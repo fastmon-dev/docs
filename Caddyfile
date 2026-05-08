@@ -4,7 +4,7 @@
 # Deploy: rsync -av --delete ./out/ user@host:/var/www/fastmon-docs/
 # Then point Caddy at /var/www/fastmon-docs.
 
-docs.fastmon.io {
+docs.fastmon.eu {
 	root * /var/www/fastmon-docs
 	encode zstd gzip
 

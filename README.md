@@ -44,7 +44,7 @@ The `out/` directory is fully static. Push it to the server and let Caddy serve 
 ```bash
 # from your dev machine
 npm run build
-rsync -av --delete ./out/ deploy@docs.fastmon.io:/var/www/fastmon-docs/
+rsync -av --delete ./out/ deploy@docs.fastmon.eu:/var/www/fastmon-docs/
 ```
 
 `Caddyfile` in this repo is the production config — copy to
@@ -56,7 +56,7 @@ adjust the host, and reload Caddy.
 ```nginx
 server {
   listen 443 ssl http2;
-  server_name docs.fastmon.io;
+  server_name docs.fastmon.eu;
   root /var/www/fastmon-docs;
 
   location / {
