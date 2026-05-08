@@ -14,15 +14,15 @@ Three modes: `anonymous`, `consent`, `full`. The default is
 
 | Aspect                        | `anonymous` (default)              | `consent`                                                     | `full`                                  |
 | ----------------------------- | ---------------------------------- | ------------------------------------------------------------- | --------------------------------------- |
-| Sends before consent signal   | Yes                                | Yes — as `anonymous`                                          | Yes                                     |
-| Sends after consent signal    | Yes                                | Upgrades to `full` collection                                 | Yes                                     |
+| Default behavior              | Anonymous                          | Per-request via `?p=` (default anonymous)                     | Full                                    |
 | Web Vitals                    | Yes                                | Yes                                                           | Yes                                     |
 | Errors                        | Yes (no PII, fingerprinted)        | Yes                                                           | Yes                                     |
-| Cross-page `session_id`       | No (discarded)                     | No before opt-in — yes after                                  | Yes                                     |
-| URL query string + fragment   | Stripped                           | Stripped before opt-in — kept after                           | Kept                                    |
-| Cookie required               | No                                 | No (consent signal is a JS event, not a cookie)               | No                                      |
+| Cross-page `session_id`       | No (stripped)                      | No before opt-in — yes after                                  | Yes                                     |
+| Referrer                      | Stripped                           | Stripped before opt-in — kept after                           | Kept                                    |
+| LCP image URL, LoAF detail, third-party domain map | Stripped     | Stripped before opt-in — kept after                           | Kept                                    |
+| Cookie required               | No                                 | No (the `?p=` flag is a query param)                          | No                                      |
 | GDPR consent banner needed for our beacon | No (no PII, no IP, no cookies) | Only required if you also want post-opt-in linkability | Depends on jurisdiction                 |
-| When to pick it               | Everyone, unless you have a specific reason | You want to start collecting Web Vitals from page 1 but only link sessions after CMP consent | You're under a regulator that explicitly permits richer collection, or you're internal-only |
+| When to pick it               | Everyone, unless you have a specific reason | You want Web Vitals from page 1 but session linkage only after CMP consent | You're under a regulator that explicitly permits richer collection, or you're internal-only |
 
 ## `anonymous` — the default
 
@@ -53,21 +53,25 @@ could be used to identify a visitor across pages or sites.
 
 - Set cookies.
 - Read or write `localStorage` / `IndexedDB`.
-- Touch query strings, form values, or DOM content.
+- Touch form values or DOM content.
+- Carry a `session_id`, referrer, LCP image URL, LoAF detail, or
+  third-party domain map (all stripped before send).
 - Try to identify the visitor.
 
-## `consent` — start anonymous, upgrade on opt-in
+## `consent` — let the page choose, per request
 
-The beacon **sends from page load as `anonymous`** — same payload,
-same privacy floor as the default mode (no cookies, no IP storage,
-no `session_id`, URL reduced to pathname). When your site signals
-consent, the beacon upgrades to `full` collection for the rest of
-the session: `session_id` is now stored, full URL is kept, and
-pageviews can be linked into a session.
+The site is configured for `consent`, but the actual mode each
+beacon uses is decided at request time via a `?p=` query parameter
+on the collector URL:
 
-This means you don't lose Web Vitals from the first page-view, and
-visitors who never accept the CMP still produce anonymous metrics.
-The opt-in unlocks **linkability**, not new categories of data.
+- `?p=1` — the beacon ships as `full`.
+- `?p=0` or no `p` at all — the beacon ships as `anonymous`.
+
+Your CMP integration is responsible for setting that flag once the
+visitor accepts. Beacons sent before consent (or after a revoke)
+go out anonymously — Web Vitals still flow, but without `sid`,
+without referrer, and with the same redactions as `anonymous`
+mode. Consent unlocks **linkability**, not new categories of data.
 
 **Pick this if:**
 
@@ -78,38 +82,22 @@ The opt-in unlocks **linkability**, not new categories of data.
 - you want one consent decision to govern Fastmon along with other
   tools.
 
-**How to signal consent:**
+## `full` — keep everything the beacon collected, no consent gate
 
-```js
-window.dispatchEvent(new Event('fastmon:consent'));
-```
+`full` keeps a handful of fields that `anonymous` strips:
 
-Fire that event the moment your CMP records consent. From that
-point on, beacons in this session are sent as `full`.
-
-Revoking consent:
-
-```js
-window.dispatchEvent(new Event('fastmon:revoke'));
-```
-
-After a revoke, the beacon drops back to `anonymous` collection
-and clears any buffered detail it hadn't sent yet.
-
-## `full` — link pageviews into sessions, no consent gate
-
-`full` collects the same fields as `anonymous` plus two things:
-
-- **`session_id`** is stored, so pageviews of the same session
-  link together (cross-page journeys, funnels, return-visitor
-  metrics).
-- **The full URL** is kept including query string and fragment
-  (instead of pathname only).
+- **`session_id`** so pageviews of the same session link together
+  (cross-page journeys, funnels, return-visitor metrics).
+- **Referrer** for source attribution.
+- **LCP image URL** for performance debugging.
+- **Long Animation Frames (LoAF) detail** for INP attribution.
+- **Third-party domain map** so dashboard breakdowns show which
+  vendor scripts contributed to load.
 
 Everything else — Web Vitals, errors, browser/OS/device/viewport,
-connection type — is identical to `anonymous`. There are no extra
-attribute categories. The privacy floor is also unchanged: no
-cookies, no IP storage, no raw User-Agent, no fingerprints.
+connection type — is identical to `anonymous`. The privacy floor
+is also unchanged: no cookies, no IP storage, no raw User-Agent,
+no fingerprints.
 
 What `full` gives up is the GDPR-legitimate-interest argument that
 `anonymous` rests on: a stable cross-page identifier turns

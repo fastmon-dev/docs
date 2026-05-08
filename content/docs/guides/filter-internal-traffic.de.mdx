@@ -17,8 +17,8 @@ ausschließen willst, entscheidet, welcher Weg passt.
 | Du willst ausschließen…             | Beste Mechanik                                    |
 | ----------------------------------- | ------------------------------------------------- |
 | Dev/Staging-Umgebung                | Separate Site (oder `allowed_origins`-Disziplin)  |
-| Office-Traffic deines Teams         | Selbst-gesetztes Client-Side-Flag                 |
-| CI / synthetische Monitore          | Beacon ganz weglassen oder Flag                   |
+| Office-Traffic deines Teams         | Beacon-Script bei internen Sessions weglassen     |
+| CI / synthetische Monitore          | Beacon-Script per User-Agent weglassen            |
 | Allen Nicht-Production-Traffic      | Per-Site `is_active`-Toggle                       |
 
 ## Option 1: Separate Sites für Non-Production
@@ -34,39 +34,35 @@ Saubere Antwort für Staging, Preview, Dev.
 Kostet dich nichts — keine Client-Logik, keine Flags, kein Risiko,
 dass Production-Daten in Staging landen oder umgekehrt.
 
-## Option 2: Selbst-gesetztes Client-Side-Flag
+## Option 2: Beacon bei internen Sessions weglassen
 
 Nützlich für Office-Traffic, wenn der Besucher Zugang zum Backend
 oder Admin-UI hat und du ihn dort als "intern" markieren kannst.
 
-Wenn als intern erkannt (z. B. nach Login im Admin-Panel),
-Fastmon-Collection für die Seite ausschalten:
+Einfachster Weg: das Beacon-`<script>` einfach nicht rendern, wenn
+der Request aus einer internen Session kommt. Server-seitig ent-
+scheiden anhand des Signals, das du eh schon hast — Session-Cookie,
+JWT-Claim, Admin-Login.
 
 ```html
-<script>
-  window.__fastmon_disabled = true;
-</script>
-<script src="https://fastmon.site/s/{source_hash}.js" async></script>
+{% if not request.session.is_staff %}
+  <script src="https://fastmon.site/s/{source_hash}.js" async></script>
+{% endif %}
 ```
 
-Der Beacon respektiert `window.__fastmon_disabled` und sendet auf
-diesem Pageview keine Daten. Setz das bedingt über das
-"ist intern"-Signal, das du eh schon hast — ein Session-Cookie, ein
-JWT-Claim, ein server-seitig gerendertes `<html data-internal>`.
-
-Reines Cookie-Beispiel (keine Server-Logik):
+Reine Client-Variante geht auch — Script-Tag nur einfügen, wenn das
+Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
 
 ```html
 <script>
-  if (document.cookie.includes('staff=1')) {
-    window.__fastmon_disabled = true;
+  if (!document.cookie.includes('staff=1')) {
+    var s = document.createElement('script');
+    s.src = 'https://fastmon.site/s/{source_hash}.js';
+    s.async = true;
+    document.head.appendChild(s);
   }
 </script>
-<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
-
-Das `staff=1`-Cookie einmal auf einer `/staff`-Route setzen, die
-dein Team besucht.
 
 ## Option 3: Site komplett pausieren
 
@@ -94,17 +90,16 @@ nicht erst laden. Die meisten Monitore setzen einen erkennbaren
 {% endif %}
 ```
 
-Wenn dein Stack keinen einfachen "ist Bot"-Check hat, funktioniert
-auch das `__fastmon_disabled`-Flag — anhand des UA in einem kleinen
-Inline-Script flippen.
+Wenn dein Stack keinen einfachen "ist Bot"-Check hat, gate das
+Script-Tag direkt im Template anhand des UA — gleiches Prinzip.
 
 ## Filter verifizieren
 
 Site als interner Besucher öffnen. DevTools → Network → `c/`
 filtern. Du solltest **keinen** Request an
-`https://fastmon.site/c/...` sehen. Wenn doch, wurde das Flag zu spät
-gesetzt — sicherstellen, dass das Inline-Script *vor* dem
-Beacon-Script-Tag läuft.
+`https://fastmon.site/c/...` sehen. Wenn doch, wird das Script-Tag
+weiter gerendert — Gate-Bedingung auf dem Server (oder den
+Cookie-Check im Inline-Snippet) prüfen.
 
 In Fastmon nach dem Umschalten: Im **Sessions**-View sollte die
 Country-/Region-Zelle deines Office-Standorts deutlich kleiner
@@ -116,8 +111,8 @@ werden. Wenn nicht, fängt der Filter sie nicht.
   (siehe [Privacy](/de/privacy)). Sobald ein Beacon drin ist,
   können wir nicht mehr sagen, ob der aus eurem Office kam. Also:
   an der Quelle filtern.
-- **`__fastmon_disabled` gilt nur pro Seite.** Auf jeder Seite
-  setzen, die du ausschließen willst — nicht nur beim ersten Load.
+- **Das Gate läuft pro Seite.** Auf jeder Seite weglassen, die du
+  ausschließen willst — nicht nur beim ersten Load.
 - **Country-Filter helfen nicht.** Dein Office sitzt im gleichen
   Land wie die meisten echten Besucher. Was funktioniert: an der
   Quelle filtern, wo der echte Kontext (User, Cookie, UA) noch da

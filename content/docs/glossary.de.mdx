@@ -29,8 +29,9 @@ erstmals rendert. Diagnostisch; erklärt langsamen LCP. Siehe
 ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe
 [TTFB](/de/web-vitals/ttfb).
 
-**Experience Score** — Composite aus LCP / INP / CLS als einzelne
-0–100-Zahl, gewichtet 35/35/30. Siehe
+**Experience Score** — Score von 0,0 bis 10,0, gewichtet aus LCP,
+INP, CLS, FCP, TTFB, Page-Load-Time und Error-Rate. Gemappt auf
+Schulnoten A+ bis F. Siehe
 [Experience Score](/de/web-vitals/experience-score).
 
 **Core Web Vitals** — Googles Drei-Metrik-Set: LCP, INP, CLS. Die
@@ -60,9 +61,10 @@ ohne Daten zu invalidieren.
 **Page-View-ID (`pvid`)** — Per-Pageview-ID, vom Beacon
 clientseitig erzeugt. Nicht persistiert.
 
-**`pst` / `cst`** — Page-Started-Timestamp (Besucher-Uhr) /
-Collector-Ankunftszeit (Server-Uhr). Beide in Millisekunden seit
-Epoch.
+**`pst` / `cst`** — Page-Started-Timestamp / Client-Sent-At-Timestamp.
+Beide auf der Besucher-Uhr, in Millisekunden seit Epoch. Das
+Intervall `cst - pst` misst die Pageview-Dauer bis zum Flush
+unabhängig von Clock-Skew.
 
 ## Ressourcen und Accounts
 
@@ -99,7 +101,7 @@ wiederherstellbar.
 
 ## Storage und Infrastruktur
 
-**Konfig-DB** — Relationaler Store für User, Organisationen, Sites,
+**Config-DB** — Relationaler Store für User, Organisationen, Sites,
 Settings.
 
 **Analytics-Store** — Columnar-Store für Beacon-Events und

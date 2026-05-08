@@ -51,9 +51,9 @@ verstehen willst:
 | ----------------- | ---------------------------------------------------------------------------- |
 | Beacon-Script     | Vanilla JS, ~10 KB komprimiert. Beobachtet Web Vitals, batcht, postet.       |
 | Collector         | Öffentlicher Ingest unter `/c/{collector_hash}`. Validation, Rate-Limit, Geo. |
-| API               | `/api/v1/...` — authentifizierte REST. Versorgt das Dashboard.               |
+| API               | `/v1/...` — authentifizierte REST. Versorgt das Dashboard.               |
 | Dashboard         | Single-Page-App. Liest über die API. Nur Static-Assets.                      |
-| Konfig-DB         | User, Organisationen, Sites, Settings, Billing.                              |
+| Config-DB         | User, Organisationen, Sites, Settings, Billing.                              |
 | Analytics-Store   | Beacon-Events, aggregierte Metriken, Error-Logs.                             |
 | Session-Store     | Sessions, Rate-Limits, kurzlebige Caches.                                    |
 
@@ -64,7 +64,7 @@ unabhängig.
 
 | Store             | Inhalt                                                | Hinweise                                  |
 | ----------------- | ----------------------------------------------------- | ----------------------------------------- |
-| Konfig-DB         | User, Orgs, Sites, Settings, Billing                  | Single Primary, asynchroner Zugriff.      |
+| Config-DB         | User, Orgs, Sites, Settings, Billing                  | Single Primary, asynchroner Zugriff.      |
 | Analytics-Store   | Beacon-Events, Aggregate, Error-Logs                  | Columnar, Queries pro Org gescopt.        |
 | Session-Store     | Sessions, Rate-Limits, kurzlebige Caches              | In-Memory-Store unter EU-Jurisdiktion.    |
 
@@ -77,26 +77,20 @@ idempotenten Migrations beim Deploy.
 | --------------------------------- | -------------------------------------------------------------- | ------------- |
 | `GET  /s/{source_hash}.js`        | Öffentliche Beacon-Script-Auslieferung. Strong-Cache, ETag.    | Public        |
 | `POST /c/{collector_hash}`        | Öffentlicher Beacon-Ingest.                                    | Public        |
-| `/api/v1/...`                     | Authentifizierte REST-API.                                     | Cookie oder Token |
+| `/v1/...`                     | Authentifizierte REST-API.                                     | Cookie oder Token |
 | `/openapi.json`                   | OpenAPI-Dokument der v1-API.                                   | Public        |
 
 Die beiden öffentlichen Roots stehen bewusst nicht unter
-`/api/v1` — kurze URLs halten den Beacon-Payload klein, und die
+`/v1` — kurze URLs halten den Beacon-Payload klein, und die
 Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv
 gecached; API-Responses typischerweise nicht).
-
-## Multi-Tenancy
-
-Jede Beacon-Zeile trägt ihre `organization_id`, und jede
-Analytics-Query filtert danach. Tenants teilen sich die
-Infrastruktur, sehen aber nie gegenseitig die Daten.
 
 ## Was wo liegt, kurz
 
 | Daten                               | Wo                  | Retention                       |
 | ----------------------------------- | ------------------- | ------------------------------- |
 | Beacon-Events (raw + roll-ups)      | Analytics-Store     | `data_retention_days` pro Site (Default 90). |
-| Site-, Org-, Member-Config          | Konfig-DB           | Bis zur Löschung.               |
+| Site-, Org-, Member-Config          | Config-DB           | Bis zur Löschung.               |
 | Aktive Sessions (Auth)              | Session-Store       | Gleitendes Fenster, default 30 Tage idle. |
 | Rate-Limit-Counter                  | Session-Store       | Per-Fenster-TTL, < 5 min.       |
 | Personenbezogene Daten (PII)        | —                   | Nicht gesammelt. Siehe [Privacy](/de/privacy). |
@@ -120,16 +114,19 @@ gültig. Mehr dazu unter
 
 ### Warum ein Columnar-Analytics-Store?
 
-Web-Vitals-Queries aggregieren über hunderte Millionen Zeilen.
-Mit Columnar-Storage und vektorisierter Execution sind die in
-unter einer Sekunde durch — ein Row-Store schafft das in dieser
-Größe einfach nicht.
+Analytics-Queries lesen wenige Spalten (eine Metrik, ein paar
+Dimensionen) über viele Zeilen. Spaltenweise Speicherung liest
+nur diese Spalten von der Platte statt jeder Zeile, und Timing-
+Daten komprimieren in dieser Form sehr gut. Vektorisierte
+Aggregation pro Spalte macht Perzentile und Group-Bys nochmal
+deutlich schneller. Auf Postgres ginge das auch — wäre nur
+spürbar langsamer und teurer pro Query.
 
 ### Warum ein eigener Session-Store?
 
 Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich
 auf jedem Request, aber keine Langzeit-Durability. In der
-Konfig-DB hätten sie nichts zu suchen — sie wegzulagern hält den
+Config-DB hätten sie nichts zu suchen — sie wegzulagern hält den
 Auth-Pfad schnell und sauber getrennt.
 
 ## Verwandt

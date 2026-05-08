@@ -31,19 +31,22 @@ the site is set to:
 Just enough to compute Web Vitals and per-page performance
 breakdowns:
 
-- **URL pathname** — query string and fragment are stripped in
-  `anonymous`, kept in `full`.
-- **Web Vitals** — LCP, INP, CLS, FCP, TTFB.
-- **Navigation timing** — nav type, redirect count, total page-visible time.
-- **Resource timing** — aggregated per-domain and per-category byte sizes
-  and counts.
+- **Page URL** — sanitized per [collection mode](/en/collection-modes).
+- **Web Vitals** — LCP, INP, CLS, FCP, TTFB and related timings.
+- **Navigation timing** — nav type, TTFB, page-load timing.
+- **Resource timing** — per-category byte sizes and counts
+  (script, css, img, font, other).
 - **Errors** — type, message, fingerprinted stack frames.
-- **Environment** — browser family, OS family, device class
-  (`mobile`/`tablet`/`desktop`), viewport class, connection type.
+- **Environment** — allowlisted browser family, OS family, device
+  class (`mobile`/`tablet`/`desktop`), viewport class, connection
+  type. No raw User-Agent parsing.
 - **Geo** — country only, derived server-side from the request IP
   *which is then discarded*.
-- **Session ID** — only in `full`, and in `consent` after opt-in.
-  Used to group pageviews of the same session together.
+- **Session ID** — only in `full`, and in `consent` when the
+  request opts in via `?p=1`. Groups pageviews of the same
+  session together.
+- **Referrer, LCP image URL, LoAF detail, third-party domain map**
+   — only in `full`, or in `consent` after opt-in.
 
 That's the whole payload. There's no opt-in we can offer to
 "unlock" more — we didn't build the more.
@@ -53,11 +56,12 @@ That's the whole payload. There's no opt-in we can offer to
 The site's [collection mode](/en/collection-modes) decides only
 **linkability**, not data categories. The privacy floor above —
 no cookies, no IP storage, no raw User-Agent, no fingerprints —
-holds in every mode. What changes between modes is whether the
-URL keeps its query string and whether a `session_id` is stored
-to link pageviews into a session. See
-[Collection modes](/en/collection-modes) for the per-mode
-breakdown and how to wire `fastmon:consent` into your CMP.
+holds in every mode. What changes between modes is whether a
+`session_id`, referrer, LCP image URL, LoAF detail, and
+third-party domain map are kept (linking pageviews into a session)
+or stripped. See [Collection modes](/en/collection-modes) for the
+per-mode breakdown and how the `?p=` request flag wires consent
+into your CMP.
 
 ## Where the data lives
 

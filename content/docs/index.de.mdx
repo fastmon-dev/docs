@@ -7,14 +7,14 @@ Fastmon misst, wie sich deine Website für echte Besucher anfühlt —
 Core Web Vitals, Fehler und Performance, direkt aus dem Browser.
 Daraus werden Dashboards, mit denen dein Team was anfangen kann.
 
-Die Doku ist nach Anlässen sortiert. Spring direkt rein.
+Die Doku ist nach Aufgaben sortiert. Spring rein.
 
 ## Loslegen
 
 Fastmon in unter fünf Minuten auf einer Site live haben.
 
 <Cards>
-  <Card title="Fastmon implementieren" href="/de/install" description="Wähle deinen Stack: HTML, Next.js, WordPress, GTM. Jeder Pfad ist ein Fünf-Minuten-Walkthrough." />
+  <Card title="Fastmon implementieren" href="/de/install" description="Ein Script-Tag im <head> — funktioniert auf jeder Site, statisches HTML genauso wie Next.js, WordPress oder über den Tag-Manager. Fünf Minuten." />
   <Card title="Implementierung prüfen" href="/de/install/verify" description="Bestätigen, dass der Beacon Daten erfasst — und was zu prüfen ist, wenn nicht." />
 </Cards>
 
@@ -38,7 +38,7 @@ bedeutet — oder wie man sie wegbekommt.
   <Card title="Web-Vitals-Übersicht" href="/de/web-vitals" description="LCP, INP, CLS, FCP, TTFB — Definitionen, Schwellen, wo du anfängst." />
   <Card title="LCP" href="/de/web-vitals/lcp" description="Die Pageload-Metrik." />
   <Card title="INP" href="/de/web-vitals/inp" description="Die Runtime-Responsiveness-Metrik." />
-  <Card title="Experience Score" href="/de/web-vitals/experience-score" description="Die einzelne 0–100-Zahl aus LCP, INP, CLS." />
+  <Card title="Experience Score" href="/de/web-vitals/experience-score" description="Eine einzelne Zahl von 0 bis 10 aus LCP, INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate." />
 </Cards>
 
 ## Etwas bauen
@@ -60,6 +60,7 @@ existierenden Dashboards integrieren.
 - **Skaliert mit, ohne dass du was merkst.** Beacons gehen gebündelt
   in einen Analytics-Store. Gebaut für echten Production-Traffic,
   ohne dass du was tunen musst.
-- **Misst das, was Google misst.** LCP, INP, CLS, FCP, TTFB plus
-  Navigation-, Resource- und Long-Task-Timing. Gleiche Browser-APIs
-  wie Chromes `web-vitals`-Library, keine eigenen Hausnummern.
+- **Standardisierte Web Vitals, keine eigenen Hausnummern.** LCP,
+  INP, CLS, FCP, TTFB plus Navigation-, Resource- und Long-Task-Timing
+  — alles über dieselben Browser-APIs wie Chromes `web-vitals`-Library.
+  Vergleichbar mit allem, was du sonst zu CWV liest.

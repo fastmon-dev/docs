@@ -41,9 +41,9 @@ Traffic baut sich auf, sobald Besucher die Seite öffnen.
 
 **Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
 filtern. Du solltest einen Request an
-`https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen. `404`
-heißt, der `source_hash` im Tag ist falsch. `410` heißt, die Site
-wurde in Fastmon gelöscht — neu anlegen.
+`https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen.
+Ein `404` heißt, der `source_hash` passt zu keiner Site — entweder
+vertippt oder die Site wurde gelöscht.
 
 **Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
 der Production-Seite "View Source". Das Tag muss tatsächlich im
@@ -52,20 +52,23 @@ aus Page-Buildern raus — dann brauchst du ein
 Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 
 **Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen
-und nach einem CSP-Violation-Eintrag mit `fastmon.eu` suchen. Wenn ja,
-`https://fastmon.eu` zu `script-src` und `connect-src` hinzufügen.
+und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Wenn ja,
+`https://fastmon.site` zu `script-src` und `connect-src` hinzufügen.
 
 **Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei
 `pagehide` / `visibilitychange`. Wenn noch nichts aufgetaucht ist,
 einmal Tab wechseln (oder Seite schließen und neu öffnen) — das
 triggert sofort einen Flush.
 
-### Request an `/c/` liefert `403`
+### Beacon liefert `204`, aber im Dashboard taucht nichts auf
 
-Die **Allowed origins** der Site listen den Origin nicht, von dem du
-lädst. Site-Settings öffnen, fehlenden Origin hinzufügen (z. B.
-`staging.acme.com`), speichern. Der Script-Cache invalidiert
-automatisch.
+`204` ist die normale Erfolgsantwort — kommt aber auch, wenn der
+Beacon still verworfen wird. Häufigster Grund: die Site hat
+**Allowed origins** gesetzt, und der Origin, von dem du lädst,
+steht nicht drauf. Site-Settings öffnen, fehlenden Origin
+hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache
+invalidiert automatisch. Andere stille Drops: Site auf inaktiv
+gesetzt, unbekannter `collector_hash`.
 
 ### Request an `/c/` liefert `429`
 

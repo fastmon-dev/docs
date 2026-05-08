@@ -14,7 +14,7 @@ The docs are organized by what you're trying to do. Jump in.
 Get Fastmon running on a site in under five minutes.
 
 <Cards>
-  <Card title="Implement Fastmon" href="/en/install" description="Pick your stack: HTML, Next.js, WordPress, GTM. Each path is a five-minute walkthrough." />
+  <Card title="Implement Fastmon" href="/en/install" description="One script tag in your <head> — works on any site, static HTML through Next.js, WordPress, or a tag manager. Five minutes." />
   <Card title="Verify the implementation" href="/en/install/verify" description="Confirm the beacon is collecting data — and what to check when it isn't." />
 </Cards>
 
@@ -38,7 +38,7 @@ means — or how to make it go away.
   <Card title="Web Vitals overview" href="/en/web-vitals" description="LCP, INP, CLS, FCP, TTFB — definitions, thresholds, and where to start." />
   <Card title="LCP" href="/en/web-vitals/lcp" description="The page-load metric." />
   <Card title="INP" href="/en/web-vitals/inp" description="The runtime-responsiveness metric." />
-  <Card title="Experience Score" href="/en/web-vitals/experience-score" description="The single 0–100 number combining LCP, INP, and CLS." />
+  <Card title="Experience Score" href="/en/web-vitals/experience-score" description="A single 0–10 number combining LCP, INP, CLS, FCP, TTFB, page-load time, and error rate." />
 </Cards>
 
 ## Build something
@@ -60,6 +60,7 @@ existing dashboards.
 - **Scales without you noticing.** Beacons go into a columnar
   analytics store via batched inserts. Built to handle real
   production traffic without you having to tune anything.
-- **Measures what Google measures.** LCP, INP, CLS, FCP, TTFB
-  plus navigation, resource, and long-task timing. Same browser
-  APIs as Chrome's `web-vitals` library — no homegrown numbers.
+- **Standard Web Vitals, no homegrown numbers.** LCP, INP, CLS,
+  FCP, TTFB plus navigation, resource, and long-task timing — all
+  through the same browser APIs as Chrome's `web-vitals` library.
+  Comparable with anything else you read about CWV.

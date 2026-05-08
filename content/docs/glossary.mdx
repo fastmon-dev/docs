@@ -28,8 +28,9 @@ image renders. Diagnostic; explains slow LCP. See
 arrives. Diagnostic; the floor for FCP and LCP. See
 [TTFB](/en/web-vitals/ttfb).
 
-**Experience Score** — Composite of LCP / INP / CLS into a single
-0–100 number, weighted 35/35/30. See
+**Experience Score** — Composite score from 0.0 to 10.0, weighted
+across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate.
+Mapped to letter grades A+ through F. See
 [Experience Score](/en/web-vitals/experience-score).
 
 **Core Web Vitals** — Google's three-metric set: LCP, INP, CLS.
@@ -58,9 +59,10 @@ invalidating data.
 **Page-view ID (`pvid`)** — Per-page-view identifier the beacon
 generates client-side. Not persisted.
 
-**`pst` / `cst`** — Page started timestamp (visitor clock) /
-collector arrival timestamp (server clock). Both in milliseconds
-since epoch.
+**`pst` / `cst`** — Page-started timestamp / client-sent-at
+timestamp. Both visitor wall-clock, in milliseconds since epoch.
+The interval `cst - pst` is the reliable clock-skew-free measure
+of how long the page-view took before flushing.
 
 ## Resources and accounts
 

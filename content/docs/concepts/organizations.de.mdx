@@ -31,7 +31,7 @@ unten.
 
 | Feld              | Typ                                       | Hinweise                                                              |
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
-| `id`              | UUID v7                                   | Stabiler Identifier. Verwendet in API-URLs (`/api/v1/organizations/{id}/…`). |
+| `id`              | UUID v7                                   | Stabiler Identifier. Verwendet in API-URLs (`/v1/organizations/{id}/…`). |
 | `name`            | string                                    | Menschenlesbar. Erscheint im Org-Switcher.                            |
 | `plan`            | enum                                      | `beta` · `starter` · `pro` · `partner` · `enterprise`.                |
 | `members`         | Liste von `{ user_id, role }`             | Rollen: `owner`, `member`.                                            |
@@ -82,7 +82,7 @@ verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst.
 ## Häufige Überraschungen
 
 - **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen
-  über die URL (`/api/v1/organizations/{id}/…`), nicht über
+  über die URL (`/v1/organizations/{id}/…`), nicht über
   irgendeinen aktiven Tab.
 - **Mitglieder sind globale Fastmon-User.** Lädst du einen
   bestehenden User neu ein, wird der bestehende Account

@@ -15,15 +15,15 @@ und für fast alle ist das genau richtig.
 
 | Aspekt                           | `anonymous` (Default)              | `consent`                                                       | `full`                                  |
 | -------------------------------- | ---------------------------------- | --------------------------------------------------------------- | --------------------------------------- |
-| Sendet vor Consent-Signal        | Ja                                 | Ja — als `anonymous`                                            | Ja                                      |
-| Sendet nach Consent-Signal       | Ja                                 | Wechselt auf `full`-Erfassung                                   | Ja                                      |
+| Default-Verhalten                | Anonym                             | Pro Request über `?p=` (default anonym)                         | Full                                    |
 | Web Vitals                       | Ja                                 | Ja                                                              | Ja                                      |
 | Fehler                           | Ja (keine PII, fingerprinted)      | Ja                                                              | Ja                                      |
-| Seitenübergreifende `session_id` | Nein (verworfen)                   | Vor Opt-In nein — danach ja                                     | Ja                                      |
-| URL Query-String + Fragment      | Entfernt                           | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
-| Cookie nötig                     | Nein                               | Nein (Signal ist ein JS-Event, kein Cookie)                     | Nein                                    |
+| Seitenübergreifende `session_id` | Nein (entfernt)                    | Vor Opt-In nein — danach ja                                     | Ja                                      |
+| Referrer                         | Entfernt                           | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
+| LCP-Image-URL, LoAF-Detail, Third-Party-Domain-Map | Entfernt          | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
+| Cookie nötig                     | Nein                               | Nein (`?p=` ist ein Query-Parameter)                            | Nein                                    |
 | Consent-Banner für unseren Beacon nötig | Nein (keine PII, keine IP, keine Cookies) | Nur, wenn du auch nach Opt-In Verknüpfbarkeit willst | Hängt von der Jurisdiktion ab          |
-| Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1 sammeln, aber Sessions erst nach CMP-Consent verknüpfen | Du fällst unter eine Regulierung, die das explizit erlaubt, oder du bist nur intern |
+| Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1, Sessions aber erst nach CMP-Consent verknüpfen | Du fällst unter eine Regulierung, die das explizit erlaubt, oder du misst nur intern |
 
 ## `anonymous` — der Default
 
@@ -56,23 +56,25 @@ wiedererkennen könnte.
 
 - Cookies setzen.
 - `localStorage` / `IndexedDB` lesen oder schreiben.
-- Query-Strings, Formularwerte oder DOM-Inhalt anfassen.
+- Formularwerte oder DOM-Inhalt anfassen.
+- Eine `session_id`, Referrer, LCP-Image-URL, LoAF-Details oder
+  Third-Party-Domain-Map mitschicken (vor dem Senden entfernt).
 - Versuchen, den Besucher zu identifizieren.
 
-## `consent` — anonym starten, bei Opt-In hochstufen
+## `consent` — pro Request entscheiden lassen
 
-Der Beacon **sendet ab Pageload als `anonymous`** — gleicher
-Payload, gleiche Privacy-Untergrenze wie im Default-Modus (keine
-Cookies, keine IP-Speicherung, keine `session_id`, URL nur
-Pathname). Sobald deine Site Consent signalisiert, schaltet der
-Beacon für den Rest der Session auf `full`-Erfassung: `session_id`
-wird gespeichert, vollständige URL bleibt erhalten, Pageviews
-werden zu Sessions verknüpfbar.
+Die Site steht auf `consent`, der tatsächliche Modus jedes Beacons
+wird zur Request-Zeit über einen `?p=`-Query-Parameter auf der
+Collector-URL festgelegt:
 
-Das heißt: du verlierst keine Web Vitals vom ersten Pageview, und
-Besucher, die den CMP nie akzeptieren, erzeugen weiter anonyme
-Metriken. Der Opt-In schaltet **Verknüpfbarkeit** frei, keine
-neuen Datenkategorien.
+- `?p=1` — der Beacon geht als `full` raus.
+- `?p=0` oder kein `p` — der Beacon geht als `anonymous` raus.
+
+Deine CMP-Anbindung setzt das Flag, sobald der Besucher zustimmt.
+Beacons vor Consent (oder nach Widerruf) gehen anonym raus — Web
+Vitals fließen weiter, aber ohne `sid`, ohne Referrer, mit
+denselben Redaktionen wie im `anonymous`-Modus. Consent schaltet
+**Verknüpfbarkeit** frei, keine neuen Datenkategorien.
 
 **Passt für dich, wenn:**
 
@@ -83,40 +85,23 @@ neuen Datenkategorien.
 - du eine Consent-Entscheidung für Fastmon und andere Tools
   gleichzeitig haben willst.
 
-**Consent signalisieren:**
+## `full` — alles behalten, ohne Consent-Gate
 
-```js
-window.dispatchEvent(new Event('fastmon:consent'));
-```
+`full` behält ein paar Felder, die `anonymous` entfernt:
 
-Dieses Event feuert, sobald dein CMP Consent erfasst hat. Ab
-diesem Moment werden Beacons in dieser Session als `full`
-gesendet.
-
-Widerruf:
-
-```js
-window.dispatchEvent(new Event('fastmon:revoke'));
-```
-
-Nach einem Revoke fällt der Beacon zurück auf `anonymous`-Erfassung
-und verwirft, was er an Detail noch im Buffer hatte.
-
-## `full` — Sessions ohne Consent-Gate verknüpfen
-
-`full` sammelt dieselben Felder wie `anonymous`, plus zwei Dinge:
-
-- **`session_id`** wird gespeichert, sodass Pageviews derselben
-  Session verknüpfbar werden (seitenübergreifende Journeys,
-  Funnels, Wiederkehrer-Metriken).
-- **Die volle URL** bleibt erhalten, inklusive Query-String und
-  Fragment (statt nur Pathname).
+- **`session_id`**, sodass Pageviews derselben Session verknüpfbar
+  werden (seitenübergreifende Journeys, Funnels,
+  Wiederkehrer-Metriken).
+- **Referrer** für die Quellen-Attribution.
+- **LCP-Image-URL** fürs Performance-Debugging.
+- **Long-Animation-Frames-Detail (LoAF)** für die INP-Attribution.
+- **Third-Party-Domain-Map**, damit Dashboard-Breakdowns zeigen,
+  welche Vendor-Skripte zur Ladezeit beigetragen haben.
 
 Alles andere — Web Vitals, Fehler, Browser/OS/Device/Viewport,
-Connection-Typ — ist identisch zu `anonymous`. Es gibt keine
-zusätzlichen Attributkategorien. Auch die Privacy-Untergrenze
-ändert sich nicht: keine Cookies, keine IP-Speicherung, kein
-roher User-Agent, keine Fingerprints.
+Connection-Typ — ist identisch zu `anonymous`. Auch die
+Privacy-Untergrenze ändert sich nicht: keine Cookies, keine
+IP-Speicherung, kein roher User-Agent, keine Fingerprints.
 
 Was `full` aufgibt, ist das DSGVO-Argument des berechtigten
 Interesses, auf dem `anonymous` ruht: ein stabiler

@@ -35,12 +35,16 @@ aus.
 Eine Session enthält Pageviews, die **alles** Folgende teilen:
 
 - dieselbe `site_id`,
-- denselben Browser (kein persistenter Identifier — der Collector
-  gruppiert über einen kurzlebigen Korrelations-Schlüssel, der pro
-  Request abgeleitet und nur in einem kleinen Zeitfenster gematcht
-  wird),
+- dieselbe `session_id` (`sid` auf der Leitung) — clientseitig
+  pro Session vergeben und nur gesendet, wenn der
+  [Collection Mode](/de/collection-modes) das erlaubt (`full`,
+  oder `consent` nach Opt-In),
 - eine Lücke von **weniger als 30 Minuten** zwischen
   aufeinanderfolgenden Pageviews.
+
+In `anonymous` (und in `consent` vor dem Opt-In) wird die `sid`
+vor dem Senden entfernt — diese Pageviews bilden also gar keine
+Session und tauchen nur in Pageview-Views auf.
 
 Die Session endet, wenn:
 

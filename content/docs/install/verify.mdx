@@ -40,9 +40,9 @@ fine — real traffic builds up as visitors load pages.
 
 **Check the script loaded.** In DevTools → Network, filter for `s/`.
 You should see a request to
-`https://fastmon.site/s/{source_hash}.js` with a `200` status. If it
-returns `404`, the `source_hash` in your tag is wrong. If it returns
-`410`, the site was deleted in Fastmon — recreate it.
+`https://fastmon.site/s/{source_hash}.js` with a `200` status. A
+`404` means the `source_hash` in your tag doesn't match a site —
+either the hash was mistyped, or the site was deleted in Fastmon.
 
 **Check the `<script>` tag is in the rendered HTML.** View source on a
 production page. The tag must be present in the actual HTML the browser
@@ -51,8 +51,8 @@ header-injection plugin or your theme's `<head>` slot instead of an
 inline content block.
 
 **Check that no CSP is blocking it.** Open the Console and look
-for a CSP violation mentioning `fastmon.eu`. If there is one, add
-`https://fastmon.eu` to your `script-src` and `connect-src`
+for a CSP violation mentioning `fastmon.site`. If there is one, add
+`https://fastmon.site` to your `script-src` and `connect-src`
 directives.
 
 **Force a flush.** The beacon flushes periodically and on
@@ -60,12 +60,15 @@ directives.
 switch tabs (or close and reopen the page) — that triggers an
 immediate flush.
 
-### Request to `/c/` returns `403`
+### Beacon shows `204`, but no row appears in the dashboard
 
-The site's **Allowed origins** doesn't list the origin you're loading
-from. Open the site settings, add the missing origin (e.g.
-`staging.acme.com`), and save. The script cache invalidates
-automatically.
+A `204` is the standard accept response. It's also what you get
+when the beacon is silently dropped — the most common reason is
+that the site has **Allowed origins** set and the page you're
+loading from isn't on the list. Open the site settings, add the
+missing origin (e.g. `staging.acme.com`), and save. The script
+cache invalidates automatically. Other silent drops: site marked
+inactive, or unknown `collector_hash`.
 
 ### Request to `/c/` returns `429`
 

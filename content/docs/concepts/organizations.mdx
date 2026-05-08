@@ -31,7 +31,7 @@ a thing for agencies and partners — see the `partner` plan below.
 
 | Field             | Type                                      | Notes                                                                 |
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
-| `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/api/v1/organizations/{id}/…`). |
+| `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/v1/organizations/{id}/…`). |
 | `name`            | string                                    | Human-readable. Shows in the org switcher.                            |
 | `plan`            | enum                                      | `beta` · `starter` · `pro` · `partner` · `enterprise`.                |
 | `members`         | list of `{ user_id, role }`               | Roles: `owner`, `member`.                                             |
@@ -81,7 +81,7 @@ the client sees only itself.
 ## Common surprises
 
 - **The org switcher is just UI.** API requests scope by the URL
-  (`/api/v1/organizations/{id}/…`), not by whichever tab you've
+  (`/v1/organizations/{id}/…`), not by whichever tab you've
   got open.
 - **Members are global Fastmon users.** Invite an existing user
   and the existing account gets reused — no duplicate.

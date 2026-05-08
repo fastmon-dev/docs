@@ -31,7 +31,7 @@ privacy review.
 | `error` event              | Type, message, stack frames (fingerprinted, not stored verbatim).              |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
-| Document & Window          | Pathname (no query string), referrer host, viewport size class.                |
+| Document & Window          | Page URL (sanitized per collection mode), referrer, viewport size class.       |
 
 Geo data (country, region) is **not** read in the browser — the
 collector derives it server-side from the request IP, then drops the
@@ -56,11 +56,9 @@ page loads
   ├── beacon registers PerformanceObserver and event listeners
   ├── visitor uses the page
   │     └── beacon buffers events in memory
-  └── one of three things happens:
-        ├── visibilitychange → hidden
-        ├── pagehide
-        └── periodic flush interval (default ~30 s)
-              └── beacon POSTs a single batched payload to /c/{collector_hash}
+  └── flush triggers (visibilitychange→hidden, pagehide, soft-nav,
+      error update, or terminate) cause a POST to /c/{collector_hash}
+      with a versioned payload (lifecycle marks each emission)
 ```
 
 The flush uses `navigator.sendBeacon()` when it's available, so
@@ -71,21 +69,33 @@ with `keepalive: true`.
 ## The wire payload
 
 The payload is JSON with deliberately short keys to keep the wire
-size down. A representative envelope:
+size down. The body is capped at 4 KiB. All fields are optional;
+a representative envelope looks like:
 
 ```json
 {
-  "v":   1,
-  "pst": 1746604800000,
-  "cst": 1746604800123,
-  "pvid": "01HZX...",
-  "url": "/pricing",
-  "ref": "google.com",
-  "vit": { "lcp": 1820, "inp": 140, "cls": 0.05, "fcp": 1100, "ttfb": 320 },
-  "nav": { "type": "navigate", "redirects": 0 },
-  "res": { "img": { "n": 12, "b": 184320 }, "script": { "n": 5, "b": 92160 } },
-  "err": [ { "t": "TypeError", "n": 1, "fp": "abc123", "msg": "..." } ],
-  "env": { "br": "Chrome", "os": "macOS", "dt": "desktop", "vc": "wide" }
+  "sid":  "01HZX...",
+  "pvid": "01HZY...",
+  "ver":  3,
+  "lifecycle": "hidden",
+  "pst":  1746604800000,
+  "cst":  1746604803456,
+  "u":    "https://acme.com/pricing",
+  "r":    "https://google.com/",
+  "b":    "Chrome",
+  "v":    "120",
+  "d":    "desktop",
+  "o":    "macOS",
+  "vc":   "wide",
+  "c":    "4g",
+  "t1":   320,
+  "t2":   1100,
+  "t9":   1820,
+  "t10":  140,
+  "t11":  0.05,
+  "errs": [ { "t": "TypeError", "n": 1, "m": "...", "fr": "..." } ],
+  "tv":   "260508-a1b2c3d",
+  "dlv":  "b"
 }
 ```
 
@@ -95,14 +105,21 @@ documented here for transparency.
 
 Key abbreviations:
 
-- `pst` — page started timestamp (visitor clock, ms since epoch).
-- `cst` — collector arrival timestamp (server clock, set on receipt).
-- `pvid` — per-page-view ID. Not persistent.
-- `vit` — Web Vitals.
-- `nav` — Navigation Timing.
-- `res` — aggregated resource timing.
-- `err` — fingerprinted error entries.
-- `env` — environment.
+- `sid` — session id. Dropped in `anonymous`.
+- `pvid` — per-page-view id.
+- `ver` — monotonic version of this page-view's payload.
+- `lifecycle` — one of `init`, `loaded`, `error_update`, `softnav`,
+  `hidden`, `frozen`, `terminated`.
+- `pst` — page-started timestamp, visitor wall-clock (ms since epoch).
+- `cst` — client-sent-at timestamp, visitor wall-clock at flush.
+  Used server-side to detect clock skew against receive time.
+- `u`, `r` — page URL and referrer (referrer dropped in `anonymous`).
+- `b`, `v`, `d`, `o`, `vc`, `c` — browser family, browser major,
+  device class, OS family, viewport class, connection type.
+- `t1`…`t36` — numeric timing slots (TTFB, FCP, LCP, INP, CLS, …).
+- `errs` — error entries (`t` type, `n` count, `m` message, `fr` frames).
+- `tv` — tracker version, format `YYMMDD-<git-sha>[-dirty]`.
+- `dlv` — delivery method (`b` for `sendBeacon`, empty for `fetch`).
 
 ## Cache and rollouts
 
@@ -123,35 +140,46 @@ The browser picks up the new version on its next cache check.
 The beacon's runtime behavior depends on the site's
 [collection mode](/en/collection-modes):
 
-- `anonymous` — observes and sends without a consent gate.
-- `consent` — observes but holds the buffer until your site fires
-  `fastmon:consent`. Discards on `fastmon:revoke`.
-- `full` — observes a richer set of attributes, otherwise behaves
-  like `anonymous`.
+- `anonymous` — observes and sends without identifiers (no `sid`,
+  no referrer, no LCP image URL, no LoAF detail, no third-party
+  domain map).
+- `consent` — toggles between anonymous and full at request time
+  via the `?p=` query parameter on the collector URL (`p=1` for
+  full, absent or `0` for anonymous).
+- `full` — keeps all fields the beacon collected.
 
 In every mode, the privacy guarantees in
 [Privacy](/en/privacy) hold.
 
 ## Rate limiting
 
-The collector rate-limits per `(collector_hash, client_ip)`. It's
-defensive — keeps a broken page or a synthetic load test from
-saturating ingestion for other tenants. Real traffic basically
-never hits it.
+The collector rate-limits in memory per `(collector_hash, client_ip)`
+— the IP is used for that bucket only and never written to disk.
+It's defensive: a broken page or a synthetic load test shouldn't
+saturate ingestion for other tenants. Real traffic basically never
+hits it.
 
 A rate-limited beacon gets a `429`. The browser drops its buffer
 and carries on; nothing else breaks.
 
-## Common surprises
+Payloads larger than 4 KiB return `413`. If `cst` is more than 5
+minutes off the server clock, the server falls back to its own
+receive time instead of rejecting — the beacon is still accepted.
 
-- **The beacon doesn't restart on SPA route changes.** Web Vitals
-  are per-navigation. SPA "page changes" share one beacon
-  instance, one metric set, and one final flush.
-- **The beacon is small.** Under 10 KB compressed. It's not what's
-  slowing your page down.
-- **It doesn't flush on every event.** Buffering is intentional —
-  that's why a `POST /c/` only shows up in DevTools when you
-  switch tabs, not on every metric.
+## Things worth knowing
+
+- **SPA route changes start a new pageview.** The script stays
+  loaded, but soft-navs (patched `history.pushState` + `popstate`)
+  mint a new `pvid`, reset the Web-Vitals observers, and flush a
+  `softnav` beacon for the previous pageview. So one tab can emit
+  many pageviews.
+- **Multiple flushes per pageview.** The buffer flushes on
+  lifecycle triggers — `init`, `loaded`, `error_update`, `softnav`,
+  `hidden`, `frozen`, `terminated` — not just on tab switch.
+  Expect more than one `POST /c/` per visit.
+- **`sendBeacon` doesn't show up under "Fetch/XHR" in DevTools.**
+  Filter Network on `c/` (or use the "All" tab) — sendBeacon
+  requests appear under "Other".
 
 ## Related
 

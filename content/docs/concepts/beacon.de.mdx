@@ -31,7 +31,7 @@ jedem Datenschutz-Review verteidigbar.
 | `error`-Event              | Typ, Message, Stack-Frames (fingerprinted, nicht wörtlich gespeichert).        |
 | `unhandledrejection`       | Selbe Form wie `error`.                                                        |
 | Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
-| Document & Window          | Pathname (kein Query-String), Referrer-Host, Viewport-Größenklasse.            |
+| Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
 
 Geo-Daten (Land, Region) werden im Browser **nicht** gelesen — der
 Collector leitet sie serverseitig aus der Request-IP ab und verwirft
@@ -56,11 +56,10 @@ Seite lädt
   ├── Beacon registriert PerformanceObserver und Event-Listener
   ├── Besucher nutzt die Seite
   │     └── Beacon puffert Events im Speicher
-  └── Eines von drei Dingen passiert:
-        ├── visibilitychange → hidden
-        ├── pagehide
-        └── periodisches Flush-Intervall (default ~30 s)
-              └── Beacon schickt einen gebündelten Payload per POST an /c/{collector_hash}
+  └── Flush-Trigger (visibilitychange→hidden, pagehide, Soft-Nav,
+      Fehler-Update oder Terminate) lösen einen POST an
+      /c/{collector_hash} aus, mit versioniertem Payload
+      (Lifecycle markiert jede Emission)
 ```
 
 Beim Flush versuchen wir zuerst `navigator.sendBeacon()`, damit der
@@ -69,39 +68,58 @@ Request auch beim Unload sicher rauskommt. Fehlt das, fallen wir auf
 
 ## Der Wire-Payload
 
-Der Payload ist JSON mit absichtlich kurzen Keys, um die
-Wire-Größe klein zu halten. Repräsentativer Envelope:
+Der Payload ist JSON mit absichtlich kurzen Keys, um den Body klein
+zu halten. Der Body ist auf 4 KiB begrenzt. Alle Felder sind
+optional; ein typischer Envelope sieht so aus:
 
 ```json
 {
-  "v":   1,
-  "pst": 1746604800000,
-  "cst": 1746604800123,
-  "pvid": "01HZX...",
-  "url": "/pricing",
-  "ref": "google.com",
-  "vit": { "lcp": 1820, "inp": 140, "cls": 0.05, "fcp": 1100, "ttfb": 320 },
-  "nav": { "type": "navigate", "redirects": 0 },
-  "res": { "img": { "n": 12, "b": 184320 }, "script": { "n": 5, "b": 92160 } },
-  "err": [ { "t": "TypeError", "n": 1, "fp": "abc123", "msg": "..." } ],
-  "env": { "br": "Chrome", "os": "macOS", "dt": "desktop", "vc": "wide" }
+  "sid":  "01HZX...",
+  "pvid": "01HZY...",
+  "ver":  3,
+  "lifecycle": "hidden",
+  "pst":  1746604800000,
+  "cst":  1746604803456,
+  "u":    "https://acme.com/pricing",
+  "r":    "https://google.com/",
+  "b":    "Chrome",
+  "v":    "120",
+  "d":    "desktop",
+  "o":    "macOS",
+  "vc":   "wide",
+  "c":    "4g",
+  "t1":   320,
+  "t2":   1100,
+  "t9":   1820,
+  "t10":  140,
+  "t11":  0.05,
+  "errs": [ { "t": "TypeError", "n": 1, "m": "...", "fr": "..." } ],
+  "tv":   "260508-a1b2c3d",
+  "dlv":  "b"
 }
 ```
 
 In der Praxis musst du das nicht lesen — Dashboard und
 [Analytics-API](/de/analytics-api) packen das für dich aus.
-Steht hier nur fürs Nachschlagen, falls jemand reinschauen will.
+Steht hier zum Nachschlagen.
 
 Schlüssel-Abkürzungen:
 
-- `pst` — Page-Started-Timestamp (Besucher-Uhr, ms seit Epoch).
-- `cst` — Collector-Ankunftszeit (Server-Uhr, beim Empfang gesetzt).
-- `pvid` — Per-Pageview-ID. Nicht persistent.
-- `vit` — Web Vitals.
-- `nav` — Navigation Timing.
-- `res` — aggregiertes Resource Timing.
-- `err` — fingerprinted Error-Einträge.
-- `env` — Umgebung.
+- `sid` — Session-ID. Wird in `anonymous` weggelassen.
+- `pvid` — Per-Pageview-ID.
+- `ver` — monoton steigende Version dieses Pageview-Payloads.
+- `lifecycle` — einer von `init`, `loaded`, `error_update`,
+  `softnav`, `hidden`, `frozen`, `terminated`.
+- `pst` — Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
+- `cst` — Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
+  Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
+- `u`, `r` — Seiten-URL und Referrer (Referrer in `anonymous` weg).
+- `b`, `v`, `d`, `o`, `vc`, `c` — Browser-Familie, Browser-Major,
+  Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ.
+- `t1`…`t36` — numerische Timing-Slots (TTFB, FCP, LCP, INP, CLS, …).
+- `errs` — Error-Einträge (`t` Typ, `n` Count, `m` Message, `fr` Frames).
+- `tv` — Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
+- `dlv` — Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
 
 ## Cache und Rollouts
 
@@ -123,36 +141,49 @@ der Browser sich die neue Version automatisch.
 Die Runtime des Beacons hängt am
 [Collection Mode](/de/collection-modes) der Site:
 
-- `anonymous` — beobachtet und sendet ohne Consent-Gate.
-- `consent` — beobachtet, hält den Buffer, bis deine Site
-  `fastmon:consent` feuert. Verwirft auf `fastmon:revoke`.
-- `full` — beobachtet ein reicheres Attribut-Set, sonst wie
-  `anonymous`.
+- `anonymous` — beobachtet und sendet ohne Identifier (kein `sid`,
+  kein Referrer, keine LCP-Image-URL, keine LoAF-Details, keine
+  Third-Party-Domain-Map).
+- `consent` — schaltet pro Request zwischen anonym und full um, per
+  `?p=`-Query-Parameter auf der Collector-URL (`p=1` für full,
+  fehlend oder `0` für anonymous).
+- `full` — behält alle erfassten Felder.
 
 In jedem Mode gelten die Datenschutz-Garantien aus
 [Privacy](/de/privacy).
 
 ## Rate-Limiting
 
-Der Collector rate-limited pro `(collector_hash, Client-IP)`. Das
-ist defensiv gemeint: eine kaputte Seite oder ein synthetischer
-Lasttest soll uns nicht den Ingest für andere Tenants zumüllen.
-Mit echtem Traffic läufst du da praktisch nie rein.
+Der Collector rate-limited im Speicher pro
+`(collector_hash, Client-IP)`. Die IP dient nur diesem Bucket und
+landet nie auf der Platte. Das ist defensiv gemeint: eine kaputte
+Seite oder ein synthetischer Lasttest soll den Ingest für andere
+Tenants nicht zumüllen. Mit echtem Traffic läufst du da praktisch
+nie rein.
 
 Wird ein Beacon rate-limited, kommt eine `429` zurück. Der Browser
 wirft den Buffer weg und macht weiter — sonst passiert nichts.
 
-## Häufige Überraschungen
+Payloads über 4 KiB werden mit `413` abgelehnt. Liegt `cst` mehr
+als 5 Minuten neben der Server-Uhr, fällt der Server auf seine
+eigene Empfangszeit zurück, statt zu rejecten — der Beacon wird
+trotzdem akzeptiert.
 
-- **Der Beacon startet bei SPA-Route-Wechseln nicht neu.** Web
-  Vitals zählen pro Navigation. Mehrere "Page-Changes" in einer
-  SPA teilen sich eine Beacon-Instanz, ein Metrik-Set und einen
-  finalen Flush.
-- **Der Beacon ist klein.** Unter 10 KB komprimiert. Er ist nicht
-  der Grund, warum deine Seite langsam ist.
-- **Geflusht wird nicht bei jedem Event.** Buffering ist Absicht —
-  deshalb siehst du einen `POST /c/` in den DevTools beim
-  Tab-Wechsel, nicht bei jeder einzelnen Metrik.
+## Was du wissen solltest
+
+- **SPA-Route-Wechsel starten einen neuen Pageview.** Das Script
+  bleibt geladen, aber Soft-Navs (gepatchtes `history.pushState`
+  und `popstate`) generieren einen neuen `pvid`, setzen die
+  Web-Vitals-Observer zurück und flushen einen `softnav`-Beacon
+  für den vorherigen Pageview. Ein Tab kann also viele Pageviews
+  emittieren.
+- **Mehrere Flushes pro Pageview.** Geflusht wird bei den Lifecycle-
+  Triggern `init`, `loaded`, `error_update`, `softnav`, `hidden`,
+  `frozen`, `terminated` — nicht nur beim Tab-Wechsel. Pro Besuch
+  siehst du in der Regel mehrere `POST /c/`.
+- **`sendBeacon` taucht in DevTools nicht unter "Fetch/XHR" auf.**
+  Network-Tab nach `c/` filtern (oder "All" benutzen) — sendBeacon-
+  Requests landen unter "Other".
 
 ## Verwandt
 

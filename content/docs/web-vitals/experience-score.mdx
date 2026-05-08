@@ -1,54 +1,59 @@
 ---
 title: Experience Score
-description: A single 0–100 number that combines LCP, INP, and CLS — the headline metric for tracking UX over time.
+description: A single 0–10 number that combines Core Web Vitals, page load time, and error rate — the headline metric for tracking UX over time.
 ---
 
 **Experience Score** is a composite metric. It condenses LCP,
-INP, and CLS into a single 0–100 number per page-view.
-Practically: this is the number you put on a dashboard, a status
-report, or in a slide when you're explaining performance to
-people who don't care about the engineering detail.
+INP, CLS, FCP, TTFB, page load time, and error rate into a single
+0–10 number with a letter grade. Practically: this is the number
+you put on a dashboard, a status report, or in a slide when you're
+explaining performance to people who don't care about the
+engineering detail.
 
-Math and thresholds are Google's, the weighting follows the
-[PageSpeed Insights model](https://developer.chrome.com/docs/lighthouse/performance/performance-scoring).
-We compute the score from your real-user data.
+Thresholds follow Google's "good" / "poor" boundaries for the Web
+Vitals; we compute the score from your real-user data.
 
 ## What's a good score?
 
-| Score           | Rating              |
-| --------------- | ------------------- |
-| 90–100          | **Good**            |
-| 50–89           | Needs improvement   |
-| 0–49            | Poor                |
+Scores round to one decimal. Letter grades:
 
-A score of 90 means all three Core Web Vitals are at or above
-"good" for the bulk of your traffic. A score in the 50s almost
-always means two metrics are okay and one (usually INP) is sitting
-in the red.
+| Score    | Grade |
+| -------- | ----- |
+| ≥ 9.5    | A+    |
+| ≥ 9.0    | A     |
+| ≥ 8.0    | B     |
+| ≥ 7.0    | C     |
+| ≥ 5.0    | D     |
+| < 5.0    | F     |
+
+A score of 10 means every metric was at or below its "good"
+threshold for the bulk of your traffic. A score of 5 means metrics
+are sitting around the "poor" boundary on average. Below that,
+several metrics are well into the red.
 
 ## How the score is computed
 
-Each Core Web Vital is mapped to a 0–100 sub-score using a log-normal
-curve calibrated against Google's "good" / "needs improvement"
-thresholds:
+Each metric is mapped to a 0–10 sub-score by linear interpolation
+against its good / poor thresholds:
 
-| Metric | Good (full points) | Poor (zero points) |
-| ------ | ------------------ | ------------------ |
-| LCP    | ≤ 2,500 ms         | ≥ 4,000 ms         |
-| INP    | ≤ 200 ms           | ≥ 500 ms           |
-| CLS    | ≤ 0.1              | ≥ 0.25             |
+- value ≤ **good** → 10
+- value at **poor** → 5
+- value at **2 × poor** or worse → 0
 
-The three sub-scores are weighted:
+| Metric         | Good       | Poor       | Weight |
+| -------------- | ---------- | ---------- | ------ |
+| LCP            | ≤ 2,500 ms | > 4,000 ms | 25 %   |
+| INP            | ≤ 200 ms   | > 500 ms   | 15 %   |
+| FCP            | ≤ 1,800 ms | > 3,000 ms | 15 %   |
+| Error rate     | ≤ 0.5 %    | > 2 %      | 15 %   |
+| Page load time | ≤ 3,000 ms | > 6,000 ms | 10 %   |
+| CLS            | ≤ 0.1      | > 0.25     | 10 %   |
+| TTFB           | ≤ 800 ms   | > 1,800 ms | 10 %   |
 
-| Metric | Weight |
-| ------ | ------ |
-| LCP    | 35 %   |
-| INP    | 35 %   |
-| CLS    | 30 %   |
-
-The weighted sum is the Experience Score. Pages without a value for
-one of the metrics (e.g. INP on a page the visitor never interacted
-with) use the sub-scores that exist, re-weighted proportionally.
+The weighted sum of sub-scores is the Experience Score. If a
+metric is missing for a segment (e.g. INP when no one interacted),
+its weight is redistributed proportionally across the metrics that
+do have values.
 
 ## When the score is computed
 
@@ -77,12 +82,13 @@ The composite is only as healthy as its weakest part:
 
 1. Open the breakdown and identify the **worst sub-score**.
 2. Read the linked metric page ([LCP](/en/web-vitals/lcp),
-   [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls)) and
+   [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls),
+   [FCP](/en/web-vitals/fcp), [TTFB](/en/web-vitals/ttfb)) and
    apply the highest-leverage fix listed there.
 3. Recheck after a release. Use `compare_to_release_id` for a clean
    before/after.
 
-Don't try to optimize all three at once. The improvements often
+Don't try to optimize everything at once. The improvements often
 trade against each other — fixing LCP by adding more JavaScript can
 regress INP, and reserving space for ads to fix CLS can push LCP
 later.
@@ -91,7 +97,7 @@ later.
 
 - **The score can drop without any single metric crossing a
   threshold.** A small regression in two metrics can move the
-  composite by 5–10 points while each metric still says "Good."
+  composite by half a point while each metric still says "Good."
 - **A single deploy can create a permanent score gap.** Once a
   regression ships, every subsequent page-view contributes the worse
   number to the average. Catching it on the day of the deploy
@@ -107,6 +113,7 @@ later.
 ## What's next
 
 - [LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp),
-  [CLS](/en/web-vitals/cls) — the three contributing metrics.
+  [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp),
+  [TTFB](/en/web-vitals/ttfb) — the contributing metrics.
 - [Web Vitals overview](/en/web-vitals) — the full set including
   diagnostic metrics.

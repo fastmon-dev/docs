@@ -32,19 +32,23 @@ Diese Regeln gelten unabhängig davon, in welchem
 Genau das, was wir brauchen, um Web Vitals und Performance pro
 Seite auszurechnen:
 
-- **URL-Pathname** — Query-String und Fragment werden in
-  `anonymous` entfernt, in `full` behalten.
-- **Web Vitals** — LCP, INP, CLS, FCP, TTFB.
-- **Navigation-Timing** — Nav-Typ, Redirect-Count, gesamte sichtbare Zeit.
-- **Resource-Timing** — pro Domain und Kategorie aggregierte Byte-Größen
-  und Counts.
+- **Seiten-URL** — bereinigt je nach
+  [Collection Mode](/de/collection-modes).
+- **Web Vitals** — LCP, INP, CLS, FCP, TTFB und verwandte Timings.
+- **Navigation-Timing** — Nav-Typ, TTFB, Pageload-Timing.
+- **Resource-Timing** — pro Kategorie aggregierte Byte-Größen und
+  Counts (Script, CSS, Image, Font, Sonstige).
 - **Fehler** — Typ, Message, fingerprinted Stack-Frames.
 - **Umgebung** — Browser-Familie, OS-Familie, Device-Klasse
-  (`mobile`/`tablet`/`desktop`), Viewport-Klasse, Connection-Typ.
+  (`mobile`/`tablet`/`desktop`), Viewport-Klasse, Connection-Typ
+  aus einer Allowlist. Kein Parsing des rohen User-Agent.
 - **Geo** — nur Land, serverseitig aus der Request-IP abgeleitet,
   *die danach verworfen wird*.
-- **Session-ID** — nur in `full`, und in `consent` nach Opt-In.
-  Gruppiert Pageviews derselben Session.
+- **Session-ID** — nur in `full`, und in `consent`, wenn der
+  Request per `?p=1` Opt-In signalisiert. Gruppiert Pageviews
+  derselben Session.
+- **Referrer, LCP-Image-URL, LoAF-Detail, Third-Party-Domain-Map**
+   — nur in `full` oder in `consent` nach Opt-In.
 
 Mehr schickt der Beacon nicht. Es gibt auch keinen Opt-In, mit dem
 du irgendwo „noch ein bisschen mehr" freischaltest — das Mehr haben
@@ -56,10 +60,11 @@ Der [Collection Mode](/de/collection-modes) der Site entscheidet
 nur über **Verknüpfbarkeit**, nicht über Datenkategorien. Die
 Privacy-Untergrenze oben — keine Cookies, keine IP-Speicherung,
 kein roher User-Agent, keine Fingerprints — gilt in jedem Modus.
-Was sich zwischen den Modi unterscheidet: ob die URL ihren
-Query-String behält und ob eine `session_id` gespeichert wird, die
-Pageviews zu einer Session verknüpft. Per-Mode-Aufschlüsselung
-und CMP-Anbindung über `fastmon:consent` stehen unter
+Was sich zwischen den Modi unterscheidet: ob `session_id`,
+Referrer, LCP-Image-URL, LoAF-Detail und Third-Party-Domain-Map
+mitgeschickt werden (und damit Pageviews zu Sessions verknüpfbar)
+oder entfernt sind. Per-Mode-Aufschlüsselung und wie der
+`?p=`-Request-Flag den CMP anbindet, stehen unter
 [Collection Modes](/de/collection-modes).
 
 ## Wo die Daten liegen

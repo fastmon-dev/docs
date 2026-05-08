@@ -49,7 +49,7 @@ behavior:
 | ----------------- | --------------------------------------------------------------------------- |
 | Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
 | Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, geo derive. |
-| API               | `/api/v1/...` — authenticated REST. Powers the dashboard.                   |
+| API               | `/v1/...` — authenticated REST. Powers the dashboard.                   |
 | Dashboard         | Single-page app. Reads via the API. Static assets only.                     |
 | Configuration DB  | Users, organizations, sites, settings, billing.                             |
 | Analytics store   | Beacon events, aggregated metrics, error logs.                              |
@@ -75,19 +75,13 @@ migrations applied on deploy.
 | --------------------------------- | -------------------------------------------------------------- | ------------- |
 | `GET  /s/{source_hash}.js`        | Public beacon script delivery. Strong cache, ETag.            | Public        |
 | `POST /c/{collector_hash}`        | Public beacon ingestion.                                       | Public        |
-| `/api/v1/...`                     | Authenticated REST API.                                        | Cookie or token |
+| `/v1/...`                     | Authenticated REST API.                                        | Cookie or token |
 | `/openapi.json`                   | OpenAPI document for the v1 API.                               | Public        |
 
-The two public roots stay outside the `/api/v1` prefix on purpose —
+The two public roots stay outside the `/v1` prefix on purpose —
 short URLs keep the beacon payload smaller, and the cache rules are
 different (the beacon script is aggressively cached; API responses
 typically aren't).
-
-## Multi-tenancy
-
-Every beacon row is tagged with its `organization_id`, and every
-analytics query filters by it. Tenants share infrastructure but
-never see each other's data.
 
 ## What's kept where, briefly
 
@@ -118,9 +112,12 @@ More on this under
 
 ### Why a columnar analytics store?
 
-Web-Vitals queries aggregate across hundreds of millions of rows.
-With columnar storage and vectorized execution they finish in
-under a second. A row store at this volume just wouldn't.
+Analytics queries read a few columns (one metric, a couple of
+dimensions) across many rows. Columnar storage scans only those
+columns from disk instead of every row, and timing data compresses
+very well in that layout. Vectorized aggregation makes percentiles
+and group-bys faster again. Postgres could serve the same queries
+— it would just be noticeably slower and more expensive per query.
 
 ### Why a separate session store?
 
