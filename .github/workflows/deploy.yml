@@ -1,0 +1,84 @@
+name: Deploy docs
+
+# Only fires after the CI workflow has finished successfully on `main`.
+# Cuts off the deploy when lint/typecheck/build is red.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
+
+env:
+  # Connection details — every value is required as a repo/org secret.
+  # No defaults: an unset secret expands to empty and the rsync step fails
+  # loudly, which is preferable to silently shipping to the wrong host.
+  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+  DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+  DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+  DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+jobs:
+  build-and-deploy:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On `workflow_run`, default checkout is the workflow file's commit,
+          # not the run's head. Pin to the SHA that CI actually validated.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # CI already produced a green build for this SHA, but artifacts aren't
+      # passed across workflows — rebuild here.
+      - run: npm run build
+
+      # Fail loudly if any required secret is missing instead of letting
+      # rsync produce a confusing "missing argument" later.
+      - name: Verify deploy secrets
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          missing=()
+          for v in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH \
+                   DEPLOY_SSH_KEY; do
+            if [ -z "${!v}" ]; then missing+=("$v"); fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      # Host-key checking disabled by request: each CI runner is ephemeral
+      # so a stable known_hosts file would have to live in a secret anyway.
+      # `accept-new` would still reject changed keys after the first run on
+      # a given runner; with `no` we trade MITM resistance for one less
+      # secret to manage. Acceptable for an internal-network deploy target.
+      - name: Rsync to ${{ env.DEPLOY_HOST }}
+        run: |
+          rsync -av --delete \
+            -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            ./out/ \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
