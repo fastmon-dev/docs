@@ -1,0 +1,108 @@
+---
+title: Privacy — was wir nicht sammeln
+description: Fastmons Datenschutz-Position, Punkt für Punkt. Nützlich, wenn Legal nachfragt.
+---
+
+Mit Fastmon sollst du Real-User-Performance messen können, ohne
+dafür ein Datenschutz-Minenfeld aufzumachen. Kurz: **keine Cookies,
+keine IPs auf der Platte, kein Fingerprinting, kein
+Cross-Site-Tracking, EU-Infrastruktur.** Auf dieser Seite steht die
+ausführliche Version — was die Zusagen in der Praxis heißen, was
+wir trotzdem sammeln, damit das Produkt funktioniert, und wie sich
+das je nach Collection Mode unterscheidet.
+
+## Was wir nie sammeln — in keinem Modus
+
+Diese Regeln gelten unabhängig davon, in welchem
+[Collection Mode](/de/collection-modes) die Site läuft:
+
+| Wir sammeln **kein**…              | Was das praktisch heißt                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| **Cookies**                        | Der Beacon setzt nichts. Deine Besucher bekommen kein Fastmon-Cookie. Kein `localStorage`, kein `IndexedDB`. |
+| **IP-Adressen**                    | Der Collector liest die Request-IP, leitet daraus das Land ab und verwirft sie. Keine IP wird je auf Disk geschrieben — weder im `anonymous`- noch im `full`-Modus. |
+| **Roher User-Agent-String**        | Der Tracker leitet Browser/OS/Device-Klasse clientseitig ab. Der rohe `User-Agent`-Header wird nur als Fallback für Noscript-Pixel geparst und danach verworfen — nie persistiert. |
+| **Device- oder Browser-Fingerprints** | Kein Canvas-Fingerprinting, keine Font-Enumeration, kein Header-Hashing, keine `userAgentData`-High-Entropy-Hints. |
+| **Cross-Site-IDs**                 | Wir vergeben keine Kennung, die eine Domain-Grenze überlebt. Eine Session auf `acme.com` ist nicht mit einer auf `other.com` verknüpfbar. |
+| **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine "Audience"-Daten. |
+| **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. |
+| **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst.                     |
+
+## Was wir schon sammeln
+
+Genau das, was wir brauchen, um Web Vitals und Performance pro
+Seite auszurechnen:
+
+- **URL-Pathname** — Query-String und Fragment werden in
+  `anonymous` entfernt, in `full` behalten.
+- **Web Vitals** — LCP, INP, CLS, FCP, TTFB.
+- **Navigation-Timing** — Nav-Typ, Redirect-Count, gesamte sichtbare Zeit.
+- **Resource-Timing** — pro Domain und Kategorie aggregierte Byte-Größen
+  und Counts.
+- **Fehler** — Typ, Message, fingerprinted Stack-Frames.
+- **Umgebung** — Browser-Familie, OS-Familie, Device-Klasse
+  (`mobile`/`tablet`/`desktop`), Viewport-Klasse, Connection-Typ.
+- **Geo** — nur Land, serverseitig aus der Request-IP abgeleitet,
+  *die danach verworfen wird*.
+- **Session-ID** — nur in `full`, und in `consent` nach Opt-In.
+  Gruppiert Pageviews derselben Session.
+
+Mehr schickt der Beacon nicht. Es gibt auch keinen Opt-In, mit dem
+du irgendwo „noch ein bisschen mehr" freischaltest — das Mehr haben
+wir gar nicht gebaut.
+
+## Collection Mode und was sich ändert
+
+Der [Collection Mode](/de/collection-modes) der Site entscheidet
+nur über **Verknüpfbarkeit**, nicht über Datenkategorien. Die
+Privacy-Untergrenze oben — keine Cookies, keine IP-Speicherung,
+kein roher User-Agent, keine Fingerprints — gilt in jedem Modus.
+Was sich zwischen den Modi unterscheidet: ob die URL ihren
+Query-String behält und ob eine `session_id` gespeichert wird, die
+Pageviews zu einer Session verknüpft. Per-Mode-Aufschlüsselung
+und CMP-Anbindung über `fastmon:consent` stehen unter
+[Collection Modes](/de/collection-modes).
+
+## Wo die Daten liegen
+
+- **Nur EU.** Unsere komplette Infrastruktur läuft in der EU. Kein
+  Anbieter mit US-Jurisdiktion im Datenpfad: kein Cloudflare, kein
+  AWS, kein GCP, kein Vercel.
+- **Verantwortlich.** Verarbeitet wird von Fastmon — der Firma
+  hinter dem Produkt. Im AVV stehen alle Sub-Auftragsverarbeiter,
+  den schicken wir auf Anfrage.
+- **Retention.** Per Default 90 Tage. Pro Site einstellbar
+  (`data_retention_days` in den Site-Settings). Was abläuft, wird
+  weggeworfen, nicht archiviert.
+
+## Vergleich
+
+Wenn du von einem US-Analytics-Produkt umsteigst, hier das relevante
+Delta:
+
+| Fähigkeit                        | Fastmon | Typischer US-RUM-Anbieter        |
+| -------------------------------- | ------- | -------------------------------- |
+| Gesetzte Cookies                 | 0       | 1–N (Analytics + Ad-Partner)     |
+| IP gespeichert                   | Nein    | Oft, manchmal trunkiert          |
+| Cross-Site-Identity-Graph        | Nein    | Oft, via SDK oder Pixel-Netz     |
+| Session-Replay / DOM-Dump        | Nein    | Häufig als Opt-In                |
+| Datenpfad ausschließlich EU      | Ja      | Selten                           |
+| Schrems-II-Exposition            | Keine   | Ja (US-Transfermechanismen)      |
+
+## Was das für dich heißt
+
+- **Im `anonymous`-Modus brauchst du für unseren Beacon keinen
+  Cookie-Banner.** Keine Cookies, keine Cross-Site-IDs, keine
+  IP-Speicherung. Andere Tools auf der Seite vielleicht trotzdem —
+  aber das liegt nicht an uns.
+- **Schrems II ist für unsere Pipeline kein Thema.** Daten verlassen
+  die EU schlicht nicht.
+- **Deinem DSB kannst du eine Ein-Seiter-Antwort geben** — Link auf
+  diese Seite plus unseren AVV, fertig.
+- **Striktes Consent-Regime?** Nutze den
+  [Collection Mode](/de/collection-modes) `consent`.
+
+## Wie geht's weiter
+
+- [Collection Modes](/de/collection-modes) ansehen.
+- Technische Details zum [Beacon](/de/beacon).
+- AVV gewünscht? Mail an [support@fastmon.eu](mailto:support@fastmon.eu).

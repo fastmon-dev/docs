@@ -1,0 +1,131 @@
+---
+title: Filter internal traffic
+description: Keep office, staff, and synthetic traffic out of your real-user metrics.
+---
+
+Internal traffic — your team's own visits, office IPs, automated
+checks — skews every metric. Office machines on warm caches and
+fast networks look great; mobile visitors in a tunnel look bad;
+average those two together and the number means nothing.
+
+There's no "ignore my IP" toggle, on purpose — we don't store IPs
+(see [Privacy](/en/privacy)). The right move depends on what you
+want to exclude.
+
+## Pick the option that fits
+
+| You want to exclude…              | Best mechanism                                   |
+| --------------------------------- | ------------------------------------------------ |
+| Your dev / staging environment    | Separate site (or `allowed_origins` discipline)  |
+| Your team's office traffic        | A self-set client-side flag                      |
+| Your CI / synthetic monitors      | Either skip the beacon entirely, or a flag       |
+| All non-production traffic        | Per-environment `is_active` toggle               |
+
+## Option 1: Separate sites for non-production
+
+The cleanest answer for staging, preview, and dev environments.
+
+1. Create a second site in Fastmon called e.g. `acme-marketing-staging`.
+2. Use **its** `source_hash` in your staging deploy.
+3. Either ignore the staging site in dashboards, or use it
+   intentionally — staging metrics are useful for catching
+   regressions before production.
+
+Costs you nothing — no client-side logic, no flags, no risk of
+leaking production data into staging or the other way around.
+
+## Option 2: Self-set client-side flag
+
+Useful for office traffic where the visitor has access to the site's
+backend or admin UI, and you can mark them as internal there.
+
+When the visitor is identified as internal (e.g. they logged in to
+your admin panel), flip the Fastmon collection mode for the page:
+
+```html
+<script>
+  window.__fastmon_disabled = true;
+</script>
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+The beacon respects `window.__fastmon_disabled` and stops sending
+data on that page-view. Set it conditionally based on whatever
+"is internal" signal you already have — a session cookie, a JWT
+claim, an `<html data-internal>` attribute rendered server-side.
+
+A pure cookie example (no server logic):
+
+```html
+<script>
+  if (document.cookie.includes('staff=1')) {
+    window.__fastmon_disabled = true;
+  }
+</script>
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+Set the `staff=1` cookie once on a `/staff` route your team visits.
+
+## Option 3: Pause a site entirely
+
+For a maintenance window, an investigation, or a non-production
+environment that's permanently noisy:
+
+1. In Fastmon, open the site, go to **Settings**.
+2. Toggle **Active** off.
+
+Beacons keep arriving but aren't written to analytics tables. Toggle
+back on when you want data again. History from when the site was
+active stays intact.
+
+## Option 4: Skip the beacon for synthetic monitors
+
+For Pingdom, UptimeRobot, your own E2E suite, etc., the cleanest move
+is to not load the script at all. Most monitors set a recognizable
+`User-Agent` — gate the script tag on the server side:
+
+```html
+{% if request.user_agent.is_synthetic %}
+  <!-- skip Fastmon for synthetic checks -->
+{% else %}
+  <script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+{% endif %}
+```
+
+If your stack doesn't have an easy "is bot" check, the
+`__fastmon_disabled` flag works just as well — flip it based on the
+UA in a small inline script.
+
+## Verifying the filter
+
+Open your site as an internal visitor. Check DevTools → Network →
+filter `c/`. You should see **no** request to
+`https://api.fastmon.eu/c/...`. If you do, the flag isn't set in time —
+make sure the inline script that sets the flag runs *before* the
+beacon script tag.
+
+In Fastmon, after the cutover, the **Sessions** view should show
+your office's country/IP-derived region drop substantially. If it
+doesn't, the filter isn't catching them.
+
+## Common surprises
+
+- **You can't filter after the fact.** We don't store IPs (see
+  [Privacy](/en/privacy)), so once a beacon's in, we can't tell
+  whether it came from your office. Filtering has to happen at
+  the source.
+- **`__fastmon_disabled` is per page.** Set it on every page you
+  want excluded, not just the first load.
+- **Country-level filters don't help.** Your office sits in the
+  same country as most of your real visitors. What works:
+  filtering at the source, where the real context (user, cookie,
+  UA) is still there.
+
+## Related
+
+- [Sites](/en/concepts/sites) — separate sites for environments.
+- [Collection modes](/en/collection-modes) — runtime beacon
+  control.
+- [Privacy: what we don't collect](/en/privacy) — why there's no
+  server-side IP filter.

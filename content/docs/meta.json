@@ -1,0 +1,21 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "---Get started---",
+    "install",
+    "---Concepts---",
+    "concepts",
+    "collection-modes",
+    "privacy",
+    "---Web Vitals---",
+    "web-vitals",
+    "---Guides---",
+    "guides",
+    "---API---",
+    "api",
+    "---Reference---",
+    "architecture",
+    "glossary"
+  ]
+}

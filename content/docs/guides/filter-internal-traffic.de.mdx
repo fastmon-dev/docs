@@ -1,0 +1,132 @@
+---
+title: Internen Traffic filtern
+description: Office-, Staff- und synthetischen Traffic aus deinen Real-User-Metriken raushalten.
+---
+
+Interner Traffic — eigene Team-Besuche, Office-IPs, automatisierte
+Checks — verzieht dir jede Metrik. Office-Maschinen mit warmem Cache
+und schnellem Netz looken super; Mobile-Besucher im Tunnel looken
+mies; und der Durchschnitt von beidem sagt am Ende nichts mehr.
+
+Einen "meine IP ignorieren"-Toggle haben wir mit Absicht nicht — wir
+speichern keine IPs, siehe [Privacy](/de/privacy). Was du
+ausschließen willst, entscheidet, welcher Weg passt.
+
+## Wähle die passende Option
+
+| Du willst ausschließen…             | Beste Mechanik                                    |
+| ----------------------------------- | ------------------------------------------------- |
+| Dev/Staging-Umgebung                | Separate Site (oder `allowed_origins`-Disziplin)  |
+| Office-Traffic deines Teams         | Selbst-gesetztes Client-Side-Flag                 |
+| CI / synthetische Monitore          | Beacon ganz weglassen oder Flag                   |
+| Allen Nicht-Production-Traffic      | Per-Site `is_active`-Toggle                       |
+
+## Option 1: Separate Sites für Non-Production
+
+Saubere Antwort für Staging, Preview, Dev.
+
+1. Zweite Site in Fastmon anlegen, z. B. `acme-marketing-staging`.
+2. **Deren** `source_hash` im Staging-Deploy nutzen.
+3. Entweder die Staging-Site in Dashboards ignorieren oder
+   absichtlich nutzen — Staging-Metriken sind nützlich, um
+   Regressionen vor Production zu fangen.
+
+Kostet dich nichts — keine Client-Logik, keine Flags, kein Risiko,
+dass Production-Daten in Staging landen oder umgekehrt.
+
+## Option 2: Selbst-gesetztes Client-Side-Flag
+
+Nützlich für Office-Traffic, wenn der Besucher Zugang zum Backend
+oder Admin-UI hat und du ihn dort als "intern" markieren kannst.
+
+Wenn als intern erkannt (z. B. nach Login im Admin-Panel),
+Fastmon-Collection für die Seite ausschalten:
+
+```html
+<script>
+  window.__fastmon_disabled = true;
+</script>
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+Der Beacon respektiert `window.__fastmon_disabled` und sendet auf
+diesem Pageview keine Daten. Setz das bedingt über das
+"ist intern"-Signal, das du eh schon hast — ein Session-Cookie, ein
+JWT-Claim, ein server-seitig gerendertes `<html data-internal>`.
+
+Reines Cookie-Beispiel (keine Server-Logik):
+
+```html
+<script>
+  if (document.cookie.includes('staff=1')) {
+    window.__fastmon_disabled = true;
+  }
+</script>
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+Das `staff=1`-Cookie einmal auf einer `/staff`-Route setzen, die
+dein Team besucht.
+
+## Option 3: Site komplett pausieren
+
+Für Wartungsfenster, eine Investigation oder eine
+Nicht-Production-Umgebung, die permanent laut ist:
+
+1. In Fastmon Site öffnen, **Settings**.
+2. **Active** abschalten.
+
+Beacons kommen weiter an, werden aber nicht in Analytics-Tabellen
+geschrieben. Wieder einschalten, wenn du Daten willst. Historie aus
+der aktiven Phase bleibt erhalten.
+
+## Option 4: Beacon für synthetische Monitore weglassen
+
+Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar
+nicht erst laden. Die meisten Monitore setzen einen erkennbaren
+`User-Agent` — Tag server-seitig gaten:
+
+```html
+{% if request.user_agent.is_synthetic %}
+  <!-- Fastmon für synthetische Checks weglassen -->
+{% else %}
+  <script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+{% endif %}
+```
+
+Wenn dein Stack keinen einfachen "ist Bot"-Check hat, funktioniert
+auch das `__fastmon_disabled`-Flag — anhand des UA in einem kleinen
+Inline-Script flippen.
+
+## Filter verifizieren
+
+Site als interner Besucher öffnen. DevTools → Network → `c/`
+filtern. Du solltest **keinen** Request an
+`https://api.fastmon.eu/c/...` sehen. Wenn doch, wurde das Flag zu spät
+gesetzt — sicherstellen, dass das Inline-Script *vor* dem
+Beacon-Script-Tag läuft.
+
+In Fastmon nach dem Umschalten: Im **Sessions**-View sollte die
+Country-/Region-Zelle deines Office-Standorts deutlich kleiner
+werden. Wenn nicht, fängt der Filter sie nicht.
+
+## Häufige Überraschungen
+
+- **Nachträglich filtern geht nicht.** Wir speichern keine IPs
+  (siehe [Privacy](/de/privacy)). Sobald ein Beacon drin ist,
+  können wir nicht mehr sagen, ob der aus eurem Office kam. Also:
+  an der Quelle filtern.
+- **`__fastmon_disabled` gilt nur pro Seite.** Auf jeder Seite
+  setzen, die du ausschließen willst — nicht nur beim ersten Load.
+- **Country-Filter helfen nicht.** Dein Office sitzt im gleichen
+  Land wie die meisten echten Besucher. Was funktioniert: an der
+  Quelle filtern, wo der echte Kontext (User, Cookie, UA) noch da
+  ist.
+
+## Verwandt
+
+- [Sites](/de/concepts/sites) — separate Sites für Umgebungen.
+- [Collection Modes](/de/collection-modes) — Runtime-Steuerung des
+  Beacons.
+- [Privacy: was wir nicht sammeln](/de/privacy) — warum es keinen
+  serverseitigen IP-Filter gibt.

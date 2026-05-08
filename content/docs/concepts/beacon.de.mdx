@@ -1,0 +1,163 @@
+---
+title: Der RUM-Beacon
+description: Die kleine JavaScript-Datei, die Fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie sendet, und was sie nie tut.
+---
+
+Der **Beacon** ist die JavaScript-Datei, die Fastmon unter
+`https://api.fastmon.eu/s/{source_hash}.js` ausliefert. Mehr
+Client-Code haben wir nicht — und mehr laden deine Besucher auch
+nicht von uns.
+
+Diese Seite ist die technische Referenz. Fürs Setup geht's zur
+[Implementierung](/de/install), für die Datenschutzposition zu
+[Privacy: was wir nicht sammeln](/de/privacy).
+
+## Warum das zählt
+
+Der Beacon ist die Grenze zwischen Fastmon und deinem Besucher.
+Was hier läuft — was gemessen wird, wann geflusht wird, welche
+Identifier erzeugt werden — sieht der Browser, und es kann sich
+jeder anschauen, der ins Script reinguckt. Deshalb halten wir die
+Oberfläche klein: klein heißt auditierbar, schnell geladen und in
+jedem Datenschutz-Review verteidigbar.
+
+## Was der Beacon beobachtet
+
+| Quelle                     | Was erfasst wird                                                               |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| `PerformanceObserver`      | LCP, INP, CLS, FCP, Paint-Einträge, Long Animation Frames, Layout Shifts.      |
+| `Navigation Timing`        | TTFB, Redirect-Count, Navigation-Typ (`navigate`, `reload`, `back_forward`).   |
+| `Resource Timing`          | Pro Resource: Größe, Dauer, Kategorie. Aggregiert zu Per-Domain-Rollups.       |
+| `error`-Event              | Typ, Message, Stack-Frames (fingerprinted, nicht wörtlich gespeichert).        |
+| `unhandledrejection`       | Selbe Form wie `error`.                                                        |
+| Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
+| Document & Window          | Pathname (kein Query-String), Referrer-Host, Viewport-Größenklasse.            |
+
+Geo-Daten (Land, Region) werden im Browser **nicht** gelesen — der
+Collector leitet sie serverseitig aus der Request-IP ab und verwirft
+sie. Der Beacon fragt nie nach Geolokation.
+
+## Was der Beacon nicht tut
+
+- Cookies setzen.
+- `localStorage` / `IndexedDB` / `Cache Storage` lesen oder schreiben.
+- URL-Query-Parameter oder Hash-Fragmente lesen.
+- DOM-Inhalt anfassen (kein Scroll-Replay, kein Session-Replay, keine
+  Formularerfassung).
+- Mediengeräte, Sensoren oder Geolokation des Besuchers anfragen.
+- Persistenten Identifier minten — die Per-Pageview-ID wird nicht
+  persistiert.
+
+## Lebenszyklus eines Pageviews
+
+```
+Seite lädt
+  ├── Beacon-Script wird geladen (async, gecached, ETag-validiert)
+  ├── Beacon registriert PerformanceObserver und Event-Listener
+  ├── Besucher nutzt die Seite
+  │     └── Beacon puffert Events im Speicher
+  └── Eines von drei Dingen passiert:
+        ├── visibilitychange → hidden
+        ├── pagehide
+        └── periodisches Flush-Intervall (default ~30 s)
+              └── Beacon schickt einen gebündelten Payload per POST an /c/{collector_hash}
+```
+
+Beim Flush versuchen wir zuerst `navigator.sendBeacon()`, damit der
+Request auch beim Unload sicher rauskommt. Fehlt das, fallen wir auf
+`fetch` mit `keepalive: true` zurück.
+
+## Der Wire-Payload
+
+Der Payload ist JSON mit absichtlich kurzen Keys, um die
+Wire-Größe klein zu halten. Repräsentativer Envelope:
+
+```json
+{
+  "v":   1,
+  "pst": 1746604800000,
+  "cst": 1746604800123,
+  "pvid": "01HZX...",
+  "url": "/pricing",
+  "ref": "google.com",
+  "vit": { "lcp": 1820, "inp": 140, "cls": 0.05, "fcp": 1100, "ttfb": 320 },
+  "nav": { "type": "navigate", "redirects": 0 },
+  "res": { "img": { "n": 12, "b": 184320 }, "script": { "n": 5, "b": 92160 } },
+  "err": [ { "t": "TypeError", "n": 1, "fp": "abc123", "msg": "..." } ],
+  "env": { "br": "Chrome", "os": "macOS", "dt": "desktop", "vc": "wide" }
+}
+```
+
+In der Praxis musst du das nicht lesen — Dashboard und
+[Analytics-API](/de/analytics-api) packen das für dich aus.
+Steht hier nur fürs Nachschlagen, falls jemand reinschauen will.
+
+Schlüssel-Abkürzungen:
+
+- `pst` — Page-Started-Timestamp (Besucher-Uhr, ms seit Epoch).
+- `cst` — Collector-Ankunftszeit (Server-Uhr, beim Empfang gesetzt).
+- `pvid` — Per-Pageview-ID. Nicht persistent.
+- `vit` — Web Vitals.
+- `nav` — Navigation Timing.
+- `res` — aggregiertes Resource Timing.
+- `err` — fingerprinted Error-Einträge.
+- `env` — Umgebung.
+
+## Cache und Rollouts
+
+Das Script wird mit starkem Cache und `ETag` ausgeliefert. Zwei
+Dinge invalidieren den Cache automatisch:
+
+- **Collection-Mode-Wechsel.** Schaltest du eine Site von
+  `anonymous` auf `consent` (oder umgekehrt), liefert das eine neue
+  Template-Version aus.
+- **Beacon-Upgrade.** Fastmon liefert Beacon-Versionen
+  (`source_version`); ein Wechsel der gepinnten Version rollt den
+  Cache.
+
+Du musst dafür nicht redeployen. Beim nächsten Cache-Check holt
+der Browser sich die neue Version automatisch.
+
+## Collection Modes
+
+Die Runtime des Beacons hängt am
+[Collection Mode](/de/collection-modes) der Site:
+
+- `anonymous` — beobachtet und sendet ohne Consent-Gate.
+- `consent` — beobachtet, hält den Buffer, bis deine Site
+  `fastmon:consent` feuert. Verwirft auf `fastmon:revoke`.
+- `full` — beobachtet ein reicheres Attribut-Set, sonst wie
+  `anonymous`.
+
+In jedem Mode gelten die Datenschutz-Garantien aus
+[Privacy](/de/privacy).
+
+## Rate-Limiting
+
+Der Collector rate-limited pro `(collector_hash, Client-IP)`. Das
+ist defensiv gemeint: eine kaputte Seite oder ein synthetischer
+Lasttest soll uns nicht den Ingest für andere Tenants zumüllen.
+Mit echtem Traffic läufst du da praktisch nie rein.
+
+Wird ein Beacon rate-limited, kommt eine `429` zurück. Der Browser
+wirft den Buffer weg und macht weiter — sonst passiert nichts.
+
+## Häufige Überraschungen
+
+- **Der Beacon startet bei SPA-Route-Wechseln nicht neu.** Web
+  Vitals zählen pro Navigation. Mehrere "Page-Changes" in einer
+  SPA teilen sich eine Beacon-Instanz, ein Metrik-Set und einen
+  finalen Flush.
+- **Der Beacon ist klein.** Unter 10 KB komprimiert. Er ist nicht
+  der Grund, warum deine Seite langsam ist.
+- **Geflusht wird nicht bei jedem Event.** Buffering ist Absicht —
+  deshalb siehst du einen `POST /c/` in den DevTools beim
+  Tab-Wechsel, nicht bei jeder einzelnen Metrik.
+
+## Verwandt
+
+- [Implementierung](/de/install) — wie du den Beacon einbettest.
+- [Collection Modes](/de/collection-modes) — Runtime-Verhalten.
+- [Privacy: was wir nicht sammeln](/de/privacy) — was wir
+  garantieren.
+- [Architektur](/de/architecture) — was nach dem POST passiert.

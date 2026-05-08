@@ -1,0 +1,157 @@
+---
+title: Releases vergleichen
+description: Deploys aus CI/CD taggen und "hat dieser Deploy LCP verschlechtert?" in einer Query beantworten.
+---
+
+Wenn du Performance-Regressionen sauber erwischen willst, taggst du
+jeden Deploy als [Release](/de/concepts/releases) und lässt die
+Analytics-API den Vorher-Nachher-Vergleich machen. Dieser Guide
+verdrahtet alles von Anfang bis Ende: API-Token, Release-Call aus
+CI/CD, Vergleichs-Query.
+
+**Setup-Zeit:** 10–15 Minuten.
+**Was du brauchst:** authentifizierten Fastmon-Account,
+Edit-Zugriff auf die CI/CD-Pipeline, eine Site, die schon
+[Beacons ingestet](/de/install/verify).
+
+## 1. API-Token erzeugen
+
+1. In Fastmon **Account → API-Token** öffnen.
+2. **Generate token** klicken. Wert kopieren — beginnt mit `fm_`.
+   Wird nicht erneut angezeigt.
+3. Im Secret-Store deines CI als `FASTMON_TOKEN` ablegen.
+
+Token verloren? Mit `POST /api/v1/account/api-token` neu erzeugen.
+Der alte funktioniert sofort nicht mehr.
+
+## 2. Site-ID finden
+
+In Fastmon Site öffnen, **Settings**. Site-`id` kopieren (UUID v7,
+sieht aus wie `01HZX...`). Im CI als `FASTMON_SITE_ID` ablegen.
+
+## 3. Release-Call zum Deploy-Job hinzufügen
+
+Der Release-Call kommt **ans Ende** des Deploy-Jobs, nach
+erfolgreichem Deploy. Minimum-Payload ist nur `version`:
+
+```bash
+curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"version\": \"$DEPLOY_VERSION\",
+    \"released_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+  }"
+```
+
+Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern
+und sparen sich den Progress-Output. `released_at` ist optional —
+wenn du's weglässt, setzt der Server einfach "jetzt".
+
+### GitHub Actions
+
+```yaml
+- name: Tag Fastmon release
+  if: success()
+  env:
+    FASTMON_TOKEN: ${{ secrets.FASTMON_TOKEN }}
+    FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
+  run: |
+    curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+      -H "Authorization: Bearer $FASTMON_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "{ \"version\": \"${{ github.sha }}\" }"
+```
+
+### GitLab CI
+
+```yaml
+fastmon-release:
+  stage: post-deploy
+  needs: ["deploy"]
+  script:
+    - |
+      curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+        -H "Authorization: Bearer $FASTMON_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
+```
+
+### Vercel
+
+Vercel führt keine beliebigen Post-Deploy-Commands im Build aus.
+Zwei Optionen:
+
+- **Deploy-Hook** — Webhook-Receiver einrichten, der auf
+  `deployment.succeeded` von Vercel hört und mit der SHA aus dem
+  Payload den Fastmon-Endpoint aufruft.
+- **Edge-Function** — kleine Cron-getriggerte Function, die die
+  Vercel-API auf neue Deployments pollt und sie taggt.
+
+## 4. Prüfen, ob der Release angekommen ist
+
+Release-Liste der Site abfragen:
+
+```bash
+curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+  -H "Authorization: Bearer $FASTMON_TOKEN"
+```
+
+Im `data`-Array sollte dein neuer Release stehen, mit der
+übergebenen `version`.
+
+Im Dashboard taucht er im Release-Picker der **Performance**-Ansicht
+auf.
+
+## 5. Metriken vergleichen
+
+Das Dashboard hat einen Release-Picker auf **Performance** — Release
+auswählen, Chart überlagert Vorher/Nachher. Programmatischer
+Vergleich: `compare_to_release_id` setzen:
+
+```bash
+curl https://api.fastmon.eu/v1/organizations/$ORG_ID/analytics/query \
+  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "time_range": { "from": "2026-05-07T12:00:00Z", "to": "2026-05-08T12:00:00Z" },
+    "metrics": ["lcp", "inp", "cls"],
+    "aggregations": ["p75"],
+    "filters": { "site_id": "01HZX..." },
+    "compare_to_release_id": "01HZY..."
+  }'
+```
+
+Die Response enthält einen `compare`-Block mit denselben Metriken
+für ein **gleich langes Fenster, das beim `released_at` des Release
+endet**. Beispiel oben: 24 Stunden nach dem Release vs. die 24
+Stunden direkt davor.
+
+## Wie "gut" aussieht
+
+- Jeder erfolgreiche Deploy taggt automatisch einen Release. Nichts
+  von Hand.
+- Die Release-Version lässt sich auf einen Commit zurückführen —
+  Git-SHA, Tag, Build-Nummer, was auch immer ihr nutzt.
+- Im CI gibt's einen Schritt, der den Deploy scheitern lässt, wenn
+  der Release-Call hängt. Sonst hast du irgendwann stille Lücken
+  und glaubst den Vergleichen nicht mehr.
+
+## Häufige Überraschungen
+
+- **Ein Release ohne `released_at` setzt "jetzt".** Meistens passt
+  das. Aufpassen, wenn dein Deploy-Job Minuten vor dem
+  tatsächlichen Live-Gehen läuft (Blue/Green-Flip kommt später) —
+  dann lieber zurückdatieren.
+- **Releases hängen an einer Site.** Wer in einem Monorepo drei
+  Sites ausliefert, braucht drei Release-Calls.
+- **Vergleichsfenster richtet sich nach der Query-Länge.** Eine
+  7-Tage-Query vergleicht gegen die 7 Tage davor. Wenn du
+  Regressionen scharf sehen willst, halt das Fenster kurz (1–24 h).
+
+## Verwandt
+
+- [Releases-Konzept](/de/concepts/releases) — was ein Release ist.
+- [Analytics-API](/de/analytics-api) — `compare_to_release_id`-Details.
+- [Notification Rules](/de/guides/notification-rules) — automatisch
+  alarmieren bei Per-Release-Regressionen.

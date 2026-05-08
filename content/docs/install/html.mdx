@@ -1,0 +1,101 @@
+---
+title: Implement Fastmon on a website
+description: Drop Fastmon onto any website with a single script tag. Five minutes from sign-up to first data point.
+---
+
+The universal route: a single `<script>` tag in your `<head>`. It
+works on any site you control — static HTML, a Vue or React app, a
+Hugo blog, whatever. If you're on Next.js, Nuxt, WordPress, or
+Google Tag Manager, hop over to the platform-specific guide — it's
+a few clicks shorter.
+
+**Time to first data:** about five minutes.
+**You'll need:** access to your site's HTML and a Fastmon account.
+
+## 1. Create a site in Fastmon
+
+Sign in, open the org you want to add this site to, and click **Create
+site**. Fill in:
+
+- **Name** — whatever helps you recognize it later (e.g. `acme-marketing`).
+- **Domain** — the bare hostname, no protocol. Example: `acme.com`.
+- **Allowed origins** *(optional)* — leave blank to accept beacons from
+  the domain itself. Add staging or preview hostnames here as a
+  comma-separated list (`staging.acme.com, preview.acme.com`).
+
+Leave the rest at defaults for now — you can come back to
+[collection mode](/en/collection-modes) and retention later.
+
+Click **Save**. Fastmon generates two short hashes for the site:
+
+- `source_hash` — goes into the script URL.
+- `collector_hash` — used by the beacon to send data back. It's
+  baked into the script, so you don't need to copy it.
+
+Both show up on the settings page, along with a copy-paste-ready
+snippet — that's exactly what step 2 walks through.
+
+## 2. Add the script to your site
+
+Drop this single tag into the `<head>` of every page you want to
+monitor, with `{source_hash}` replaced by the hash from step 1:
+
+```html title="<head>"
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+That's the whole setup. The beacon:
+
+- registers `PerformanceObserver` for Web Vitals,
+- buffers events in memory,
+- sends a single batched POST to `/c/{collector_hash}` on
+  `visibilitychange → hidden`, on `pagehide`, and at a periodic
+  flush.
+
+The tag is `async` so it won't block rendering. Where you place it
+isn't critical, but `<head>` is the better spot — it lets the
+beacon catch the very first paint.
+
+### Where to put it
+
+| Site type                  | Put the tag in…                                              |
+| -------------------------- | ------------------------------------------------------------ |
+| Plain HTML / Hugo / Jekyll | `<head>` of your base template.                              |
+| WordPress                  | A header snippet plugin, or `header.php`. See [WordPress guide](/en/install/wordpress). |
+| Next.js / Nuxt / Astro     | The framework's head/script primitive. See [Next.js guide](/en/install/nextjs). |
+| Single-page apps           | The static `index.html` shell — once is enough.              |
+
+## 3. Deploy and load a page
+
+Push the change to production (or whichever environment you want
+to monitor) and open any page on the site in your own browser.
+
+The beacon ships data on `pagehide` / `visibilitychange`, so the
+first batch goes out when you navigate away or switch tabs.
+
+## 4. Verify it works
+
+Two checks — one in DevTools, one in the dashboard.
+
+### In your browser
+
+Open DevTools → **Network** → filter for `/c/`. You should see a
+`POST` to `https://api.fastmon.eu/c/{collector_hash}` after you switch tabs
+or close the page. Status 204 means the beacon was accepted.
+
+If you don't see it, jump to [Verifying it works](/en/install/verify).
+
+### In Fastmon
+
+Open the site in the dashboard. Within ~30 seconds the **Traffic**
+section will show non-zero sessions. The first beacon is the one
+you just sent — your IP isn't stored, but the row is there.
+
+## What's next
+
+- Pick a [collection mode](/en/collection-modes) — `anonymous` is
+  the right pick for most sites.
+- Read [Privacy: what we don't collect](/en/privacy) — handy when
+  the legal team asks.
+- Tag releases for before/after comparisons — see
+  [Compare releases](/en/guides/compare-releases).

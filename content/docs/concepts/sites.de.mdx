@@ -1,0 +1,142 @@
+---
+title: Sites
+description: Eine Site ist eine Property, die du monitorst. Jede Site hat eigene Beacon-Hashes und Settings.
+---
+
+Eine **Site** ist die Monitoring-Einheit in Fastmon. Praktisch
+entspricht das einer Property — meistens einem Origin, einer App
+oder einer Brand. Beacon-URL, Settings, Dashboard-Filter: alles
+pro Site.
+
+## Warum das zählt
+
+Was der Beacon tut, hängt komplett an der Site: das Script, der
+[Collection Mode](/de/collection-modes), die Retention, die Allowed
+Origins, die Daten im Dashboard. Neue Property monitoren = neue
+Site anlegen.
+
+Willst du einen Dashboard-View über mehrere Properties, nimm
+**Tags** (siehe unten) und aggregier zur Query-Zeit. Ein
+Site-Group-Konzept gibt es bewusst nicht — Tags reichen.
+
+## Wann du sie anfasst
+
+- **Neue Property hinzufügen.** Site anlegen, Snippet kopieren,
+  einbetten.
+- **Was der Beacon erfasst ändern.** Collection Mode der Site
+  bearbeiten.
+- **Staging oder Preview hinzufügen.** Staging-Origin in **Allowed
+  Origins** eintragen, oder eine separate Site für Staging anlegen,
+  wenn du isolierte Daten willst.
+- **Retention reduzieren.** Default 90 Tage. Manche Sites wollen
+  kürzer für Compliance, manche länger.
+- **Ohne Löschen pausieren.** `is_active = false` behält Historie,
+  stoppt neuen Ingest.
+- **Cross-Site-Reporting taggen.** Tags wie `env:production` oder
+  `team:growth`.
+
+## Was eine Site hat
+
+| Feld                  | Typ                                   | Hinweise                                                                          |
+| --------------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
+| `id`                  | UUID v7                               | Stabiler Identifier.                                                              |
+| `organization_id`     | UUID v7                               | Die besitzende Organisation.                                                      |
+| `name`                | string                                | Wie die Site im UI erscheint.                                                     |
+| `domain`              | string                                | Reiner Hostname, kein Protokoll (z. B. `acme.com`).                               |
+| `allowed_origins`     | komma-separierter String              | Zusätzliche Origins, die ingesten dürfen. Leer = nur `domain` selbst.             |
+| `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.eu`.          |
+| `source_hash`         | string                                | Per-Site-Hash für die Script-URL (`/s/{source_hash}.js`).                         |
+| `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
+| `collection_mode`     | enum                                  | `anonymous` · `consent` · `full`. Siehe [Collection Modes](/de/collection-modes). |
+| `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
+| `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
+| `tags`                | Liste von Strings (max 10)            | Freie Labels für Dashboard- und Analytics-Filter.                                 |
+| `is_active`           | bool                                  | Bei false werden Beacons akzeptiert, aber nicht in Analytics-Tabellen geschrieben. |
+
+## Die zwei Hashes
+
+Jede Site hat zwei Hashes. Sehen ähnlich aus, machen aber zwei
+unterschiedliche Sachen.
+
+- **`source_hash`** steht in der **Script-URL** und sagt, welche
+  Beacon-Konfiguration an den Browser geliefert wird.
+- **`collector_hash`** steht in der **Ingest-URL** und sagt, zu
+  welcher Site eingehende Beacons gehören.
+
+Getrennt sind sie, damit sich das Script-Template ändern kann (etwa
+beim Beacon-Upgrade oder Collection-Mode-Wechsel), ohne dass die
+Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den
+`source_hash` — der `collector_hash` ist im Script drin und kommt
+automatisch mit.
+
+## Tags
+
+Tags sind kurze Labels, die du an eine Site klebst. Dashboard und
+Analytics-API filtern danach — so baust du "Production-Sites" oder
+"Marketing-Sites"-Views über mehrere Properties.
+
+Konventionen, die gut funktionieren:
+
+- `env:production`, `env:staging`, `env:preview`
+- `team:growth`, `team:product`
+- `region:eu`, `region:us`
+- `tier:critical` für Sites, auf die du aggressiv alarmierst
+
+Max 10 Tags pro Site.
+
+## Allowed Origins
+
+Der Collector akzeptiert Beacons, deren `Origin`-Header dem `domain`
+der Site oder einem Eintrag in `allowed_origins` entspricht. Lädt
+das Script auf einer nicht-erlaubten Domain, antwortet der Collector
+mit `403`.
+
+Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
+unterstützt — jeden Origin explizit listen.
+
+## Häufige Szenarien
+
+### Production + Staging + Preview
+
+Zwei Wege, beide tragen:
+
+- **Eine Site, drei Origins** (`acme.com`, `staging.acme.com`,
+  `preview-*.acme.com`). Alle Daten in einem Topf, im Dashboard
+  nach `domain` filtern. Billiger, dafür weniger sauber.
+- **Drei Sites** mit eigener Retention und eigenen Tags. Saubere
+  Daten, etwas mehr Setup.
+
+Die meisten Teams landen nach ein paar Wochen bei der zweiten
+Variante.
+
+### Neue Sub-Site, gleiche Brand
+
+Neue Site anlegen. Bloß nicht das Script-Tag einer anderen Property
+wiederverwenden — der `source_hash` gehört zur Site, sonst sind
+die Daten am Ende nicht mehr zuordenbar.
+
+### Auf eine neue Domain umziehen
+
+Neue Site für die neue Domain anlegen. Beide während des Cutovers
+laufen lassen. Sobald kein Traffic mehr aufschlägt, die alte auf
+inactive setzen.
+
+## Häufige Überraschungen
+
+- **Sites lassen sich nicht zwischen Organisationen umziehen.**
+  Falls doch nötig: Support melden.
+- **`is_active = false` behält die Historie.** Es stoppt nur neuen
+  Schreibvorgang — gut für Pausen, nicht zum Retention-Kürzen.
+- **Site umbenennen ändert die Hashes nicht.** Schon eingebettete
+  Scripts laufen einfach weiter.
+- **Site löschen löscht auch die Beacon-Daten.** Mit Bestätigung.
+  Kein Undo.
+
+## Verwandt
+
+- [Collection Modes](/de/collection-modes) — was der Beacon pro
+  Site tut.
+- [Der RUM-Beacon](/de/beacon) — was der Beacon erfasst.
+- [Releases](/de/concepts/releases) — versionierte Marker auf einer
+  Site.
+- [API: Sites-Endpunkte](/de/api) — programmatisches Site-CRUD.

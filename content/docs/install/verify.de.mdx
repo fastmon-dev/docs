@@ -1,0 +1,100 @@
+---
+title: Implementierung verifizieren
+description: Bestätigen, dass Fastmon Daten erfasst — und was zu prüfen ist, wenn nicht.
+---
+
+Sobald das Script auf der Seite liegt, kannst du mit zwei Checks
+prüfen, ob alles sauber läuft. Wenn beide passen, ist hier
+Schluss.
+
+## Der Fünf-Sekunden-Check
+
+Site in einem frischen Tab öffnen, DevTools auf (`⌥⌘I` / `F12`), zu
+**Network** wechseln. Nach `c/` filtern.
+
+Jetzt zu einem anderen Tab wechseln, dann zurück. Du solltest einen
+einzelnen `POST`-Request sehen:
+
+```
+POST https://api.fastmon.eu/c/{collector_hash}     204
+```
+
+Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's
+— dein Install läuft.
+
+## Der Dashboard-Check
+
+Site im Fastmon-Dashboard öffnen. Innerhalb von ~30 Sekunden zeigt der
+Bereich **Traffic**:
+
+- **Sessions** &gt; 0,
+- **Page Views** &gt; 0,
+- ein **Web Vitals**-Snapshot zumindest für die Seite, die du geladen hast.
+
+Wenn da erstmal nur dein eigener Besuch steht: alles gut. Echter
+Traffic baut sich auf, sobald Besucher die Seite öffnen.
+
+## Troubleshooting
+
+### Kein Request an `/c/` sichtbar
+
+**Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
+filtern. Du solltest einen Request an
+`https://api.fastmon.eu/s/{source_hash}.js` mit Status `200` sehen. `404`
+heißt, der `source_hash` im Tag ist falsch. `410` heißt, die Site
+wurde in Fastmon gelöscht — neu anlegen.
+
+**Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
+der Production-Seite "View Source". Das Tag muss tatsächlich im
+ausgelieferten HTML stehen. Manche CMSe filtern unbekannte Tags
+aus Page-Buildern raus — dann brauchst du ein
+Header-Injection-Plugin oder den `<head>`-Slot des Themes.
+
+**Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen
+und nach einem CSP-Violation-Eintrag mit `fastmon.eu` suchen. Wenn ja,
+`https://fastmon.eu` zu `script-src` und `connect-src` hinzufügen.
+
+**Prüfen, ob die Seite überhaupt verlassen wurde.** Geflusht wird
+bei `pagehide` / `visibilitychange`. Wenn du nur eine Seite offen
+hast und nie den Tab wechselst, ist halt noch kein Flush passiert
+— einmal Tab wechseln, dann Network neu anschauen.
+
+### Request an `/c/` liefert `403`
+
+Die **Allowed origins** der Site listen den Origin nicht, von dem du
+lädst. Site-Settings öffnen, fehlenden Origin hinzufügen (z. B.
+`staging.acme.com`), speichern. Der Script-Cache invalidiert
+automatisch.
+
+### Request an `/c/` liefert `429`
+
+Du bist ins Per-IP-Rate-Limit gelaufen. Mit echtem Traffic passiert
+das so gut wie nie — meistens steckt ein synthetischer Lasttest
+oder eine kaputte Reload-Schleife dahinter. Eine Minute warten,
+dann ist das Limit zurückgesetzt.
+
+### Beacon geht durch, aber im Dashboard ist nichts
+
+Erst mal checken, ob du die richtige Site und den richtigen
+Zeitraum offen hast — der Default sind die letzten 24 h, das passt
+für frische Daten.
+
+Bekommst du `204` zurück, und das Dashboard ist nach ein paar
+Minuten immer noch leer, ist die Ingestion vermutlich pausiert.
+Site-Settings öffnen und schauen, ob **Active** an ist. Inaktive
+Sites nehmen Beacons an, schreiben sie aber nicht in die
+Analytics-Tabellen.
+
+### Immer noch nichts
+
+Hol dir den `X-Request-ID`-Header aus einer fehlerhaften Response
+(DevTools → Network → Request anklicken → **Headers**) und schick
+ihn an den Support. Mit der Request-ID finden wir das passende
+Server-Log in Sekunden.
+
+## Wie geht's weiter
+
+- Einen [Collection Mode](/de/collection-modes) wählen, falls
+  `anonymous` nicht passt.
+- Erstes [Release taggen](/de/guides/compare-releases) und Deploys
+  vergleichen.

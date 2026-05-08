@@ -1,0 +1,135 @@
+---
+title: Architecture
+description: How a beacon becomes a dashboard. The data flow, the stores, and what each one does.
+---
+
+Fastmon is two services — an API backend and a single-page
+dashboard — on top of three data stores. Knowing the shape helps
+when a metric goes missing, when you're debugging slow ingestion,
+or when compliance asks how the thing actually works.
+
+## High-level diagram
+
+```
+                   visitor browser
+                          │
+                          ▼
+        ┌─────────────────────────────────────┐
+        │   beacon.js  (PerformanceObserver)  │
+        └─────────────────────────────────────┘
+                          │
+        ┌──── POST /c/{collector_hash} ──────┐
+        ▼                                    │
+   collector  ──── validate, derive geo ─────┤
+        │                                    │
+        ├──── per-process buffer (~30 s) ────┤
+        │                                    │
+        ▼                                    │
+   analytics store                           │
+                                             │
+                    dashboard ───────────────┘
+                          │
+                          ▼
+                  analytics queries
+```
+
+Two spots in the pipeline matter if you want to understand the
+behavior:
+
+- **Browser → collector.** A single batched `POST` per page-view, on
+  `pagehide` / `visibilitychange` / periodic flush. See
+  [The RUM Beacon](/en/concepts/beacon).
+- **Collector → analytics store.** Beacons land in a per-process
+  buffer and flush every few seconds via batched insert. That's why
+  your first visitor takes ~30 s to show up in the dashboard.
+
+## Components
+
+| Component         | What it does                                                                |
+| ----------------- | --------------------------------------------------------------------------- |
+| Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
+| Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, geo derive. |
+| API               | `/api/v1/...` — authenticated REST. Powers the dashboard.                   |
+| Dashboard         | Single-page app. Reads via the API. Static assets only.                     |
+| Configuration DB  | Users, organizations, sites, settings, billing.                             |
+| Analytics store   | Beacon events, aggregated metrics, error logs.                              |
+| Session store     | Sessions, rate limits, short-lived caches.                                  |
+
+Backend and frontend live in independent repos and deploy
+independently.
+
+## Storage tiers
+
+| Store             | What lives here                                       | Notes                                |
+| ----------------- | ----------------------------------------------------- | ------------------------------------ |
+| Configuration DB  | Users, orgs, sites, settings, billing                 | Single primary, async access.        |
+| Analytics store   | Beacon events, aggregates, error logs                 | Columnar, queries scoped per org.    |
+| Session store     | Sessions, rate limits, short-lived caches             | EU-jurisdiction in-memory store.     |
+
+All three are operated in the EU with versioned, idempotent
+migrations applied on deploy.
+
+## Routing layout
+
+| Path                              | Purpose                                                        | Auth          |
+| --------------------------------- | -------------------------------------------------------------- | ------------- |
+| `GET  /s/{source_hash}.js`        | Public beacon script delivery. Strong cache, ETag.            | Public        |
+| `POST /c/{collector_hash}`        | Public beacon ingestion.                                       | Public        |
+| `/api/v1/...`                     | Authenticated REST API.                                        | Cookie or token |
+| `/openapi.json`                   | OpenAPI document for the v1 API.                               | Public        |
+
+The two public roots stay outside the `/api/v1` prefix on purpose —
+short URLs keep the beacon payload smaller, and the cache rules are
+different (the beacon script is aggressively cached; API responses
+typically aren't).
+
+## Multi-tenancy
+
+Every beacon row is tagged with its `organization_id`, and every
+analytics query filters by it. Tenants share infrastructure but
+never see each other's data.
+
+## What's kept where, briefly
+
+| Data                               | Where               | Retention                       |
+| ---------------------------------- | ------------------- | ------------------------------- |
+| Beacon events (raw and rolled-up)  | Analytics store     | `data_retention_days` per site (90 default). |
+| Site, org, member configuration    | Configuration DB    | Until deletion.                 |
+| Active sessions (auth)             | Session store       | Sliding window, default 30 days idle. |
+| Rate-limit counters                | Session store       | Per-window TTL, < 5 min.        |
+| Personal data (PII)                | —                   | Not collected. See [Privacy](/en/privacy). |
+
+## Why some things look the way they do
+
+### Why a 30-second buffer on ingest?
+
+Because per-row inserts at this scale would melt any analytics
+database. Batching into a per-process buffer that flushes every
+few seconds is the standard pattern. The price: a ~30 s delay
+between a beacon arriving and it showing up in queries.
+
+### Why separate `source_hash` and `collector_hash`?
+
+So the script template (and the cache around it) can change
+without affecting the data pipeline. A beacon upgrade is just
+"roll a new template" — existing collector endpoints stay valid.
+More on this under
+[The RUM Beacon — cache and rollouts](/en/concepts/beacon#cache-and-rollouts).
+
+### Why a columnar analytics store?
+
+Web-Vitals queries aggregate across hundreds of millions of rows.
+With columnar storage and vectorized execution they finish in
+under a second. A row store at this volume just wouldn't.
+
+### Why a separate session store?
+
+Sessions and rate-limit counters need millisecond reads on every
+request — but no long-term durability. Keeping them out of the
+configuration DB keeps the auth path fast and cleanly isolated.
+
+## Related
+
+- [Concepts](/en/concepts) — the customer-facing data model.
+- [The RUM Beacon](/en/concepts/beacon) — the client-side half.
+- [Privacy](/en/privacy) — what we don't keep.

@@ -1,0 +1,122 @@
+---
+title: Errors
+description: Error envelope, status codes, and what each common code means.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Every error from the Fastmon API uses the same envelope. The HTTP
+status code tells you the shape; the `code` inside tells you the
+cause.
+
+## Envelope
+
+```json title="Error response"
+{
+  "error": {
+    "code": "validation_error",
+    "message": "domain is required",
+    "request_id": "01HZY…",
+    "doc_url": "https://docs.fastmon.eu/errors/validation_error",
+    "details": { "field": "domain" }
+  }
+}
+```
+
+| Field         | Required | Notes                                                                  |
+| ------------- | -------- | ---------------------------------------------------------------------- |
+| `code`        | yes      | Stable machine-readable code. Safe to switch on.                       |
+| `message`     | yes      | Human-readable. May change for the same code as we improve clarity.    |
+| `request_id`  | usually  | Same value as the `X-Request-ID` response header.                      |
+| `doc_url`     | optional | Link to a docs page that explains the code in depth.                   |
+| `details`     | optional | Code-specific. Validation errors put the offending `field` here.       |
+
+<Callout type="info">
+  Switch on `code` in client code; render `message` to humans. The
+  `code` is part of our public contract — `message` may be reworded
+  for clarity at any time.
+</Callout>
+
+## Status codes
+
+<Tabs items={['Client errors (4xx)', 'Server errors (5xx)']}>
+<Tab value="Client errors (4xx)">
+
+| Status | What it means                                                                       |
+| ------ | ----------------------------------------------------------------------------------- |
+| `400`  | The body or query was malformed. See `code` for specifics.                          |
+| `401`  | Authentication failed or wasn't provided. See [Authentication](/en/api/authentication). |
+| `403`  | Authenticated, but not allowed. Wrong organization, wrong role, or paused resource.  |
+| `404`  | Resource doesn't exist — *or* you can't see it. We don't leak existence.            |
+| `409`  | Conflict — usually a uniqueness violation or a state-machine clash.                  |
+| `422`  | Validation failed. `details.field` carries the offending field.                      |
+| `429`  | Rate-limited. Wait and retry; `Retry-After` is set.                                  |
+
+</Tab>
+<Tab value="Server errors (5xx)">
+
+| Status | What it means                                                          |
+| ------ | ---------------------------------------------------------------------- |
+| `500`  | Server error. Include `request_id` when reporting.                     |
+| `502`  | Bad gateway. Usually a deploy-window blip — retry with backoff.        |
+| `503`  | Service unavailable. Same as `502` — transient.                         |
+| `504`  | Gateway timeout. Retry once with longer client timeout.                |
+
+</Tab>
+</Tabs>
+
+## Common `code` values
+
+| Code                       | Meaning                                                                                 |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `validation_error`         | A field failed validation. `details.field` names it.                                    |
+| `unauthorized`             | No or invalid auth credentials.                                                         |
+| `forbidden`                | Authenticated, not allowed.                                                             |
+| `not_found`                | The resource doesn't exist or isn't visible to you.                                     |
+| `already_exists`           | Uniqueness violation (e.g. duplicate site domain in an org).                            |
+| `rate_limited`             | Too many requests. `Retry-After` is set.                                                |
+| `plan_limit_exceeded`      | The action requires a plan tier or quota you don't have.                                |
+| `invalid_state`            | The resource isn't in a state where this action is valid.                               |
+| `internal_error`           | Server bug. Include `request_id` when reporting.                                        |
+
+The full list lives in `/v1/openapi.json` under each endpoint's
+responses.
+
+## Retrying
+
+| Status                | Retry?                                                                  |
+| --------------------- | ----------------------------------------------------------------------- |
+| `429`                 | Yes — wait `Retry-After` seconds.                                       |
+| `502` / `503` / `504` | Yes — exponential backoff. Usually deploy-window blips.                 |
+| Other `5xx`           | Once. If it persists, report with `request_id`.                         |
+| `4xx`                 | **No.** The request is wrong; fix and resend.                            |
+
+## Reporting an error
+
+<Callout type="warn">
+  Always include the `request_id` when you contact support. It lets us
+  pull the matching server log in seconds. Without it, debugging
+  starts from "describe what time it happened roughly," which is much
+  slower.
+</Callout>
+
+The request ID is on:
+
+- the `X-Request-ID` response header,
+- `error.request_id` in the JSON body,
+- the response of every successful request too — for chain
+  correlation.
+
+## Common surprises
+
+- **`404` is intentionally ambiguous.** "I can't see this resource"
+  and "this resource doesn't exist" both return `404`. We don't want
+  to leak existence to unauthorized clients.
+- **Validation errors stop at the first failure.** A payload with
+  two bad fields reports one. Fix and resend to see the next.
+
+## Related
+
+- [API overview](/en/api)
+- [Authentication](/en/api/authentication) — `401` / `403` origins

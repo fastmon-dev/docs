@@ -1,0 +1,4 @@
+{
+  "title": "Web Vitals",
+  "pages": ["index", "lcp", "inp", "cls", "fcp", "ttfb", "experience-score"]
+}

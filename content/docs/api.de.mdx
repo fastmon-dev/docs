@@ -1,0 +1,48 @@
+---
+title: API-Referenz
+description: Base URL, Authentifizierung, Response-Envelopes und Ressourcen, die du lesen oder schreiben kannst.
+---
+
+Die Fastmon-REST-API liefert dieselbe Oberfläche, die das Dashboard
+nutzt. Wird aus dem Code generiert und als OpenAPI-Dokument unter
+[`/openapi.json`](https://api.fastmon.eu/v1/openapi.json) ausgeliefert —
+direkt in deinen Generator deiner Wahl für einen typisierten Client.
+
+## Base URL
+
+```
+https://api.fastmon.eu/v1
+```
+
+Die öffentlichen Ingest-Endpunkte (`POST /c/{collector_hash}` und
+`GET /s/{source_hash}.js`) liegen **außerhalb** des
+`/api/v1/`-Prefix.
+
+## Querschnittsthemen
+
+<Cards>
+  <Card title="Authentifizierung" href="/de/api/authentication" description="Session-Cookie oder fm_…-Bearer-Token. Beide funktionieren auf jedem Endpunkt." />
+  <Card title="Fehler" href="/de/api/errors" description="Error-Envelope, Status-Codes, was jeder häufige Code bedeutet." />
+  <Card title="Pagination" href="/de/api/pagination" description="Offset per Default, Cursor für High-Volume-Endpunkte." />
+</Cards>
+
+## Ressourcen
+
+<Cards>
+  <Card title="Organisationen" href="/de/api/organizations" description="Top-Level-Account-Container. Mitglieder, Pläne, Settings." />
+  <Card title="Sites" href="/de/api/sites" description="Properties, die du monitorst. Beacon-Hashes, Collection Mode, Retention." />
+  <Card title="Releases" href="/de/api/releases" description="Versionierte Marker auf einer Site, für Vorher/Nachher-Vergleiche." />
+  <Card title="Analytics" href="/de/api/analytics" description="Zwölf Query-Endpunkte — Web Vitals, Sessions, Fehler, Third-Party." />
+  <Card title="Notifications" href="/de/api/notifications" description="Notification Rules: anlegen, evaluieren, testen, History." />
+</Cards>
+
+## Konventionen
+
+- **IDs sind UUID v7** — nach Erzeugungszeit sortierbar.
+- **Zeitstempel sind ISO-8601 UTC mit `Z`**.
+- **Einzelne Ressourcen** werden direkt zurückgegeben; **Listen**
+  wrappen mit `data` + `meta`; **Fehler** wrappen mit `error`.
+  Siehe [Fehler](/de/api/errors).
+- **Default-Limit** 50, Max 100 auf jedem List-Endpunkt.
+- **`X-Request-ID`** auf jeder Response. Beim Reporting
+  zurückgeben.

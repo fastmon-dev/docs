@@ -1,0 +1,112 @@
+---
+title: Authentication
+description: Session cookie or fm_… Bearer token. Both work on every endpoint.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+Every `/v1/` endpoint requires authentication. Two schemes are accepted
+on every endpoint — pick whichever fits your client. If both are sent
+on the same request, the Bearer token wins.
+
+## Pick a scheme
+
+| Client                          | Use                                          |
+| ------------------------------- | -------------------------------------------- |
+| The Fastmon SPA                 | Session cookie — already set after login.    |
+| A CI/CD job                     | Bearer token, stored in secrets.             |
+| A backend service               | Bearer token.                                |
+| A user-facing tool that logs in | Session cookie via the auth endpoints.       |
+
+## Session cookie
+
+Used by the dashboard. The login endpoint sets a cookie named `session`
+with flags `HttpOnly`, `Secure`, `SameSite=Lax`. No JWTs — sessions live
+server-side and extend on activity.
+
+<Tabs items={['Login', 'Logout']}>
+<Tab value="Login">
+
+```bash
+curl -X POST https://api.fastmon.eu/v1/auth/session \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "you@example.com", "password": "…" }'
+```
+
+</Tab>
+<Tab value="Logout">
+
+```bash
+curl -X DELETE https://api.fastmon.eu/v1/auth/session \
+  -H "Cookie: session=…"
+```
+
+</Tab>
+</Tabs>
+
+### With 2FA enabled
+
+<Steps>
+<Step>
+
+`POST /v1/auth/session` with email + password returns a partial session
+that's valid **only for the 2FA verification call**.
+
+</Step>
+<Step>
+
+`POST /v1/auth/session/2fa` with a TOTP code completes the login and
+upgrades the cookie to a full session.
+
+</Step>
+</Steps>
+
+## Bearer token
+
+Used by programmatic clients. Generate from **Account → API token** in
+the dashboard, or via `POST /v1/account/api-token`. Looks like
+`fm_<long-random-suffix>`.
+
+```http
+Authorization: Bearer fm_abcdef…
+```
+
+```bash title="Generate a token"
+curl -X POST https://api.fastmon.eu/v1/account/api-token \
+  -H "Cookie: session=…"
+```
+
+The response contains the token **once**. Store it in your secret
+manager immediately — there is no recovery flow.
+
+<Callout type="warn">
+  Lost tokens are unrecoverable. Server-side they're hashed; only the
+  `fm_` prefix is queryable. To rotate, regenerate via
+  `POST /v1/account/api-token` — the previous token stops working
+  immediately.
+</Callout>
+
+### What a token can do
+
+- **Per-user.** Each user has at most one token at a time.
+- **Same scope as the user.** Token from a `member` does what a
+  `member` can; token from an `owner` does what an `owner` can.
+- **Org-spanning.** If the user is a member of multiple orgs, the
+  token works against all of them.
+
+## Common surprises
+
+- **You can't manage another user's token.** Even an `owner` can
+  only regenerate their own.
+- **Session cookies don't work cross-origin** to other domains by
+  design — `SameSite=Lax` is intentional.
+- **Multi-token / service-account tokens** are on the roadmap, gated
+  behind enterprise plans.
+
+## Related
+
+- [API overview](/en/api) — base URL and conventions.
+- [Errors](/en/api/errors) — `401 unauthorized` and `403 forbidden`
+  responses.

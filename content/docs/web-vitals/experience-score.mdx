@@ -1,0 +1,112 @@
+---
+title: Experience Score
+description: A single 0–100 number that combines LCP, INP, and CLS — the headline metric for tracking UX over time.
+---
+
+**Experience Score** is a composite metric. It condenses LCP,
+INP, and CLS into a single 0–100 number per page-view.
+Practically: this is the number you put on a dashboard, a status
+report, or in a slide when you're explaining performance to
+people who don't care about the engineering detail.
+
+Math and thresholds are Google's, the weighting follows the
+[PageSpeed Insights model](https://developer.chrome.com/docs/lighthouse/performance/performance-scoring).
+We compute the score from your real-user data.
+
+## What's a good score?
+
+| Score           | Rating              |
+| --------------- | ------------------- |
+| 90–100          | **Good**            |
+| 50–89           | Needs improvement   |
+| 0–49            | Poor                |
+
+A score of 90 means all three Core Web Vitals are at or above
+"good" for the bulk of your traffic. A score in the 50s almost
+always means two metrics are okay and one (usually INP) is sitting
+in the red.
+
+## How the score is computed
+
+Each Core Web Vital is mapped to a 0–100 sub-score using a log-normal
+curve calibrated against Google's "good" / "needs improvement"
+thresholds:
+
+| Metric | Good (full points) | Poor (zero points) |
+| ------ | ------------------ | ------------------ |
+| LCP    | ≤ 2,500 ms         | ≥ 4,000 ms         |
+| INP    | ≤ 200 ms           | ≥ 500 ms           |
+| CLS    | ≤ 0.1              | ≥ 0.25             |
+
+The three sub-scores are weighted:
+
+| Metric | Weight |
+| ------ | ------ |
+| LCP    | 35 %   |
+| INP    | 35 %   |
+| CLS    | 30 %   |
+
+The weighted sum is the Experience Score. Pages without a value for
+one of the metrics (e.g. INP on a page the visitor never interacted
+with) use the sub-scores that exist, re-weighted proportionally.
+
+## When the score is computed
+
+Per page-view, when the page is hidden — the same trigger that
+finalizes the underlying metrics. Aggregate scores you see in the
+dashboard are averages over your selected time range.
+
+## How to see the Experience Score in Fastmon
+
+The headline number lives on the **Performance** dashboard. Below it
+you'll see the breakdown — which sub-score is dragging the total
+down — and a trend chart over the selected window.
+
+Useful slices:
+
+- **By URL** — group by URL. Find which pages dominate the average.
+- **By release** — `compare_to_release_id`. The single best signal
+  for "did this deploy regress UX?"
+- **By country / device** — group by `country` or `device_type`.
+  Regional or device-class regressions are usually invisible in the
+  global score.
+
+## How to improve a low score
+
+The composite is only as healthy as its weakest part:
+
+1. Open the breakdown and identify the **worst sub-score**.
+2. Read the linked metric page ([LCP](/en/web-vitals/lcp),
+   [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls)) and
+   apply the highest-leverage fix listed there.
+3. Recheck after a release. Use `compare_to_release_id` for a clean
+   before/after.
+
+Don't try to optimize all three at once. The improvements often
+trade against each other — fixing LCP by adding more JavaScript can
+regress INP, and reserving space for ads to fix CLS can push LCP
+later.
+
+## Common surprises
+
+- **The score can drop without any single metric crossing a
+  threshold.** A small regression in two metrics can move the
+  composite by 5–10 points while each metric still says "Good."
+- **A single deploy can create a permanent score gap.** Once a
+  regression ships, every subsequent page-view contributes the worse
+  number to the average. Catching it on the day of the deploy
+  matters.
+- **Pages with low interaction count have inflated scores.** If
+  visitors never interact, INP is excluded — the score then reflects
+  only LCP and CLS, which are usually easier.
+- **Internal vs external traffic skews the composite.** Office
+  traffic on warm caches and fast laptops scores great; real visitors
+  on mobile in a tunnel score worse. Filter out internal IPs to keep
+  the number honest.
+
+## What's next
+
+- [LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp),
+  [CLS](/en/web-vitals/cls) — the three contributing metrics.
+- [Web Vitals overview](/en/web-vitals) — the full set including
+  diagnostic metrics.

@@ -1,0 +1,130 @@
+---
+title: Implement Fastmon on Next.js
+description: Drop the beacon into a Next.js app using the framework's Script component. Covers App Router and Pages Router.
+---
+
+Next.js ships a [`<Script>`](https://nextjs.org/docs/app/api-reference/components/script)
+component that's the right primitive for loading the Fastmon
+beacon. This page covers the App Router (Next.js 13+) and the
+Pages Router (legacy), plus a note on static export.
+
+**Time to first data:** about five minutes.
+**You'll need:** a Fastmon site (see [the overview](/en/install))
+and access to your Next.js app's root layout.
+
+## 1. Get your `source_hash`
+
+Open the site you want to monitor in Fastmon. Copy the `source_hash`
+from the site settings page — it looks like `a1b2c3d4`.
+
+If you haven't created a site yet, see step 1 of the
+[HTML guide](/en/install/html#1-create-a-site-in-fastmon).
+
+## 2. Add the `<Script>` component
+
+### App Router (Next.js 13+)
+
+In `app/layout.tsx`:
+
+```tsx title="app/layout.tsx"
+import Script from 'next/script';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <Script
+          src="https://api.fastmon.eu/s/{source_hash}.js"
+          strategy="afterInteractive"
+        />
+      </body>
+    </html>
+  );
+}
+```
+
+Replace `{source_hash}` with the value from step 1.
+
+`strategy="afterInteractive"` is the right default — it loads the
+script after the page is interactive, which is when you want the
+beacon to start observing. `lazyOnload` works too and is slightly
+cheaper, but you'd miss the very first paint on every load.
+
+### Pages Router (legacy)
+
+In `pages/_app.tsx`:
+
+```tsx title="pages/_app.tsx"
+import Script from 'next/script';
+import type { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <Script
+        src="https://api.fastmon.eu/s/{source_hash}.js"
+        strategy="afterInteractive"
+      />
+    </>
+  );
+}
+```
+
+### Static export (`output: 'export'`)
+
+If you ship a static export, skip the `<Script>` component entirely
+and use a plain `<script>` tag in your root layout's `<head>`:
+
+```tsx
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async />
+```
+
+Static export doesn't run the React component tree at request time, so
+`next/script`'s strategy options don't apply.
+
+## 3. Deploy
+
+Push to your hosting target (Vercel, Netlify, your own infra). Wait
+for the deploy to finish.
+
+## 4. Verify it works
+
+Open a page on the deployed site, open DevTools → **Network**, and
+filter for `c/`. Switch to another tab, then back.
+
+You should see a `POST` to `https://api.fastmon.eu/c/{collector_hash}`
+with status `204`.
+
+In Fastmon, open the site's dashboard. Within ~30 seconds the
+**Traffic** section will show non-zero sessions.
+
+If something doesn't add up, jump to
+[Verifying it works](/en/install/verify).
+
+## Notes for App Router
+
+- The beacon is a single fetch on `pagehide` — it doesn't add
+  per-render cost.
+- Server Components don't need any change. The beacon is a
+  client-side concern; loading it in `app/layout.tsx` covers every
+  route automatically.
+- **Route changes in App Router don't generate a new LCP.** Web
+  Vitals are per-navigation, and SPA-style transitions aren't
+  navigations. This is consistent with how every RUM tool measures
+  Next.js.
+
+## Notes for Pages Router
+
+- `_app.tsx` is the right place. Don't put the `<Script>` in
+  `_document.tsx` — Next.js's strategy options aren't honored there.
+- `getServerSideProps` and `getStaticProps` don't affect the
+  setup.
+
+## What's next
+
+- [Verify it works](/en/install/verify).
+- [Pick a collection mode](/en/collection-modes).
+- [Tag releases](/en/guides/compare-releases) — wire your Vercel
+  deploy step into Fastmon to compare Web Vitals across deploys.

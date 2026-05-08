@@ -1,0 +1,137 @@
+---
+title: Sites
+description: A site is one property you monitor. Each site has its own beacon hashes and settings.
+---
+
+A **site** is the unit of monitoring in Fastmon. In practice that
+maps to a property — usually one origin, one app, or one brand.
+Beacon URL, settings, dashboard filters: all per site.
+
+## Why it matters
+
+Everything beacon-related lives on the site: the script you embed,
+the [collection mode](/en/collection-modes), retention, allowed
+origins, the data in the dashboard. New property to monitor =
+new site.
+
+If you want one dashboard view across several properties, use
+**tags** (below) and aggregate at query time. There's no
+site-group concept on purpose — tags cover it.
+
+## When you'd touch it
+
+- **Adding a new property.** Create a site, copy the snippet, embed.
+- **Changing what the beacon collects.** Edit the site's collection
+  mode.
+- **Adding a staging or preview environment.** Add the staging origin
+  to **allowed origins**, or create a separate site for staging if
+  you want isolated data.
+- **Cutting retention.** Default is 90 days. Some sites want shorter
+  for compliance, some want longer.
+- **Pausing without deleting.** Toggle `is_active = false` to keep
+  history but stop ingesting new data.
+- **Tagging for cross-site reporting.** Add tags like `env:production`
+  or `team:growth`.
+
+## What's on a site
+
+| Field                 | Type                                  | Notes                                                                            |
+| --------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `id`                  | UUID v7                               | Stable identifier.                                                               |
+| `organization_id`     | UUID v7                               | The owning organization.                                                         |
+| `name`                | string                                | How the site appears in the UI.                                                  |
+| `domain`              | string                                | Bare hostname, no protocol (e.g. `acme.com`).                                    |
+| `allowed_origins`     | comma-separated string                | Extra origins that can ingest. Empty means only `domain` itself.                 |
+| `collector_endpoint`  | string · nullable                     | Custom collector hostname for enterprise routing. Defaults to `fastmon.eu`.      |
+| `source_hash`         | string                                | Per-site hash used in the script URL (`/s/{source_hash}.js`).                    |
+| `collector_hash`      | string                                | Per-site hash used in the ingest URL (`/c/{collector_hash}`).                    |
+| `collection_mode`     | enum                                  | `anonymous` · `consent` · `full`. See [Collection modes](/en/collection-modes). |
+| `data_retention_days` | int                                   | Default `90`. After expiry, rows are dropped at the storage layer.               |
+| `source_version`      | string                                | Pins a beacon template version (`v1` is current).                                |
+| `tags`                | list of strings (max 10)              | Free-form labels for dashboard and analytics filtering.                          |
+| `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
+
+## The two hashes
+
+Each site has two hashes. They look similar but do two different
+jobs.
+
+- **`source_hash`** sits in the **script URL** and tells us which
+  site's beacon config to ship to the browser.
+- **`collector_hash`** sits in the **ingest URL** and tells us
+  which site an incoming beacon belongs to.
+
+They're separate so the script template can change (for a beacon
+upgrade or a collection-mode swap) without affecting the data
+pipeline. You only ever copy `source_hash` by hand —
+`collector_hash` is baked into the script and rides along.
+
+## Tags
+
+Tags are short labels you attach to a site. The dashboard and
+analytics API let you filter by tag, so they're how you build a
+"production sites" or "marketing sites" view across multiple
+properties.
+
+Conventions that work well:
+
+- `env:production`, `env:staging`, `env:preview`
+- `team:growth`, `team:product`
+- `region:eu`, `region:us`
+- `tier:critical` for sites you alert on aggressively
+
+Max 10 tags per site.
+
+## Allowed origins
+
+The collector accepts beacons whose `Origin` header matches the
+site's `domain` *or* one of the entries in `allowed_origins`. If you
+load the script on a domain that isn't allow-listed, the collector
+returns `403`.
+
+Add staging and preview hostnames here. Wildcards aren't supported —
+list each origin explicitly.
+
+## Common scenarios
+
+### Production + staging + preview
+
+Two shapes that work:
+
+- **One site, three origins** (`acme.com`, `staging.acme.com`,
+  `preview-*.acme.com`). All data lands in one bucket; filter by
+  `domain` in the dashboard. Cheaper, less clean.
+- **Three sites** with their own retention and tags. Cleaner
+  data, more setup.
+
+Most teams end up on the second one after a few weeks.
+
+### A new sub-site, same brand
+
+New site. Don't reuse the script tag from another property — the
+`source_hash` is per site, and the data has to be attributable.
+
+### Moving to a new domain
+
+Create a new site for the new domain, run both during the cutover,
+and mark the old one inactive once traffic's moved over.
+
+## Common surprises
+
+- **Sites can't move between organizations.** Ping support if you
+  really need it.
+- **`is_active = false` keeps the history.** It just stops new
+  writes. Use it for pauses, not for cutting retention.
+- **Renaming a site doesn't change its hashes.** Already-embedded
+  scripts keep working.
+- **Deleting a site deletes its beacon data.** With a
+  confirmation step. No undo.
+
+## Related
+
+- [Collection modes](/en/collection-modes) — what the beacon does,
+  per site.
+- [The RUM Beacon](/en/beacon) — what the beacon collects.
+- [Releases](/en/concepts/releases) — versioned markers attached to
+  a site.
+- [API: Sites endpoints](/en/api) — programmatic site CRUD.

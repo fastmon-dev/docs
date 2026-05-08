@@ -1,0 +1,26 @@
+{
+  "title": "API",
+  "pages": [
+    "index",
+    "---Concepts---",
+    "authentication",
+    "errors",
+    "pagination",
+    "---Endpoints---",
+    "auth",
+    "account",
+    "organizations",
+    "members",
+    "invites",
+    "sites",
+    "releases",
+    "analytics",
+    "notifications",
+    "partners",
+    "weekly-summary",
+    "waitlist",
+    "ai-ask",
+    "collector",
+    "uncategorized"
+  ]
+}

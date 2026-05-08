@@ -1,0 +1,140 @@
+---
+title: Pagination
+description: Offset by default. Cursor for high-volume endpoints. Tell which scheme is in use by looking at meta.
+---
+
+List endpoints in the Fastmon API use one of two pagination schemes.
+You don't choose — the endpoint chooses based on the underlying
+data shape. Read the response `meta` to tell which one you got.
+
+## Defaults
+
+- **Default limit:** `50`.
+- **Maximum limit:** `100`.
+- The limit is the same for both schemes; it caps how many rows
+  come back per request.
+
+## Offset pagination (default)
+
+Most list endpoints use offset pagination. Pass `?limit` and
+`?offset`; the response carries `meta.total` and `meta.has_more`.
+
+```bash
+curl 'https://api.fastmon.eu/v1/organizations/$ORG/sites?limit=50&offset=100' \
+  -H "Authorization: Bearer fm_…"
+```
+
+```json
+{
+  "data": [ /* up to 50 sites */ ],
+  "meta": {
+    "limit":    50,
+    "offset":   100,
+    "total":    242,
+    "has_more": true
+  }
+}
+```
+
+To page through:
+
+1. Start with `offset=0`.
+2. Request `limit` items.
+3. If `meta.has_more`, increment `offset` by `limit` and repeat.
+4. Stop when `has_more` is `false`.
+
+Offset pagination is fine for any list with under a few thousand
+rows. Beyond that, deep pages get slow because the database has to
+walk the offset.
+
+## Cursor pagination (high-volume)
+
+Sessions, beacon records, and a few other event feeds use cursor
+pagination because their underlying tables are large and offset
+walks would be too slow.
+
+The response carries `meta.next_cursor` (and no `total`). Send the
+cursor back as `?cursor=<token>` to get the next page.
+
+```bash
+curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
+  -X POST \
+  -H "Authorization: Bearer fm_…" \
+  -H "Content-Type: application/json" \
+  -d '{ "time_range": { "from": "...", "to": "..." }, "limit": 100 }'
+```
+
+```json
+{
+  "data": [ /* up to 100 sessions */ ],
+  "meta": {
+    "limit":       100,
+    "next_cursor": "eyJ0IjoiMjAyNi0wNS0wN1Q…"
+  }
+}
+```
+
+Next page:
+
+```bash
+curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
+  -X POST \
+  -H "Authorization: Bearer fm_…" \
+  -H "Content-Type: application/json" \
+  -d '{ "time_range": { "from": "...", "to": "..." }, "limit": 100, "cursor": "eyJ0IjoiMjAyNi0wNS0wN1Q…" }'
+```
+
+The cursor is **opaque** — it encodes whatever the server needs to
+resume. Don't parse it, don't construct it, don't persist it across
+deploys longer than your normal use.
+
+When `meta.next_cursor` is absent, you've reached the end.
+
+## How to tell which scheme is in use
+
+Read `meta` on the response:
+
+| Shape                                    | Scheme  |
+| ---------------------------------------- | ------- |
+| has `total` and `offset`                 | offset  |
+| has `next_cursor` (with no `total`)      | cursor  |
+
+Don't infer from the path. The same endpoint family can mix — for
+example `/analytics/sessions` is cursor-paginated while
+`/analytics/error-types` is offset-paginated, even though both
+sit under the analytics namespace.
+
+## Which endpoints use cursor
+
+Cursor pagination is used where the dataset is too large to count
+cheaply or to walk by offset:
+
+- `POST /analytics/sessions`
+- `POST /analytics/beacons`
+- A handful of error-feed endpoints under `/analytics/error-types/detail`
+
+Everything else is offset-paginated.
+
+## Common surprises
+
+- **Cursor responses don't include a `total`.** This is
+  intentional. Counting rows to compute a total would defeat the
+  point of using cursors. If you need an "approximate total,"
+  combine an aggregation query (`/analytics/query` with
+  `aggregations: ["count"]`) with the listing.
+- **Cursors expire.** They're not designed to be persisted for
+  hours or days. If you stash a cursor in a queue and process it
+  next morning, expect a `400` or stale results.
+- **Cursors are not URLs.** Don't URL-encode them yourself if you're
+  passing them through `?cursor=` — most HTTP clients handle that
+  automatically.
+- **Sort order is fixed.** Cursor endpoints don't accept arbitrary
+  `order_by`. The order is determined by the server (typically
+  newest first for events). Offset endpoints do accept `order_by`
+  per their specific schema.
+
+## Related
+
+- [API overview](/en/api).
+- [Analytics API](/en/analytics-api) — the cursor-paginated
+  feeds.

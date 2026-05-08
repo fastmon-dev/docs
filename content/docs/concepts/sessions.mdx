@@ -1,0 +1,101 @@
+---
+title: Sessions
+description: How Fastmon groups page-views from the same browser without identifying the visitor.
+---
+
+A **session** is a short window of page-views from the same
+browser on the same site. It's there so the dashboard can answer
+things like "average pages per visit" or "where in a session did
+the error happen?" without us having to identify the visitor.
+
+Sessions are anonymous by design. Fastmon never sets a persistent
+identifier — the session boundary is computed from the beacon
+stream, not from a cookie.
+
+## Why it matters
+
+Some questions only make sense at the session level:
+
+- "How many visits crossed a Web-Vitals threshold?" (a multi-page
+  visit might have one bad page and several good ones).
+- "Did the error on the checkout step come after a slow page load?"
+  (the answer is in the prior page-views of the same session).
+- "What's the distribution of pages per visit on each entry path?"
+  (a single page-view can't answer this).
+
+That's what the **Sessions** view in the dashboard is for. Most
+other views work at the page-view level and don't touch sessions
+at all.
+
+## What counts as one session
+
+A session contains the page-views that share **all** of these:
+
+- the same `site_id`,
+- the same browser (no persistent ID — the collector groups by a
+  short-lived correlation key derived per-page-view at request time
+  and matched only within a small time window),
+- a gap of **less than 30 minutes** between consecutive page-views.
+
+The session ends when:
+
+- 30 minutes pass without a new page-view, or
+- the date changes in the visitor's local time, or
+- the visitor closes the browser process (we observe this only via
+  the gap rule).
+
+A new page-view after the boundary starts a new session.
+
+## What's on a session
+
+| Field            | Type                | Notes                                                 |
+| ---------------- | ------------------- | ----------------------------------------------------- |
+| `id`             | string              | Anonymous, time-bounded. Not stable across sessions.  |
+| `site_id`        | UUID v7             | The site the session belongs to.                      |
+| `started_at`     | timestamp           | First page-view's `pst`.                              |
+| `ended_at`       | timestamp           | Last page-view's `pst`, or session-close moment.      |
+| `page_view_count`| int                 | Number of page-views in the session.                  |
+| `entry_url`      | string              | The pathname of the first page-view.                  |
+| `country`        | ISO 3166-1 alpha-2  | Derived from the first page-view's IP.                |
+| `device_type`    | enum                | `mobile` · `tablet` · `desktop`.                      |
+| `browser`        | string              | Family only.                                          |
+
+Note what's absent: no user ID, no fingerprint, no IP. The session
+ID itself is short-lived and not designed to be used outside of the
+analytics window.
+
+## Querying sessions
+
+The Analytics API exposes two endpoints:
+
+- `POST /analytics/sessions` — paginated list of sessions in a time
+  range, with filters. Cursor-paginated for high volumes.
+- `POST /analytics/sessions/detail` — page-views and timing for a
+  single session.
+
+See [Analytics API](/en/analytics-api) for the request shapes.
+
+## Common surprises
+
+- **A "session" in Fastmon is shorter than in some other tools.**
+  Tools that set a 1- or 2-year cookie glue any return visit onto
+  the previous session. We don't have that cookie, so a 30-minute
+  gap is the hard boundary.
+- **One visitor across two days = two sessions.** On purpose.
+  Counting it as one would need persistent identity we don't have.
+- **No "users" concept.** There's nothing above the session. We
+  don't store who someone is — and that includes "is this the
+  same person who showed up yesterday?"
+- **Bot traffic still creates sessions.** The collector filters
+  the obvious bots, but a deliberate headless browser looks like a
+  real visitor. If that bothers you, filter by `device_type` and
+  set up notification rules with sanity bounds.
+
+## Related
+
+- [Collection modes](/en/collection-modes) — what the beacon
+  collects per page-view, which is the data sessions are built from.
+- [Privacy: what we don't collect](/en/privacy) — why sessions are
+  anonymous.
+- [Analytics API](/en/analytics-api) — querying sessions
+  programmatically.

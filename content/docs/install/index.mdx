@@ -1,0 +1,51 @@
+---
+title: Implement Fastmon
+description: Drop the Fastmon beacon into your stack — pick the path that matches your tools.
+---
+
+Fastmon is a hosted service. There's nothing to install on your
+servers — you just add a single `<script>` tag to your site and
+point it at your Fastmon site. Pick the path below that matches
+your stack; each one is self-contained and takes about five
+minutes.
+
+If your stack isn't on the list, the [HTML path](/en/install/html)
+is the universal one: a single tag in `<head>` works on any site
+you control.
+
+<Cards>
+  <Card title="HTML" href="/en/install/html" description="Any website you control. Works on static sites, Hugo, Jekyll, plain HTML." />
+  <Card title="Next.js" href="/en/install/nextjs" description="App Router and Pages Router, with SSR/SSG/static export." />
+  <Card title="WordPress" href="/en/install/wordpress" description="With or without a header-injection plugin." />
+  <Card title="Google Tag Manager" href="/en/install/gtm" description="If your team manages tags through GTM." />
+</Cards>
+
+## After you've added the tag
+
+- [Verify it's working](/en/install/verify) — a five-second check
+  in DevTools and the dashboard.
+- [Pick a collection mode](/en/collection-modes) — `anonymous` fits
+  almost everyone.
+- [Read what we don't collect](/en/privacy) — handy when legal asks.
+
+## What every setup has in common
+
+The script you embed is the same byte-for-byte file, no matter how
+you load it:
+
+```html
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+`{source_hash}` is the per-site hash Fastmon generates when you
+create the site. Copy it from the site's settings page.
+
+The beacon:
+
+- registers `PerformanceObserver` for Web Vitals,
+- buffers events in memory, and
+- POSTs a single batched payload to `/c/{collector_hash}` on
+  `pagehide`, `visibilitychange → hidden`, or a periodic flush.
+
+It doesn't set cookies, store IPs, or fingerprint the visitor —
+see [Privacy](/en/privacy) for the full statement.

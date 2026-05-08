@@ -1,0 +1,109 @@
+---
+title: First Contentful Paint (FCP)
+description: Wann der erste Text oder das erste Bild erscheint — die diagnostische Metrik, die langsame LCPs erklärt.
+---
+
+**FCP** misst die Zeit zwischen Navigation Start und dem ersten
+Text oder Bild, das der Browser auf den Schirm bringt. Das ist der
+Moment, in dem ein Besucher merkt: ah, da tut sich was — das erste
+Lebenszeichen der Seite.
+
+FCP ist **kein** Core Web Vital, fürs Ranking zählt's nicht. Es
+ist eine diagnostische Metrik, mit der du herausfindest, wo deine
+Ladezeit hingeht. Wenn LCP langsam ist, ist FCP der erste Ort,
+an dem du nachschaust.
+
+## Was ist ein guter FCP?
+
+FCP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
+
+| FCP bei p75     | Rating              |
+| --------------- | ------------------- |
+| ≤ 1.800 ms      | **Gut**             |
+| ≤ 3.000 ms      | Verbesserungswürdig |
+| > 3.000 ms      | Schlecht            |
+
+Ein guter FCP garantiert keinen guten LCP — er heißt nur, dass der
+Besucher *irgendwas* schnell gesehen hat. Andersrum: ein schlechter
+FCP heißt fast immer auch einen schlechten LCP. Den FCP zuerst zu
+fixen, ist deshalb meistens der richtige Hebel.
+
+## Was als First Contentful Paint zählt
+
+Der Browser feuert einen FCP-Eintrag beim ersten Paint von:
+
+- Text (jeder Textknoten, inkl. Form-Controls und SVG `<text>`),
+- Bildern (`<img>`, SVG-Bilder, Canvas mit Inhalt),
+- einem nicht-weißen Background-Image.
+
+Eine leere Hintergrundfarbe, ein weißer Rahmen, ein CSS-Gradient ohne
+Text zählt nicht. Skeleton-Loader aus leeren `<div>`s mit
+Background-Color zählen ebenfalls nicht — ein Skeleton mit einem
+einzigen sichtbaren Text-Label aber schon.
+
+## Wann FCP reportet wird
+
+FCP feuert beim ersten berechtigten Paint. Der Beacon nimmt es in den
+nächsten gebündelten Payload. FCP ist pro Navigation;
+SPA-Route-Wechsel erzeugen keinen neuen FCP.
+
+## Wie FCP zu anderen Metriken steht
+
+FCP zerfällt meist in:
+
+```
+FCP ≈ TTFB + (Request → Response → erster Paint)
+```
+
+- Ist **TTFB langsam**, ist FCP langsam, egal was du im Frontend
+  machst.
+- Ist **TTFB schnell, aber FCP langsam**, sind die Schuldigen
+  render-blocking Resources (CSS, synchrone Scripts, Web-Fonts) oder
+  großes HTML.
+
+## FCP in Fastmon ansehen
+
+Der **Performance**-Bereich zeigt FCP bei p50, p75, p95. Der
+nützlichste Vergleich ist FCP neben TTFB:
+
+- TTFB / FCP beide langsam → Server-Problem.
+- TTFB schnell, FCP langsam → render-blocking Resources.
+- FCP schnell, LCP langsam → das LCP-Bild oder der LCP-Text ist der
+  Bottleneck, nicht die Seiten-Shell.
+
+Per **By URL**-Breakdown auffällig schlechte Seiten finden.
+
+## Wie man einen schlechten FCP verbessert
+
+1. **Erst TTFB verbessern.** Siehe [TTFB](/de/web-vitals/ttfb).
+2. **Render-blocking CSS reduzieren.** Critical CSS für
+   above-the-fold inlinen; den Rest via `media`-Attribut oder
+   `rel="preload" + onload` laden.
+3. **Unkritisches JavaScript deferren.** Ein synchrones `<script>` im
+   `<head>` blockiert den Parser bis zur Ausführung. `defer` nutzen
+   oder ans `<body>`-Ende verschieben.
+4. **Web-Fonts optimieren.** `font-display: swap` damit Text im
+   Fallback rendert, während der Web-Font lädt. `font-display:
+   optional` wenn du auf langsamen Verbindungen ohne den Web-Font
+   leben kannst.
+5. **HTML-Payload reduzieren.** Ein 500-KB-HTML-Dokument blockiert
+   den Parser auf langsamen Netzen lange genug, um FCP zu
+   dominieren.
+
+## Häufige Überraschungen
+
+- **FCP kann nahezu null sein mit einem Skeleton-Loader.** Der
+  Browser zählt das erste Text-Element des Skeletons als FCP, auch
+  wenn es "Lädt…" ist. Dein FCP sieht super aus, während LCP
+  schlecht ist — der Besucher merkt die Verzögerung trotzdem.
+- **Critical-CSS-Extraktion ist der Hebel mit der höchsten
+  Leverage.** Ein typischer Blog-Post kann FCP halbieren ohne
+  weitere Änderungen.
+- **Web-Font-Tricks sind verlockend, aber klein.** Sie helfen, bewegen
+  FCP aber selten alleine um Hunderte ms.
+
+## Wie geht's weiter
+
+- [TTFB](/de/web-vitals/ttfb) — die vorgelagerte Metrik für FCP.
+- [LCP](/de/web-vitals/lcp) — was FCP meist vorhersagt.
+- [Web-Vitals-Übersicht](/de/web-vitals).

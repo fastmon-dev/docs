@@ -1,0 +1,162 @@
+---
+title: Notification rules
+description: Alert when a metric crosses a threshold or regresses against a release.
+---
+
+A **notification rule** evaluates a condition on a schedule and
+fires a notification when the condition is met. Two patterns
+cover what most teams want:
+
+- **Threshold breach** — "alert when LCP at p75 goes above
+  3,000 ms."
+- **Release regression** — "alert when a metric is meaningfully
+  worse after a release than before."
+
+This guide walks through both. The engine's the same — only the
+condition looks different.
+
+**Time to set up:** about ten minutes per rule.
+**You'll need:** an organization member account with permission
+to create rules (any role works for your own rules).
+
+## Where rules live
+
+Rules are organization-level resources. Every rule is owned by the
+user who created it, but other org members can see them too.
+Notifications go to whatever delivery target the rule specifies — by
+default, the creator's email.
+
+## 1. Pick a preset (or start blank)
+
+Open **Notifications → Rules → New rule** in the Fastmon dashboard.
+The first step shows a list of **presets** — common rule shapes
+pre-filled with sensible defaults:
+
+- *LCP regression on production*
+- *Error spike on a single URL*
+- *INP went poor*
+- *Experience score dropped*
+- … and a few others.
+
+Pick the one closest to what you want. You can edit any field
+afterward. If nothing matches, choose **Blank rule** and skip to
+step 3.
+
+## 2. Pick a delivery target
+
+Email by default. Other targets (depending on your plan):
+
+- **Email** — to one or more addresses.
+- **Webhook** — POST to a URL with a JSON payload.
+- **Slack / Teams / Mattermost** — incoming-webhook integrations.
+
+You can add multiple targets to one rule. Each fires on the same
+event.
+
+## 3. Define the condition
+
+The part that takes a bit of thought. A rule has three pieces:
+
+### What you're measuring
+
+- A **site** (or "all sites" for a portfolio rule).
+- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, sessions, …).
+- An **aggregation** (p50, p75, p95, count, avg, …).
+- An optional **filter** (mobile only, a specific URL pattern, a
+  country list, …).
+
+### When you're measuring it
+
+- A **time window** — usually 1 hour or 24 hours. Shorter windows
+  catch things faster but are noisier.
+- An **evaluation cadence** — how often the rule runs (every 15
+  minutes, hourly, daily).
+
+### What's a breach
+
+Pick one of:
+
+- **Above / below threshold** — fixed number. "LCP p75 > 3,000 ms."
+- **Regresses against previous window** — relative to the prior
+  same-length window. "LCP p75 +20%."
+- **Regresses against a release** — relative to the same-length
+  window ending at a release's `released_at`. "LCP p75 +20% vs.
+  release `01HZX...`." (Useful in CI to fail a deploy.)
+
+Each shape has its own gotcha:
+
+- **Absolute thresholds are stable** — but they punish you on
+  the day a big new segment hits your site (more slow-network
+  visitors → metrics dip → alert you can't do anything about).
+- **Relative thresholds are sensitive** but noisy on low-volume
+  sites. One bad day-over-day comparison fires the alert. Use a
+  `min_volume` guard.
+- **Per-release thresholds are precise** — but only fire on
+  releases you actually tagged. See
+  [Compare releases](/en/guides/compare-releases).
+
+## 4. Dry-run the rule
+
+Before you save, click **Evaluate now**. That runs the rule
+against the **current** window and tells you whether it would
+fire. Good sanity check for the threshold — if it fires on every
+test, the threshold is too tight.
+
+There's a corresponding API endpoint — `POST /notification-rules/{id}/evaluate`.
+
+## 5. Send a synthetic test
+
+Once the rule is saved, click **Send test notification**. This
+sends a sample message to all delivery targets so you can confirm
+they receive it.
+
+API equivalent: `POST /notification-rules/{id}/test`.
+
+## 6. Watch the history
+
+Each rule has a **History** tab that lists every evaluation, whether
+it fired, and (if it fired) where the notification went. If you ever
+get an alert that doesn't match what you see in the dashboard, the
+history is the audit trail to start from.
+
+## A worked example: LCP regression on production
+
+Goal: alert when LCP at p75 on the production site is more than 20%
+worse than the previous 24 hours.
+
+| Field            | Value                                     |
+| ---------------- | ----------------------------------------- |
+| Site             | `acme-marketing` (production)             |
+| Metric           | `lcp`                                     |
+| Aggregation      | `p75`                                     |
+| Filter           | `tags: [env:production]`                  |
+| Time window      | last 24 hours                             |
+| Cadence          | every hour                                |
+| Condition        | regresses against previous window (+20 %) |
+| Min volume       | 500 page-views in window                  |
+| Delivery         | `team-perf@example.com`                   |
+
+The min-volume guard is the piece people forget most often —
+without it, overnight low-volume periods will fire false
+positives non-stop.
+
+## Common surprises
+
+- **Rules don't deduplicate across cadences.** A 15-minute rule
+  fires 4× an hour during a sustained regression, easily. If
+  you'd rather get one notification per incident, use a longer
+  cadence or set `min_silence_minutes` on the rule.
+- **A regression alert during a known maintenance window is
+  still noise.** Pause the rule, or filter by URL to skip the
+  affected paths.
+- **Notification rules don't auto-create release tags.** If you
+  want per-release alerts, wire up
+  [Compare releases](/en/guides/compare-releases) first.
+
+## Related
+
+- [Notification rules — API](/en/api) — programmatic creation.
+- [Releases concept](/en/concepts/releases) — for per-release
+  rules.
+- [Compare releases](/en/guides/compare-releases) — wire CI/CD to
+  tag deploys.

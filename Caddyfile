@@ -1,0 +1,31 @@
+# Production Caddyfile for Fastmon docs.
+# Serves the static export from `out/` after `npm run build`.
+#
+# Deploy: rsync -av --delete ./out/ user@host:/var/www/fastmon-docs/
+# Then point Caddy at /var/www/fastmon-docs.
+
+docs.fastmon.io {
+	root * /var/www/fastmon-docs
+	encode zstd gzip
+
+	# Next static export uses .html siblings — try them before falling through.
+	try_files {path} {path}.html {path}/index.html
+
+	file_server
+
+	# Cache hashed Next assets aggressively.
+	@hashed path /_next/static/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	# HTML pages: short cache, must revalidate.
+	@html path *.html /
+	header @html Cache-Control "public, max-age=0, must-revalidate"
+
+	# Security headers.
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "interest-cohort=()"
+	}
+}

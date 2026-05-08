@@ -1,0 +1,105 @@
+---
+title: Fastmon auf einer Website implementieren
+description: Fastmon mit einem einzigen Script-Tag auf jeder Website einbinden. Fünf Minuten vom Signup bis zum ersten Datenpunkt.
+---
+
+Der universelle Weg: ein `<script>`-Tag im `<head>`. Läuft auf
+jeder Site, die du selbst hostest — statisches HTML, Vue/React,
+Hugo-Blog, was auch immer. Für Next.js, Nuxt, WordPress und Google
+Tag Manager haben wir kürzere, eigene Guides.
+
+**Time to first data:** etwa fünf Minuten.
+**Was du brauchst:** Zugriff aufs HTML deiner Site und einen
+Fastmon-Account.
+
+## 1. Site in Fastmon anlegen
+
+Einloggen, gewünschte Organisation öffnen, **Create site** klicken.
+Ausfüllen:
+
+- **Name** — wie auch immer du sie später erkennst (z. B. `acme-marketing`).
+- **Domain** — der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
+- **Allowed origins** *(optional)* — leer lassen, um Beacons von der
+  Domain selbst zu akzeptieren. Staging- oder Preview-Hostnames hier
+  als Komma-Liste eintragen (`staging.acme.com, preview.acme.com`).
+
+Den Rest erstmal auf Default lassen — [Collection Mode](/de/collection-modes)
+und Retention drehst du später bei Bedarf.
+
+**Save** klicken. Fastmon legt zwei kurze Hashes für die Site an:
+
+- `source_hash` — kommt in die Script-URL.
+- `collector_hash` — nutzt der Beacon zum Senden. Steckt im Script
+  drin, den musst du nicht extra kopieren.
+
+Beide findest du auf der Settings-Seite. Dort liegt auch ein
+fertiges Snippet zum Reinkopieren — genau das, was im nächsten
+Schritt erklärt wird.
+
+## 2. Script auf deiner Site einbinden
+
+Diesen Tag in den `<head>` jeder Seite, die du monitoren willst.
+`{source_hash}` durch den Wert aus Schritt 1 ersetzen:
+
+```html title="<head>"
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+Mehr ist es nicht. Der Beacon:
+
+- registriert `PerformanceObserver` für Web Vitals,
+- puffert Events im Speicher,
+- schickt einen gebündelten POST an `/c/{collector_hash}` bei
+  `visibilitychange → hidden`, bei `pagehide` und in periodischen
+  Flushes.
+
+Das Tag ist `async`, blockiert also kein Rendering. Wo du es
+einbaust, ist relativ egal — der `<head>` ist trotzdem die bessere
+Wahl, dann erwischt der Beacon auch den ersten Paint.
+
+### Wo das Tag hinkommt
+
+| Site-Typ                   | Tag einfügen in…                                              |
+| -------------------------- | ------------------------------------------------------------- |
+| Plain HTML / Hugo / Jekyll | `<head>` des Base-Templates.                                  |
+| WordPress                  | Header-Snippet-Plugin oder `header.php`. Siehe [WordPress-Guide](/de/install/wordpress). |
+| Next.js / Nuxt / Astro     | Das Head/Script-Primitive des Frameworks. Siehe [Next.js-Guide](/de/install/nextjs). |
+| Single-Page-Apps           | Die statische `index.html`-Shell — einmal reicht.             |
+
+## 3. Deployen und Seite laden
+
+Push die Änderung nach Production (oder in die Umgebung, die du
+monitoren willst), und ruf eine beliebige Seite im Browser auf.
+
+Der Beacon schickt erst bei `pagehide` / `visibilitychange` — den
+ersten Batch siehst du also, wenn du wegnavigierst oder den Tab
+wechselst.
+
+## 4. Prüfen, ob es läuft
+
+Zwei Checks — einer in DevTools, einer im Dashboard.
+
+### Im Browser
+
+DevTools → **Network** → nach `/c/` filtern. Beim Tab-Wechsel oder
+Schließen der Seite sollte ein `POST` an
+`https://api.fastmon.eu/c/{collector_hash}` erscheinen. Status 204 bedeutet,
+der Beacon wurde akzeptiert.
+
+Wenn nichts kommt: [Implementierung verifizieren](/de/install/verify).
+
+### In Fastmon
+
+Site im Dashboard öffnen. Spätestens nach ~30 Sekunden zeigt der
+**Traffic**-Bereich Sessions &gt; 0. Der erste Beacon ist der,
+den du gerade abgeschickt hast — deine IP behalten wir nicht, aber
+die Zeile ist da.
+
+## Wie geht's weiter
+
+- [Collection Mode](/de/collection-modes) wählen — Default
+  `anonymous` ist für die meisten Sites die richtige Antwort.
+- [Privacy: Was wir nicht sammeln](/de/privacy) — nützlich, wenn
+  Legal fragt.
+- Releases taggen für Vorher/Nachher-Vergleiche — siehe
+  [Releases vergleichen](/de/guides/compare-releases).

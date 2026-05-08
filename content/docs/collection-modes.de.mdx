@@ -1,0 +1,153 @@
+---
+title: Collection Modes
+description: Anonymous, Consent, Full — was sie sind, was sie sammeln, welchen du wählst.
+---
+
+Jede Fastmon-Site hat einen **Collection Mode**. Der legt fest, was
+der Beacon im Browser des Besuchers tatsächlich macht. Pro Site,
+jederzeit umschaltbar — der Script-Cache wird dabei automatisch
+invalidiert.
+
+Drei Modes: `anonymous`, `consent`, `full`. Default ist `anonymous`,
+und für fast alle ist das genau richtig.
+
+## Vergleich auf einen Blick
+
+| Aspekt                           | `anonymous` (Default)              | `consent`                                                       | `full`                                  |
+| -------------------------------- | ---------------------------------- | --------------------------------------------------------------- | --------------------------------------- |
+| Sendet vor Consent-Signal        | Ja                                 | Ja — als `anonymous`                                            | Ja                                      |
+| Sendet nach Consent-Signal       | Ja                                 | Wechselt auf `full`-Erfassung                                   | Ja                                      |
+| Web Vitals                       | Ja                                 | Ja                                                              | Ja                                      |
+| Fehler                           | Ja (keine PII, fingerprinted)      | Ja                                                              | Ja                                      |
+| Seitenübergreifende `session_id` | Nein (verworfen)                   | Vor Opt-In nein — danach ja                                     | Ja                                      |
+| URL Query-String + Fragment      | Entfernt                           | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
+| Cookie nötig                     | Nein                               | Nein (Signal ist ein JS-Event, kein Cookie)                     | Nein                                    |
+| Consent-Banner für unseren Beacon nötig | Nein (keine PII, keine IP, keine Cookies) | Nur, wenn du auch nach Opt-In Verknüpfbarkeit willst | Hängt von der Jurisdiktion ab          |
+| Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1 sammeln, aber Sessions erst nach CMP-Consent verknüpfen | Du fällst unter eine Regulierung, die das explizit erlaubt, oder du bist nur intern |
+
+## `anonymous` — der Default
+
+Der Beacon sendet sofort beim Pageload, ohne Consent-Gate. Erfasst
+wird nur, was unter [Privacy: Was wir nicht sammeln](/de/privacy)
+steht — nichts, womit man einen Besucher seitenübergreifend
+wiedererkennen könnte.
+
+**Passt für dich, wenn:**
+
+- du eine öffentliche Website in der EU betreibst und die
+  einfachste DSGVO-Position willst. `anonymous` braucht *für
+  unseren Beacon* keinen Cookie-Banner, weil keine Cookies gesetzt
+  und keine IPs gespeichert werden. Andere Tools auf der Seite
+  können trotzdem einen Banner verlangen — das liegt aber nicht
+  an uns.
+- du kein CMP integriert hast,
+- du das Setup live schalten willst, ohne erst Engineering und
+  Legal an einen Tisch zu setzen.
+
+**Was der Beacon tut:**
+
+- Registriert `PerformanceObserver` beim Pageload.
+- Puffert Web Vitals, Fehler und Resource-Timing im Speicher.
+- Schickt einen gebündelten POST bei `pagehide` /
+  `visibilitychange` / periodischem Flush.
+- Vergibt eine Per-Pageview-ID, die mit der Seite verschwindet.
+
+**Was der Beacon nicht tut:**
+
+- Cookies setzen.
+- `localStorage` / `IndexedDB` lesen oder schreiben.
+- Query-Strings, Formularwerte oder DOM-Inhalt anfassen.
+- Versuchen, den Besucher zu identifizieren.
+
+## `consent` — anonym starten, bei Opt-In hochstufen
+
+Der Beacon **sendet ab Pageload als `anonymous`** — gleicher
+Payload, gleiche Privacy-Untergrenze wie im Default-Modus (keine
+Cookies, keine IP-Speicherung, keine `session_id`, URL nur
+Pathname). Sobald deine Site Consent signalisiert, schaltet der
+Beacon für den Rest der Session auf `full`-Erfassung: `session_id`
+wird gespeichert, vollständige URL bleibt erhalten, Pageviews
+werden zu Sessions verknüpfbar.
+
+Das heißt: du verlierst keine Web Vitals vom ersten Pageview, und
+Besucher, die den CMP nie akzeptieren, erzeugen weiter anonyme
+Metriken. Der Opt-In schaltet **Verknüpfbarkeit** frei, keine
+neuen Datenkategorien.
+
+**Passt für dich, wenn:**
+
+- du Web-Vitals-Abdeckung auch für Besucher willst, die den CMP
+  nie akzeptieren,
+- aber Session-Verknüpfung (seitenübergreifende Journeys, volle
+  URLs) erst nach explizitem Consent,
+- du eine Consent-Entscheidung für Fastmon und andere Tools
+  gleichzeitig haben willst.
+
+**Consent signalisieren:**
+
+```js
+window.dispatchEvent(new Event('fastmon:consent'));
+```
+
+Dieses Event feuert, sobald dein CMP Consent erfasst hat. Ab
+diesem Moment werden Beacons in dieser Session als `full`
+gesendet.
+
+Widerruf:
+
+```js
+window.dispatchEvent(new Event('fastmon:revoke'));
+```
+
+Nach einem Revoke fällt der Beacon zurück auf `anonymous`-Erfassung
+und verwirft, was er an Detail noch im Buffer hatte.
+
+## `full` — Sessions ohne Consent-Gate verknüpfen
+
+`full` sammelt dieselben Felder wie `anonymous`, plus zwei Dinge:
+
+- **`session_id`** wird gespeichert, sodass Pageviews derselben
+  Session verknüpfbar werden (seitenübergreifende Journeys,
+  Funnels, Wiederkehrer-Metriken).
+- **Die volle URL** bleibt erhalten, inklusive Query-String und
+  Fragment (statt nur Pathname).
+
+Alles andere — Web Vitals, Fehler, Browser/OS/Device/Viewport,
+Connection-Typ — ist identisch zu `anonymous`. Es gibt keine
+zusätzlichen Attributkategorien. Auch die Privacy-Untergrenze
+ändert sich nicht: keine Cookies, keine IP-Speicherung, kein
+roher User-Agent, keine Fingerprints.
+
+Was `full` aufgibt, ist das DSGVO-Argument des berechtigten
+Interesses, auf dem `anonymous` ruht: ein stabiler
+seitenübergreifender Identifier macht aus Pageviews eine Session,
+und das gilt nach den meisten EU-Lesarten als personenbezogenes
+Datum.
+
+**Passt für dich, wenn:**
+
+- du rein intern misst (Intranet, Employee-App), wo Besucherkreis
+  und Consent-Kontext anders aussehen,
+- du in einer Jurisdiktion sitzt, in der Session-Verknüpfung ohne
+  separate Rechtsgrundlage erlaubt ist,
+- du einen AVV unterschrieben hast, der das explizit abdeckt,
+- oder du entschieden hast, dass `consent` die bessere Wahl ist
+  und du das Opt-In-Gate willst.
+
+Im Zweifel: lass `full` weg. Regulatoren belohnen niemanden dafür,
+Sessions zu verknüpfen, die er nicht hätte verknüpfen müssen.
+
+## Mode ändern
+
+Site in Fastmon öffnen, **Settings**, **Collection mode** umstellen,
+speichern. Die Änderung greift, sobald der Script-Cache rolliert —
+für aktive Besucher meistens binnen Minuten, für neue Sessions
+sofort.
+
+Redeployen oder das `<script>`-Tag anpassen musst du nichts.
+
+## Wie geht's weiter
+
+- Genau was der Beacon schickt: [Der RUM-Beacon](/de/beacon).
+- [Privacy: Was wir nicht sammeln](/de/privacy) — die
+  Zero-Cookie-Story gilt für alle drei Modes.

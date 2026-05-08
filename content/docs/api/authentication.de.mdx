@@ -1,0 +1,112 @@
+---
+title: Authentifizierung
+description: Session-Cookie oder fm_…-Bearer-Token. Beide funktionieren auf jedem Endpunkt.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+Jeder `/v1/`-Endpunkt erfordert Authentifizierung. Zwei Schemata werden
+akzeptiert — nimm das, was zu deinem Client passt. Wenn beide auf einem
+Request sind, gewinnt das Bearer-Token.
+
+## Wahl des Schemas
+
+| Client                          | Nutze                                        |
+| ------------------------------- | -------------------------------------------- |
+| Die Fastmon-SPA                 | Session-Cookie — nach Login schon gesetzt.   |
+| CI/CD-Job                       | Bearer-Token, in Secrets abgelegt.           |
+| Backend-Service                 | Bearer-Token.                                |
+| User-facing Tool mit Login      | Session-Cookie über die Auth-Endpunkte.      |
+
+## Session-Cookie
+
+Wird vom Dashboard genutzt. Login setzt ein Cookie namens `session`
+mit den Flags `HttpOnly`, `Secure`, `SameSite=Lax`. Keine JWTs —
+Sessions liegen server-seitig und verlängern sich bei Aktivität.
+
+<Tabs items={['Login', 'Logout']}>
+<Tab value="Login">
+
+```bash
+curl -X POST https://api.fastmon.eu/v1/auth/session \
+  -H "Content-Type: application/json" \
+  -d '{ "email": "du@example.com", "password": "…" }'
+```
+
+</Tab>
+<Tab value="Logout">
+
+```bash
+curl -X DELETE https://api.fastmon.eu/v1/auth/session \
+  -H "Cookie: session=…"
+```
+
+</Tab>
+</Tabs>
+
+### Mit aktiviertem 2FA
+
+<Steps>
+<Step>
+
+`POST /v1/auth/session` mit E-Mail + Passwort liefert eine
+Partial-Session, die **nur für den 2FA-Verify-Call** gültig ist.
+
+</Step>
+<Step>
+
+`POST /v1/auth/session/2fa` mit TOTP-Code schließt den Login ab und
+upgradet das Cookie zur Voll-Session.
+
+</Step>
+</Steps>
+
+## Bearer-Token
+
+Für programmatische Clients. Erzeugen in **Account → API-Token** im
+Dashboard, oder via `POST /v1/account/api-token`. Sieht aus wie
+`fm_<langer-zufälliger-Suffix>`.
+
+```http
+Authorization: Bearer fm_abcdef…
+```
+
+```bash title="Token erzeugen"
+curl -X POST https://api.fastmon.eu/v1/account/api-token \
+  -H "Cookie: session=…"
+```
+
+Die Response enthält das Token **einmalig**. Sofort in deinem
+Secret-Manager ablegen — keinen Recovery-Flow.
+
+<Callout type="warn">
+  Verlorene Tokens sind unwiederbringlich. Server-seitig sind sie
+  gehasht; nur der `fm_`-Prefix ist abfragbar. Zum Rotieren neu
+  erzeugen via `POST /v1/account/api-token` — das vorherige
+  funktioniert sofort nicht mehr.
+</Callout>
+
+### Was ein Token darf
+
+- **Pro User.** Jeder User hat höchstens ein Token zur Zeit.
+- **Selbe Scope wie der User.** `member`-Token kann was ein
+  `member` kann; `owner`-Token kann was ein `owner` kann.
+- **Org-übergreifend.** Ist der User Mitglied mehrerer Orgs,
+  funktioniert das Token gegen alle.
+
+## Häufige Überraschungen
+
+- **Du kannst kein fremdes Token verwalten.** Auch ein `owner`
+  kann nur sein eigenes neu erzeugen.
+- **Session-Cookies funktionieren cross-origin nicht** zu anderen
+  Domains — `SameSite=Lax` ist Absicht.
+- **Multi-Token / Service-Account-Tokens** sind auf der Roadmap,
+  Enterprise-gated.
+
+## Verwandt
+
+- [API-Übersicht](/de/api) — Base URL und Konventionen.
+- [Fehler](/de/api/errors) — `401 unauthorized` und `403 forbidden`
+  Responses.

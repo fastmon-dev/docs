@@ -1,0 +1,96 @@
+---
+title: Fastmon über Google Tag Manager implementieren
+description: Fastmon auf einer Site einbinden, die per GTM verwaltet wird — ein einzelnes Custom-HTML-Tag, getriggert auf All Pages.
+---
+
+Wenn dein Team Tags über Google Tag Manager verwaltet, kommt der
+Fastmon-Beacon als **Custom HTML**-Tag rein, das auf jeder Seite
+feuert. Es gibt kein Fastmon-spezifisches GTM-Template — das Snippet
+ist klein genug, dass du keins brauchst.
+
+Eine Einschränkung vorweg: GTM ist ein Service mit US-Jurisdiktion.
+Der Fastmon-Beacon selbst läuft komplett in der EU, aber das
+Script-Tag wird *über* GTM geladen, das damit auf dem kritischen
+Pfad sitzt. Wenn du einen strikt EU-only-Pfad ohne
+US-Jurisdiktions-Anbieter zwischen Besucher und unserem Beacon
+willst, embed das Script direkt via
+[HTML-Pfad](/de/install/html).
+
+**Time to first data:** etwa fünf Minuten.
+**Was du brauchst:** Fastmon-Site (siehe
+[Übersicht](/de/install)), Edit-/Publish-Rechte auf den
+GTM-Container, der bereits auf deiner Site läuft.
+
+## 1. `source_hash` holen
+
+Site in Fastmon öffnen, die du monitoren willst. `source_hash` aus
+den Site-Settings kopieren — sieht aus wie `a1b2c3d4`. Das fertige
+Snippet:
+
+```html
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+## 2. Tag in GTM anlegen
+
+1. GTM-Workspace öffnen, **Tags → Neu**.
+2. Tag **Fastmon Beacon** nennen.
+3. **Tag-Konfiguration** klicken, **Custom HTML** wählen.
+4. Das `<script>`-Snippet aus Schritt 1 ins **HTML**-Feld einfügen.
+5. **Support document.write** abgewählt lassen. Erweiterte
+   Einstellungen auf Default.
+
+## 3. Trigger hinzufügen
+
+1. **Trigger** klicken, **All Pages** wählen (der eingebaute Trigger,
+   der bei jedem Pageview feuert).
+2. Tag speichern.
+
+## 4. Preview, dann veröffentlichen
+
+1. **Preview** klicken, um den Tag Assistant zu öffnen. Mit deiner
+   Site-URL verbinden und eine Seite laden.
+2. Im Tag Assistant prüfen, dass **Fastmon Beacon** in der Liste
+   **Tags Fired** auftaucht.
+3. Zurück in GTM **Submit** klicken, der Version einen Namen geben,
+   **Publish**.
+
+## 5. Prüfen, ob es läuft
+
+Eine Seite auf deiner Live-Site öffnen, DevTools → **Network**, nach
+`c/` filtern, Tab wechseln, zurückkommen.
+
+Du solltest einen `POST` an `https://api.fastmon.eu/c/{collector_hash}`
+mit Status `204` sehen.
+
+In Fastmon das Site-Dashboard öffnen. Innerhalb von ~30 Sekunden
+zeigt **Traffic** Sessions &gt; 0.
+
+Wenn etwas nicht passt: [Implementierung verifizieren](/de/install/verify).
+
+## Hinweise
+
+- **Page Load vs. DOM Ready vs. Window Loaded.** Der **All
+  Pages**-Trigger feuert auf `gtm.js` (das früheste Event). Richtig
+  für Fastmon — je früher, desto mehr Web Vitals erfasst.
+- **Consent-Mode-Integration.** Wenn du GTM-Consent nutzt und der
+  Beacon auf Consent warten soll, die Fastmon-Site auf
+  [`consent`-Collection-Mode](/de/collection-modes#consent--auf-opt-in-warten)
+  schalten. Der GTM-Consent-State löst dann das
+  `fastmon:consent`-Event aus — per kleinem Custom-HTML-Tag, das
+  auf GTMs `consent_update`-Event hört.
+- **Mehrere GTM-Container auf einer Seite.** Das Tag in den
+  Container packen, der am frühesten feuert. Nicht doppelt einbauen
+  — sonst werden Pageviews doppelt gezählt.
+- **GTM-Load-Timing.** GTM selbst fügt Latenz hinzu, bevor der
+  Beacon lädt. Auf langsamen Netzen verzögert sich der Start des
+  `PerformanceObserver` um ein paar Hundert ms, was sehr frühe
+  Einträge auf dem ersten Pageview leicht unterzählen kann. Der
+  HTML-Pfad vermeidet das.
+
+## Wie geht's weiter
+
+- [Implementierung verifizieren](/de/install/verify).
+- [Collection Mode wählen](/de/collection-modes).
+- Für einen strikten EU-only-Datenpfad zum
+  [HTML-Pfad](/de/install/html) wechseln.

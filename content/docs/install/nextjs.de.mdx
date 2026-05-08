@@ -1,0 +1,132 @@
+---
+title: Fastmon auf Next.js implementieren
+description: Fastmon mit der Next.js-Script-Komponente einbinden. Deckt App Router und Pages Router ab.
+---
+
+Next.js liefert eine [`<Script>`](https://nextjs.org/docs/app/api-reference/components/script)-Komponente,
+die genau die richtige Primitive ist, um den Fastmon-Beacon zu laden.
+Dieser Guide deckt App Router (Next.js 13+) und Pages Router (Legacy)
+ab, plus eine Notiz zu Static Export.
+
+**Time to first data:** etwa fünf Minuten.
+**Was du brauchst:** eine Fastmon-Site (siehe
+[Übersicht](/de/install)) und Zugriff auf das Root-Layout deiner
+Next.js-App.
+
+## 1. `source_hash` holen
+
+Site in Fastmon öffnen, die du monitoren willst. `source_hash` aus
+den Site-Settings kopieren — sieht aus wie `a1b2c3d4`.
+
+Wenn noch keine Site angelegt: Schritt 1 von
+[HTML-Pfad](/de/install/html#1-create-a-site-in-fastmon).
+
+## 2. `<Script>`-Komponente einfügen
+
+### App Router (Next.js 13+)
+
+In `app/layout.tsx`:
+
+```tsx title="app/layout.tsx"
+import Script from 'next/script';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="de">
+      <body>
+        {children}
+        <Script
+          src="https://api.fastmon.eu/s/{source_hash}.js"
+          strategy="afterInteractive"
+        />
+      </body>
+    </html>
+  );
+}
+```
+
+`{source_hash}` mit dem Wert aus Schritt 1 ersetzen.
+
+`strategy="afterInteractive"` ist der richtige Default — das Script
+lädt, nachdem die Seite interaktiv ist, was der Moment ist, in dem
+der Beacon mit Beobachten anfangen soll. `lazyOnload` würde auch
+funktionieren und ist minimal billiger, aber du verpasst den ersten
+Paint bei jedem Load.
+
+### Pages Router (Legacy)
+
+In `pages/_app.tsx`:
+
+```tsx title="pages/_app.tsx"
+import Script from 'next/script';
+import type { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <Script
+        src="https://api.fastmon.eu/s/{source_hash}.js"
+        strategy="afterInteractive"
+      />
+    </>
+  );
+}
+```
+
+### Static Export (`output: 'export'`)
+
+Wenn du einen Static Export auslieferst, überspringe die
+`<Script>`-Komponente und nutze ein einfaches `<script>`-Tag im
+`<head>` deines Root-Layouts:
+
+```tsx
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async />
+```
+
+Static Export führt den React-Tree zur Request-Zeit nicht aus, also
+greifen die Strategy-Optionen von `next/script` nicht.
+
+## 3. Deployen
+
+Auf dein Hosting-Target pushen (Vercel, Netlify, eigene Infra). Auf
+den fertigen Deploy warten.
+
+## 4. Prüfen, ob es läuft
+
+Eine Seite auf der deployten Site öffnen, DevTools → **Network**,
+nach `c/` filtern. Tab wechseln, dann zurück.
+
+Du solltest einen `POST` an `https://api.fastmon.eu/c/{collector_hash}`
+mit Status `204` sehen.
+
+In Fastmon das Site-Dashboard öffnen. Innerhalb von ~30 Sekunden
+zeigt **Traffic** Sessions &gt; 0.
+
+Wenn etwas nicht stimmt: [Implementierung verifizieren](/de/install/verify).
+
+## Hinweise zum App Router
+
+- Der Beacon ist ein einzelner Fetch beim `pagehide` — er fügt keine
+  Per-Render-Kosten hinzu.
+- Server Components brauchen keine Änderung. Der Beacon ist
+  client-seitig; ihn in `app/layout.tsx` zu laden, deckt automatisch
+  jede Route ab.
+- **Route-Wechsel im App Router erzeugen keinen neuen LCP.** Web
+  Vitals sind per-Navigation, und SPA-Transitions sind keine
+  Navigationen. Das ist konsistent damit, wie jedes RUM-Tool Next.js
+  misst.
+
+## Hinweise zum Pages Router
+
+- `_app.tsx` ist die richtige Stelle. Nicht in `_document.tsx` —
+  Strategy-Optionen werden dort nicht respektiert.
+- `getServerSideProps` und `getStaticProps` beeinflussen das Setup
+  nicht.
+
+## Wie geht's weiter
+
+- [Implementierung verifizieren](/de/install/verify).
+- [Collection Mode wählen](/de/collection-modes).
+- [Releases taggen](/de/guides/compare-releases) — Vercel-Deploy-Schritt
+  mit Fastmon verbinden und Web Vitals zwischen Deploys vergleichen.

@@ -1,0 +1,107 @@
+---
+title: Sessions
+description: Wie Fastmon Pageviews desselben Browsers gruppiert, ohne den Besucher zu identifizieren.
+---
+
+Eine **Session** ist ein kurzes Fenster mit Pageviews desselben
+Browsers auf derselben Site. Damit kann das Dashboard Sachen
+beantworten wie "wie viele Seiten pro Besuch?" oder "an welcher
+Stelle im Besuch kam der Fehler?" — ohne dass wir den Besucher
+identifizieren müssen.
+
+Anonym sind Sessions schon vom Aufbau her. Fastmon setzt nie einen
+persistenten Identifier; die Session-Grenze rechnen wir aus dem
+Beacon-Stream, nicht aus einem Cookie.
+
+## Warum das zählt
+
+Manche Fragen kannst du nur auf Session-Ebene beantworten:
+
+- "Wie viele Besuche haben eine Web-Vitals-Schwelle gerissen?" (ein
+  Mehr-Seiten-Besuch hat vielleicht eine schlechte Seite und mehrere
+  gute).
+- "Kam der Fehler auf der Checkout-Stufe nach einem langsamen
+  Pageload?" (die Antwort steht in den vorherigen Pageviews
+  derselben Session).
+- "Wie verteilt sich Pages-pro-Besuch je Entry-Pfad?" (ein einzelner
+  Pageview kann das nicht beantworten).
+
+Dafür gibt's den **Sessions**-View im Dashboard. Die meisten
+anderen Views arbeiten auf Pageview-Ebene und kommen ohne Sessions
+aus.
+
+## Was eine Session ausmacht
+
+Eine Session enthält Pageviews, die **alles** Folgende teilen:
+
+- dieselbe `site_id`,
+- denselben Browser (kein persistenter Identifier — der Collector
+  gruppiert über einen kurzlebigen Korrelations-Schlüssel, der pro
+  Request abgeleitet und nur in einem kleinen Zeitfenster gematcht
+  wird),
+- eine Lücke von **weniger als 30 Minuten** zwischen
+  aufeinanderfolgenden Pageviews.
+
+Die Session endet, wenn:
+
+- 30 Minuten ohne neuen Pageview vergehen, oder
+- das Datum in der lokalen Zeit des Besuchers wechselt, oder
+- der Besucher den Browser-Prozess schließt (das beobachten wir nur
+  über die Lücken-Regel).
+
+Ein Pageview nach der Grenze startet eine neue Session.
+
+## Was auf einer Session steht
+
+| Feld             | Typ                  | Hinweise                                                |
+| ---------------- | -------------------- | ------------------------------------------------------- |
+| `id`             | string               | Anonym, zeitlich begrenzt. Nicht stabil über Sessions.  |
+| `site_id`        | UUID v7              | Die zugehörige Site.                                    |
+| `started_at`     | timestamp            | `pst` des ersten Pageviews.                             |
+| `ended_at`       | timestamp            | `pst` des letzten Pageviews oder Schließ-Moment.        |
+| `page_view_count`| int                  | Anzahl Pageviews in der Session.                        |
+| `entry_url`      | string               | Pathname des ersten Pageviews.                          |
+| `country`        | ISO 3166-1 alpha-2   | Aus der IP des ersten Pageviews abgeleitet.             |
+| `device_type`    | enum                 | `mobile` · `tablet` · `desktop`.                        |
+| `browser`        | string               | Nur Familie.                                            |
+
+Was fehlt: keine User-ID, kein Fingerprint, keine IP. Die Session-ID
+selbst ist kurzlebig und nicht dafür da, außerhalb des
+Analytics-Fensters verwendet zu werden.
+
+## Sessions abfragen
+
+Die Analytics-API bietet zwei Endpunkte:
+
+- `POST /analytics/sessions` — paginierte Liste in einem Zeitraum,
+  mit Filtern. Cursor-paginiert für hohe Volumina.
+- `POST /analytics/sessions/detail` — Pageviews und Timing einer
+  einzelnen Session.
+
+Request-Shapes: [Analytics-API](/de/analytics-api).
+
+## Häufige Überraschungen
+
+- **Eine "Session" in Fastmon ist kürzer als bei manchen anderen
+  Tools.** Wer ein 1- oder 2-Jahre-Cookie setzt, klebt jeden
+  Wiederbesuch an die alte Session. Wir haben das Cookie nicht,
+  und damit ist die 30-Minuten-Lücke die harte Grenze.
+- **Ein Besucher an zwei Tagen = zwei Sessions.** Mit Absicht.
+  Alles andere würde voraussetzen, dass wir wissen, wer derselbe
+  Besucher ist — und das wissen wir nicht.
+- **Kein "Users"-Konzept.** Über der Session gibt es nichts.
+  Wir speichern nicht, wer jemand ist — und damit eben auch nicht,
+  ob das dieselbe Person ist wie gestern.
+- **Bot-Traffic erzeugt trotzdem Sessions.** Offensichtliche Bots
+  filtert der Collector, aber ein zielgerichteter Headless-Browser
+  sieht aus wie ein echter Besucher. Falls dich das stört: nach
+  `device_type` filtern und Notification Rules mit
+  Plausibilitäts-Schwellen anlegen.
+
+## Verwandt
+
+- [Collection Modes](/de/collection-modes) — was der Beacon pro
+  Pageview erfasst, woraus Sessions gebaut werden.
+- [Privacy: was wir nicht sammeln](/de/privacy) — warum Sessions
+  anonym sind.
+- [Analytics-API](/de/analytics-api) — Sessions programmatisch.

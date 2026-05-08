@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1216 2048">
+  <style>
+    .main { fill: #020202; }
+    .fold { fill: #191919; }
+    @media (prefers-color-scheme: dark) {
+      .main { fill: #fefefe; }
+      .fold { fill: #E5E5E3; }
+    }
+  </style>
+  <polygon class="fold" points="173,692 715,692 936,846 401,846" />
+  <polygon class="fold" points="245,1126 545,1126 622,1274" />
+  <polygon class="main" points="173,692 1044,692 1201,415 329,415" />
+  <polygon class="main" points="400,846 940,846 785,1126 245,1126" />
+  <polygon class="main" points="245,1126 622,1274 509,1596" />
+</svg>

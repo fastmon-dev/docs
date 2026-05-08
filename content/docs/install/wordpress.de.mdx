@@ -1,0 +1,98 @@
+---
+title: Fastmon auf WordPress implementieren
+description: Fastmon zu einer WordPress-Site hinzufügen — mit Header-Plugin oder per Theme-Edit.
+---
+
+WordPress hat keinen eingebauten Slot für `<head>`-Snippets, deshalb
+gibt es zwei sinnvolle Pfade: ein Header-Injection-Plugin oder eine
+kleine Theme-Anpassung. Wähle den, mit dem dein Workflow ohnehin
+arbeitet.
+
+**Time to first data:** etwa fünf Minuten.
+**Was du brauchst:** Fastmon-Site (siehe
+[Übersicht](/de/install)) und Admin-Zugriff auf die WordPress-Site.
+
+## 1. `source_hash` holen
+
+Site in Fastmon öffnen, die du monitoren willst. `source_hash` aus
+den Site-Settings kopieren — sieht aus wie `a1b2c3d4`. Das fertige
+Snippet:
+
+```html
+<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+```
+
+## 2. Snippet einfügen
+
+Zwei Pfade. Einen wählen.
+
+### Option A: Mit Header-Injection-Plugin (empfohlen)
+
+Die meisten WordPress-Sites haben so etwas schon installiert. Wenn
+nicht: **WPCode** installieren (kostenlos, ehemals "Insert Headers
+and Footers") — am weitesten verbreitet, unkompliziert.
+
+1. Im WordPress-Admin **Plugins → Installieren** öffnen.
+2. Nach **WPCode** suchen, **Jetzt installieren**, dann
+   **Aktivieren**.
+3. **Code Snippets → Header & Footer** öffnen.
+4. Das Fastmon-`<script>`-Tag aus Schritt 1 in das Feld **Header**
+   einfügen.
+5. **Speichern**.
+
+Das Snippet rendert jetzt im `<head>` auf jeder Front-End-Seite.
+
+### Option B: Theme bearbeiten
+
+Überlebt das Entfernen eines Plugins, geht aber kaputt, sobald
+jemand das Theme neu hochlädt.
+
+1. Im WordPress-Admin **Design → Theme-Datei-Editor** öffnen.
+2. `header.php` öffnen.
+3. Das Fastmon-`<script>`-Tag direkt vor `</head>` einfügen.
+4. **Datei aktualisieren**.
+
+Bei einem **Child-Theme** das im Child-Theme machen — sicherer.
+Wenn dein Theme keine `header.php` hat, nutzt es vermutlich einen
+Hook-basierten Header (häufig bei Block-Themes). Dann **Option A**
+nehmen.
+
+## 3. Prüfen, ob es läuft
+
+Eine Front-End-Seite öffnen, View Source (`⌥⌘U` / `Strg+U`), nach
+`fastmon.eu` suchen. Das `<script>`-Tag muss im tatsächlich
+ausgelieferten HTML stehen — wenn nicht, wurde das Snippet nicht
+injected.
+
+Jetzt DevTools → **Network**, nach `c/` filtern, Tab wechseln,
+zurückkommen. Du solltest einen `POST` an
+`https://api.fastmon.eu/c/{collector_hash}` mit Status `204` sehen.
+
+In Fastmon das Site-Dashboard öffnen. Innerhalb von ~30 Sekunden
+zeigt **Traffic** Sessions &gt; 0.
+
+Wenn etwas nicht passt: [Implementierung verifizieren](/de/install/verify).
+
+## Hinweise
+
+- **Multisite.** Setup pro Site wiederholen, mit dem jeweiligen
+  `source_hash`. Jede WordPress-Site ist in Fastmon eine eigene
+  Property.
+- **Caching-Plugins.** Manche Caching-Plugins minifizieren oder
+  rewriten `<head>`. Wenn das Snippet nach dem Aktivieren
+  verschwindet, das Fastmon-Script von der Minifizierung
+  ausnehmen — die meisten Plugins haben eine Exclusion-List.
+- **Cookie-Banner.** Der Fastmon-Beacon setzt keine Cookies, muss
+  also nicht hinter deinem CMP gegated werden. Wenn deine
+  Governance-Policy es trotzdem fordert, die Site auf
+  [`consent`-Collection-Mode](/de/collection-modes#consent--auf-opt-in-warten)
+  schalten.
+- **Page-Builder.** Das Script nicht in einen Page-Builder-Block
+  einfügen — die meisten entfernen unbekannte Tags. Option A nutzen.
+
+## Wie geht's weiter
+
+- [Implementierung verifizieren](/de/install/verify).
+- [Collection Mode wählen](/de/collection-modes).
+- [Was wir nicht sammeln](/de/privacy) — nützlich für deine
+  Datenschutzseite.

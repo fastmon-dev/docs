@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1216 2048">
+  <!-- Fold 1 (Grey) -->
+  <polygon points="173,692 715,692 936,846 401,846" fill="#E5E5E3" />
+  <!-- Fold 2 (Grey) -->
+  <polygon points="245,1126 545,1126 622,1274" fill="#E5E5E3" />
+  
+  <!-- Top Bar (White) -->
+  <polygon points="173,692 1044,692 1201,415 329,415" fill="#fefefe" />
+  <!-- Middle Bar (White) -->
+  <polygon points="400,846 940,846 785,1126 245,1126" fill="#fefefe" />
+  <!-- Bottom Tip (White) -->
+  <polygon points="245,1126 622,1274 509,1596" fill="#fefefe" />
+</svg>

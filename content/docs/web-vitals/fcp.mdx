@@ -1,0 +1,104 @@
+---
+title: First Contentful Paint (FCP)
+description: When the first text or image appears — the diagnostic metric that explains slow LCPs.
+---
+
+**FCP** measures the time from navigation start to the moment
+the browser paints the first text or image from the DOM. It's the
+instant a visitor notices something's happening — the first sign
+of life from the page.
+
+FCP is **not** a Core Web Vital. Google doesn't use it for
+ranking. It's a diagnostic metric that helps you figure out where
+load time is going. If LCP is slow, FCP is the first place you
+look.
+
+## What's a good FCP?
+
+FCP is reported in milliseconds. Track the **75th percentile**.
+
+| FCP at p75      | Rating              |
+| --------------- | ------------------- |
+| ≤ 1,800 ms      | **Good**            |
+| ≤ 3,000 ms      | Needs improvement   |
+| > 3,000 ms      | Poor                |
+
+A good FCP doesn't guarantee a good LCP — it just means the
+visitor saw *something* quickly. The other way around: a bad FCP
+almost always means a bad LCP. Fixing FCP first is usually the
+right move.
+
+## What counts as the first contentful paint
+
+The browser fires an FCP entry for the first paint of:
+
+- text (any text node, including form controls and SVG `<text>`),
+- images (`<img>`, `<svg>` images, canvas with content),
+- a non-white background image.
+
+A blank background color, a white frame, or a CSS gradient with no
+text doesn't count. Skeleton loaders made of empty `<div>`s with
+background colors don't count either — but a skeleton with a single
+visible text label does.
+
+## When FCP is reported
+
+FCP fires at the first eligible paint. The beacon includes it in the
+next batched payload. FCP is per-navigation; SPA route changes don't
+generate a new FCP.
+
+## How FCP relates to other metrics
+
+FCP usually decomposes into:
+
+```
+FCP ≈ TTFB + (request → response → first paint)
+```
+
+- If **TTFB is slow**, FCP is slow regardless of front-end work.
+- If **TTFB is fast but FCP is slow**, the gap is render-blocking
+  resources (CSS, synchronous scripts, web fonts) or large HTML.
+
+## How to see FCP in Fastmon
+
+The dashboard's **Performance** section shows FCP at p50, p75, p95.
+The most useful comparison is FCP next to TTFB:
+
+- TTFB / FCP both slow → server-side problem.
+- TTFB fast, FCP slow → render-blocking resources.
+- FCP fast, LCP slow → the LCP image or text is the bottleneck, not
+  the page shell.
+
+Use **By URL** breakdown to find pages where FCP is unusually bad.
+
+## How to improve a slow FCP
+
+1. **Improve TTFB first.** See [TTFB](/en/web-vitals/ttfb).
+2. **Reduce render-blocking CSS.** Inline critical CSS for above-the-
+   fold content; load the rest with `media` attributes or
+   `rel="preload" + onload`.
+3. **Defer non-critical JavaScript.** A synchronous `<script>` in
+   `<head>` blocks the parser until it executes. Use `defer` or move
+   to `<body>` end.
+4. **Optimize web fonts.** Use `font-display: swap` so text renders
+   in the fallback while the web font loads. `font-display: optional`
+   if you can live without the web font on slow connections.
+5. **Reduce HTML payload.** A 500 KB HTML document blocks the parser
+   long enough to dominate FCP on slow networks.
+
+## Common surprises
+
+- **FCP can be near-zero with a skeleton loader.** The browser counts
+  the skeleton's first text as FCP, even if it's "Loading…". Your FCP
+  number looks great while LCP is bad — the visitor still feels the
+  delay.
+- **Critical-CSS extraction is the highest-leverage fix.** A typical
+  blog post can drop FCP by half with no other changes.
+- **Web font tricks are tempting but small.** They help, but they
+  rarely move FCP by hundreds of milliseconds on their own.
+
+## What's next
+
+- [TTFB](/en/web-vitals/ttfb) — the upstream metric for FCP.
+- [LCP](/en/web-vitals/lcp) — what FCP usually predicts.
+- [Web Vitals overview](/en/web-vitals).

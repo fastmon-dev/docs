@@ -1,0 +1,127 @@
+---
+title: Interaction to Next Paint (INP)
+description: What INP measures, what's a good INP, and how to debug a sluggish page — with Fastmon's data.
+---
+
+**INP** measures how long the worst user interaction took to
+produce a visual update. It's the metric for "this page feels
+sluggish when I click things." Where LCP captures *load*
+responsiveness, INP captures *runtime* responsiveness — the
+entire time someone's on the page.
+
+INP replaced FID as a Core Web Vital in March 2024 and counts
+toward search ranking.
+
+## What's a good INP?
+
+INP is reported in milliseconds. Track the **75th percentile**.
+
+| INP at p75      | Rating              |
+| --------------- | ------------------- |
+| ≤ 200 ms        | **Good**            |
+| ≤ 500 ms        | Needs improvement   |
+| > 500 ms        | Poor                |
+
+200 ms is roughly the upper limit for what still feels "instant"
+to a human. Above 500 ms, every interaction feels noticeably
+delayed.
+
+## What counts as an interaction
+
+INP measures three event types:
+
+- Mouse click (`mousedown` → `mouseup` → `click`)
+- Tap (`pointerdown` → `pointerup` → `click`)
+- Keyboard (`keydown` → `keyup`)
+
+Scrolling, hovering, and continuous events (mousemove) don't count.
+
+For each interaction, INP is the time from input to the **next paint
+that visually reflects the result**. If your click handler runs for
+80 ms but the browser then takes another 120 ms to render the result,
+your INP is 200 ms.
+
+## When INP is reported
+
+INP is finalized when the page becomes hidden. The reported value is
+roughly the worst interaction during the page's life — technically,
+the high-percentile interaction adjusted for total interaction count
+(so a single 800 ms outlier on a page with 100 interactions doesn't
+dominate).
+
+If the visitor never interacts, the page-view has no INP.
+
+## Examples
+
+**Search-as-you-type input** — every keystroke fires a handler.
+If the handler does layout-heavy work synchronously, every
+keystroke contributes a candidate INP, and the worst one wins.
+Things that help: debounce, push work into `requestIdleCallback`,
+or move it to a worker.
+
+**"View details" disclosure on a product page** — opening it
+animates a height transition. The animation itself doesn't count,
+but the synchronous JS that measures the content height
+beforehand does. If that measurement triggers layout, INP takes
+the hit.
+
+**SPA route change** — a link click runs your router, which can
+re-render a big tree. INP captures click → first paint of the
+new route. INP gets ugly here if you're not lazy-loading route
+chunks.
+
+## How to see INP in Fastmon
+
+The dashboard's **Performance** section shows INP at p50, p75, and p95.
+Specifically useful slices:
+
+- **By URL** — group by URL. Interactive pages (search, configurator,
+  dashboard) usually dominate.
+- **By device** — group by `device_type`. INP is much harder on
+  low-end mobile.
+- **By browser** — group by `browser`. Firefox and Safari sometimes
+  show different INP behavior than Chromium.
+
+## How to improve a slow INP
+
+INP regressions almost always trace to one of these:
+
+1. **Long task on the main thread.** A click handler, an effect, or a
+   re-render that takes >50 ms blocks paint. Use the Performance tab in
+   DevTools to find the long task; break it up with
+   `await new Promise(r => setTimeout(r, 0))` or
+   `scheduler.yield()`.
+2. **Synchronous DOM work in the handler.** Reading layout properties
+   (`offsetHeight`, `getBoundingClientRect`) right after writing to the
+   DOM forces a synchronous reflow. Batch reads before writes.
+3. **Heavy framework work on every change.** Re-rendering thousands of
+   nodes on a single keystroke. Memoize, virtualize, or move to
+   uncontrolled inputs.
+4. **Third-party scripts.** Tag managers, A/B test frameworks,
+   chat widgets — many run on every event. Audit your
+   [third-party impact](/en/analytics-api) and remove or defer
+   what you don't need.
+
+For a deeper walkthrough, see web.dev's
+[Optimize INP](https://web.dev/articles/optimize-inp).
+
+## Common surprises
+
+- **A page can have a great LCP and a terrible INP.** They
+  measure different things. Don't ship "fast load" without
+  checking responsiveness too.
+- **INP can regress when LCP improves.** Lazy-loading and
+  hydration push work to *after* the first paint — good for LCP,
+  bad for INP. Always look at both metrics together.
+- **INP varies a lot by interaction.** The first click on a
+  fresh page is usually the worst — cold cache, code not warm
+  yet. Look at per-interaction data, not just the average.
+- **SSR pages aren't immune.** SSR helps LCP, but it doesn't
+  help INP — hydration is JavaScript on the main thread.
+
+## What's next
+
+- [LCP](/en/web-vitals/lcp) — load speed.
+- [CLS](/en/web-vitals/cls) — visual stability.
+- [Experience Score](/en/web-vitals/experience-score) — composite of
+  all three Core Web Vitals.

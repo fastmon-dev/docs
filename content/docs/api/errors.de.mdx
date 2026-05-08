@@ -1,0 +1,120 @@
+---
+title: Fehler
+description: Error-Envelope, Status-Codes und was jeder häufige Code bedeutet.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Jeder Fehler der Fastmon-API nutzt denselben Envelope. Der HTTP-Status
+sagt dir die Form; der `code` im Body sagt dir die Ursache.
+
+## Envelope
+
+```json title="Error-Response"
+{
+  "error": {
+    "code": "validation_error",
+    "message": "domain is required",
+    "request_id": "01HZY…",
+    "doc_url": "https://docs.fastmon.eu/errors/validation_error",
+    "details": { "field": "domain" }
+  }
+}
+```
+
+| Feld          | Pflicht  | Hinweise                                                                  |
+| ------------- | -------- | ------------------------------------------------------------------------- |
+| `code`        | ja       | Stabiler maschinenlesbarer Code. Switchbar.                               |
+| `message`     | ja       | Menschenlesbar. Kann sich für denselben Code ändern, wenn wir klarer werden. |
+| `request_id`  | meist    | Selber Wert wie der `X-Request-ID`-Response-Header.                       |
+| `doc_url`     | optional | Link zu einer Doku-Seite, die den Code erklärt.                           |
+| `details`     | optional | Code-spezifisch. Validierungsfehler legen das `field` rein.               |
+
+<Callout type="info">
+  Im Client-Code auf `code` switchen, `message` an Menschen rendern.
+  `code` ist Teil des öffentlichen Vertrags — `message` kann jederzeit
+  zwecks Klarheit umformuliert werden.
+</Callout>
+
+## Status-Codes
+
+<Tabs items={['Client-Fehler (4xx)', 'Server-Fehler (5xx)']}>
+<Tab value="Client-Fehler (4xx)">
+
+| Status | Bedeutung                                                                              |
+| ------ | -------------------------------------------------------------------------------------- |
+| `400`  | Body oder Query war malformed. Siehe `code` für Details.                               |
+| `401`  | Authentifizierung fehlgeschlagen oder fehlt. Siehe [Authentifizierung](/de/api/authentication). |
+| `403`  | Authentifiziert, aber nicht erlaubt. Falsche Org, falsche Rolle, pausierte Ressource.  |
+| `404`  | Ressource existiert nicht — *oder* du darfst sie nicht sehen. Wir leaken keine Existenz. |
+| `409`  | Konflikt — meist Uniqueness oder State-Machine-Clash.                                  |
+| `422`  | Validierung fehlgeschlagen. `details.field` trägt das Feld.                            |
+| `429`  | Rate-limited. Warten und retrien; `Retry-After` ist gesetzt.                           |
+
+</Tab>
+<Tab value="Server-Fehler (5xx)">
+
+| Status | Bedeutung                                                              |
+| ------ | ---------------------------------------------------------------------- |
+| `500`  | Server-Fehler. Beim Reporting `request_id` mitsenden.                  |
+| `502`  | Bad Gateway. Meist Deploy-Window-Blip — mit Backoff retrien.            |
+| `503`  | Service nicht verfügbar. Wie `502` — transient.                         |
+| `504`  | Gateway-Timeout. Einmal mit längerem Client-Timeout retrien.            |
+
+</Tab>
+</Tabs>
+
+## Häufige `code`-Werte
+
+| Code                       | Bedeutung                                                                               |
+| -------------------------- | --------------------------------------------------------------------------------------- |
+| `validation_error`         | Ein Feld hat Validierung gerissen. `details.field` benennt es.                          |
+| `unauthorized`             | Keine oder ungültige Auth-Credentials.                                                  |
+| `forbidden`                | Authentifiziert, nicht erlaubt.                                                         |
+| `not_found`                | Ressource existiert nicht oder ist für dich unsichtbar.                                 |
+| `already_exists`           | Uniqueness verletzt (z. B. Duplicate-Site-Domain in einer Org).                         |
+| `rate_limited`             | Zu viele Requests. `Retry-After` ist gesetzt.                                           |
+| `plan_limit_exceeded`      | Aktion braucht eine Plan-Stufe oder Quota, die du nicht hast.                           |
+| `invalid_state`            | Ressource ist nicht im richtigen Zustand für diese Aktion.                              |
+| `internal_error`           | Server-Bug. Beim Reporting `request_id` mitsenden.                                      |
+
+Die volle Liste steht in `/v1/openapi.json` unter den Responses jedes
+Endpunkts.
+
+## Retries
+
+| Status                | Retry?                                                                  |
+| --------------------- | ----------------------------------------------------------------------- |
+| `429`                 | Ja — `Retry-After` Sekunden warten.                                     |
+| `502` / `503` / `504` | Ja — exponential backoff. Meist Deploy-Window-Blips.                    |
+| Andere `5xx`          | Einmal. Wenn's bleibt, mit `request_id` reporten.                       |
+| `4xx`                 | **Nein.** Request ist falsch; fixen und neu senden.                     |
+
+## Fehler reporten
+
+<Callout type="warn">
+  Beim Support-Kontakt **immer `request_id` mitsenden**. Damit ziehen
+  wir das passende Server-Log in Sekunden. Ohne startet das Debugging
+  bei "beschreib mal, wann das ungefähr war" — viel langsamer.
+</Callout>
+
+Die Request-ID steht in:
+
+- dem `X-Request-ID`-Response-Header,
+- `error.request_id` im JSON-Body,
+- der Response jedes erfolgreichen Requests — für Call-Ketten-Korrelation.
+
+## Häufige Überraschungen
+
+- **`404` ist absichtlich mehrdeutig.** "Darf nicht sehen" und "gibt's
+  nicht" liefern beide `404`. Wir leaken keine Existenz an
+  unautorisierte Clients.
+- **Validierungsfehler stoppen beim ersten Treffer.** Ein Payload mit
+  zwei kaputten Feldern liefert eines. Fixen, neu senden, nächstes
+  sehen.
+
+## Verwandt
+
+- [API-Übersicht](/de/api)
+- [Authentifizierung](/de/api/authentication) — Ursprünge von `401` / `403`

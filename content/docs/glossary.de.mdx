@@ -1,0 +1,151 @@
+---
+title: Glossar
+description: Begriffe aus Fastmon, dem Dashboard und dieser Dokumentation.
+---
+
+Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen
+Begriff.
+
+## Web Vitals
+
+**LCP** — *Largest Contentful Paint.* Zeit, bis das größte
+sichtbare Element rendert. Die Lade-Metrik. Gut ≤ 2.500 ms bei
+p75. Siehe [LCP](/de/web-vitals/lcp).
+
+**INP** — *Interaction to Next Paint.* Worst-Case-Latenz zwischen
+Interaktion und nächstem Paint. Die Responsiveness-Metrik. Gut
+≤ 200 ms bei p75. Hat im März 2024 FID abgelöst. Siehe
+[INP](/de/web-vitals/inp).
+
+**CLS** — *Cumulative Layout Shift.* Summe unerwarteter
+Layout-Verschiebungen. Einheitenlos. Die Visual-Stability-Metrik.
+Gut ≤ 0,1 bei p75. Siehe [CLS](/de/web-vitals/cls).
+
+**FCP** — *First Contentful Paint.* Zeit, bis Text oder Bild
+erstmals rendert. Diagnostisch; erklärt langsamen LCP. Siehe
+[FCP](/de/web-vitals/fcp).
+
+**TTFB** — *Time to First Byte.* Zeit, bis das erste Response-Byte
+ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe
+[TTFB](/de/web-vitals/ttfb).
+
+**Experience Score** — Composite aus LCP / INP / CLS als einzelne
+0–100-Zahl, gewichtet 35/35/30. Siehe
+[Experience Score](/de/web-vitals/experience-score).
+
+**Core Web Vitals** — Googles Drei-Metrik-Set: LCP, INP, CLS. Die
+Metriken, die das Suchranking beeinflussen.
+
+## Beacon und Ingestion
+
+**Beacon** — Die JS-Datei unter `/s/{source_hash}.js`. Erfasst
+Metriken im Browser und POSTet sie. Siehe
+[Der RUM-Beacon](/de/concepts/beacon).
+
+**Collector** — Der Server-Endpunkt unter `/c/{collector_hash}`,
+der Beacons empfängt, validiert und in den Analytics-Store
+schreibt.
+
+**`source_hash`** — Per-Site-Hash in der Script-URL. Stabil über
+Beacon-Upgrades.
+
+**`collector_hash`** — Per-Site-Hash in der Ingest-URL. Getrennt
+vom `source_hash`, damit das Script-Template sich ändern kann,
+ohne Daten zu invalidieren.
+
+**Collection Mode** — Per-Site-Einstellung: `anonymous`,
+`consent`, `full`. Siehe
+[Collection Modes](/de/collection-modes).
+
+**Page-View-ID (`pvid`)** — Per-Pageview-ID, vom Beacon
+clientseitig erzeugt. Nicht persistiert.
+
+**`pst` / `cst`** — Page-Started-Timestamp (Besucher-Uhr) /
+Collector-Ankunftszeit (Server-Uhr). Beide in Millisekunden seit
+Epoch.
+
+## Ressourcen und Accounts
+
+**Organisation** — Top-Level-Account-Container. Besitzt Sites,
+Mitglieder, Notification Rules, API-Tokens. Siehe
+[Organisationen](/de/concepts/organizations).
+
+**Plan** — Organisations-Tier: `beta`, `starter`, `pro`, `partner`,
+`enterprise`. Steuert Features und Quotas.
+
+**Site** — Eine monitorte Property. Hat eigene Beacon-Hashes und
+Settings. Siehe [Sites](/de/concepts/sites).
+
+**Session** — 30-Minuten-Fenster von Pageviews desselben Browsers.
+Anonym per Konstruktion. Siehe
+[Sessions](/de/concepts/sessions).
+
+**Release** — Versionierter Marker auf einer Site. Wird von
+Analytics über `compare_to_release_id` für Vorher/Nachher genutzt.
+Siehe [Releases](/de/concepts/releases).
+
+**Tag** — Freies Label auf einer Site (max 10) für
+Dashboard-Filter. Konventionen: `env:production`, `team:growth`
+etc.
+
+**Member** — User in einer Organisation mit Rolle
+(`owner` / `member`).
+
+**Invite** — Schwebende Mitgliedschaft, wartet auf Annahme.
+
+**API-Token** — `fm_…`-prefixed Bearer-Token für programmatischen
+Zugriff. Server-seitig gehasht; verlorene Tokens nicht
+wiederherstellbar.
+
+## Storage und Infrastruktur
+
+**Konfig-DB** — Relationaler Store für User, Organisationen, Sites,
+Settings.
+
+**Analytics-Store** — Columnar-Store für Beacon-Events und
+aggregierte Metriken.
+
+**Session-Store** — In-Memory-Store für Sessions, Rate-Limits,
+kurzlebige Caches.
+
+**Partner-Client** — Sub-Organisation, die eine
+`partner`-Plan-Org für jemand anderen betreibt.
+
+## API
+
+**Envelope** — Wrapper um den Response-Body. Einzelne Ressource =
+direkt; Liste = `data` + `meta`; Fehler = `error`. Siehe
+[API-Übersicht](/de/api).
+
+**Cursor-Pagination** — High-Volume-Endpunkte liefern
+`meta.next_cursor`; Client sendet zurück als `?cursor=…`. Siehe
+[Pagination](/de/api/pagination).
+
+**Offset-Pagination** — Default. `?limit` und `?offset`, Response
+mit `meta.total` und `meta.has_more`.
+
+**`X-Request-ID`** — Header auf jeder Response. Bei Fehlern in
+`error.request_id` gespiegelt. Beim Reporting immer mitsenden.
+
+**UUID v7** — Zeitlich sortierbares UUID-Format für alle
+Ressource-IDs.
+
+## Sonstiges
+
+**RUM** — *Real User Monitoring.* Performance-Messung aus echten
+Besucher-Browsern, im Gegensatz zu synthetischen Lab-Tests.
+
+**LoAF** — *Long Animation Frame.* Browser-API für Frames, die
+länger als 50 ms dauerten; meist die Ursache schlechter INP.
+
+**Third-Party** — Request an eine andere Domain als die der Site
+selbst. Fastmon gruppiert nach Domain und Kategorie für
+Impact-Analyse. Siehe `/analytics/third-party`.
+
+**`fastmon:consent` / `fastmon:revoke`** — Window-Events, auf die
+der Beacon im `consent`-Mode hört. Siehe
+[Collection Modes](/de/collection-modes#consent--auf-opt-in-warten).
+
+**`__fastmon_disabled`** — Window-Flag, das der Beacon respektiert,
+um auf einem Pageview nicht zu senden. Siehe
+[Internen Traffic filtern](/de/guides/filter-internal-traffic).

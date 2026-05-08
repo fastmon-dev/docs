@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-openapi/css/preset.css';
+
+/* === API layout: API pages use `full: true` which adds article + prose
+   caps that squash the 2-column operation layout. Unset them so the right
+   column (URL bar + cURL + response samples) can stretch. The overall
+   layout grid width stays at fumadocs' default 97rem so the sidebar +
+   content column align with the Docs layout — both tabs feel identical.
+   Source-of-truth chain:
+   - DocsPage container caps article at `max-w-[1168px]` when `full`
+     (node_modules/fumadocs-ui/dist/layouts/docs/page/slots/container.js)
+   - DocsBody adds `prose` which caps text at 65ch
+     (node_modules/fumadocs-ui/dist/layouts/docs/page/index.js)
+   The right column's width is controlled in `src/components/api-page.tsx`
+   via the `renderOperationLayout` override (clamp(420px, 45%, 640px)). */
+[data-api-layout] article[data-full='true'] {
+  max-width: none !important;
+}
+[data-api-layout] article[data-full='true'] .prose {
+  max-width: none !important;
+}

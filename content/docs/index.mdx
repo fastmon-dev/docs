@@ -1,0 +1,65 @@
+---
+title: Welcome to Fastmon
+description: Privacy-first real-user monitoring and Core Web Vitals — hosted in the EU.
+---
+
+Fastmon measures how your site actually feels for real visitors —
+Core Web Vitals, errors, and performance, straight from the
+browser. Out of that come dashboards your team can actually use.
+
+The docs are organized by what you're trying to do. Jump in.
+
+## Get started
+
+Get Fastmon running on a site in under five minutes.
+
+<Cards>
+  <Card title="Implement Fastmon" href="/en/install" description="Pick your stack: HTML, Next.js, WordPress, GTM. Each path is a five-minute walkthrough." />
+  <Card title="Verify the implementation" href="/en/install/verify" description="Confirm the beacon is collecting data — and what to check when it isn't." />
+</Cards>
+
+## Understand the model
+
+You're new to RUM or to Fastmon, and you want a quick tour of the
+moving parts before touching anything.
+
+<Cards>
+  <Card title="Concepts" href="/en/concepts" description="Organizations, sites, sessions, releases — the small set of resources that make up the product." />
+  <Card title="Privacy: what we don't collect" href="/en/privacy" description="No cookies, no IPs stored, no fingerprinting. Useful for a legal review." />
+  <Card title="Collection modes" href="/en/collection-modes" description="anonymous, consent, full — what the beacon does, and which one to pick." />
+</Cards>
+
+## Read about a metric
+
+You're staring at a Web-Vitals number and want to know what it
+means — or how to make it go away.
+
+<Cards>
+  <Card title="Web Vitals overview" href="/en/web-vitals" description="LCP, INP, CLS, FCP, TTFB — definitions, thresholds, and where to start." />
+  <Card title="LCP" href="/en/web-vitals/lcp" description="The page-load metric." />
+  <Card title="INP" href="/en/web-vitals/inp" description="The runtime-responsiveness metric." />
+  <Card title="Experience Score" href="/en/web-vitals/experience-score" description="The single 0–100 number combining LCP, INP, and CLS." />
+</Cards>
+
+## Build something
+
+You want to integrate Fastmon with your CI/CD, your alerting, your
+existing dashboards.
+
+<Cards>
+  <Card title="Compare releases" href="/en/guides/compare-releases" description="Tag deploys from CI/CD and answer 'did this deploy regress LCP?' in one query." />
+  <Card title="Notification rules" href="/en/guides/notification-rules" description="Alert when a metric crosses a threshold or regresses against a release." />
+  <Card title="API reference" href="/en/api" description="Authentication, errors, pagination, and all resource endpoints." />
+</Cards>
+
+## What Fastmon is, briefly
+
+- **Privacy-first, no asterisks.** No third-party cookies, no IPs
+  on disk, no cross-site tracking. EU infrastructure end-to-end.
+  Details on [Privacy](/en/privacy).
+- **Scales without you noticing.** Beacons go into a columnar
+  analytics store via batched inserts. Built to handle real
+  production traffic without you having to tune anything.
+- **Measures what Google measures.** LCP, INP, CLS, FCP, TTFB
+  plus navigation, resource, and long-task timing. Same browser
+  APIs as Chrome's `web-vitals` library — no homegrown numbers.

@@ -1,0 +1,46 @@
+# deps
+/node_modules
+/.npm-cache
+
+# generated content
+.source
+.fastmon-openapi.json
+# Auto-generated API reference folders — re-emitted on every `npm run generate:api`.
+# Hand-written narrative pages at api/ root (index, authentication, errors,
+# pagination) are NOT in this list and must be committed.
+/content/docs/api/auth/
+/content/docs/api/account/
+/content/docs/api/organizations/
+/content/docs/api/members/
+/content/docs/api/invites/
+/content/docs/api/sites/
+/content/docs/api/releases/
+/content/docs/api/analytics/
+/content/docs/api/notifications/
+/content/docs/api/partners/
+/content/docs/api/weekly-summary/
+/content/docs/api/waitlist/
+/content/docs/api/ai-ask/
+/content/docs/api/collector/
+/content/docs/api/uncategorized/
+
+# test & build
+/coverage
+/.next/
+/out/
+/build
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.pem
+/.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# others
+.env*.local
+.vercel
+next-env.d.ts

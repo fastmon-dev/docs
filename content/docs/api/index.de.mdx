@@ -1,0 +1,88 @@
+---
+title: API-Referenz
+description: Base URL, Authentifizierung, Response-Envelopes — und die auto-generierte Endpoint-Referenz.
+---
+
+Die Fastmon-REST-API liefert dieselbe Oberfläche, die das Dashboard
+nutzt. Die Endpoint-Referenz wird **bei jedem Doku-Build aus dem
+OpenAPI-Dokument des Backends generiert** — kann also nie vom laufenden
+Service driften.
+
+## Querschnittsthemen
+
+<Cards>
+  <Card title="Authentifizierung" href="/de/api/authentication" description="Session-Cookie oder fm_…-Bearer-Token. Beide funktionieren auf jedem Endpunkt." />
+  <Card title="Fehler" href="/de/api/errors" description="Error-Envelope, Status-Codes, was jeder häufige Code bedeutet." />
+  <Card title="Pagination" href="/de/api/pagination" description="Offset per Default, Cursor für High-Volume-Endpunkte." />
+</Cards>
+
+## Endpunkte
+
+Pro OpenAPI-Tag eine eigene Sektion, auto-generiert. Jede Operation
+hat eine eigene Seite mit Split-Layout, Sprach-Tabs (curl, JS,
+Python, Go, Java, C#) und Try-it-Playground.
+
+<Cards>
+  <Card title="Auth" href="/de/api/auth/createSession" description="Sign in/out, 2FA, Passwort-Reset, E-Mail-Verifikation." />
+  <Card title="Account" href="/de/api/account/getMyAccount" description="Account-Settings, Profile, API-Token-Rotation." />
+  <Card title="Organisationen" href="/de/api/organizations/listOrganizations" description="Top-Level-Container — Mitglieder, Pläne, Billing." />
+  <Card title="Sites" href="/de/api/sites/listSites" description="Properties, die du monitorst. Beacon-Hashes, Collection Mode." />
+  <Card title="Releases" href="/de/api/releases/listReleases" description="Versionierte Marker auf einer Site, für Vorher/Nachher-Vergleiche." />
+  <Card title="Analytics" href="/de/api/analytics/queryAnalytics" description="Web Vitals, Sessions, Fehler, Third-Party-Impact-Queries." />
+  <Card title="Notifications" href="/de/api/notifications/getNotificationMetadata" description="Notification Rules: anlegen, evaluieren, testen, History." />
+</Cards>
+
+## Base URL
+
+```
+https://api.fastmon.eu/v1
+```
+
+Die öffentlichen Ingest-Endpunkte (`POST /c/{collector_hash}` und
+`GET /s/{source_hash}.js`) liegen **außerhalb** des `/v1/`-Prefix und
+haben einen eigenen Vertrag.
+
+## Beispiel
+
+```bash
+curl https://api.fastmon.eu/v1/organizations \
+  -H "Authorization: Bearer fm_$YOUR_TOKEN"
+```
+
+```json
+{
+  "data": [
+    { "id": "01HZX…", "name": "Acme", "plan": "pro" }
+  ],
+  "meta": { "limit": 50, "offset": 0, "total": 1, "has_more": false }
+}
+```
+
+## Konventionen
+
+- **IDs sind UUID v7** — nach Erzeugungszeit sortierbar.
+- **Zeitstempel sind ISO-8601 UTC mit `Z`** —
+  `2026-04-18T12:34:56.123456Z`.
+- **Einzelne Ressourcen** werden direkt zurückgegeben; **Listen**
+  wrappen mit `data` + `meta`; **Fehler** wrappen mit `error`.
+  Siehe [Fehler](/de/api/errors).
+- **Default-Limit** 50, Max 100 auf jedem List-Endpunkt.
+- **`X-Request-ID`** auf jeder Response. Beim Reporting
+  zurückgeben.
+
+## Versionierung
+
+API-Version ist `v1`. Breaking Changes laufen als neuer Prefix
+(`/api/v2`) — `v1` bleibt nach `v2`-Release mindestens 12 Monate
+nebeneinander funktionsfähig.
+
+Additive Änderungen (neue Felder, Endpunkte, Query-Parameter)
+laufen kontinuierlich in `v1`. Clients sollten unbekannte Felder
+ignorieren.
+
+## Schema-Dokument
+
+Das rohe OpenAPI-Dokument liegt unter
+[`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json).
+Direkt in `openapi-typescript`, `oapi-codegen` oder ähnliches werfen
+für einen typisierten Client.
