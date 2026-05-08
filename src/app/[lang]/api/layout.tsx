@@ -1,3 +1,4 @@
+import type { HTMLAttributes } from 'react';
 import { getApiTree } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
@@ -20,10 +21,16 @@ export default async function ApiLayout({ children, params }: LayoutProps<'/[lan
       // multiple locales are registered with RootProvider, even without
       // passing `i18n`. The API tab is English-only.
       i18n={false}
-      // Marker used by global.css to widen the openapi-component's right
-      // column (cURL / response). All other layout dimensions match the
-      // Docs layout so the sidebar feels identical between tabs.
-      containerProps={{ 'data-api-layout': '' }}
+      // Marker used by global.css to unset the article + prose width caps
+      // for openapi pages (which set `full: true`). All other layout
+      // dimensions match the Docs layout so the sidebar feels identical
+      // between tabs.
+      // Cast: `data-*` attributes aren't part of HTMLAttributes' static
+      // shape in this @types/react version, even though React forwards
+      // them at runtime.
+      containerProps={
+        { 'data-api-layout': '' } as HTMLAttributes<HTMLDivElement>
+      }
       {...rest}
     >
       {children}
