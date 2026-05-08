@@ -24,8 +24,9 @@ Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's
 
 ## Der Dashboard-Check
 
-Site im Fastmon-Dashboard öffnen. Innerhalb von ~30 Sekunden zeigt der
-Bereich **Traffic**:
+Site im Fastmon-Dashboard öffnen. Nach ungefähr einer Minute (Beacons
+werden gebatcht nach ClickHouse geschrieben) zeigt der Bereich
+**Traffic**:
 
 - **Sessions** &gt; 0,
 - **Page Views** &gt; 0,
@@ -75,9 +76,13 @@ dann ist das Limit zurückgesetzt.
 
 ### Beacon geht durch, aber im Dashboard ist nichts
 
-Erst mal checken, ob du die richtige Site und den richtigen
-Zeitraum offen hast — der Default sind die letzten 24 h, das passt
-für frische Daten.
+Beacons werden gebatcht nach ClickHouse geschrieben — ungefähr eine
+Minute Verzögerung zwischen erfolgreichem `204` und der Zeile im
+Dashboard ist normal. Kurz warten und neu laden.
+
+Wenn dann immer noch nichts da ist: prüf, ob du die richtige Site
+und den richtigen Zeitraum offen hast — der Default sind die letzten
+24 h, das passt für frische Daten.
 
 Bekommst du `204` zurück, und das Dashboard ist nach ein paar
 Minuten immer noch leer, ist die Ingestion vermutlich pausiert.

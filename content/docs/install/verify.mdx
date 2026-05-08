@@ -23,8 +23,9 @@ it — you're up.
 
 ## The dashboard check
 
-Open the site in the Fastmon dashboard. Within about 30 seconds the
-**Traffic** section will show:
+Open the site in the Fastmon dashboard. After about a minute
+(beacons are batched into ClickHouse), the **Traffic** section will
+show:
 
 - non-zero **sessions**,
 - non-zero **page views**,
@@ -74,9 +75,13 @@ loop. Wait a minute and the limit resets.
 
 ### Beacon goes through, but no data in the dashboard
 
-First check you're on the right site and the right time range —
-the dashboard defaults to the last 24 h, which is fine for fresh
-data.
+Beacons are batched into ClickHouse, so a delay of about a minute
+between a successful `204` and the row showing up in the dashboard
+is normal. Wait a moment and refresh.
+
+If it's still empty after that, check you're on the right site and
+the right time range — the dashboard defaults to the last 24 h,
+which is fine for fresh data.
 
 If the request returned `204` and the dashboard is still empty
 after a few minutes, ingestion might be paused. Open site settings

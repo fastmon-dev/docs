@@ -66,22 +66,97 @@ cause.
 </Tab>
 </Tabs>
 
-## Common `code` values
+## `code` values
 
-| Code                       | Meaning                                                                                 |
-| -------------------------- | --------------------------------------------------------------------------------------- |
-| `validation_error`         | A field failed validation. `details.field` names it.                                    |
-| `unauthorized`             | No or invalid auth credentials.                                                         |
-| `forbidden`                | Authenticated, not allowed.                                                             |
-| `not_found`                | The resource doesn't exist or isn't visible to you.                                     |
-| `already_exists`           | Uniqueness violation (e.g. duplicate site domain in an org).                            |
-| `rate_limited`             | Too many requests. `Retry-After` is set.                                                |
-| `plan_limit_exceeded`      | The action requires a plan tier or quota you don't have.                                |
-| `invalid_state`            | The resource isn't in a state where this action is valid.                               |
-| `internal_error`           | Server bug. Include `request_id` when reporting.                                        |
+The full list, grouped by category.
 
-The full list lives in `/v1/openapi.json` under each endpoint's
-responses.
+### Auth
+
+| Code                      | Meaning                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| `unauthenticated`         | No credentials, or they didn't validate.                                             |
+| `invalid_credentials`     | Email/password combination didn't match.                                             |
+| `two_factor_required`     | Login passed step one; a TOTP code is needed to complete the session.                |
+| `invalid_two_factor_code` | The TOTP code was wrong or expired.                                                  |
+| `session_expired`         | The session cookie is no longer valid — log in again.                                |
+| `invalid_token`           | Short-lived opaque token (email verification, password reset, OAuth state, 2FA temp) was invalid or expired. Distinct from `session_expired` on purpose: don't bounce the user to /login on a stale reset link. |
+
+### Authorization
+
+| Code                          | Meaning                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `forbidden`                   | Authenticated, but not allowed for this action.                                  |
+| `organization_access_denied`  | The token/user can't access this organization.                                   |
+| `site_access_denied`          | The token/user can't access this site.                                           |
+| `admin_required`              | The action requires platform-admin privileges.                                   |
+| `owner_required`              | The action requires organization-owner privileges.                               |
+
+### Not found
+
+| Code                       | Meaning                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| `organization_not_found`   | Organization doesn't exist or isn't visible to you.                                 |
+| `site_not_found`           | Site doesn't exist or isn't visible to you.                                         |
+| `release_not_found`        | Release marker doesn't exist on this site.                                          |
+| `rule_not_found`           | Notification rule doesn't exist.                                                    |
+| `member_not_found`         | Organization member doesn't exist.                                                  |
+| `invite_not_found`         | Invite doesn't exist or has been consumed.                                          |
+| `partner_not_found`        | Partner relationship doesn't exist.                                                 |
+| `user_not_found`           | User doesn't exist or isn't visible to you.                                         |
+| `resource_not_found`       | Catch-all for resources without a more specific code.                               |
+
+### Conflict / state
+
+| Code                          | Meaning                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `email_already_registered`    | Sign-up attempted with an email that already has an account.                     |
+| `site_already_exists`         | Domain is already registered in this organization.                               |
+| `release_already_exists`      | A release with this version already exists on the site.                          |
+| `organization_inactive`       | The organization is suspended.                                                   |
+| `user_inactive`               | The user account is disabled.                                                    |
+| `already_member`              | Tried to invite or add someone who's already in the organization.                |
+| `billing_partner_exists`      | Billing-partner relationship is already set; remove the existing one first.      |
+| `circular_partner_forbidden`  | Partner relationship would create a cycle.                                       |
+| `self_transfer_forbidden`     | Can't transfer ownership to yourself.                                            |
+| `conflict`                    | Catch-all conflict without a more specific code.                                 |
+
+### Input
+
+| Code                    | Meaning                                                                                |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `validation_error`      | A field failed validation. `details.field` names it.                                   |
+| `unsupported_operation` | The operation isn't supported in this context (e.g. wrong storage mode).               |
+| `invalid_cursor`        | The pagination cursor was malformed or has expired.                                    |
+
+### Rate limit
+
+| Code           | Meaning                                                                |
+| -------------- | ---------------------------------------------------------------------- |
+| `rate_limited` | Too many requests. `Retry-After` is set on the response.               |
+
+### Plan / entitlement
+
+| Code                | Meaning                                                                   |
+| ------------------- | ------------------------------------------------------------------------- |
+| `plan_insufficient` | The action requires a higher plan tier than the organization is on.       |
+| `ai_disabled`       | AI features are turned off for this organization or globally.             |
+
+### Resource limits / upstream
+
+| Code                      | Meaning                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| `beacon_buffer_full`      | The beacon ingestion buffer is saturated. Retry shortly.                      |
+| `clickhouse_unavailable`  | The analytics store is temporarily unavailable.                               |
+| `audio_quota_exceeded`    | TTS/audio generation quota for this organization is used up.                  |
+| `upstream_unavailable`    | A required upstream service didn't respond. Retry with backoff.               |
+| `oauth_error`             | An OAuth provider returned an error or the state didn't validate.             |
+
+### Generic
+
+| Code             | Meaning                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| `internal_error` | Server bug. Include `request_id` when reporting.                                 |
+| `not_ready`      | Service is starting up or briefly draining. Retry shortly.                       |
 
 ## Retrying
 

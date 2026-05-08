@@ -44,11 +44,14 @@ Schritt 3.
 
 ## 2. Delivery-Target wählen
 
-E-Mail per Default. Weitere (planabhängig):
+Vier Target-Typen sind unterstützt:
 
 - **E-Mail** — eine oder mehrere Adressen.
-- **Webhook** — POST an eine URL mit JSON-Payload.
-- **Slack / Teams / Mattermost** — Incoming-Webhook-Integrationen.
+- **Slack** — native Incoming-Webhook-Integration.
+- **Discord** — native Incoming-Webhook-Integration.
+- **Webhook** — POST an eine URL mit JSON-Payload. Damit deckst du
+  Teams, Mattermost, PagerDuty, Opsgenie oder jedes andere Tool mit
+  Incoming-Webhook-URL ab.
 
 Mehrere Targets pro Rule möglich. Jedes feuert auf dasselbe Event.
 

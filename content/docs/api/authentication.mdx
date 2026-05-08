@@ -1,109 +1,57 @@
 ---
 title: Authentication
-description: Session cookie or fm_… Bearer token. Both work on every endpoint.
+description: API requests authenticate with an fm_… Bearer token.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
-import { Steps, Step } from 'fumadocs-ui/components/steps';
 
-Every `/v1/` endpoint requires authentication. Two schemes are accepted
-on every endpoint — pick whichever fits your client. If both are sent
-on the same request, the Bearer token wins.
+Every `/v1/` endpoint requires authentication. The public API uses
+a single scheme: a Bearer token.
 
-## Pick a scheme
-
-| Client                          | Use                                          |
-| ------------------------------- | -------------------------------------------- |
-| The Fastmon SPA                 | Session cookie — already set after login.    |
-| A CI/CD job                     | Bearer token, stored in secrets.             |
-| A backend service               | Bearer token.                                |
-| A user-facing tool that logs in | Session cookie via the auth endpoints.       |
-
-## Session cookie
-
-Used by the dashboard. The login endpoint sets a cookie named `session`
-with flags `HttpOnly`, `Secure`, `SameSite=Lax`. No JWTs — sessions live
-server-side and extend on activity.
-
-<Tabs items={['Login', 'Logout']}>
-<Tab value="Login">
-
-```bash
-curl -X POST https://api.fastmon.eu/v1/auth/session \
-  -H "Content-Type: application/json" \
-  -d '{ "email": "you@example.com", "password": "…" }'
-```
-
-</Tab>
-<Tab value="Logout">
-
-```bash
-curl -X DELETE https://api.fastmon.eu/v1/auth/session \
-  -H "Cookie: session=…"
-```
-
-</Tab>
-</Tabs>
-
-### With 2FA enabled
-
-<Steps>
-<Step>
-
-`POST /v1/auth/session` with email + password returns a partial session
-that's valid **only for the 2FA verification call**.
-
-</Step>
-<Step>
-
-`POST /v1/auth/session/2fa` with a TOTP code completes the login and
-upgrades the cookie to a full session.
-
-</Step>
-</Steps>
+<Callout type="info">
+  The dashboard SPA uses session cookies, but they're only valid
+  for the dashboard's own origin. Programmatic clients — CI jobs,
+  scripts, backend services — must use a Bearer token.
+</Callout>
 
 ## Bearer token
 
-Used by programmatic clients. Generate from **Account → API token** in
-the dashboard, or via `POST /v1/account/api-token`. Looks like
-`fm_<long-random-suffix>`.
+Generate a token in the dashboard under **Account → API token**.
+It looks like `fm_<long-random-suffix>` and is shown **once**.
+Store it in your secret manager immediately; there is no recovery
+flow.
+
+Send it on every request:
 
 ```http
 Authorization: Bearer fm_abcdef…
 ```
 
-```bash title="Generate a token"
-curl -X POST https://api.fastmon.eu/v1/account/api-token \
-  -H "Cookie: session=…"
+```bash title="Example"
+curl https://api.fastmon.eu/v1/sites \
+  -H "Authorization: Bearer fm_abcdef…"
 ```
 
-The response contains the token **once**. Store it in your secret
-manager immediately — there is no recovery flow.
-
 <Callout type="warn">
-  Lost tokens are unrecoverable. Server-side they're hashed; only the
-  `fm_` prefix is queryable. To rotate, regenerate via
-  `POST /v1/account/api-token` — the previous token stops working
-  immediately.
+  Lost tokens are unrecoverable. Server-side they're hashed; only
+  the `fm_` prefix is queryable. To rotate, regenerate from the
+  dashboard — the previous token stops working immediately.
 </Callout>
 
-### What a token can do
+## What a token can do
 
-- **Per-user.** Each user has at most one token at a time.
-- **Same scope as the user.** Token from a `member` does what a
-  `member` can; token from an `owner` does what an `owner` can.
-- **Org-spanning.** If the user is a member of multiple orgs, the
+- **Per-user.** Each user has at most one active token at a time.
+- **Same scope as the user.** A token from a `member` does what a
+  `member` can; a token from an `owner` does what an `owner` can.
+- **Org-spanning.** If the user is in multiple organizations, the
   token works against all of them.
 
 ## Common surprises
 
 - **You can't manage another user's token.** Even an `owner` can
   only regenerate their own.
-- **Session cookies don't work cross-origin** to other domains by
-  design — `SameSite=Lax` is intentional.
-- **Multi-token / service-account tokens** are on the roadmap, gated
-  behind enterprise plans.
+- **Multi-token / service-account tokens** are on the roadmap,
+  gated behind enterprise plans.
 
 ## Related
 

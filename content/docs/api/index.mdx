@@ -3,15 +3,28 @@ title: API Reference
 description: Base URL, authentication, response envelopes — and the auto-generated endpoint reference.
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 The Fastmon REST API is the same surface the dashboard uses. The
 endpoint reference is **auto-generated from the backend's OpenAPI
 document** on every docs build, so it never drifts from the running
 service.
 
+<Callout type="warn" title="The API is not production-ready">
+  Endpoints, request shapes, response shapes, field names, and
+  error formats can change at any time without notice. There is
+  no deprecation window and no compatibility guarantee yet.
+
+  Use the API for prototypes, internal tooling, and exploration.
+  Don't build production systems against it. We'll cut a stable
+  contract and announce a deprecation policy before recommending
+  it for production use.
+</Callout>
+
 ## Cross-cutting topics
 
 <Cards>
-  <Card title="Authentication" href="/en/api/authentication" description="Session cookie or fm_… Bearer token. Both work on every endpoint." />
+  <Card title="Authentication" href="/en/api/authentication" description="fm_… Bearer token on every endpoint." />
   <Card title="Errors" href="/en/api/errors" description="Error envelope, status codes, and what each common code means." />
   <Card title="Pagination" href="/en/api/pagination" description="Offset by default, cursor for high-volume endpoints." />
 </Cards>
@@ -23,7 +36,6 @@ page with split-layout schema, language tabs (curl, JS, Python, Go,
 Java, C#), and a Try-it playground.
 
 <Cards>
-  <Card title="Auth" href="/en/api/auth/createSession" description="Sign in, sign out, 2FA, password reset, email verification." />
   <Card title="Account" href="/en/api/account/getMyAccount" description="Account settings, profile, API token rotation." />
   <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container — members, plans, billing." />
   <Card title="Sites" href="/en/api/sites/listSites" description="Properties you monitor. Beacon hashes, collection mode." />
@@ -69,15 +81,6 @@ curl https://api.fastmon.eu/v1/organizations \
 - **Default limit** is 50; max is 100 on every list endpoint.
 - **`X-Request-ID`** is on every response. Mirror it back when
   reporting issues.
-
-## Versioning
-
-The API version is `v1`. Breaking changes ship as a new prefix
-(`/api/v2`) — `v1` will continue to work alongside `v2` for at
-least 12 months after `v2` is released.
-
-Additive changes (new fields, new endpoints, new query parameters)
-ship continuously inside `v1`. Clients should ignore unknown fields.
 
 ## Schema document
 

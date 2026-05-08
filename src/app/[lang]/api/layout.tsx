@@ -1,7 +1,12 @@
 import type { HTMLAttributes } from 'react';
+import { Suspense } from 'react';
 import { getApiTree } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
+import {
+  ApiI18nGuard,
+  EnglishOnlyBanner,
+} from '@/components/api-i18n-guard';
 
 // API section uses its own sidebar tree (only API endpoints + concepts) so the
 // docs hierarchy disappears when the user is browsing the API reference. The
@@ -33,6 +38,10 @@ export default async function ApiLayout({ children, params }: LayoutProps<'/[lan
       }
       {...rest}
     >
+      <Suspense fallback={null}>
+        <ApiI18nGuard />
+        <EnglishOnlyBanner />
+      </Suspense>
       {children}
     </DocsLayout>
   );
