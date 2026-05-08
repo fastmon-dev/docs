@@ -15,7 +15,7 @@ Now switch to another tab, then come back. You should see a single
 `POST` request:
 
 ```
-POST https://api.fastmon.eu/c/{collector_hash}     204
+POST https://fastmon.site/c/{collector_hash}     204
 ```
 
 A `204 No Content` response means the beacon was accepted. That's
@@ -40,7 +40,7 @@ fine — real traffic builds up as visitors load pages.
 
 **Check the script loaded.** In DevTools → Network, filter for `s/`.
 You should see a request to
-`https://api.fastmon.eu/s/{source_hash}.js` with a `200` status. If it
+`https://fastmon.site/s/{source_hash}.js` with a `200` status. If it
 returns `404`, the `source_hash` in your tag is wrong. If it returns
 `410`, the site was deleted in Fastmon — recreate it.
 
@@ -55,10 +55,10 @@ for a CSP violation mentioning `fastmon.eu`. If there is one, add
 `https://fastmon.eu` to your `script-src` and `connect-src`
 directives.
 
-**Check the page actually navigates away.** The beacon flushes on
-`pagehide` / `visibilitychange`. If you've only ever stared at a
-single loaded page without switching tabs, you might not have
-triggered a flush yet — switch tabs and look again.
+**Force a flush.** The beacon flushes periodically and on
+`pagehide` / `visibilitychange`. If nothing has shown up yet,
+switch tabs (or close and reopen the page) — that triggers an
+immediate flush.
 
 ### Request to `/c/` returns `403`
 

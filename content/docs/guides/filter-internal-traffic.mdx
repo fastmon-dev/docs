@@ -46,7 +46,7 @@ your admin panel), flip the Fastmon collection mode for the page:
 <script>
   window.__fastmon_disabled = true;
 </script>
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 The beacon respects `window.__fastmon_disabled` and stops sending
@@ -62,7 +62,7 @@ A pure cookie example (no server logic):
     window.__fastmon_disabled = true;
   }
 </script>
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 Set the `staff=1` cookie once on a `/staff` route your team visits.
@@ -89,7 +89,7 @@ is to not load the script at all. Most monitors set a recognizable
 {% if request.user_agent.is_synthetic %}
   <!-- skip Fastmon for synthetic checks -->
 {% else %}
-  <script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+  <script src="https://fastmon.site/s/{source_hash}.js" async></script>
 {% endif %}
 ```
 
@@ -101,7 +101,7 @@ UA in a small inline script.
 
 Open your site as an internal visitor. Check DevTools → Network →
 filter `c/`. You should see **no** request to
-`https://api.fastmon.eu/c/...`. If you do, the flag isn't set in time —
+`https://fastmon.site/c/...`. If you do, the flag isn't set in time —
 make sure the inline script that sets the flag runs *before* the
 beacon script tag.
 

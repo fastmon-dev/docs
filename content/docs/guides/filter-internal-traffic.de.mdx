@@ -46,7 +46,7 @@ Fastmon-Collection für die Seite ausschalten:
 <script>
   window.__fastmon_disabled = true;
 </script>
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 Der Beacon respektiert `window.__fastmon_disabled` und sendet auf
@@ -62,7 +62,7 @@ Reines Cookie-Beispiel (keine Server-Logik):
     window.__fastmon_disabled = true;
   }
 </script>
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 Das `staff=1`-Cookie einmal auf einer `/staff`-Route setzen, die
@@ -90,7 +90,7 @@ nicht erst laden. Die meisten Monitore setzen einen erkennbaren
 {% if request.user_agent.is_synthetic %}
   <!-- Fastmon für synthetische Checks weglassen -->
 {% else %}
-  <script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+  <script src="https://fastmon.site/s/{source_hash}.js" async></script>
 {% endif %}
 ```
 
@@ -102,7 +102,7 @@ Inline-Script flippen.
 
 Site als interner Besucher öffnen. DevTools → Network → `c/`
 filtern. Du solltest **keinen** Request an
-`https://api.fastmon.eu/c/...` sehen. Wenn doch, wurde das Flag zu spät
+`https://fastmon.site/c/...` sehen. Wenn doch, wurde das Flag zu spät
 gesetzt — sicherstellen, dass das Inline-Script *vor* dem
 Beacon-Script-Tag läuft.
 

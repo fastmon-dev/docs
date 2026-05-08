@@ -16,7 +16,7 @@ Jetzt zu einem anderen Tab wechseln, dann zurück. Du solltest einen
 einzelnen `POST`-Request sehen:
 
 ```
-POST https://api.fastmon.eu/c/{collector_hash}     204
+POST https://fastmon.site/c/{collector_hash}     204
 ```
 
 Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's
@@ -41,7 +41,7 @@ Traffic baut sich auf, sobald Besucher die Seite öffnen.
 
 **Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
 filtern. Du solltest einen Request an
-`https://api.fastmon.eu/s/{source_hash}.js` mit Status `200` sehen. `404`
+`https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen. `404`
 heißt, der `source_hash` im Tag ist falsch. `410` heißt, die Site
 wurde in Fastmon gelöscht — neu anlegen.
 
@@ -55,10 +55,10 @@ Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 und nach einem CSP-Violation-Eintrag mit `fastmon.eu` suchen. Wenn ja,
 `https://fastmon.eu` zu `script-src` und `connect-src` hinzufügen.
 
-**Prüfen, ob die Seite überhaupt verlassen wurde.** Geflusht wird
-bei `pagehide` / `visibilitychange`. Wenn du nur eine Seite offen
-hast und nie den Tab wechselst, ist halt noch kein Flush passiert
-— einmal Tab wechseln, dann Network neu anschauen.
+**Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei
+`pagehide` / `visibilitychange`. Wenn noch nichts aufgetaucht ist,
+einmal Tab wechseln (oder Seite schließen und neu öffnen) — das
+triggert sofort einen Flush.
 
 ### Request an `/c/` liefert `403`
 

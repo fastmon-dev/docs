@@ -5,9 +5,8 @@ description: Drop Fastmon onto any website with a single script tag. Five minute
 
 The universal route: a single `<script>` tag in your `<head>`. It
 works on any site you control — static HTML, a Vue or React app, a
-Hugo blog, whatever. If you're on Next.js, Nuxt, WordPress, or
-Google Tag Manager, hop over to the platform-specific guide — it's
-a few clicks shorter.
+Hugo blog, a Next.js project, a WordPress site, anything you can
+inject a `<script>` into.
 
 **Time to first data:** about five minutes.
 **You'll need:** access to your site's HTML and a Fastmon account.
@@ -41,7 +40,7 @@ Drop this single tag into the `<head>` of every page you want to
 monitor, with `{source_hash}` replaced by the hash from step 1:
 
 ```html title="<head>"
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 That's the whole setup. The beacon:
@@ -61,8 +60,8 @@ beacon catch the very first paint.
 | Site type                  | Put the tag in…                                              |
 | -------------------------- | ------------------------------------------------------------ |
 | Plain HTML / Hugo / Jekyll | `<head>` of your base template.                              |
-| WordPress                  | A header snippet plugin, or `header.php`. See [WordPress guide](/en/install/wordpress). |
-| Next.js / Nuxt / Astro     | The framework's head/script primitive. See [Next.js guide](/en/install/nextjs). |
+| WordPress                  | A header-snippet plugin, or `header.php`.                    |
+| Next.js / Nuxt / Astro     | The framework's head/script primitive (e.g. Next.js `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
 | Single-page apps           | The static `index.html` shell — once is enough.              |
 
 ## 3. Deploy and load a page
@@ -70,8 +69,10 @@ beacon catch the very first paint.
 Push the change to production (or whichever environment you want
 to monitor) and open any page on the site in your own browser.
 
-The beacon ships data on `pagehide` / `visibilitychange`, so the
-first batch goes out when you navigate away or switch tabs.
+The beacon flushes periodically while the page is open, and again
+on `visibilitychange → hidden` and `pagehide` — switching tabs or
+closing the page is the most reliable way to force a flush during
+testing, but it's not the only trigger.
 
 ## 4. Verify it works
 
@@ -80,16 +81,18 @@ Two checks — one in DevTools, one in the dashboard.
 ### In your browser
 
 Open DevTools → **Network** → filter for `/c/`. You should see a
-`POST` to `https://api.fastmon.eu/c/{collector_hash}` after you switch tabs
-or close the page. Status 204 means the beacon was accepted.
+`POST` to `https://fastmon.site/c/{collector_hash}` — either after
+the periodic flush ticks over, or when you switch tabs / close the
+page. Status 204 means the beacon was accepted.
 
 If you don't see it, jump to [Verifying it works](/en/install/verify).
 
 ### In Fastmon
 
-Open the site in the dashboard. Within ~30 seconds the **Traffic**
-section will show non-zero sessions. The first beacon is the one
-you just sent — your IP isn't stored, but the row is there.
+Open the site in the dashboard. After about a minute (beacons are
+batched into ClickHouse), the **Traffic** section will show
+non-zero sessions. The first beacon is the one you just sent —
+your IP isn't stored, but the row is there.
 
 ## What's next
 

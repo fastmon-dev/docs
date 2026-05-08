@@ -9,15 +9,12 @@ Site ein, das auf deine Fastmon-Site zeigt. Wähle den Pfad unten,
 der zu deinem Stack passt; jeder ist self-contained und dauert
 etwa fünf Minuten.
 
-Wenn dein Stack nicht dabei ist: der
-[HTML-Pfad](/de/install/html) ist der universelle — ein einzelnes
-Tag im `<head>` funktioniert auf jeder Site, die du kontrollierst.
+Der [HTML-Pfad](/de/install/html) ist der universelle — ein
+einzelnes Tag im `<head>` funktioniert auf jeder Site, die du
+kontrollierst, unabhängig von Framework, CMS oder Tag-Manager.
 
 <Cards>
-  <Card title="HTML" href="/de/install/html" description="Jede Website, die du kontrollierst. Funktioniert mit statischen Sites, Hugo, Jekyll, plain HTML." />
-  <Card title="Next.js" href="/de/install/nextjs" description="App Router und Pages Router, mit SSR/SSG/Static Export." />
-  <Card title="WordPress" href="/de/install/wordpress" description="Mit oder ohne Header-Injection-Plugin." />
-  <Card title="Google Tag Manager" href="/de/install/gtm" description="Wenn dein Team Tags über GTM verwaltet." />
+  <Card title="HTML" href="/de/install/html" description="Jede Website, die du kontrollierst. Funktioniert mit statischen Sites, Hugo, Jekyll, plain HTML und jedem Framework über dessen Head/Script-Primitive." />
 </Cards>
 
 ## Nachdem der Tag drin ist
@@ -35,7 +32,7 @@ Das Script, das du einbettest, ist Byte-für-Byte derselbe Inhalt,
 egal wie du es lädst:
 
 ```html
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 `{source_hash}` ist der Per-Site-Hash, den Fastmon beim Anlegen der

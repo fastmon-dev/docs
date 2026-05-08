@@ -9,15 +9,12 @@ point it at your Fastmon site. Pick the path below that matches
 your stack; each one is self-contained and takes about five
 minutes.
 
-If your stack isn't on the list, the [HTML path](/en/install/html)
-is the universal one: a single tag in `<head>` works on any site
-you control.
+The [HTML path](/en/install/html) is the universal one — a single
+tag in `<head>` works on any site you control, regardless of
+framework, CMS, or tag manager.
 
 <Cards>
-  <Card title="HTML" href="/en/install/html" description="Any website you control. Works on static sites, Hugo, Jekyll, plain HTML." />
-  <Card title="Next.js" href="/en/install/nextjs" description="App Router and Pages Router, with SSR/SSG/static export." />
-  <Card title="WordPress" href="/en/install/wordpress" description="With or without a header-injection plugin." />
-  <Card title="Google Tag Manager" href="/en/install/gtm" description="If your team manages tags through GTM." />
+  <Card title="HTML" href="/en/install/html" description="Any website you control. Works on static sites, Hugo, Jekyll, plain HTML, and any framework via its head/script primitive." />
 </Cards>
 
 ## After you've added the tag
@@ -34,7 +31,7 @@ The script you embed is the same byte-for-byte file, no matter how
 you load it:
 
 ```html
-<script src="https://api.fastmon.eu/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" async></script>
 ```
 
 `{source_hash}` is the per-site hash Fastmon generates when you
