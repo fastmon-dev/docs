@@ -119,6 +119,21 @@ very well in that layout. Vectorized aggregation makes percentiles
 and group-bys faster again. Postgres could serve the same queries
 — it would just be noticeably slower and more expensive per query.
 
+### Query freshness — live vs. aggregated
+
+Analytics queries route by time range. Anything within the last
+**6 hours** reads the raw beacon stream directly — fresh, with the
+~30 s ingest delay above, no other latency. Longer ranges
+(24 h, 7 d, 30 d, custom) read from hourly pre-aggregated tables
+that the backend rebuilds once per hour. Same numbers, sub-100 ms
+response, no scan-cost growth as your data retention grows.
+
+The crossover is invisible from the dashboard or the API — you
+just see fast queries. The only user-visible consequence is that
+the most recent completed hour can lag by up to an hour before it
+folds into the aggregated view; the 6 h live window covers that
+gap, so live dashboards stay accurate.
+
 ### Why a separate session store?
 
 Sessions and rate-limit counters need millisecond reads on every

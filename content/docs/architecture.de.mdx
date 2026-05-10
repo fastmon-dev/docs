@@ -122,6 +122,22 @@ Aggregation pro Spalte macht Perzentile und Group-Bys nochmal
 deutlich schneller. Auf Postgres ginge das auch — wäre nur
 spürbar langsamer und teurer pro Query.
 
+### Wie aktuell sind die Daten — live vs. aggregiert
+
+Analytics-Queries entscheiden je nach Zeitbereich, woher sie lesen.
+Alles innerhalb der letzten **6 Stunden** geht direkt auf den
+Roh-Beacon-Stream, also frisch bis auf die ~30 s Ingest-Verzögerung
+von oben. Längere Bereiche (24 h, 7 d, 30 d, custom) lesen aus
+stündlich vor-aggregierten Tabellen, die das Backend einmal pro
+Stunde neu aufbaut. Gleiche Zahlen, Antwort unter 100 ms, und die
+Scan-Kosten wachsen nicht mit, wenn die Aufbewahrungsdauer steigt.
+
+Für Dashboard und API ändert sich nichts — man merkt nur, dass die
+Queries schnell sind. Die einzige sichtbare Folge: Die zuletzt
+abgeschlossene Stunde braucht bis zu eine Stunde, bis sie in der
+aggregierten Sicht auftaucht. Das 6-h-Live-Fenster deckt diese
+Lücke ab, also stimmen die Live-Dashboards trotzdem.
+
 ### Warum ein eigener Session-Store?
 
 Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich
