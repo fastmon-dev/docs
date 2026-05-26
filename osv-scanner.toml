@@ -1,8 +1,6 @@
 # OSV-Scanner ignore list. Mirror of the npm audit `--audit-level=high` threshold
 # in .github/workflows/security.yml. Re-evaluate each time package-lock.json changes.
 
-# No vulnerabilities currently ignored. Add entries as needed using:
-#
-# [[IgnoredVulns]]
-# id = "GHSA-xxxx-xxxx-xxxx"
-# reason = "Short rationale (dev-only dependency, no production exposure, …)."
+[[IgnoredVulns]]
+id = "GHSA-qx2v-qp2m-jg93"
+reason = "postcss XSS via unescaped </style>. Only present via next's bundled postcss@8.4.31 (next pins it exactly; root postcss is on the patched line). This is a docs site: postcss runs at build time on our own authored CSS only — MDX code samples are rendered as text by the syntax highlighter, never piped through postcss. No attacker-controlled CSS reaches the stringify path. Re-evaluate when next bumps its postcss pin."
