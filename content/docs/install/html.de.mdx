@@ -4,7 +4,7 @@ description: Fastmon mit einem einzigen Script-Tag auf jeder Website einbinden. 
 ---
 
 Der universelle Weg: ein `<script>`-Tag im `<head>`. Läuft auf
-jeder Site, die du selbst hostest — statisches HTML, Vue/React,
+jeder Site, die du selbst hostest: statisches HTML, Vue/React,
 Hugo-Blog, ein Next.js-Projekt, eine WordPress-Site, alles, wo du
 ein `<script>` einbauen kannst.
 
@@ -17,23 +17,23 @@ Fastmon-Account.
 Einloggen, gewünschte Organisation öffnen, **Create site** klicken.
 Ausfüllen:
 
-- **Name** — wie auch immer du sie später erkennst (z. B. `acme-marketing`).
-- **Domain** — der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
-- **Allowed origins** *(optional)* — leer lassen, um Beacons von der
+- **Name**: wie auch immer du sie später erkennst (z. B. `acme-marketing`).
+- **Domain**: der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
+- **Allowed origins** *(optional)*: leer lassen, um Beacons von der
   Domain selbst zu akzeptieren. Staging- oder Preview-Hostnames hier
   als Komma-Liste eintragen (`staging.acme.com, preview.acme.com`).
 
-Den Rest erstmal auf Default lassen — [Collection Mode](/de/collection-modes)
+Den Rest erstmal auf Default lassen; [Collection Mode](/de/collection-modes)
 und Retention drehst du später bei Bedarf.
 
 **Save** klicken. Fastmon legt zwei kurze Hashes für die Site an:
 
-- `source_hash` — kommt in die Script-URL.
-- `collector_hash` — nutzt der Beacon zum Senden. Steckt im Script
+- `source_hash`: kommt in die Script-URL.
+- `collector_hash`: nutzt der Beacon zum Senden. Steckt im Script
   drin, den musst du nicht extra kopieren.
 
 Beide findest du auf der Settings-Seite. Dort liegt auch ein
-fertiges Snippet zum Reinkopieren — genau das, was im nächsten
+fertiges Snippet zum Reinkopieren; genau das, was im nächsten
 Schritt erklärt wird.
 
 ## 2. Script auf deiner Site einbinden
@@ -54,7 +54,7 @@ Mehr ist es nicht. Der Beacon:
   Flushes.
 
 Das Tag ist `async`, blockiert also kein Rendering. Wo du es
-einbaust, ist relativ egal — der `<head>` ist trotzdem die bessere
+einbaust, ist relativ egal; der `<head>` ist trotzdem die bessere
 Wahl, dann erwischt der Beacon auch den ersten Paint.
 
 ### Wo das Tag hinkommt
@@ -64,7 +64,7 @@ Wahl, dann erwischt der Beacon auch den ersten Paint.
 | Plain HTML / Hugo / Jekyll | `<head>` des Base-Templates.                                  |
 | WordPress                  | Header-Snippet-Plugin oder `header.php`.                      |
 | Next.js / Nuxt / Astro     | Das Head/Script-Primitive des Frameworks (z. B. Next.js `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
-| Single-Page-Apps           | Die statische `index.html`-Shell — einmal reicht.             |
+| Single-Page-Apps           | Die statische `index.html`-Shell (einmal reicht).             |
 
 ## 3. Deployen und Seite laden
 
@@ -72,19 +72,19 @@ Push die Änderung nach Production (oder in die Umgebung, die du
 monitoren willst), und ruf eine beliebige Seite im Browser auf.
 
 Der Beacon flusht periodisch, solange die Seite offen ist, und
-zusätzlich bei `visibilitychange → hidden` und `pagehide` —
+zusätzlich bei `visibilitychange → hidden` und `pagehide`.
 Tab-Wechsel oder Schließen der Seite ist beim Testen der
 zuverlässigste Weg, einen Flush zu erzwingen, aber nicht der einzige
 Trigger.
 
 ## 4. Prüfen, ob es läuft
 
-Zwei Checks — einer in DevTools, einer im Dashboard.
+Zwei Checks: einer in DevTools, einer im Dashboard.
 
 ### Im Browser
 
 DevTools → **Network** → nach `/c/` filtern. Du solltest einen
-`POST` an `https://fastmon.site/c/{collector_hash}` sehen — entweder
+`POST` an `https://fastmon.site/c/{collector_hash}` sehen, entweder
 nach dem periodischen Flush oder beim Tab-Wechsel / Schließen der
 Seite. Status 204 bedeutet, der Beacon wurde akzeptiert.
 
@@ -95,14 +95,14 @@ Wenn nichts kommt: [Implementierung verifizieren](/de/install/verify).
 Site im Dashboard öffnen. Nach ungefähr einer Minute (Beacons
 werden gebatcht nach ClickHouse geschrieben) zeigt der
 **Traffic**-Bereich Sessions &gt; 0. Der erste Beacon ist der, den
-du gerade abgeschickt hast — deine IP behalten wir nicht, aber die
+du gerade abgeschickt hast; deine IP behalten wir nicht, aber die
 Zeile ist da.
 
 ## Wie geht's weiter
 
-- [Collection Mode](/de/collection-modes) wählen — Default
+- [Collection Mode](/de/collection-modes) wählen; Default
   `anonymous` ist für die meisten Sites die richtige Antwort.
-- [Privacy: Was wir nicht sammeln](/de/privacy) — nützlich, wenn
+- [Privacy: Was wir nicht sammeln](/de/privacy), nützlich, wenn
   Legal fragt.
-- Releases taggen für Vorher/Nachher-Vergleiche — siehe
+- Releases taggen für Vorher/Nachher-Vergleiche: siehe
   [Releases vergleichen](/de/guides/compare-releases).

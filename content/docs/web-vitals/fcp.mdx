@@ -1,11 +1,11 @@
 ---
 title: First Contentful Paint (FCP)
-description: When the first text or image appears — the diagnostic metric that explains slow LCPs.
+description: "When the first text or image appears: the diagnostic metric that explains slow LCPs."
 ---
 
 **FCP** measures the time from navigation start to the moment
 the browser paints the first text or image from the DOM. It's the
-instant a visitor notices something's happening — the first sign
+instant a visitor notices something's happening: the first sign
 of life from the page.
 
 FCP is **not** a Core Web Vital. Google doesn't use it for
@@ -23,7 +23,7 @@ FCP is reported in milliseconds. Track the **75th percentile**.
 | ≤ 3,000 ms      | Needs improvement   |
 | > 3,000 ms      | Poor                |
 
-A good FCP doesn't guarantee a good LCP — it just means the
+A good FCP doesn't guarantee a good LCP; it just means the
 visitor saw *something* quickly. The other way around: a bad FCP
 almost always means a bad LCP. Fixing FCP first is usually the
 right move.
@@ -38,7 +38,7 @@ The browser fires an FCP entry for the first paint of:
 
 A blank background color, a white frame, or a CSS gradient with no
 text doesn't count. Skeleton loaders made of empty `<div>`s with
-background colors don't count either — but a skeleton with a single
+background colors don't count either, but a skeleton with a single
 visible text label does.
 
 ## When FCP is reported
@@ -90,7 +90,7 @@ Use **By URL** breakdown to find pages where FCP is unusually bad.
 
 - **FCP can be near-zero with a skeleton loader.** The browser counts
   the skeleton's first text as FCP, even if it's "Loading…". Your FCP
-  number looks great while LCP is bad — the visitor still feels the
+  number looks great while LCP is bad; the visitor still feels the
   delay.
 - **Critical-CSS extraction is the highest-leverage fix.** A typical
   blog post can drop FCP by half with no other changes.
@@ -99,6 +99,6 @@ Use **By URL** breakdown to find pages where FCP is unusually bad.
 
 ## What's next
 
-- [TTFB](/en/web-vitals/ttfb) — the upstream metric for FCP.
-- [LCP](/en/web-vitals/lcp) — what FCP usually predicts.
+- [TTFB](/en/web-vitals/ttfb): the upstream metric for FCP.
+- [LCP](/en/web-vitals/lcp): what FCP usually predicts.
 - [Web Vitals overview](/en/web-vitals).

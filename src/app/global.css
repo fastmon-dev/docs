@@ -1,7 +1,7 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
-@import 'fumadocs-openapi/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+@import "fumadocs-openapi/css/preset.css";
 
 /* === API layout: API pages use `full: true` which adds article + prose
    caps that squash the 2-column operation layout. Unset them so the right
@@ -15,9 +15,9 @@
      (node_modules/fumadocs-ui/dist/layouts/docs/page/index.js)
    The right column's width is controlled in `src/components/api-page.tsx`
    via the `renderOperationLayout` override (clamp(420px, 45%, 640px)). */
-[data-api-layout] article[data-full='true'] {
+[data-api-layout] article[data-full="true"] {
   max-width: none !important;
 }
-[data-api-layout] article[data-full='true'] .prose {
+[data-api-layout] article[data-full="true"] .prose {
   max-width: none !important;
 }

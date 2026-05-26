@@ -3,7 +3,7 @@ title: Releases
 description: A versioned marker on a site. The mechanism for "did this deploy regress performance?"
 ---
 
-A **release** is a named point in time on a site — usually a
+A **release** is a named point in time on a site, usually a
 deploy. With releases you can ask "did LCP go up after we shipped
 `v2.4.1`?" with one API call, instead of squinting at a chart.
 
@@ -22,7 +22,7 @@ for you in a single request.
   deploy.
 - **Investigating a regression.** Use the release picker in the
   dashboard to overlay metrics across releases.
-- **Rolling back.** Tag the rollback as a release too — you want
+- **Rolling back.** Tag the rollback as a release too; you want
   both transitions visible.
 
 If you don't tag releases, nothing breaks. The dashboard still
@@ -38,7 +38,7 @@ shortcut.
 | `version`     | string      | Required. Free-form (`v2.4.1`, `2026-05-07`, `git:abcdef0`).          |
 | `released_at` | timestamp   | Optional. When the deploy went live. Defaults to "now" if omitted.    |
 
-That's the whole resource. Releases are minimal on purpose — the
+That's the whole resource. Releases are minimal on purpose; the
 goal is correlation, not building a deploy database.
 
 ## Tagging from CI/CD
@@ -52,7 +52,7 @@ curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
   -d "{ \"version\": \"$DEPLOY_VERSION\", \"released_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" }"
 ```
 
-Use whatever your CI considers a deploy version — git SHA, tag,
+Use whatever your CI considers a deploy version: git SHA, tag,
 build number. Whatever you pick, stick with it. Mixing styles
 makes the sort order meaningless.
 
@@ -102,7 +102,7 @@ stay queryable by ID.
 ### Long-running release branches
 
 Tag in the moment the new version actually reaches meaningful
-traffic — when you flip the feature flag, swap the canary, or
+traffic: when you flip the feature flag, swap the canary, or
 move the load balancer. Don't tag on "deploy finished, nobody
 saw it yet."
 
@@ -127,7 +127,7 @@ brings metrics back to baseline.
 
 ## Related
 
-- [Sites](/en/concepts/sites) — releases live under a site.
-- [Analytics API](/en/analytics-api) — `compare_to_release_id`.
-- [Compare releases](/en/guides/compare-releases) — step-by-step
+- [Sites](/en/concepts/sites): releases live under a site.
+- [Analytics API](/en/analytics-api): `compare_to_release_id`.
+- [Compare releases](/en/guides/compare-releases): step-by-step
   guide for hooking up CI/CD.

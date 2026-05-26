@@ -1,13 +1,13 @@
 ---
 title: Interaction to Next Paint (INP)
-description: Was INP misst, was ein guter INP ist, und wie man eine träge Seite debuggt — mit Fastmon-Daten.
+description: "Was INP misst, was ein guter INP ist, und wie man eine träge Seite debuggt, mit Fastmon-Daten."
 ---
 
 **INP** misst, wie lange die schlechteste User-Interaktion auf der
 Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die
 Metrik für "die Seite fühlt sich beim Klicken träge an". Während
 LCP die Lade-Responsiveness misst, geht es bei INP um die
-*Runtime-Responsiveness* — über die ganze Zeit, in der jemand auf
+*Runtime-Responsiveness* über die ganze Zeit, in der jemand auf
 der Seite ist.
 
 INP hat im März 2024 FID als Core Web Vital abgelöst und zählt
@@ -46,27 +46,27 @@ rendern, ist dein INP 200 ms.
 ## Wann INP reportet wird
 
 INP wird finalisiert, wenn die Seite versteckt wird. Der Wert ist
-grob die schlechteste Interaktion über die Page-Lifetime —
-technisch ein Hoch-Perzentil-Interaktions-Wert, korrigiert um die
-Gesamtanzahl an Interaktionen (damit ein einzelner 800-ms-Ausreißer
+grob die schlechteste Interaktion über die Page-Lifetime
+(technisch ein Hoch-Perzentil-Interaktions-Wert, korrigiert um die
+Gesamtanzahl an Interaktionen, damit ein einzelner 800-ms-Ausreißer
 auf einer Seite mit 100 Interaktionen nicht dominiert).
 
 Wenn der Besucher nie interagiert, hat der Pageview kein INP.
 
 ## Beispiele
 
-**Search-as-you-type-Input** — jeder Tastendruck triggert einen
+**Search-as-you-type-Input.** Jeder Tastendruck triggert einen
 Handler. Macht der Handler synchron Layout-Arbeit, liefert dir
 jeder Tastendruck einen INP-Kandidaten, und der schlechteste
 gewinnt. Was hilft: Debounce, Arbeit in `requestIdleCallback`
 schieben, oder auf einen Worker auslagern.
 
-**"Details anzeigen"-Disclosure auf einer Produktseite** — beim
+**"Details anzeigen"-Disclosure auf einer Produktseite.** Beim
 Öffnen läuft eine Height-Transition. Die Animation selbst zählt
 nicht, aber das synchrone JS davor, das die Content-Höhe misst,
 schon. Triggert diese Messung Layout, schlägt das auf INP durch.
 
-**SPA-Route-Wechsel** — ein Klick auf einen Link triggert deinen
+**SPA-Route-Wechsel.** Ein Klick auf einen Link triggert deinen
 Router, der gerne mal einen großen Baum komplett neu rendert. INP
 misst Klick → erster Paint der neuen Route. Wer Route-Chunks nicht
 lazy-loadet, kriegt hier richtig auf den Deckel.
@@ -76,11 +76,11 @@ lazy-loadet, kriegt hier richtig auf den Deckel.
 Der **Performance**-Bereich zeigt INP bei p50, p75, p95. Besonders
 nützliche Slices:
 
-- **Nach URL** — Group by URL. Interaktive Seiten (Suche,
+- **Nach URL**: Group by URL. Interaktive Seiten (Suche,
   Konfigurator, Dashboard) dominieren meist.
-- **Nach Device** — Group by `device_type`. INP ist auf günstigem
+- **Nach Device**: Group by `device_type`. INP ist auf günstigem
   Mobile deutlich härter.
-- **Nach Browser** — Group by `browser`. Firefox und Safari zeigen
+- **Nach Browser**: Group by `browser`. Firefox und Safari zeigen
   manchmal andere INP-Profile als Chromium.
 
 ## Wie man einen schlechten INP verbessert
@@ -100,7 +100,7 @@ zurückführen:
    Tastendruck rerendern. Memoize, virtualisiere, oder zu
    uncontrolled Inputs wechseln.
 4. **Third-Party-Scripts.** Tag-Manager, A/B-Test-Frameworks,
-   Chat-Widgets — viele laufen auf jedem Event. Deinen
+   Chat-Widgets: viele laufen auf jedem Event. Deinen
    [Third-Party-Impact](/de/analytics-api) auditieren und
    entfernen oder deferren, was du nicht brauchst.
 
@@ -114,19 +114,19 @@ Tieferer Walkthrough: web.devs
   Responsiveness nicht auch gemessen hast.
 - **INP kann sich verschlechtern, wenn LCP besser wird.**
   Lazy-Loading und Hydration schieben Arbeit *nach* dem ersten
-  Paint — gut für LCP, doof für INP. Immer beides zusammen
+  Paint: gut für LCP, doof für INP. Immer beides zusammen
   anschauen.
 - **INP schwankt stark nach Interaktion.** Der erste Klick auf
-  einer frischen Seite ist meistens der schlimmste — kalter Cache,
-  Code noch nicht warm. Lass dir die Daten pro Interaktion zeigen,
+  einer frischen Seite ist meistens der schlimmste (kalter Cache,
+  Code noch nicht warm). Lass dir die Daten pro Interaktion zeigen,
   nicht nur den Durchschnitt.
 - **Server-gerenderte Seiten sind nicht immun.** SSR hilft LCP,
-  bringt für INP aber nichts — Hydration ist JavaScript im
+  bringt für INP aber nichts; Hydration ist JavaScript im
   Main-Thread.
 
 ## Wie geht's weiter
 
-- [LCP](/de/web-vitals/lcp) — Lade-Geschwindigkeit.
-- [CLS](/de/web-vitals/cls) — visuelle Stabilität.
-- [Experience Score](/de/web-vitals/experience-score) — eine Zahl
+- [LCP](/de/web-vitals/lcp): Lade-Geschwindigkeit.
+- [CLS](/de/web-vitals/cls): visuelle Stabilität.
+- [Experience Score](/de/web-vitals/experience-score): eine Zahl
   von 0–10, die alle obigen Metriken zusammenfasst.

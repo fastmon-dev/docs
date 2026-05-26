@@ -1,9 +1,9 @@
-import { openapi } from '@/lib/openapi';
-import { createAPIPage } from 'fumadocs-openapi/ui';
-import { defaultShikiFactory } from 'fumadocs-core/highlight/shiki/full';
-import { createCodeUsageGeneratorRegistry } from 'fumadocs-openapi/requests/generators';
-import { registerDefault } from 'fumadocs-openapi/requests/generators/all';
-import client from './api-page.client';
+import { openapi } from "@/lib/openapi";
+import { createAPIPage } from "fumadocs-openapi/ui";
+import { defaultShikiFactory } from "fumadocs-core/highlight/shiki/full";
+import { createCodeUsageGeneratorRegistry } from "fumadocs-openapi/requests/generators";
+import { registerDefault } from "fumadocs-openapi/requests/generators/all";
+import client from "./api-page.client";
 
 // Multi-language code samples (curl, JavaScript, Python, Go, Java, C#).
 // Without this registry, the right-hand "API example" panel renders empty.
@@ -17,8 +17,8 @@ export const APIPage = createAPIPage(openapi, {
   shiki: defaultShikiFactory,
   shikiOptions: {
     themes: {
-      light: 'github-light',
-      dark: 'github-dark',
+      light: "github-light",
+      dark: "github-dark",
     },
   },
   codeUsages,

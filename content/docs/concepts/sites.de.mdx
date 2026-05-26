@@ -4,7 +4,7 @@ description: Eine Site ist eine Property, die du monitorst. Jede Site hat eigene
 ---
 
 Eine **Site** ist die Monitoring-Einheit in Fastmon. Praktisch
-entspricht das einer Property — meistens einem Origin, einer App
+entspricht das einer Property: meistens einem Origin, einer App
 oder einer Brand. Beacon-URL, Settings, Dashboard-Filter: alles
 pro Site.
 
@@ -17,7 +17,7 @@ Site anlegen.
 
 Willst du einen Dashboard-View über mehrere Properties, nimm
 **Tags** (siehe unten) und aggregier zur Query-Zeit. Ein
-Site-Group-Konzept gibt es bewusst nicht — Tags reichen.
+Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 
 ## Wann du sie anfasst
 
@@ -47,7 +47,7 @@ Site-Group-Konzept gibt es bewusst nicht — Tags reichen.
 | `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.eu`.          |
 | `source_hash`         | string                                | Per-Site-Hash für die Script-URL (`/s/{source_hash}.js`).                         |
 | `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
-| `collection_mode`     | enum                                  | `anonymous` · `consent` · `full`. Siehe [Collection Modes](/de/collection-modes). |
+| `collection_mode`     | enum                                  | `anonymous`, `consent` oder `full`. Siehe [Collection Modes](/de/collection-modes). |
 | `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
 | `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
 | `tags`                | Liste von Strings (max 10)            | Freie Labels für Dashboard- und Analytics-Filter.                                 |
@@ -66,13 +66,13 @@ unterschiedliche Sachen.
 Getrennt sind sie, damit sich das Script-Template ändern kann (etwa
 beim Beacon-Upgrade oder Collection-Mode-Wechsel), ohne dass die
 Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den
-`source_hash` — der `collector_hash` ist im Script drin und kommt
+`source_hash`; der `collector_hash` ist im Script drin und kommt
 automatisch mit.
 
 ## Tags
 
 Tags sind kurze Labels, die du an eine Site klebst. Dashboard und
-Analytics-API filtern danach — so baust du "Production-Sites" oder
+Analytics-API filtern danach; so baust du "Production-Sites" oder
 "Marketing-Sites"-Views über mehrere Properties.
 
 Konventionen, die gut funktionieren:
@@ -92,7 +92,7 @@ das Script auf einer nicht-erlaubten Domain, antwortet der Collector
 mit `403`.
 
 Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
-unterstützt — jeden Origin explizit listen.
+unterstützt; jeden Origin explizit listen.
 
 ## Häufige Szenarien
 
@@ -112,7 +112,7 @@ Variante.
 ### Neue Sub-Site, gleiche Brand
 
 Neue Site anlegen. Bloß nicht das Script-Tag einer anderen Property
-wiederverwenden — der `source_hash` gehört zur Site, sonst sind
+wiederverwenden; der `source_hash` gehört zur Site, sonst sind
 die Daten am Ende nicht mehr zuordenbar.
 
 ### Auf eine neue Domain umziehen
@@ -126,7 +126,7 @@ inactive setzen.
 - **Sites lassen sich nicht zwischen Organisationen umziehen.**
   Falls doch nötig: Support melden.
 - **`is_active = false` behält die Historie.** Es stoppt nur neuen
-  Schreibvorgang — gut für Pausen, nicht zum Retention-Kürzen.
+  Schreibvorgang; gut für Pausen, nicht zum Retention-Kürzen.
 - **Site umbenennen ändert die Hashes nicht.** Schon eingebettete
   Scripts laufen einfach weiter.
 - **Site löschen löscht auch die Beacon-Daten.** Mit Bestätigung.
@@ -134,9 +134,9 @@ inactive setzen.
 
 ## Verwandt
 
-- [Collection Modes](/de/collection-modes) — was der Beacon pro
+- [Collection Modes](/de/collection-modes): was der Beacon pro
   Site tut.
-- [Der RUM-Beacon](/de/beacon) — was der Beacon erfasst.
-- [Releases](/de/concepts/releases) — versionierte Marker auf einer
+- [Der RUM-Beacon](/de/beacon): was der Beacon erfasst.
+- [Releases](/de/concepts/releases): versionierte Marker auf einer
   Site.
-- [API: Sites-Endpunkte](/de/api) — programmatisches Site-CRUD.
+- [API: Sites-Endpunkte](/de/api): programmatisches Site-CRUD.

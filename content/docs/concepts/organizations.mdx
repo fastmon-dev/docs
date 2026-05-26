@@ -5,7 +5,7 @@ description: The top-level account container. Everything in Fastmon belongs to o
 
 An **organization** is the top-level container in Fastmon. Every
 [site](/en/concepts/sites), member, invite, API token, and
-notification rule belongs to exactly one organization — nothing
+notification rule belongs to exactly one organization; nothing
 crosses that line.
 
 ## Why it matters
@@ -14,7 +14,7 @@ Organizations are how Fastmon keeps customers apart, how billing
 and plans hang together, and how access control is scoped.
 
 Most accounts only ever have one organization. Multiple is mostly
-a thing for agencies and partners — see the `partner` plan below.
+a thing for agencies and partners; see the `partner` plan below.
 
 ## When you'd touch it
 
@@ -33,7 +33,7 @@ a thing for agencies and partners — see the `partner` plan below.
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
 | `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/v1/organizations/{id}/…`). |
 | `name`            | string                                    | Human-readable. Shows in the org switcher.                            |
-| `plan`            | enum                                      | `beta` · `starter` · `pro` · `partner` · `enterprise`.                |
+| `plan`            | enum                                      | `beta`, `starter`, `pro`, `partner`, or `enterprise`.                 |
 | `members`         | list of `{ user_id, role }`               | Roles: `owner`, `member`.                                             |
 
 ## Plans
@@ -43,11 +43,11 @@ a thing for agencies and partners — see the `partner` plan below.
 | `beta`        | Early access during onboarding. Limited quota.               |
 | `starter`     | Single-product teams. Default retention.                     |
 | `pro`         | Production teams. Higher retention.                          |
-| `partner`     | Agencies. Manage **partner clients** — sub-organizations you operate on behalf of someone else. |
+| `partner`     | Agencies. Manage **partner clients** (sub-organizations you operate on behalf of someone else). |
 | `enterprise`  | Custom limits, custom retention, signed DPA.                 |
 
 The plan gates features and quotas. Which Web Vitals get
-collected isn't tied to the plan — every plan collects the same
+collected isn't tied to the plan; every plan collects the same
 metrics.
 
 ## Roles
@@ -58,7 +58,7 @@ metrics.
 | `member` | View dashboards, run analytics queries, manage their own notification rules.                 |
 
 There's exactly one owner at a time. Use **Transfer ownership** to
-hand it off — the previous owner becomes a member.
+hand it off; the previous owner becomes a member.
 
 ## Common scenarios
 
@@ -74,7 +74,7 @@ separated? Create two organizations. You can be a member of both.
 
 ### Agency running client sites
 
-Use the `partner` plan. Each client is a **partner client** — a
+Use the `partner` plan. Each client is a **partner client**: a
 sub-organization the agency runs. Agency users see all clients;
 the client sees only itself.
 
@@ -84,12 +84,12 @@ the client sees only itself.
   (`/v1/organizations/{id}/…`), not by whichever tab you've
   got open.
 - **Members are global Fastmon users.** Invite an existing user
-  and the existing account gets reused — no duplicate.
+  and the existing account gets reused; no duplicate.
 - **Sites can't move between organizations.** If you genuinely
   need this, ping support. No self-serve action for it.
 
 ## Related
 
-- [Sites](/en/concepts/sites) — the resources owned by an
+- [Sites](/en/concepts/sites): the resources owned by an
   organization.
-- [API: Organizations endpoints](/en/api) — programmatic access.
+- [API: Organizations endpoints](/en/api): programmatic access.

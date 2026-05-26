@@ -16,7 +16,7 @@ your CI/CD pipeline, and a site that's already
 ## 1. Create an API token
 
 1. In Fastmon, open **Account → API token**.
-2. Click **Generate token**. Copy the value — it starts with `fm_`.
+2. Click **Generate token**. Copy the value: it starts with `fm_`.
    You won't see it again.
 3. Store it in your CI's secret store as `FASTMON_TOKEN`.
 
@@ -45,7 +45,7 @@ curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
 ```
 
 The `-fsS` flags make curl fail loudly on non-2xx responses
-without spamming progress output. `released_at` is optional — if
+without spamming progress output. `released_at` is optional; if
 you skip it, the server just sets "now."
 
 ### GitHub Actions
@@ -82,10 +82,10 @@ fastmon-release:
 Vercel doesn't run arbitrary post-deploy commands inside the build
 itself. Two options:
 
-- **Deploy hook** — set up a webhook receiver that fires on Vercel's
+- **Deploy hook**: set up a webhook receiver that fires on Vercel's
   `deployment.succeeded` event, and have the receiver call the
   Fastmon endpoint with the SHA from the payload.
-- **Edge function** — add a small cron-triggered function that polls
+- **Edge function**: add a small cron-triggered function that polls
   the Vercel API for new deployments and tags them.
 
 ## 4. Verify the release was recorded
@@ -105,7 +105,7 @@ will list it.
 
 ## 5. Compare metrics
 
-The dashboard has a release picker on **Performance** — pick the
+The dashboard has a release picker on **Performance**: pick the
 release and the chart overlays before/after. For programmatic
 comparison, pass `compare_to_release_id`:
 
@@ -129,7 +129,7 @@ the example above compares 24 hours after the release against the
 
 ## What "good" looks like
 
-- Every successful deploy tags a release automatically — nothing
+- Every successful deploy tags a release automatically, nothing
   by hand.
 - The release version is something you can resolve back to a
   commit: git SHA, tag, build number, whatever your team uses.
@@ -141,8 +141,8 @@ the example above compares 24 hours after the release against the
 
 - **No `released_at` defaults to "now."** That fits most of the
   time. Watch out when your deploy job runs minutes before the
-  artifact is actually live (blue/green flips later, etc.) —
-  then back-date it.
+  artifact is actually live (blue/green flips later, etc.).
+  Then back-date it.
 - **Releases are per site.** A monorepo deploy that ships three
   sites needs three release calls.
 - **Comparison windows follow the query length.** A 7-day query
@@ -152,8 +152,8 @@ the example above compares 24 hours after the release against the
 
 ## Related
 
-- [Releases concept](/en/concepts/releases) — what a release is.
-- [Analytics API](/en/analytics-api) — `compare_to_release_id`
+- [Releases concept](/en/concepts/releases): what a release is.
+- [Analytics API](/en/analytics-api): `compare_to_release_id`
   details.
-- [Notification rules](/en/guides/notification-rules) — alert
+- [Notification rules](/en/guides/notification-rules): alert
   automatically on per-release regressions.

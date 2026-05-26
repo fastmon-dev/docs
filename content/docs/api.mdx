@@ -5,7 +5,7 @@ description: Base URL, authentication, response envelopes, and the resources you
 
 The Fastmon REST API is the same surface the dashboard uses. It's
 auto-generated from code and shipped as an OpenAPI document at
-[`/openapi.json`](https://api.fastmon.eu/v1/openapi.json) — drop it into
+[`/openapi.json`](https://api.fastmon.eu/v1/openapi.json); drop it into
 your favorite generator (`openapi-typescript`, `oapi-codegen`, …)
 for a typed client.
 
@@ -36,13 +36,13 @@ and have their own contract.
   <Card title="Organizations" href="/en/api/organizations" description="Top-level account container. Members, plans, settings." />
   <Card title="Sites" href="/en/api/sites" description="Properties you monitor. Beacon hashes, collection mode, retention." />
   <Card title="Releases" href="/en/api/releases" description="Versioned markers on a site, used for before/after comparisons." />
-  <Card title="Analytics" href="/en/api/analytics" description="Twelve query endpoints — Web Vitals, sessions, errors, third-party." />
+  <Card title="Analytics" href="/en/api/analytics" description="Twelve query endpoints: Web Vitals, sessions, errors, third-party." />
   <Card title="Notifications" href="/en/api/notifications" description="Notification rules: create, evaluate, test, history." />
 </Cards>
 
 ## Conventions
 
-- **IDs are UUID v7** strings — sortable by creation time.
+- **IDs are UUID v7** strings, sortable by creation time.
 - **Timestamps are ISO-8601 UTC with `Z`**.
 - **Single resources** are returned raw; **lists** wrap with
   `data` + `meta`; **errors** wrap with `error`. See

@@ -1,6 +1,6 @@
 ---
 title: Implementierung verifizieren
-description: Bestätigen, dass Fastmon Daten erfasst — und was zu prüfen ist, wenn nicht.
+description: "Bestätigen, dass Fastmon Daten erfasst, und was zu prüfen ist, wenn nicht."
 ---
 
 Sobald das Script auf der Seite liegt, kannst du mit zwei Checks
@@ -19,8 +19,8 @@ einzelnen `POST`-Request sehen:
 POST https://fastmon.site/c/{collector_hash}     204
 ```
 
-Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's
-— dein Install läuft.
+Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's:
+dein Install läuft.
 
 ## Der Dashboard-Check
 
@@ -42,13 +42,13 @@ Traffic baut sich auf, sobald Besucher die Seite öffnen.
 **Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
 filtern. Du solltest einen Request an
 `https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen.
-Ein `404` heißt, der `source_hash` passt zu keiner Site — entweder
+Ein `404` heißt, der `source_hash` passt zu keiner Site: entweder
 vertippt oder die Site wurde gelöscht.
 
 **Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
 der Production-Seite "View Source". Das Tag muss tatsächlich im
 ausgelieferten HTML stehen. Manche CMSe filtern unbekannte Tags
-aus Page-Buildern raus — dann brauchst du ein
+aus Page-Buildern raus; dann brauchst du ein
 Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 
 **Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen
@@ -57,12 +57,12 @@ und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Wenn ja,
 
 **Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei
 `pagehide` / `visibilitychange`. Wenn noch nichts aufgetaucht ist,
-einmal Tab wechseln (oder Seite schließen und neu öffnen) — das
+einmal Tab wechseln (oder Seite schließen und neu öffnen); das
 triggert sofort einen Flush.
 
 ### Beacon liefert `204`, aber im Dashboard taucht nichts auf
 
-`204` ist die normale Erfolgsantwort — kommt aber auch, wenn der
+`204` ist die normale Erfolgsantwort, kommt aber auch, wenn der
 Beacon still verworfen wird. Häufigster Grund: die Site hat
 **Allowed origins** gesetzt, und der Origin, von dem du lädst,
 steht nicht drauf. Site-Settings öffnen, fehlenden Origin
@@ -73,18 +73,18 @@ gesetzt, unbekannter `collector_hash`.
 ### Request an `/c/` liefert `429`
 
 Du bist ins Per-IP-Rate-Limit gelaufen. Mit echtem Traffic passiert
-das so gut wie nie — meistens steckt ein synthetischer Lasttest
+das so gut wie nie; meistens steckt ein synthetischer Lasttest
 oder eine kaputte Reload-Schleife dahinter. Eine Minute warten,
 dann ist das Limit zurückgesetzt.
 
 ### Beacon geht durch, aber im Dashboard ist nichts
 
-Beacons werden gebatcht nach ClickHouse geschrieben — ungefähr eine
+Beacons werden gebatcht nach ClickHouse geschrieben; ungefähr eine
 Minute Verzögerung zwischen erfolgreichem `204` und der Zeile im
 Dashboard ist normal. Kurz warten und neu laden.
 
 Wenn dann immer noch nichts da ist: prüf, ob du die richtige Site
-und den richtigen Zeitraum offen hast — der Default sind die letzten
+und den richtigen Zeitraum offen hast. Der Default sind die letzten
 24 h, das passt für frische Daten.
 
 Bekommst du `204` zurück, und das Dashboard ist nach ein paar

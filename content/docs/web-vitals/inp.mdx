@@ -1,12 +1,12 @@
 ---
 title: Interaction to Next Paint (INP)
-description: What INP measures, what's a good INP, and how to debug a sluggish page — with Fastmon's data.
+description: "What INP measures, what's a good INP, and how to debug a sluggish page, with Fastmon's data."
 ---
 
 **INP** measures how long the worst user interaction took to
 produce a visual update. It's the metric for "this page feels
 sluggish when I click things." Where LCP captures *load*
-responsiveness, INP captures *runtime* responsiveness — the
+responsiveness, INP captures *runtime* responsiveness across the
 entire time someone's on the page.
 
 INP replaced FID as a Core Web Vital in March 2024 and counts
@@ -44,28 +44,28 @@ your INP is 200 ms.
 ## When INP is reported
 
 INP is finalized when the page becomes hidden. The reported value is
-roughly the worst interaction during the page's life — technically,
-the high-percentile interaction adjusted for total interaction count
-(so a single 800 ms outlier on a page with 100 interactions doesn't
+roughly the worst interaction during the page's life (technically,
+the high-percentile interaction adjusted for total interaction count,
+so a single 800 ms outlier on a page with 100 interactions doesn't
 dominate).
 
 If the visitor never interacts, the page-view has no INP.
 
 ## Examples
 
-**Search-as-you-type input** — every keystroke fires a handler.
+**Search-as-you-type input.** Every keystroke fires a handler.
 If the handler does layout-heavy work synchronously, every
 keystroke contributes a candidate INP, and the worst one wins.
 Things that help: debounce, push work into `requestIdleCallback`,
 or move it to a worker.
 
-**"View details" disclosure on a product page** — opening it
+**"View details" disclosure on a product page.** Opening it
 animates a height transition. The animation itself doesn't count,
 but the synchronous JS that measures the content height
 beforehand does. If that measurement triggers layout, INP takes
 the hit.
 
-**SPA route change** — a link click runs your router, which can
+**SPA route change.** A link click runs your router, which can
 re-render a big tree. INP captures click → first paint of the
 new route. INP gets ugly here if you're not lazy-loading route
 chunks.
@@ -75,11 +75,11 @@ chunks.
 The dashboard's **Performance** section shows INP at p50, p75, and p95.
 Specifically useful slices:
 
-- **By URL** — group by URL. Interactive pages (search, configurator,
+- **By URL**: group by URL. Interactive pages (search, configurator,
   dashboard) usually dominate.
-- **By device** — group by `device_type`. INP is much harder on
+- **By device**: group by `device_type`. INP is much harder on
   low-end mobile.
-- **By browser** — group by `browser`. Firefox and Safari sometimes
+- **By browser**: group by `browser`. Firefox and Safari sometimes
   show different INP behavior than Chromium.
 
 ## How to improve a slow INP
@@ -98,7 +98,7 @@ INP regressions almost always trace to one of these:
    nodes on a single keystroke. Memoize, virtualize, or move to
    uncontrolled inputs.
 4. **Third-party scripts.** Tag managers, A/B test frameworks,
-   chat widgets — many run on every event. Audit your
+   chat widgets: many run on every event. Audit your
    [third-party impact](/en/analytics-api) and remove or defer
    what you don't need.
 
@@ -111,17 +111,17 @@ For a deeper walkthrough, see web.dev's
   measure different things. Don't ship "fast load" without
   checking responsiveness too.
 - **INP can regress when LCP improves.** Lazy-loading and
-  hydration push work to *after* the first paint — good for LCP,
+  hydration push work to *after* the first paint: good for LCP,
   bad for INP. Always look at both metrics together.
 - **INP varies a lot by interaction.** The first click on a
-  fresh page is usually the worst — cold cache, code not warm
-  yet. Look at per-interaction data, not just the average.
+  fresh page is usually the worst (cold cache, code not warm
+  yet). Look at per-interaction data, not just the average.
 - **SSR pages aren't immune.** SSR helps LCP, but it doesn't
-  help INP — hydration is JavaScript on the main thread.
+  help INP; hydration is JavaScript on the main thread.
 
 ## What's next
 
-- [LCP](/en/web-vitals/lcp) — load speed.
-- [CLS](/en/web-vitals/cls) — visual stability.
-- [Experience Score](/en/web-vitals/experience-score) — a 0–10
+- [LCP](/en/web-vitals/lcp): load speed.
+- [CLS](/en/web-vitals/cls): visual stability.
+- [Experience Score](/en/web-vitals/experience-score): a 0–10
   composite combining all the metrics above.

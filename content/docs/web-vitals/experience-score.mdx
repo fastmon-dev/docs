@@ -1,6 +1,6 @@
 ---
 title: Experience Score
-description: A single 0–10 number that combines Core Web Vitals, page load time, and error rate — the headline metric for tracking UX over time.
+description: "A single 0–10 number that combines Core Web Vitals, page load time, and error rate: the headline metric for tracking UX over time."
 ---
 
 **Experience Score** is a composite metric. It condenses LCP,
@@ -57,22 +57,22 @@ do have values.
 
 ## When the score is computed
 
-Per page-view, when the page is hidden — the same trigger that
+Per page-view, when the page is hidden. That's the same trigger that
 finalizes the underlying metrics. Aggregate scores you see in the
 dashboard are averages over your selected time range.
 
 ## How to see the Experience Score in Fastmon
 
 The headline number lives on the **Performance** dashboard. Below it
-you'll see the breakdown — which sub-score is dragging the total
-down — and a trend chart over the selected window.
+you'll see the breakdown (which sub-score is dragging the total
+down) and a trend chart over the selected window.
 
 Useful slices:
 
-- **By URL** — group by URL. Find which pages dominate the average.
-- **By release** — `compare_to_release_id`. The single best signal
+- **By URL**: group by URL. Find which pages dominate the average.
+- **By release**: `compare_to_release_id`. The single best signal
   for "did this deploy regress UX?"
-- **By country / device** — group by `country` or `device_type`.
+- **By country / device**: group by `country` or `device_type`.
   Regional or device-class regressions are usually invisible in the
   global score.
 
@@ -89,7 +89,7 @@ The composite is only as healthy as its weakest part:
    before/after.
 
 Don't try to optimize everything at once. The improvements often
-trade against each other — fixing LCP by adding more JavaScript can
+trade against each other: fixing LCP by adding more JavaScript can
 regress INP, and reserving space for ads to fix CLS can push LCP
 later.
 
@@ -103,7 +103,7 @@ later.
   number to the average. Catching it on the day of the deploy
   matters.
 - **Pages with low interaction count have inflated scores.** If
-  visitors never interact, INP is excluded — the score then reflects
+  visitors never interact, INP is excluded; the score then reflects
   only LCP and CLS, which are usually easier.
 - **Internal vs external traffic skews the composite.** Office
   traffic on warm caches and fast laptops scores great; real visitors
@@ -114,6 +114,6 @@ later.
 
 - [LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp),
   [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp),
-  [TTFB](/en/web-vitals/ttfb) — the contributing metrics.
-- [Web Vitals overview](/en/web-vitals) — the full set including
+  [TTFB](/en/web-vitals/ttfb): the contributing metrics.
+- [Web Vitals overview](/en/web-vitals): the full set including
   diagnostic metrics.

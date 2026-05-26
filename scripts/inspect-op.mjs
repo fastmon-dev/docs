@@ -1,8 +1,6 @@
-import fs from 'node:fs';
-const s = JSON.parse(
-  fs.readFileSync(new URL('../.fastmon-openapi.json', import.meta.url), 'utf8'),
-);
-const op = s.paths['/v1/organizations/{org_id}/analytics/query']?.post;
+import fs from "node:fs";
+const s = JSON.parse(fs.readFileSync(new URL("../.fastmon-openapi.json", import.meta.url), "utf8"));
+const op = s.paths["/v1/organizations/{org_id}/analytics/query"]?.post;
 console.log(
   JSON.stringify(
     {
@@ -13,6 +11,6 @@ console.log(
       responses: Object.keys(op?.responses ?? {}),
     },
     null,
-    2,
-  ),
+    2
+  )
 );

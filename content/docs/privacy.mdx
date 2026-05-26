@@ -1,67 +1,171 @@
 ---
-title: Privacy — what we don't collect
+title: "Privacy: what we don't collect"
 description: Fastmon's privacy posture, line by line. Useful when your legal team asks.
 ---
 
 Fastmon is built so you can monitor real-user performance without
-walking into a privacy minefield. The short version: **no cookies,
-no IPs on disk, no fingerprinting, no cross-site tracking, EU-only
-infrastructure.** This page is the long version — what each of
-those promises means in practice, what we *do* collect so the
-product works, and how that changes between collection modes.
+walking into a privacy minefield. The short version: **no IPs on
+disk, no raw User-Agent, no fingerprinting, no cross-site tracking,
+EU-only infrastructure**, and a storage-free default that needs no
+cookie banner. This page is the long version: what each of those
+promises means in practice, what we *do* collect so the product
+works, and how that changes between collection modes.
 
-## What we never collect — in any mode
+## What we never collect, in any mode
 
 These rules hold regardless of which [collection mode](/en/collection-modes)
 the site is set to:
 
 | We do **not** collect…                | What that means in practice                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Cookies**                           | The beacon sets nothing. Your visitors don't get a Fastmon cookie. No `localStorage`, no `IndexedDB`. |
-| **IP addresses**                      | The collector reads the request IP to derive the country, then drops it. No IP is written to disk, ever — not in `anonymous`, not in `full`. |
-| **Raw User-Agent string**             | The tracker derives browser/OS/device-class client-side. The raw `User-Agent` header is parsed only as a fallback for noscript pixels and is then discarded — never persisted. |
-| **Device or browser fingerprints**    | No canvas fingerprinting, no font enumeration, no hash-of-headers, no `userAgentData` high-entropy hints. |
+| **IP addresses**                      | The edge strips the IP at the network boundary before any application code sees the request. The backend reads only a pre-derived country code (`FM-Country`, 2-letter ISO), never the IP itself. No IP is written to disk, ever, in any mode. |
+| **Raw User-Agent string**             | The edge also strips the `User-Agent` header at the network boundary. The backend reads only pre-bucketed `FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device` headers. The raw UA is never visible to the application or its logs. |
+| **Device or browser fingerprints**    | No canvas fingerprinting, no font enumeration, no `userAgentData` high-entropy hints, no battery / sensor / audio-context probing. |
 | **Cross-site identifiers**            | We mint nothing that survives a navigation across domains. A session on `acme.com` cannot be linked to one on `other.com`. |
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
 | **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. |
+| **URL query strings or hash fragments** | Stripped at the tracker before any beacon goes out. `/orders/checkout?email=jane@x.com` arrives at the collector as `/orders/checkout`. |
 | **Personal identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
+
+### A note on cookies and storage
+
+`anonymous` is **strictly storage-free**: no cookies, no
+`localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
+That's why it needs no cookie banner under TDDDG §25 / ePrivacy
+Art. 5(3).
+
+`consent` is also storage-free **before** opt-in: byte-identical to
+`anonymous` on the wire. On opt-in, the tracker sets one
+`_fm_consent` cookie that persists the consent decision, plus a
+session id in `sessionStorage` (`_s`). The cookie qualifies as
+strictly necessary under TDDDG §25(2) Nr. 2: without persisting
+the decision, the opt-in would not survive page navigation.
+Opt-out deletes both immediately.
+
+`full` keeps the `sessionStorage` session id from the first
+pageview. No cookies. Storage on the device is one `sessionStorage`
+entry, gone when the tab closes.
+
+That's the full inventory of what the beacon ever touches on the
+visitor's device. No localStorage in any mode. No IndexedDB in any
+mode. No Cache API in any mode.
 
 ## What we do collect
 
 Just enough to compute Web Vitals and per-page performance
 breakdowns:
 
-- **Page URL** — sanitized per [collection mode](/en/collection-modes).
-- **Web Vitals** — LCP, INP, CLS, FCP, TTFB and related timings.
-- **Navigation timing** — nav type, TTFB, page-load timing.
-- **Resource timing** — per-category byte sizes and counts
+- **Page URL**: sanitized per [collection mode](/en/collection-modes).
+- **Web Vitals**: LCP, INP, CLS, FCP, TTFB and related timings.
+- **Navigation timing**: nav type, TTFB, page-load timing.
+- **Resource timing**: per-category byte sizes and counts
   (script, css, img, font, other).
-- **Errors** — type, message, fingerprinted stack frames.
-- **Environment** — allowlisted browser family, OS family, device
-  class (`mobile`/`tablet`/`desktop`), viewport class, connection
-  type. No raw User-Agent parsing.
-- **Geo** — country only, derived server-side from the request IP
-  *which is then discarded*.
-- **Session ID** — only in `full`, and in `consent` when the
-  request opts in via `?p=1`. Groups pageviews of the same
-  session together.
-- **Referrer, LCP image URL, LoAF detail, third-party domain map**
-   — only in `full`, or in `consent` after opt-in.
+- **Errors**: type, count, and (with consent) message + frames.
+  All messages run through an always-on scrubber that masks URLs,
+  emails, numeric IDs, and quoted strings with `*` before they go
+  on the wire, even with explicit consent. A `Bearer eyJhbG…`
+  token slipping into an exception message would not reach us.
+- **Environment**: allowlisted browser family, OS family, device
+  class (`mobile`/`tablet`/`desktop`), viewport class, effective
+  connection type, network round-trip and downlink estimates. The
+  network values are real-time measurements the browser computes
+  on read, not stored device or OS state. We no longer read
+  `navigator.deviceMemory`, `navigator.hardwareConcurrency`, the
+  `saveData` flag, `prefers-color-scheme`, or
+  `prefers-reduced-motion`: the broad EDPB Guidelines 2/2023
+  reading treats those as "accessed stored information" under
+  TDDDG §25(1), and we retired them rather than gate them on
+  consent.
+- **Geo**: country only (2-letter ISO). Derived at the edge from
+  the IP and forwarded as a request header; the IP itself never
+  reaches the application.
+- **Campaign attribution**: `utm_source` / `utm_medium` /
+  `utm_campaign` / `utm_term` / `utm_content` and an
+  ad-platform-label `click_id_param` (e.g. `"gclid"`) extracted
+  from the page URL. Each capped at 64 chars. The click-ID
+  *value* (`Cj0KCQabc...`) is intentionally discarded; only the
+  label of which platform sent the click is stored. These are
+  marketer-set tags on the customer's own outbound URLs, not
+  visitor-derived state, and are stored in all modes.
+- **Session ID**: only in `full`, and in `consent` after the
+  visitor opts in via the customer's CMP. Lives in `sessionStorage`,
+  groups pageviews of the same session together, dies with the tab.
+- **Referrer**: pre-sanitized client-side to origin + pathname
+  (query and hash dropped before the beacon goes out). The backend
+  classifies it into a bucketed source (`Google` / `Twitter` /
+  `Direct` / …) and a canonical medium (`search` / `social` /
+  `email` / `paid` / `chatbot` / `internal` / `unknown`) via the
+  [snowplow referer-parser](https://github.com/snowplow-referer-parser/referer-parser),
+  then drops the raw URL before any logging path. **Only the
+  bucketed source and medium are stored** (in all modes); the raw
+  URL never persists, in any mode.
+- **LCP image URL, LoAF script paths, third-party domain map**:
+  only in `full`, or in `consent` after opt-in. URLs are sanitized
+  to origin + pathname at collection.
 
 That's the whole payload. There's no opt-in we can offer to
-"unlock" more — we didn't build the more.
+"unlock" more. We didn't build the more.
+
+### The edge-derived `stitch` identifier
+
+To support per-visitor performance debugging across pageviews
+without storing any visitor identifier on the device, the edge
+computes a one-way join key before the IP and User-Agent are
+destroyed:
+
+```
+stitch = HMAC-SHA256(rotating_salt, IP | User-Agent | collector_hash)
+```
+
+truncated to 128 bits (32 hex chars on the wire). Properties:
+
+- **Forward secrecy by construction.** The salt is a 32-byte
+  `crypto/rand` value held only in the active edge's RAM and
+  rotated every 24 hours. It is never persisted, never
+  distributed, never logged. An attacker who later gains row
+  access cannot reverse `stitch` back to (IP, UA): the salt
+  that produced it is gone.
+- **Bounded joinability, at most ~24h.** Across a salt rotation
+  the same visitor gets a new `stitch` value. Cross-pageview
+  linking cannot accumulate beyond a single salt window.
+- **Per-site, never cross-site.** `collector_hash` is in the HMAC
+  input, so the same (IP, UA) on two different customer sites
+  yields different `stitch` values. The "no cross-site
+  identifier" row in the table above is unchanged.
+
+`stitch` is stored in every mode (including `anonymous`) under
+GDPR Art. 6(1)(f). The IP and UA inputs are processed at the
+edge under the same basis that produces `country`, and the
+backend only ever sees the post-HMAC output. The explicit,
+consent-covered `sid` (multi-day session identifier in `full` /
+`consent` post-opt-in) is unchanged.
+
+### Site metadata vs. visitor data
+
+A handful of fields describe **the customer's own site** rather
+than the visitor: which third-party domains the page loads, the
+script / image / font byte breakdown, the LCP image origin. These
+are identical across every visitor of the same page. They tell you
+which of your CDNs is slow; they do not identify anyone.
+
+Under GDPR Art. 4(1), that puts them outside the personal-data
+boundary at the field level. We still treat them carefully (script
+URLs and LCP image URLs are sanitized to origin + pathname at
+collection), but they're not what the consent / linkability gate
+is gating.
 
 ## Collection mode and what changes
 
 The site's [collection mode](/en/collection-modes) decides only
-**linkability**, not data categories. The privacy floor above —
-no cookies, no IP storage, no raw User-Agent, no fingerprints —
-holds in every mode. What changes between modes is whether a
-`session_id`, referrer, LCP image URL, LoAF detail, and
-third-party domain map are kept (linking pageviews into a session)
-or stripped. See [Collection modes](/en/collection-modes) for the
-per-mode breakdown and how the `?p=` request flag wires consent
-into your CMP.
+**linkability**, not data categories. The privacy floor above
+(no IP storage, no raw User-Agent, no fingerprints) holds in
+every mode. What changes between modes is whether a `session_id`,
+LCP image URL, LoAF detail, and third-party domain map are
+present (linking pageviews into a session) or stripped, and
+whether error messages and stack frames are sent. See
+[Collection modes](/en/collection-modes) for the per-mode
+breakdown and how `window.__fastmon_consent(true|false)` wires
+your CMP into the beacon.
 
 ## Where the data lives
 
@@ -73,7 +177,7 @@ into your CMP.
   request.
 - **Retention.** 90 days by default. Configurable per site
   (`data_retention_days` in site settings). When retention runs
-  out, rows get dropped — we don't archive them.
+  out, rows get dropped. We don't archive them.
 
 ## Comparison
 
@@ -82,21 +186,48 @@ delta:
 
 | Capability                | Fastmon | Typical US RUM provider          |
 | ------------------------- | ------- | -------------------------------- |
-| Cookies set               | 0       | 1–N (analytics + ad partners)    |
+| Cookies set               | 0 (1 in `consent`, after opt-in) | 1–N (analytics + ad partners) |
 | IP stored                 | No      | Often, sometimes truncated       |
 | Cross-site identity graph | No      | Often, via SDK or pixel network  |
 | Session replay / DOM dump | No      | Common opt-in feature            |
 | EU-only data path         | Yes     | Rare                             |
 | Schrems II exposure       | None    | Yes (US transfer mechanisms)     |
 
+## Your responsibilities
+
+The tracker enforces the wire shape. Two things sit on your side
+of the line:
+
+- **No PII in URL paths.** Query strings and hash fragments are
+  stripped, but the pathname is preserved. `/orders/jane.doe@x.com`
+  would carry the email into our pipeline. Use opaque IDs (UUIDs,
+  numeric DB IDs) or put PII into query parameters that get
+  stripped.
+- **No PII in UTM parameters.** UTM tags and click-ID labels land
+  in the database verbatim from the marketer's outbound URLs.
+  Don't embed visitor PII. Never construct campaign URLs like
+  `?utm_term=jane@example.com&utm_content=user-12345` for
+  per-recipient tracking. Each field is server-side capped at 64
+  chars but the value is not pattern-scrubbed. Ad-platform
+  click-ID *values* are dropped by the tracker, so the
+  per-recipient join risk applies only to the UTM fields.
+- **Don't pass raw user input to `throw`.** The always-on scrubber
+  catches patterned PII (URLs, emails, IDs), but free-form text
+  (names, custom phrases) can slip through. Type the failure
+  instead: `throw new EmailDeliveryError({ code: "..." })` rather
+  than `throw new Error("Failed to send to " + email)`. Only
+  matters under consent=1 / `full`; without consent the entire
+  message is dropped.
+
 ## What this means for you
 
 - **You don't need a cookie banner *for our beacon* in `anonymous`
-  mode.** No cookies, no cross-site identifiers, no IP storage.
-  Other tools on the page may still need one — but that's not on us.
+  mode.** No cookies, no cross-site identifiers, no IP storage,
+  storage-free on the visitor's device. Other tools on the page
+  may still need one, but that's not on us.
 - **Schrems II isn't an issue for our pipe.** Data simply never
   leaves the EU.
-- **You can hand your DPO a one-page answer** — point them at this
+- **You can hand your DPO a one-page answer**: point them at this
   page and our DPA, done.
 - **Operating under a strict consent regime?** Use the
   [collection mode](/en/collection-modes) `consent`.

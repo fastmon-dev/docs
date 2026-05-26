@@ -4,40 +4,40 @@
 // Source of truth: production backend. Always.
 //
 // Run:   npm run generate:api
-import { createOpenAPI } from 'fumadocs-openapi/server';
-import { generateFiles } from 'fumadocs-openapi';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createOpenAPI } from "fumadocs-openapi/server";
+import { generateFiles } from "fumadocs-openapi";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(here, '..');
-const outDir = path.join(root, 'content/docs/api');
+const root = path.resolve(here, "..");
+const outDir = path.join(root, "content/docs/api");
 // Hand-written narrative pages we want to preserve when the script wipes
 // the api/ folder. The auto-gen pages go into per-tag subfolders so they
 // don't collide with these.
 const PRESERVE = new Set([
-  'index.mdx',
-  'index.de.mdx',
-  'meta.json',
-  'meta.de.json',
-  'authentication.mdx',
-  'authentication.de.mdx',
-  'errors.mdx',
-  'errors.de.mdx',
-  'pagination.mdx',
-  'pagination.de.mdx',
+  "index.mdx",
+  "index.de.mdx",
+  "meta.json",
+  "meta.de.json",
+  "authentication.mdx",
+  "authentication.de.mdx",
+  "errors.mdx",
+  "errors.de.mdx",
+  "pagination.mdx",
+  "pagination.de.mdx",
 ]);
-const snapshot = path.join(root, '.fastmon-openapi.json');
+const snapshot = path.join(root, ".fastmon-openapi.json");
 
-const OPENAPI_URL = 'https://api.fastmon.eu/v1/openapi.json';
+const OPENAPI_URL = "https://api.fastmon.eu/v1/openapi.json";
 
 console.log(`Fetching OpenAPI from ${OPENAPI_URL} ...`);
 const res = await fetch(OPENAPI_URL);
 if (!res.ok) {
   throw new Error(
     `OpenAPI fetch failed (${res.status} ${res.statusText}). ` +
-      `Is the backend reachable at ${OPENAPI_URL}?`,
+      `Is the backend reachable at ${OPENAPI_URL}?`
   );
 }
 const spec = await res.json();
@@ -58,13 +58,8 @@ for (const methods of Object.values(spec.paths || {})) {
 const declared = new Set((spec.tags || []).map((t) => t.name));
 const missing = [...usedTags].filter((t) => !declared.has(t));
 if (missing.length) {
-  spec.tags = [
-    ...(spec.tags || []),
-    ...missing.map((name) => ({ name })),
-  ];
-  console.log(
-    `Added ${missing.length} undeclared tag(s) to top-level tags: ${missing.join(', ')}`,
-  );
+  spec.tags = [...(spec.tags || []), ...missing.map((name) => ({ name }))];
+  console.log(`Added ${missing.length} undeclared tag(s) to top-level tags: ${missing.join(", ")}`);
 }
 
 // Operations with no tags at all end up in a fictional "default" group that
@@ -72,13 +67,13 @@ if (missing.length) {
 for (const methods of Object.values(spec.paths || {})) {
   for (const op of Object.values(methods || {})) {
     if (op && (!Array.isArray(op.tags) || op.tags.length === 0)) {
-      op.tags = ['uncategorized'];
+      op.tags = ["uncategorized"];
     }
   }
 }
-if (![...usedTags].includes('uncategorized')) {
-  if (!spec.tags?.some((t) => t.name === 'uncategorized')) {
-    spec.tags = [...(spec.tags || []), { name: 'uncategorized' }];
+if (![...usedTags].includes("uncategorized")) {
+  if (!spec.tags?.some((t) => t.name === "uncategorized")) {
+    spec.tags = [...(spec.tags || []), { name: "uncategorized" }];
   }
 }
 
@@ -90,26 +85,26 @@ if (![...usedTags].includes('uncategorized')) {
 // character that isn't [A-Za-z/!] with `\<`. Same for `>` if preceded by
 // a digit/space.
 function escapeMdxAngles(str) {
-  if (typeof str !== 'string') return str;
-  let out = '';
+  if (typeof str !== "string") return str;
+  let out = "";
   let inCode = false;
   let i = 0;
   while (i < str.length) {
     const c = str[i];
-    if (c === '`') {
+    if (c === "`") {
       // toggle simple inline-code mode (covers `foo` and ``foo``)
       inCode = !inCode;
       out += c;
       i++;
       continue;
     }
-    if (!inCode && c === '<') {
+    if (!inCode && c === "<") {
       const next = str[i + 1];
       // Allow `</…>`, `<a…>`, `<!…>` to pass; escape everything else.
       if (next && /[A-Za-z/!]/.test(next)) {
         out += c;
       } else {
-        out += '\\<';
+        out += "\\<";
       }
       i++;
       continue;
@@ -121,15 +116,15 @@ function escapeMdxAngles(str) {
 }
 
 function sanitizeDescriptions(node) {
-  if (!node || typeof node !== 'object') return;
+  if (!node || typeof node !== "object") return;
   if (Array.isArray(node)) {
     for (const child of node) sanitizeDescriptions(child);
     return;
   }
   for (const [k, v] of Object.entries(node)) {
-    if ((k === 'description' || k === 'summary') && typeof v === 'string') {
+    if ((k === "description" || k === "summary") && typeof v === "string") {
       node[k] = escapeMdxAngles(v);
-    } else if (v && typeof v === 'object') {
+    } else if (v && typeof v === "object") {
       sanitizeDescriptions(v);
     }
   }
@@ -139,9 +134,7 @@ sanitizeDescriptions(spec);
 // Force a sane `servers` list. FastAPI usually emits an empty/relative
 // `servers`, which makes the playground send Try-it requests against the
 // docs origin (e.g. http://localhost:3000) instead of the real API host.
-spec.servers = [
-  { url: 'https://api.fastmon.eu', description: 'Production' },
-];
+spec.servers = [{ url: "https://api.fastmon.eu", description: "Production" }];
 
 // Operation-level `security` that references undeclared schemes (FastAPI
 // occasionally emits stale "APIKeyHeader" entries on endpoints) breaks the
@@ -153,11 +146,9 @@ const validSchemes = new Set(Object.keys(spec.components.securitySchemes));
 let cleaned = 0;
 for (const methods of Object.values(spec.paths || {})) {
   for (const op of Object.values(methods || {})) {
-    if (!op || typeof op !== 'object' || !Array.isArray(op.security)) continue;
+    if (!op || typeof op !== "object" || !Array.isArray(op.security)) continue;
     const filtered = op.security.filter((req) =>
-      req && typeof req === 'object'
-        ? Object.keys(req).every((id) => validSchemes.has(id))
-        : false,
+      req && typeof req === "object" ? Object.keys(req).every((id) => validSchemes.has(id)) : false
     );
     if (filtered.length !== op.security.length) {
       cleaned += op.security.length - filtered.length;
@@ -172,7 +163,7 @@ for (const methods of Object.values(spec.paths || {})) {
 }
 if (cleaned) {
   console.log(
-    `Stripped ${cleaned} operation-level security entr(y|ies) that referenced undeclared schemes.`,
+    `Stripped ${cleaned} operation-level security entr(y|ies) that referenced undeclared schemes.`
   );
 }
 
@@ -184,13 +175,13 @@ console.log(`Snapshot written to ${path.relative(root, snapshot)}`);
 // generateFiles encodes this string into each MDX page's `<APIPage document=…>`
 // prop; at SSG time fumadocs-openapi looks it up by exact match against the
 // runtime's input list, so the two have to be identical strings.
-const inputPath = './.fastmon-openapi.json';
+const inputPath = "./.fastmon-openapi.json";
 
 const openapi = createOpenAPI({ input: [inputPath] });
 
 // Wipe only the auto-generated tag subfolders, preserve hand-written pages
 // at api/ root.
-const { readdir, lstat } = await import('node:fs/promises');
+const { readdir, lstat } = await import("node:fs/promises");
 const entries = await readdir(outDir).catch(() => []);
 for (const name of entries) {
   if (PRESERVE.has(name)) continue;
@@ -207,8 +198,8 @@ for (const name of entries) {
 await generateFiles({
   input: openapi,
   output: outDir,
-  per: 'operation',
-  groupBy: 'tag',
+  per: "operation",
+  groupBy: "tag",
   meta: true,
   includeDescription: true,
   addGeneratedComment: true,
@@ -218,50 +209,48 @@ await generateFiles({
 // list — wiping our hand-curated sidebar (sections + ordered hand-written
 // pages). Re-write it after generation.
 const apiMeta = {
-  title: 'API',
+  title: "API",
   // Intentionally NOT `root: true`. fumadocs treats `root: true` folders as
   // separate tree-roots that aren't part of source.pageTree[lang], which
   // breaks the sidebar tree (api/ disappears) and path-search for tab swap.
   // Keep api/ as a regular nested folder; sidebar shows full structure.
   pages: [
-    'index',
-    '---Concepts---',
-    'authentication',
-    'errors',
-    'pagination',
-    '---Endpoints---',
-    'auth',
-    'account',
-    'organizations',
-    'members',
-    'invites',
-    'sites',
-    'releases',
-    'analytics',
-    'notifications',
-    'partners',
-    'weekly-summary',
-    'waitlist',
-    'ai-ask',
-    'collector',
-    'uncategorized',
+    "index",
+    "---Concepts---",
+    "authentication",
+    "errors",
+    "pagination",
+    "---Endpoints---",
+    "auth",
+    "account",
+    "organizations",
+    "members",
+    "invites",
+    "sites",
+    "releases",
+    "analytics",
+    "notifications",
+    "partners",
+    "weekly-summary",
+    "waitlist",
+    "ai-ask",
+    "collector",
+    "uncategorized",
   ],
 };
+await writeFile(path.join(outDir, "meta.json"), JSON.stringify(apiMeta, null, 2) + "\n");
 await writeFile(
-  path.join(outDir, 'meta.json'),
-  JSON.stringify(apiMeta, null, 2) + '\n',
-);
-await writeFile(
-  path.join(outDir, 'meta.de.json'),
+  path.join(outDir, "meta.de.json"),
   JSON.stringify(
-    { ...apiMeta, pages: apiMeta.pages.map((p) =>
-      p === '---Concepts---' ? '---Konzepte---'
-      : p === '---Endpoints---' ? '---Endpunkte---'
-      : p,
-    ) },
+    {
+      ...apiMeta,
+      pages: apiMeta.pages.map((p) =>
+        p === "---Concepts---" ? "---Konzepte---" : p === "---Endpoints---" ? "---Endpunkte---" : p
+      ),
+    },
     null,
-    2,
-  ) + '\n',
+    2
+  ) + "\n"
 );
 
 console.log(`Generated MDX into ${path.relative(root, outDir)}`);
@@ -274,20 +263,20 @@ console.log(`Generated MDX into ${path.relative(root, outDir)}`);
 // gutter (cURL/response) empty next to it. Strip the prose and flip
 // `showDescription` on so the description sits in the same flex-row as
 // the request example column.
-const { readdir: rd, lstat: ls } = await import('node:fs/promises');
+const { readdir: rd, lstat: ls } = await import("node:fs/promises");
 async function* walkMdx(dir) {
   for (const entry of await rd(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) yield* walkMdx(full);
-    else if (entry.isFile() && entry.name.endsWith('.mdx')) yield full;
+    else if (entry.isFile() && entry.name.endsWith(".mdx")) yield full;
   }
 }
 function stripPreamble(text) {
-  if (!text.startsWith('---')) return text;
-  const fmCloseIdx = text.indexOf('\n---', 3);
+  if (!text.startsWith("---")) return text;
+  const fmCloseIdx = text.indexOf("\n---", 3);
   if (fmCloseIdx < 0) return text;
   const headEnd = fmCloseIdx + 4;
-  const cut = text[headEnd] === '\n' ? headEnd + 1 : headEnd;
+  const cut = text[headEnd] === "\n" ? headEnd + 1 : headEnd;
   let body = text.slice(cut);
   const apiTag = body.match(/<APIPage\b[^>]*\/>/);
   if (!apiTag) return text;
@@ -295,11 +284,8 @@ function stripPreamble(text) {
   if (!comment) return text;
   const after = comment.index + comment[0].length;
   const tagAt = body.indexOf(apiTag[0], after);
-  body = body.slice(0, after) + '\n' + body.slice(tagAt);
-  body = body.replace(
-    /<APIPage\b(?![^>]*\bshowDescription\b)/,
-    '<APIPage showDescription',
-  );
+  body = body.slice(0, after) + "\n" + body.slice(tagAt);
+  body = body.replace(/<APIPage\b(?![^>]*\bshowDescription\b)/, "<APIPage showDescription");
   return text.slice(0, cut) + body;
 }
 let touched = 0;
@@ -308,7 +294,7 @@ for await (const file of walkMdx(outDir)) {
   if (path.dirname(file) === outDir && TOP_LEVEL_SKIP.has(path.basename(file))) {
     continue;
   }
-  const before = await readFile(file, 'utf8');
+  const before = await readFile(file, "utf8");
   const after = stripPreamble(before);
   if (after !== before) {
     await writeFile(file, after);

@@ -7,143 +7,143 @@ Compact definitions. For depth, follow the link on each term.
 
 ## Web Vitals
 
-**LCP** — *Largest Contentful Paint.* Time until the largest
+**LCP**: *Largest Contentful Paint.* Time until the largest
 visible element renders. The load metric. Good ≤ 2,500 ms at p75.
 See [LCP](/en/web-vitals/lcp).
 
-**INP** — *Interaction to Next Paint.* Worst-case latency between
+**INP**: *Interaction to Next Paint.* Worst-case latency between
 interaction and the next paint. The responsiveness metric. Good
 ≤ 200 ms at p75. Replaced FID in March 2024. See
 [INP](/en/web-vitals/inp).
 
-**CLS** — *Cumulative Layout Shift.* Sum of unexpected layout
+**CLS**: *Cumulative Layout Shift.* Sum of unexpected layout
 shifts. Unitless. The visual-stability metric. Good ≤ 0.1 at p75.
 See [CLS](/en/web-vitals/cls).
 
-**FCP** — *First Contentful Paint.* Time until the first text or
+**FCP**: *First Contentful Paint.* Time until the first text or
 image renders. Diagnostic; explains slow LCP. See
 [FCP](/en/web-vitals/fcp).
 
-**TTFB** — *Time to First Byte.* Time until the first response byte
+**TTFB**: *Time to First Byte.* Time until the first response byte
 arrives. Diagnostic; the floor for FCP and LCP. See
 [TTFB](/en/web-vitals/ttfb).
 
-**Experience Score** — Composite score from 0.0 to 10.0, weighted
+**Experience Score**: Composite score from 0.0 to 10.0, weighted
 across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate.
 Mapped to letter grades A+ through F. See
 [Experience Score](/en/web-vitals/experience-score).
 
-**Core Web Vitals** — Google's three-metric set: LCP, INP, CLS.
+**Core Web Vitals**: Google's three-metric set: LCP, INP, CLS.
 The metrics that affect search ranking.
 
 ## Beacon and ingestion
 
-**Beacon** — The JS file at `/s/{source_hash}.js`. Captures metrics
+**Beacon**: The JS file at `/s/{source_hash}.js`. Captures metrics
 in the browser and POSTs them. See
 [The RUM Beacon](/en/concepts/beacon).
 
-**Collector** — The server endpoint at `/c/{collector_hash}` that
+**Collector**: The server endpoint at `/c/{collector_hash}` that
 receives beacons, validates them, and writes them to the analytics
 store.
 
-**`source_hash`** — Per-site hash in the script URL. Stable across
+**`source_hash`**: Per-site hash in the script URL. Stable across
 beacon upgrades.
 
-**`collector_hash`** — Per-site hash in the ingest URL. Distinct
+**`collector_hash`**: Per-site hash in the ingest URL. Distinct
 from `source_hash` so the script template can change without
 invalidating data.
 
-**Collection mode** — Per-site setting: `anonymous`, `consent`,
+**Collection mode**: Per-site setting: `anonymous`, `consent`,
 `full`. See [Collection modes](/en/collection-modes).
 
-**Page-view ID (`pvid`)** — Per-page-view identifier the beacon
+**Page-view ID (`pvid`)**: Per-page-view identifier the beacon
 generates client-side. Not persisted.
 
-**`pst` / `cst`** — Page-started timestamp / client-sent-at
+**`pst` / `cst`**: Page-started timestamp / client-sent-at
 timestamp. Both visitor wall-clock, in milliseconds since epoch.
 The interval `cst - pst` is the reliable clock-skew-free measure
 of how long the page-view took before flushing.
 
 ## Resources and accounts
 
-**Organization** — Top-level account container. Owns sites, members,
+**Organization**: Top-level account container. Owns sites, members,
 notification rules, API tokens. See
 [Organizations](/en/concepts/organizations).
 
-**Plan** — Organization tier: `beta`, `starter`, `pro`, `partner`,
+**Plan**: Organization tier: `beta`, `starter`, `pro`, `partner`,
 `enterprise`. Gates features and quotas.
 
-**Site** — A monitored property. Has its own beacon hashes and
+**Site**: A monitored property. Has its own beacon hashes and
 settings. See [Sites](/en/concepts/sites).
 
-**Session** — A 30-minute window of page-views from the same
+**Session**: A 30-minute window of page-views from the same
 browser. Anonymous by construction. See
 [Sessions](/en/concepts/sessions).
 
-**Release** — Versioned marker on a site. Used by analytics
+**Release**: Versioned marker on a site. Used by analytics
 `compare_to_release_id` for before/after comparisons. See
 [Releases](/en/concepts/releases).
 
-**Tag** — Free-form label on a site (max 10) for dashboard
+**Tag**: Free-form label on a site (max 10) for dashboard
 filtering. Conventions: `env:production`, `team:growth`, etc.
 
-**Member** — User attached to an organization with a role
+**Member**: User attached to an organization with a role
 (`owner` / `member`).
 
-**Invite** — Pending membership awaiting acceptance.
+**Invite**: Pending membership awaiting acceptance.
 
-**API token** — `fm_…`-prefixed bearer token for programmatic
+**API token**: `fm_…`-prefixed bearer token for programmatic
 access. Hashed server-side; lost tokens are unrecoverable.
 
 ## Storage and infrastructure
 
-**Configuration DB** — Relational store for users, organizations,
+**Configuration DB**: Relational store for users, organizations,
 sites, settings.
 
-**Analytics store** — Columnar store for beacon events and
+**Analytics store**: Columnar store for beacon events and
 aggregated metrics.
 
-**Session store** — In-memory store for sessions, rate limits,
+**Session store**: In-memory store for sessions, rate limits,
 short-lived caches.
 
-**Partner client** — A sub-organization a `partner`-plan org
+**Partner client**: A sub-organization a `partner`-plan org
 operates on behalf of someone else.
 
 ## API
 
-**Envelope** — Wrapper around the response body. Single resource =
+**Envelope**: Wrapper around the response body. Single resource =
 raw; list = `data` + `meta`; error = `error`. See
 [API overview](/en/api).
 
-**Cursor pagination** — High-volume endpoints return
+**Cursor pagination**: High-volume endpoints return
 `meta.next_cursor`; client sends it back as `?cursor=…`. See
 [Pagination](/en/api/pagination).
 
-**Offset pagination** — Default scheme. `?limit` and `?offset`,
+**Offset pagination**: Default scheme. `?limit` and `?offset`,
 response includes `meta.total` and `meta.has_more`.
 
-**`X-Request-ID`** — Header on every response. Mirrored into
+**`X-Request-ID`**: Header on every response. Mirrored into
 `error.request_id` on failure. Always include when reporting
 issues.
 
-**UUID v7** — Time-sortable UUID format used for all resource IDs.
+**UUID v7**: Time-sortable UUID format used for all resource IDs.
 
 ## Other
 
-**RUM** — *Real User Monitoring.* Measuring performance from real
+**RUM**: *Real User Monitoring.* Measuring performance from real
 visitor browsers, as opposed to synthetic tests in a lab.
 
-**LoAF** — *Long Animation Frame.* Browser API exposing frames
+**LoAF**: *Long Animation Frame.* Browser API exposing frames
 that took longer than 50 ms; usually the root cause of bad INP.
 
-**Third-party** — A request to a domain different from the site's
+**Third-party**: A request to a domain different from the site's
 own. Fastmon groups these by domain and category for impact
 analysis. See `/analytics/third-party`.
 
-**`fastmon:consent` / `fastmon:revoke`** — Window events the
+**`fastmon:consent` / `fastmon:revoke`**: Window events the
 beacon listens for in `consent` mode. See
 [Collection modes](/en/collection-modes#consent--wait-for-opt-in).
 
-**`__fastmon_disabled`** — Window flag the beacon respects to
+**`__fastmon_disabled`**: Window flag the beacon respects to
 suppress sending on a single page-view. See
 [Filter internal traffic](/en/guides/filter-internal-traffic).

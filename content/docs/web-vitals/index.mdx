@@ -14,20 +14,20 @@ thresholds, debug tips, and how to query it in Fastmon.
 
 ## The five metrics
 
-Fastmon tracks the three Core Web Vitals — the ones Google uses
-for ranking — plus two diagnostic metrics that help when something
+Fastmon tracks the three Core Web Vitals (the ones Google uses
+for ranking) plus two diagnostic metrics that help when something
 regresses.
 
 | Metric                                          | What it measures                                       | Good (p75) |
 | ----------------------------------------------- | ------------------------------------------------------ | ---------- |
-| [LCP](/en/web-vitals/lcp) — Largest Contentful Paint | Time until the largest visible element renders.        | ≤ 2,500 ms |
-| [INP](/en/web-vitals/inp) — Interaction to Next Paint | Worst-case latency from user interaction to next paint. | ≤ 200 ms   |
-| [CLS](/en/web-vitals/cls) — Cumulative Layout Shift   | Sum of unexpected visual shifts during the page's life. | ≤ 0.1      |
-| [FCP](/en/web-vitals/fcp) — First Contentful Paint    | Time until the first text or image appears.            | ≤ 1,800 ms |
-| [TTFB](/en/web-vitals/ttfb) — Time to First Byte      | Time until the first response byte arrives.            | ≤ 800 ms   |
+| [LCP](/en/web-vitals/lcp), Largest Contentful Paint | Time until the largest visible element renders.        | ≤ 2,500 ms |
+| [INP](/en/web-vitals/inp), Interaction to Next Paint | Worst-case latency from user interaction to next paint. | ≤ 200 ms   |
+| [CLS](/en/web-vitals/cls), Cumulative Layout Shift   | Sum of unexpected visual shifts during the page's life. | ≤ 0.1      |
+| [FCP](/en/web-vitals/fcp), First Contentful Paint    | Time until the first text or image appears.            | ≤ 1,800 ms |
+| [TTFB](/en/web-vitals/ttfb), Time to First Byte      | Time until the first response byte arrives.            | ≤ 800 ms   |
 
 The first three (LCP, INP, CLS) are what Google's ranking signal
-counts. The other two (FCP, TTFB) are diagnostic — useful when you
+counts. The other two (FCP, TTFB) are diagnostic, useful when you
 need to find out *why* LCP is slow.
 
 ## How to read a percentile
@@ -38,7 +38,7 @@ visitors had a better value than p75 and 25% had a worse one.
 
 If your LCP at p75 is 2,400 ms, that's the value the
 *worst-quarter of your traffic* is actually living with. p50 is
-"what most people see" — comfortable, but not a useful target if
+"what most people see": comfortable, but not a useful target if
 you care about visitors on slow networks or older devices.
 
 ## How Fastmon collects them
@@ -52,29 +52,29 @@ built on:
 - `Navigation Timing` for TTFB.
 - The browser's own attribution data for INP.
 
-Each metric is finalized at a different moment — usually when the
+Each metric is finalized at a different moment, usually when the
 page becomes hidden, or when the user interacts. The beacon
 batches the final values and sends a single POST per page-view.
 Details under [The RUM Beacon](/en/beacon).
 
 ## Where they show up in the product
 
-- **Performance dashboard** — p50/p75/p95 for every metric, sliceable
+- **Performance dashboard**: p50/p75/p95 for every metric, sliceable
   by URL, device, country, and release.
-- **Experience Score** — a composite that combines LCP, INP, CLS,
+- **Experience Score**: a composite that combines LCP, INP, CLS,
   FCP, TTFB, error rate, and page load time into a single 0–10
   number. See
   [Experience Score](/en/web-vitals/experience-score).
-- **Notification rules** — alert when a metric crosses a threshold or
+- **Notification rules**: alert when a metric crosses a threshold or
   regresses against a previous release.
-- **Analytics API** — query any metric programmatically. See
+- **Analytics API**: query any metric programmatically. See
   [Analytics API](/en/analytics-api).
 
 ## What's next
 
-- Start with [LCP](/en/web-vitals/lcp) — usually the first metric to
+- Start with [LCP](/en/web-vitals/lcp), usually the first metric to
   optimize.
-- Then [INP](/en/web-vitals/inp) — often regresses when you fix LCP
-  by adding JavaScript.
+- Then [INP](/en/web-vitals/inp), which often regresses when you fix
+  LCP by adding JavaScript.
 - For a single number to track over time, see
   [Experience Score](/en/web-vitals/experience-score).

@@ -1,11 +1,11 @@
 ---
 title: Collection Modes
-description: Anonymous, Consent, Full — was sie sind, was sie sammeln, welchen du wählst.
+description: Anonymous, Consent, Full. Was sie sind, was sie sammeln, welchen du wählst.
 ---
 
 Jede Fastmon-Site hat einen **Collection Mode**. Der legt fest, was
 der Beacon im Browser des Besuchers tatsächlich macht. Pro Site,
-jederzeit umschaltbar — der Script-Cache wird dabei automatisch
+jederzeit umschaltbar; der Script-Cache wird dabei automatisch
 invalidiert.
 
 Drei Modes: `anonymous`, `consent`, `full`. Default ist `anonymous`,
@@ -15,21 +15,23 @@ und für fast alle ist das genau richtig.
 
 | Aspekt                           | `anonymous` (Default)              | `consent`                                                       | `full`                                  |
 | -------------------------------- | ---------------------------------- | --------------------------------------------------------------- | --------------------------------------- |
-| Default-Verhalten                | Anonym                             | Pro Request über `?p=` (default anonym)                         | Full                                    |
+| Default-Verhalten                | Anonym                             | Vor Opt-In anonym, danach full (vom CMP gesteuert)              | Full                                    |
+| Storage auf dem Besucher-Gerät   | Keiner                             | Keiner vor Opt-In; `_fm_consent`-Cookie + `sessionStorage._s` danach | Nur `sessionStorage._s`             |
 | Web Vitals                       | Ja                                 | Ja                                                              | Ja                                      |
-| Fehler                           | Ja (keine PII, fingerprinted)      | Ja                                                              | Ja                                      |
-| Seitenübergreifende `session_id` | Nein (entfernt)                    | Vor Opt-In nein — danach ja                                     | Ja                                      |
-| Referrer                         | Entfernt                           | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
-| LCP-Image-URL, LoAF-Detail, Third-Party-Domain-Map | Entfernt          | Vor Opt-In entfernt — danach erhalten                           | Erhalten                                |
-| Cookie nötig                     | Nein                               | Nein (`?p=` ist ein Query-Parameter)                            | Nein                                    |
-| Consent-Banner für unseren Beacon nötig | Nein (keine PII, keine IP, keine Cookies) | Nur, wenn du auch nach Opt-In Verknüpfbarkeit willst | Hängt von der Jurisdiktion ab          |
+| Fehler                           | Nur Typ + Count                    | Typ + Count vor Opt-In; Message + Frames danach                 | Typ + Count + Message + Frames          |
+| Seitenübergreifende `session_id` | Nein (entfernt)                    | Vor Opt-In nein, danach ja                                      | Ja                                      |
+| Referrer (gebucketete Source + Medium) | Ja                          | Ja                                                              | Ja                                      |
+| Rohe Referrer-URL persistiert    | Nie                                | Nie                                                             | Nie                                     |
+| LCP-Image-URL, LoAF-Script-Pfade, Third-Party-Domain-Map | Entfernt   | Vor Opt-In entfernt; danach erhalten                          | Erhalten                                |
+| Am Edge abgeleiteter `stitch` (gedeckelt ≤24 h, pro Site) | Ja      | Ja                                                              | Ja                                      |
+| Consent-Banner für unseren Beacon nötig | Nein (speicherfrei, keine PII) | Nein vor Opt-In; der Opt-In-Pfad selbst braucht ihn    | Hängt von der Jurisdiktion ab          |
 | Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1, Sessions aber erst nach CMP-Consent verknüpfen | Du fällst unter eine Regulierung, die das explizit erlaubt, oder du misst nur intern |
 
-## `anonymous` — der Default
+## `anonymous`: der Default
 
 Der Beacon sendet sofort beim Pageload, ohne Consent-Gate. Erfasst
 wird nur, was unter [Privacy: Was wir nicht sammeln](/de/privacy)
-steht — nichts, womit man einen Besucher seitenübergreifend
+steht. Nichts, womit man einen Besucher seitenübergreifend
 wiedererkennen könnte.
 
 **Passt für dich, wenn:**
@@ -38,7 +40,7 @@ wiedererkennen könnte.
   einfachste DSGVO-Position willst. `anonymous` braucht *für
   unseren Beacon* keinen Cookie-Banner, weil keine Cookies gesetzt
   und keine IPs gespeichert werden. Andere Tools auf der Seite
-  können trotzdem einen Banner verlangen — das liegt aber nicht
+  können trotzdem einen Banner verlangen, das liegt aber nicht
   an uns.
 - du kein CMP integriert hast,
 - du das Setup live schalten willst, ohne erst Engineering und
@@ -57,24 +59,48 @@ wiedererkennen könnte.
 - Cookies setzen.
 - `localStorage` / `IndexedDB` lesen oder schreiben.
 - Formularwerte oder DOM-Inhalt anfassen.
-- Eine `session_id`, Referrer, LCP-Image-URL, LoAF-Details oder
+- Eine `session_id`, LCP-Image-URL, LoAF-Details oder
   Third-Party-Domain-Map mitschicken (vor dem Senden entfernt).
-- Versuchen, den Besucher zu identifizieren.
+- Versuchen, den Besucher zu identifizieren. (Eine Nuance: der
+  Edge leitet einen gedeckelten, pro-Site-`stitch`-Hash mit
+  ≤24 h Verknüpfbarkeit und Forward Secrecy ab; siehe
+  [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).)
 
-## `consent` — pro Request entscheiden lassen
+## `consent`: vom CMP entscheiden lassen
 
-Die Site steht auf `consent`, der tatsächliche Modus jedes Beacons
-wird zur Request-Zeit über einen `?p=`-Query-Parameter auf der
-Collector-URL festgelegt:
+Die Site steht auf `consent`, und die Wire-Form jedes Beacons
+hängt in Echtzeit am Consent-Status des Besuchers. Dein CMP
+schaltet diesen Status mit einem von zwei Calls:
 
-- `?p=1` — der Beacon geht als `full` raus.
-- `?p=0` oder kein `p` — der Beacon geht als `anonymous` raus.
+```js
+// Im "Akzeptieren"-Handler deines Cookie-Banners:
+window.__fastmon_consent(true);
 
-Deine CMP-Anbindung setzt das Flag, sobald der Besucher zustimmt.
-Beacons vor Consent (oder nach Widerruf) gehen anonym raus — Web
-Vitals fließen weiter, aber ohne `sid`, ohne Referrer, mit
-denselben Redaktionen wie im `anonymous`-Modus. Consent schaltet
-**Verknüpfbarkeit** frei, keine neuen Datenkategorien.
+// Im "Ablehnen" / "Widerrufen"-Handler:
+window.__fastmon_consent(false);
+```
+
+`__fastmon_consent(true)` setzt ein einzelnes `_fm_consent`-Cookie,
+das die Entscheidung über Seitenwechsel hinweg persistiert, und
+schaltet die volle Wire-Form frei (Session-ID, LCP-Image-URL,
+LoAF-Script-Pfade, Third-Party-Domain-Map sowie Fehlermessages und
+-Frames). `__fastmon_consent(false)` löscht
+das Cookie *und* räumt die Session-ID im Speicher ab, damit eine
+zuvor zusammengeführte Session nach Widerruf nicht
+liegenbleibt. Der Call ist idempotent; mehrfacher Aufruf mit
+gleichem Argument macht nichts zusätzlich.
+
+Bis zum Opt-In geht jedes Beacon **byte-identisch zu `anonymous`**
+raus: speicherfrei, keine Session-ID, keine LCP-Image-URL, kein
+LoAF-Detail, keine Third-Party-Domain-Map, bei Fehlern nur Typ +
+Count (keine Message, keine Frames). Web Vitals fließen weiter.
+Consent schaltet **Verknüpfbarkeit** frei, keine neuen
+Datenkategorien.
+
+Das `_fm_consent`-Cookie qualifiziert sich nach TDDDG §25(2)
+Nr. 2 / ePrivacy 5(3) als unbedingt erforderlich: ohne
+Persistierung würde das Opt-In den nächsten Seitenwechsel nicht
+überleben und der Consent-Mechanismus selbst wäre sinnlos.
 
 **Passt für dich, wenn:**
 
@@ -85,23 +111,30 @@ denselben Redaktionen wie im `anonymous`-Modus. Consent schaltet
 - du eine Consent-Entscheidung für Fastmon und andere Tools
   gleichzeitig haben willst.
 
-## `full` — alles behalten, ohne Consent-Gate
+## `full`: alles behalten, ohne Consent-Gate
 
 `full` behält ein paar Felder, die `anonymous` entfernt:
 
 - **`session_id`**, sodass Pageviews derselben Session verknüpfbar
   werden (seitenübergreifende Journeys, Funnels,
-  Wiederkehrer-Metriken).
-- **Referrer** für die Quellen-Attribution.
-- **LCP-Image-URL** fürs Performance-Debugging.
-- **Long-Animation-Frames-Detail (LoAF)** für die INP-Attribution.
+  Wiederkehrer-Metriken). Liegt im `sessionStorage`, stirbt mit
+  dem Tab.
+- **LCP-Image-URL** (Origin + Pfad, Query und Fragment entfernt)
+  fürs Performance-Debugging.
+- **Long-Animation-Frames-Detail (LoAF)**, inklusive Script-Pfade
+  (Origin + Pfad) für die INP-Attribution.
 - **Third-Party-Domain-Map**, damit Dashboard-Breakdowns zeigen,
   welche Vendor-Skripte zur Ladezeit beigetragen haben.
+- **Fehlermessages und Stack-Frames** (zusätzlich zu dem immer
+  aktiven Typ + Count). Laufen vor dem Versand weiterhin durch
+  den PII-Scrubber.
 
-Alles andere — Web Vitals, Fehler, Browser/OS/Device/Viewport,
-Connection-Typ — ist identisch zu `anonymous`. Auch die
-Privacy-Untergrenze ändert sich nicht: keine Cookies, keine
-IP-Speicherung, kein roher User-Agent, keine Fingerprints.
+Alles andere (Web Vitals, Fehler-nach-Typ, Browser / OS / Device
+/ Viewport, Connection-Typ, RTT- und Downlink-Schätzungen,
+Kampagnen-Attribution als UTM + Click-ID-Label) ist identisch zu
+`anonymous`. Auch die Privacy-Untergrenze ändert sich nicht: keine
+IP-Speicherung, kein roher User-Agent, keine Reads statischer
+Device-Hints, keine Fingerprints.
 
 Was `full` aufgibt, ist das DSGVO-Argument des berechtigten
 Interesses, auf dem `anonymous` ruht: ein stabiler
@@ -125,7 +158,7 @@ Sessions zu verknüpfen, die er nicht hätte verknüpfen müssen.
 ## Mode ändern
 
 Site in Fastmon öffnen, **Settings**, **Collection mode** umstellen,
-speichern. Die Änderung greift, sobald der Script-Cache rolliert —
+speichern. Die Änderung greift, sobald der Script-Cache rolliert;
 für aktive Besucher meistens binnen Minuten, für neue Sessions
 sofort.
 
@@ -134,5 +167,5 @@ Redeployen oder das `<script>`-Tag anpassen musst du nichts.
 ## Wie geht's weiter
 
 - Genau was der Beacon schickt: [Der RUM-Beacon](/de/beacon).
-- [Privacy: Was wir nicht sammeln](/de/privacy) — die
+- [Privacy: Was wir nicht sammeln](/de/privacy). Die
   Zero-Cookie-Story gilt für alle drei Modes.

@@ -1,4 +1,4 @@
-import { getPageImage, getPageMarkdownUrl, source } from '@/lib/source';
+import { getPageImage, getPageMarkdownUrl, source } from "@/lib/source";
 import {
   DocsBody,
   DocsDescription,
@@ -6,13 +6,13 @@ import {
   DocsTitle,
   MarkdownCopyButton,
   ViewOptionsPopover,
-} from 'fumadocs-ui/layouts/docs/page';
-import { notFound } from 'next/navigation';
-import { getMDXComponents } from '@/components/mdx';
-import type { Metadata } from 'next';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
+} from "fumadocs-ui/layouts/docs/page";
+import { notFound } from "next/navigation";
+import { getMDXComponents } from "@/components/mdx";
+import type { Metadata } from "next";
+import { createRelativeLink } from "fumadocs-ui/mdx";
 
-export default async function Page(props: PageProps<'/[lang]/[...slug]'>) {
+export default async function Page(props: PageProps<"/[lang]/[...slug]">) {
   const params = await props.params;
   const page = source.getPage(params.slug, params.lang);
   if (!page) notFound();
@@ -41,15 +41,11 @@ export default async function Page(props: PageProps<'/[lang]/[...slug]'>) {
 
 export async function generateStaticParams() {
   return source
-    .generateParams('slug', 'lang')
-    .filter(
-      (p) => Array.isArray(p.slug) && p.slug.length > 0 && p.slug[0] !== 'api',
-    );
+    .generateParams("slug", "lang")
+    .filter((p) => Array.isArray(p.slug) && p.slug.length > 0 && p.slug[0] !== "api");
 }
 
-export async function generateMetadata(
-  props: PageProps<'/[lang]/[...slug]'>,
-): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/[lang]/[...slug]">): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug, params.lang);
   if (!page) notFound();

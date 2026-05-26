@@ -1,4 +1,4 @@
-import { createOpenAPI } from 'fumadocs-openapi/server';
+import { createOpenAPI } from "fumadocs-openapi/server";
 
 // Reads the OpenAPI snapshot written by `npm run generate:api`. The
 // generation script is the single point that talks to the backend; the
@@ -7,5 +7,5 @@ import { createOpenAPI } from 'fumadocs-openapi/server';
 //
 // Path is relative to the cwd at build time (docs/).
 export const openapi = createOpenAPI({
-  input: ['./.fastmon-openapi.json'],
+  input: ["./.fastmon-openapi.json"],
 });

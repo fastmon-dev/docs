@@ -3,8 +3,8 @@ title: Architektur
 description: Wie aus einem Beacon ein Dashboard wird. Datenfluss, Stores und was jeder davon tut.
 ---
 
-Fastmon besteht aus zwei Services — einem API-Backend und einem
-Single-Page-Dashboard — und drei Datenstores. Diese Form zu kennen
+Fastmon besteht aus zwei Services (einem API-Backend und einem
+Single-Page-Dashboard) und drei Datenstores. Diese Form zu kennen
 hilft, wenn eine Metrik fehlt, wenn ihr langsame Ingestion
 debuggen müsst oder wenn Compliance fragt, wie das Ding
 funktioniert.
@@ -51,7 +51,7 @@ verstehen willst:
 | ----------------- | ---------------------------------------------------------------------------- |
 | Beacon-Script     | Vanilla JS, ~10 KB komprimiert. Beobachtet Web Vitals, batcht, postet.       |
 | Collector         | Öffentlicher Ingest unter `/c/{collector_hash}`. Validation, Rate-Limit, Geo. |
-| API               | `/v1/...` — authentifizierte REST. Versorgt das Dashboard.               |
+| API               | `/v1/...`: authentifizierte REST. Versorgt das Dashboard.               |
 | Dashboard         | Single-Page-App. Liest über die API. Nur Static-Assets.                      |
 | Config-DB         | User, Organisationen, Sites, Settings, Billing.                              |
 | Analytics-Store   | Beacon-Events, aggregierte Metriken, Error-Logs.                             |
@@ -81,7 +81,7 @@ idempotenten Migrations beim Deploy.
 | `/openapi.json`                   | OpenAPI-Dokument der v1-API.                                   | Public        |
 
 Die beiden öffentlichen Roots stehen bewusst nicht unter
-`/v1` — kurze URLs halten den Beacon-Payload klein, und die
+`/v1`: kurze URLs halten den Beacon-Payload klein, und die
 Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv
 gecached; API-Responses typischerweise nicht).
 
@@ -93,7 +93,7 @@ gecached; API-Responses typischerweise nicht).
 | Site-, Org-, Member-Config          | Config-DB           | Bis zur Löschung.               |
 | Aktive Sessions (Auth)              | Session-Store       | Gleitendes Fenster, default 30 Tage idle. |
 | Rate-Limit-Counter                  | Session-Store       | Per-Fenster-TTL, < 5 min.       |
-| Personenbezogene Daten (PII)        | —                   | Nicht gesammelt. Siehe [Privacy](/de/privacy). |
+| Personenbezogene Daten (PII)        | k. A.               | Nicht gesammelt. Siehe [Privacy](/de/privacy). |
 
 ## Warum manches so ist, wie es ist
 
@@ -108,9 +108,9 @@ bis ein Beacon in den Queries auftaucht.
 
 Damit das Script-Template (und sein Cache) sich ändern kann, ohne
 dass die Daten-Pipeline darunter leidet. Ein Beacon-Upgrade heißt
-einfach: neues Template ausrollen — die Collector-Endpoints bleiben
+einfach: neues Template ausrollen; die Collector-Endpoints bleiben
 gültig. Mehr dazu unter
-[Der RUM-Beacon — Cache und Rollouts](/de/concepts/beacon#cache-und-rollouts).
+[Der RUM-Beacon: Cache und Rollouts](/de/concepts/beacon#cache-und-rollouts).
 
 ### Warum ein Columnar-Analytics-Store?
 
@@ -119,10 +119,10 @@ Dimensionen) über viele Zeilen. Spaltenweise Speicherung liest
 nur diese Spalten von der Platte statt jeder Zeile, und Timing-
 Daten komprimieren in dieser Form sehr gut. Vektorisierte
 Aggregation pro Spalte macht Perzentile und Group-Bys nochmal
-deutlich schneller. Auf Postgres ginge das auch — wäre nur
+deutlich schneller. Auf Postgres ginge das auch, wäre nur
 spürbar langsamer und teurer pro Query.
 
-### Wie aktuell sind die Daten — live vs. aggregiert
+### Wie aktuell sind die Daten: live vs. aggregiert
 
 Analytics-Queries entscheiden je nach Zeitbereich, woher sie lesen.
 Alles innerhalb der letzten **6 Stunden** geht direkt auf den
@@ -132,7 +132,7 @@ stündlich vor-aggregierten Tabellen, die das Backend einmal pro
 Stunde neu aufbaut. Gleiche Zahlen, Antwort unter 100 ms, und die
 Scan-Kosten wachsen nicht mit, wenn die Aufbewahrungsdauer steigt.
 
-Für Dashboard und API ändert sich nichts — man merkt nur, dass die
+Für Dashboard und API ändert sich nichts; man merkt nur, dass die
 Queries schnell sind. Die einzige sichtbare Folge: Die zuletzt
 abgeschlossene Stunde braucht bis zu eine Stunde, bis sie in der
 aggregierten Sicht auftaucht. Das 6-h-Live-Fenster deckt diese
@@ -142,11 +142,11 @@ Lücke ab, also stimmen die Live-Dashboards trotzdem.
 
 Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich
 auf jedem Request, aber keine Langzeit-Durability. In der
-Config-DB hätten sie nichts zu suchen — sie wegzulagern hält den
+Config-DB hätten sie nichts zu suchen; sie wegzulagern hält den
 Auth-Pfad schnell und sauber getrennt.
 
 ## Verwandt
 
-- [Konzepte](/de/concepts) — kundenseitiges Datenmodell.
-- [Der RUM-Beacon](/de/concepts/beacon) — die Client-Hälfte.
-- [Privacy](/de/privacy) — was wir nicht behalten.
+- [Konzepte](/de/concepts): kundenseitiges Datenmodell.
+- [Der RUM-Beacon](/de/concepts/beacon): die Client-Hälfte.
+- [Privacy](/de/privacy): was wir nicht behalten.

@@ -6,7 +6,7 @@ description: Wie Fastmon Pageviews desselben Browsers gruppiert, ohne den Besuch
 Eine **Session** ist ein kurzes Fenster mit Pageviews desselben
 Browsers auf derselben Site. Damit kann das Dashboard Sachen
 beantworten wie "wie viele Seiten pro Besuch?" oder "an welcher
-Stelle im Besuch kam der Fehler?" — ohne dass wir den Besucher
+Stelle im Besuch kam der Fehler?", ohne dass wir den Besucher
 identifizieren müssen.
 
 Anonym sind Sessions schon vom Aufbau her. Fastmon setzt nie einen
@@ -35,7 +35,7 @@ aus.
 Eine Session enthält Pageviews, die **alles** Folgende teilen:
 
 - dieselbe `site_id`,
-- dieselbe `session_id` (`sid` auf der Leitung) — clientseitig
+- dieselbe `session_id` (`sid` auf der Leitung), clientseitig
   pro Session vergeben und nur gesendet, wenn der
   [Collection Mode](/de/collection-modes) das erlaubt (`full`,
   oder `consent` nach Opt-In),
@@ -43,7 +43,7 @@ Eine Session enthält Pageviews, die **alles** Folgende teilen:
   aufeinanderfolgenden Pageviews.
 
 In `anonymous` (und in `consent` vor dem Opt-In) wird die `sid`
-vor dem Senden entfernt — diese Pageviews bilden also gar keine
+vor dem Senden entfernt; diese Pageviews bilden also gar keine
 Session und tauchen nur in Pageview-Views auf.
 
 Die Session endet, wenn:
@@ -66,7 +66,7 @@ Ein Pageview nach der Grenze startet eine neue Session.
 | `page_view_count`| int                  | Anzahl Pageviews in der Session.                        |
 | `entry_url`      | string               | Pathname des ersten Pageviews.                          |
 | `country`        | ISO 3166-1 alpha-2   | Aus der IP des ersten Pageviews abgeleitet.             |
-| `device_type`    | enum                 | `mobile` · `tablet` · `desktop`.                        |
+| `device_type`    | enum                 | `mobile`, `tablet` oder `desktop`.                      |
 | `browser`        | string               | Nur Familie.                                            |
 
 Was fehlt: keine User-ID, kein Fingerprint, keine IP. Die Session-ID
@@ -77,9 +77,9 @@ Analytics-Fensters verwendet zu werden.
 
 Die Analytics-API bietet zwei Endpunkte:
 
-- `POST /analytics/sessions` — paginierte Liste in einem Zeitraum,
+- `POST /analytics/sessions`: paginierte Liste in einem Zeitraum,
   mit Filtern. Cursor-paginiert für hohe Volumina.
-- `POST /analytics/sessions/detail` — Pageviews und Timing einer
+- `POST /analytics/sessions/detail`: Pageviews und Timing einer
   einzelnen Session.
 
 Request-Shapes: [Analytics-API](/de/analytics-api).
@@ -92,9 +92,9 @@ Request-Shapes: [Analytics-API](/de/analytics-api).
   und damit ist die 30-Minuten-Lücke die harte Grenze.
 - **Ein Besucher an zwei Tagen = zwei Sessions.** Mit Absicht.
   Alles andere würde voraussetzen, dass wir wissen, wer derselbe
-  Besucher ist — und das wissen wir nicht.
+  Besucher ist, und das wissen wir nicht.
 - **Kein "Users"-Konzept.** Über der Session gibt es nichts.
-  Wir speichern nicht, wer jemand ist — und damit eben auch nicht,
+  Wir speichern nicht, wer jemand ist, und damit eben auch nicht,
   ob das dieselbe Person ist wie gestern.
 - **Bot-Traffic erzeugt trotzdem Sessions.** Offensichtliche Bots
   filtert der Collector, aber ein zielgerichteter Headless-Browser
@@ -104,8 +104,8 @@ Request-Shapes: [Analytics-API](/de/analytics-api).
 
 ## Verwandt
 
-- [Collection Modes](/de/collection-modes) — was der Beacon pro
+- [Collection Modes](/de/collection-modes): was der Beacon pro
   Pageview erfasst, woraus Sessions gebaut werden.
-- [Privacy: was wir nicht sammeln](/de/privacy) — warum Sessions
+- [Privacy: was wir nicht sammeln](/de/privacy): warum Sessions
   anonym sind.
-- [Analytics-API](/de/analytics-api) — Sessions programmatisch.
+- [Analytics-API](/de/analytics-api): Sessions programmatisch.

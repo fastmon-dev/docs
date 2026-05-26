@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 // The API reference is English-only (no .de.mdx pendants are generated for
 // endpoint pages). When a visitor lands on /de/api/... — typically via a
@@ -13,8 +13,8 @@ export function ApiI18nGuard() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!pathname?.startsWith('/de/api')) return;
-    const target = pathname.replace(/^\/de\//, '/en/');
+    if (!pathname?.startsWith("/de/api")) return;
+    const target = pathname.replace(/^\/de\//, "/en/");
     router.replace(`${target}?from=de`);
   }, [pathname, router]);
 
@@ -23,14 +23,14 @@ export function ApiI18nGuard() {
 
 export function EnglishOnlyBanner() {
   const sp = useSearchParams();
-  if (sp.get('from') !== 'de') return null;
+  if (sp.get("from") !== "de") return null;
   return (
     <div
       role="status"
       className="mb-4 rounded-md border border-fd-border bg-fd-muted px-4 py-3 text-sm text-fd-muted-foreground"
     >
-      Die API-Dokumentation pflegen wir nur auf Englisch — du wurdest auf
-      die englische Fassung weitergeleitet.
+      Die API-Dokumentation pflegen wir nur auf Englisch — du wurdest auf die englische Fassung
+      weitergeleitet.
     </div>
   );
 }

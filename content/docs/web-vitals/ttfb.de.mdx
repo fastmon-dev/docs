@@ -1,6 +1,6 @@
 ---
 title: Time to First Byte (TTFB)
-description: Wie lange der Server bis zum ersten Byte braucht — und warum es die Obergrenze für alles andere ist.
+description: "Wie lange der Server bis zum ersten Byte braucht, und warum es die Obergrenze für alles andere ist."
 ---
 
 **TTFB** misst die Zeit zwischen Navigation Start und dem ersten
@@ -8,7 +8,7 @@ Byte, das beim Browser ankommt. Das ist der Boden, auf dem alles
 andere steht: bevor das erste Byte da ist, kann visuell nichts
 passieren.
 
-TTFB ist **kein** Core Web Vital. Eine diagnostische Metrik — aber
+TTFB ist **kein** Core Web Vital. Eine diagnostische Metrik, aber
 die wichtigste, wenn du langsamen [LCP](/de/web-vitals/lcp) oder
 [FCP](/de/web-vitals/fcp) auseinandernehmen willst.
 
@@ -55,14 +55,14 @@ jedem Pageview mit neuem Navigation-Eintrag mit.
 
 Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
 
-- **Nach Land** — Group by `country`. RTT zu deinem Origin ist der
+- **Nach Land**: Group by `country`. RTT zu deinem Origin ist der
   dominante Faktor für kalte Verbindungen, und er ist regional
   schief. Liegt dein Origin in Frankfurt, ist TTFB nach São Paulo
   schlecht, egal wie schnell dein Server ist.
-- **Nach URL** — Group by URL. Wenn eine einzelne Seite deutlich
+- **Nach URL**: Group by URL. Wenn eine einzelne Seite deutlich
   schlechter ist, macht die Application Per-Page-Arbeit (DB-Query,
   Third-Party-Fetch), die andere nicht haben.
-- **Nach Release** — `compare_to_release_id`. Ein Backend-Deploy
+- **Nach Release**: `compare_to_release_id`. Ein Backend-Deploy
   mit einem neuen synchronen externen Call zeigt sich hier zuerst.
 
 ## Wie man einen schlechten TTFB verbessert
@@ -81,7 +81,7 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
    Roundtrip. `http://` → `https://` → `www.` → Final-URL sind drei
    Roundtrips, bevor der Browser überhaupt das HTML hat.
 5. **HTTP/2 oder HTTP/3 nutzen.** Die meisten modernen Stacks tun
-   das schon, aber prüfen — ältere Origins negotiieren noch
+   das schon, aber prüfen; ältere Origins negotiieren noch
    HTTP/1.1.
 
 ## Häufige Überraschungen
@@ -99,6 +99,6 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
 
 ## Wie geht's weiter
 
-- [FCP](/de/web-vitals/fcp) — TTFBs nachgelagerter Nachbar.
-- [LCP](/de/web-vitals/lcp) — was langsamer TTFB meist bricht.
+- [FCP](/de/web-vitals/fcp): TTFBs nachgelagerter Nachbar.
+- [LCP](/de/web-vitals/lcp): was langsamer TTFB meist bricht.
 - [Web-Vitals-Übersicht](/de/web-vitals).

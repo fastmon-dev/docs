@@ -7,12 +7,12 @@ A **notification rule** evaluates a condition on a schedule and
 fires a notification when the condition is met. Two patterns
 cover what most teams want:
 
-- **Threshold breach** — "alert when LCP at p75 goes above
+- **Threshold breach**: "alert when LCP at p75 goes above
   3,000 ms."
-- **Release regression** — "alert when a metric is meaningfully
+- **Release regression**: "alert when a metric is meaningfully
   worse after a release than before."
 
-This guide walks through both. The engine's the same — only the
+This guide walks through both. The engine's the same; only the
 condition looks different.
 
 **Time to set up:** about ten minutes per rule.
@@ -23,13 +23,13 @@ to create rules (any role works for your own rules).
 
 Rules are organization-level resources. Every rule is owned by the
 user who created it, but other org members can see them too.
-Notifications go to whatever delivery target the rule specifies — by
-default, the creator's email.
+Notifications go to whatever delivery target the rule specifies (by
+default, the creator's email).
 
 ## 1. Pick a preset (or start blank)
 
 Open **Notifications → Rules → New rule** in the Fastmon dashboard.
-The first step shows a list of **presets** — common rule shapes
+The first step shows a list of **presets**: common rule shapes
 pre-filled with sensible defaults:
 
 - *LCP regression on production*
@@ -46,10 +46,10 @@ step 3.
 
 Four target types are supported:
 
-- **Email** — to one or more addresses.
-- **Slack** — native incoming-webhook integration.
-- **Discord** — native incoming-webhook integration.
-- **Webhook** — POST to a URL with a JSON payload. Use this for
+- **Email**: to one or more addresses.
+- **Slack**: native incoming-webhook integration.
+- **Discord**: native incoming-webhook integration.
+- **Webhook**: POST to a URL with a JSON payload. Use this for
   Teams, Mattermost, PagerDuty, Opsgenie, or any other tool with
   an incoming-webhook URL.
 
@@ -70,31 +70,31 @@ The part that takes a bit of thought. A rule has three pieces:
 
 ### When you're measuring it
 
-- A **time window** — usually 1 hour or 24 hours. Shorter windows
+- A **time window**, usually 1 hour or 24 hours. Shorter windows
   catch things faster but are noisier.
-- An **evaluation cadence** — how often the rule runs (every 15
+- An **evaluation cadence**: how often the rule runs (every 15
   minutes, hourly, daily).
 
 ### What's a breach
 
 Pick one of:
 
-- **Above / below threshold** — fixed number. "LCP p75 > 3,000 ms."
-- **Regresses against previous window** — relative to the prior
+- **Above / below threshold**: fixed number. "LCP p75 > 3,000 ms."
+- **Regresses against previous window**: relative to the prior
   same-length window. "LCP p75 +20%."
-- **Regresses against a release** — relative to the same-length
+- **Regresses against a release**: relative to the same-length
   window ending at a release's `released_at`. "LCP p75 +20% vs.
   release `01HZX...`." (Useful in CI to fail a deploy.)
 
 Each shape has its own gotcha:
 
-- **Absolute thresholds are stable** — but they punish you on
+- **Absolute thresholds are stable**, but they punish you on
   the day a big new segment hits your site (more slow-network
   visitors → metrics dip → alert you can't do anything about).
 - **Relative thresholds are sensitive** but noisy on low-volume
   sites. One bad day-over-day comparison fires the alert. Use a
   `min_volume` guard.
-- **Per-release thresholds are precise** — but only fire on
+- **Per-release thresholds are precise**, but only fire on
   releases you actually tagged. See
   [Compare releases](/en/guides/compare-releases).
 
@@ -102,10 +102,10 @@ Each shape has its own gotcha:
 
 Before you save, click **Evaluate now**. That runs the rule
 against the **current** window and tells you whether it would
-fire. Good sanity check for the threshold — if it fires on every
+fire. Good sanity check for the threshold: if it fires on every
 test, the threshold is too tight.
 
-There's a corresponding API endpoint — `POST /notification-rules/{id}/evaluate`.
+There's a corresponding API endpoint: `POST /notification-rules/{id}/evaluate`.
 
 ## 5. Send a synthetic test
 
@@ -139,8 +139,8 @@ worse than the previous 24 hours.
 | Min volume       | 500 page-views in window                  |
 | Delivery         | `team-perf@example.com`                   |
 
-The min-volume guard is the piece people forget most often —
-without it, overnight low-volume periods will fire false
+The min-volume guard is the piece people forget most often.
+Without it, overnight low-volume periods will fire false
 positives non-stop.
 
 ## Common surprises
@@ -158,8 +158,8 @@ positives non-stop.
 
 ## Related
 
-- [Notification rules — API](/en/api) — programmatic creation.
-- [Releases concept](/en/concepts/releases) — for per-release
+- [Notification rules API](/en/api): programmatic creation.
+- [Releases concept](/en/concepts/releases): for per-release
   rules.
-- [Compare releases](/en/guides/compare-releases) — wire CI/CD to
+- [Compare releases](/en/guides/compare-releases): wire CI/CD to
   tag deploys.

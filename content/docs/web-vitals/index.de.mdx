@@ -1,6 +1,6 @@
 ---
 title: Web Vitals
-description: Die fünf Performance-Metriken, die Fastmon trackt — was sie messen und wie du sie liest.
+description: "Die fünf Performance-Metriken, die Fastmon trackt: was sie messen und wie du sie liest."
 ---
 
 **Web Vitals** sind ein Set von Performance-Metriken, die in Zahlen
@@ -15,20 +15,20 @@ in Fastmon abfragst.
 
 ## Die fünf Metriken
 
-Fastmon trackt die drei Core Web Vitals — die Metriken, die im
-Google-Ranking zählen — plus zwei diagnostische Metriken, die dir
+Fastmon trackt die drei Core Web Vitals (die Metriken, die im
+Google-Ranking zählen) plus zwei diagnostische Metriken, die dir
 bei Regressionen helfen.
 
 | Metrik                                                    | Was sie misst                                            | Gut (p75)  |
 | --------------------------------------------------------- | -------------------------------------------------------- | ---------- |
-| [LCP](/de/web-vitals/lcp) — Largest Contentful Paint    | Zeit, bis das größte sichtbare Element rendert.          | ≤ 2.500 ms |
-| [INP](/de/web-vitals/inp) — Interaction to Next Paint   | Worst-Case-Latenz von Interaktion bis nächstem Paint.    | ≤ 200 ms   |
-| [CLS](/de/web-vitals/cls) — Cumulative Layout Shift     | Summe unerwarteter visueller Verschiebungen.             | ≤ 0,1      |
-| [FCP](/de/web-vitals/fcp) — First Contentful Paint      | Zeit, bis Text oder Bild erstmals erscheint.             | ≤ 1.800 ms |
-| [TTFB](/de/web-vitals/ttfb) — Time to First Byte        | Zeit, bis das erste Response-Byte ankommt.               | ≤ 800 ms   |
+| [LCP](/de/web-vitals/lcp), Largest Contentful Paint    | Zeit, bis das größte sichtbare Element rendert.          | ≤ 2.500 ms |
+| [INP](/de/web-vitals/inp), Interaction to Next Paint   | Worst-Case-Latenz von Interaktion bis nächstem Paint.    | ≤ 200 ms   |
+| [CLS](/de/web-vitals/cls), Cumulative Layout Shift     | Summe unerwarteter visueller Verschiebungen.             | ≤ 0,1      |
+| [FCP](/de/web-vitals/fcp), First Contentful Paint      | Zeit, bis Text oder Bild erstmals erscheint.             | ≤ 1.800 ms |
+| [TTFB](/de/web-vitals/ttfb), Time to First Byte        | Zeit, bis das erste Response-Byte ankommt.               | ≤ 800 ms   |
 
 Die ersten drei (LCP, INP, CLS) zählt Google fürs Ranking. Die
-beiden anderen (FCP, TTFB) sind diagnostisch — nützlich, wenn du
+beiden anderen (FCP, TTFB) sind diagnostisch, nützlich, wenn du
 herausfinden willst, *warum* dein LCP langsam ist.
 
 ## Wie man ein Perzentil liest
@@ -39,7 +39,7 @@ einen besseren Wert als p75, 25 % einen schlechteren.
 
 Wenn dein LCP bei p75 bei 2.400 ms liegt, dann sieht das
 *schlechteste Viertel deines Traffics* genau diese Zahl. p50 ist
-"was die meisten sehen" — bequem, aber als Optimierungsziel
+"was die meisten sehen": bequem, aber als Optimierungsziel
 ungeeignet, wenn dir Besucher mit schwacher Verbindung oder
 älteren Geräten wichtig sind.
 
@@ -53,29 +53,29 @@ Der Beacon nutzt dieselben Browser-APIs wie die
 - `Navigation Timing` für TTFB.
 - Die browser-eigenen Attribution-Daten für INP.
 
-Jede Metrik wird zu einem anderen Zeitpunkt finalisiert —
-meistens, wenn die Seite versteckt wird oder der Nutzer
+Jede Metrik wird zu einem anderen Zeitpunkt finalisiert,
+meistens wenn die Seite versteckt wird oder der Nutzer
 interagiert. Der Beacon bündelt die finalen Werte und schickt
 genau einen POST pro Pageview. Mehr dazu unter
 [Der RUM-Beacon](/de/beacon).
 
 ## Wo sie im Produkt auftauchen
 
-- **Performance-Dashboard** — p50/p75/p95 pro Metrik, slicebar nach
+- **Performance-Dashboard**: p50/p75/p95 pro Metrik, slicebar nach
   URL, Device, Land und Release.
-- **Experience Score** — eine Zahl von 0–10, die LCP, INP, CLS,
+- **Experience Score**: eine Zahl von 0–10, die LCP, INP, CLS,
   FCP, TTFB, Fehlerrate und Page Load Time zusammenfasst. Siehe
   [Experience Score](/de/web-vitals/experience-score).
-- **Notification Rules** — Alarm wenn eine Metrik eine Schwelle
+- **Notification Rules**: Alarm wenn eine Metrik eine Schwelle
   überschreitet oder gegen ein Vorgänger-Release regrediert.
-- **Analytics-API** — jede Metrik programmatisch abfragen. Siehe
+- **Analytics-API**: jede Metrik programmatisch abfragen. Siehe
   [Analytics-API](/de/analytics-api).
 
 ## Wie geht's weiter
 
-- Starte mit [LCP](/de/web-vitals/lcp) — meist die erste Metrik,
+- Starte mit [LCP](/de/web-vitals/lcp), meist die erste Metrik,
   die du optimierst.
-- Dann [INP](/de/web-vitals/inp) — regrediert oft, wenn du LCP
+- Dann [INP](/de/web-vitals/inp); regrediert oft, wenn du LCP
   durch zusätzliches JavaScript fixt.
 - Für eine einzelne Zahl über Zeit:
   [Experience Score](/de/web-vitals/experience-score).

@@ -1,6 +1,6 @@
 ---
 title: Verify the implementation
-description: Confirm Fastmon is collecting data — and what to look at when it isn't.
+description: "Confirm Fastmon is collecting data, and what to look at when it isn't."
 ---
 
 Once the script is on your site, two checks tell you everything's
@@ -19,7 +19,7 @@ POST https://fastmon.site/c/{collector_hash}     204
 ```
 
 A `204 No Content` response means the beacon was accepted. That's
-it — you're up.
+it; you're up.
 
 ## The dashboard check
 
@@ -32,7 +32,7 @@ show:
 - a **Web Vitals** snapshot for at least the page you opened.
 
 If the only traffic you see is your own visit so far, that's
-fine — real traffic builds up as visitors load pages.
+fine; real traffic builds up as visitors load pages.
 
 ## Troubleshooting
 
@@ -41,12 +41,12 @@ fine — real traffic builds up as visitors load pages.
 **Check the script loaded.** In DevTools → Network, filter for `s/`.
 You should see a request to
 `https://fastmon.site/s/{source_hash}.js` with a `200` status. A
-`404` means the `source_hash` in your tag doesn't match a site —
+`404` means the `source_hash` in your tag doesn't match a site:
 either the hash was mistyped, or the site was deleted in Fastmon.
 
 **Check the `<script>` tag is in the rendered HTML.** View source on a
 production page. The tag must be present in the actual HTML the browser
-receives — some CMSes strip unknown tags from page builders. Use a
+receives; some CMSes strip unknown tags from page builders. Use a
 header-injection plugin or your theme's `<head>` slot instead of an
 inline content block.
 
@@ -57,13 +57,13 @@ directives.
 
 **Force a flush.** The beacon flushes periodically and on
 `pagehide` / `visibilitychange`. If nothing has shown up yet,
-switch tabs (or close and reopen the page) — that triggers an
+switch tabs (or close and reopen the page); that triggers an
 immediate flush.
 
 ### Beacon shows `204`, but no row appears in the dashboard
 
 A `204` is the standard accept response. It's also what you get
-when the beacon is silently dropped — the most common reason is
+when the beacon is silently dropped. The most common reason is
 that the site has **Allowed origins** set and the page you're
 loading from isn't on the list. Open the site settings, add the
 missing origin (e.g. `staging.acme.com`), and save. The script
@@ -73,7 +73,7 @@ inactive, or unknown `collector_hash`.
 ### Request to `/c/` returns `429`
 
 You hit the per-IP rate limit. With real traffic, that hardly ever
-happens — usually it's a synthetic load test or a buggy reload
+happens; usually it's a synthetic load test or a buggy reload
 loop. Wait a minute and the limit resets.
 
 ### Beacon goes through, but no data in the dashboard
@@ -83,7 +83,7 @@ between a successful `204` and the row showing up in the dashboard
 is normal. Wait a moment and refresh.
 
 If it's still empty after that, check you're on the right site and
-the right time range — the dashboard defaults to the last 24 h,
+the right time range; the dashboard defaults to the last 24 h,
 which is fine for fresh data.
 
 If the request returned `204` and the dashboard is still empty

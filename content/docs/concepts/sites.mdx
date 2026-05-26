@@ -4,7 +4,7 @@ description: A site is one property you monitor. Each site has its own beacon ha
 ---
 
 A **site** is the unit of monitoring in Fastmon. In practice that
-maps to a property — usually one origin, one app, or one brand.
+maps to a property: usually one origin, one app, or one brand.
 Beacon URL, settings, dashboard filters: all per site.
 
 ## Why it matters
@@ -16,7 +16,7 @@ new site.
 
 If you want one dashboard view across several properties, use
 **tags** (below) and aggregate at query time. There's no
-site-group concept on purpose — tags cover it.
+site-group concept on purpose; tags cover it.
 
 ## When you'd touch it
 
@@ -45,7 +45,7 @@ site-group concept on purpose — tags cover it.
 | `collector_endpoint`  | string · nullable                     | Custom collector hostname for enterprise routing. Defaults to `fastmon.eu`.      |
 | `source_hash`         | string                                | Per-site hash used in the script URL (`/s/{source_hash}.js`).                    |
 | `collector_hash`      | string                                | Per-site hash used in the ingest URL (`/c/{collector_hash}`).                    |
-| `collection_mode`     | enum                                  | `anonymous` · `consent` · `full`. See [Collection modes](/en/collection-modes). |
+| `collection_mode`     | enum                                  | `anonymous`, `consent`, or `full`. See [Collection modes](/en/collection-modes). |
 | `data_retention_days` | int                                   | Default `90`. After expiry, rows are dropped at the storage layer.               |
 | `source_version`      | string                                | Pins a beacon template version (`v1` is current).                                |
 | `tags`                | list of strings (max 10)              | Free-form labels for dashboard and analytics filtering.                          |
@@ -63,7 +63,7 @@ jobs.
 
 They're separate so the script template can change (for a beacon
 upgrade or a collection-mode swap) without affecting the data
-pipeline. You only ever copy `source_hash` by hand —
+pipeline. You only ever copy `source_hash` by hand;
 `collector_hash` is baked into the script and rides along.
 
 ## Tags
@@ -89,7 +89,7 @@ site's `domain` *or* one of the entries in `allowed_origins`. If you
 load the script on a domain that isn't allow-listed, the collector
 returns `403`.
 
-Add staging and preview hostnames here. Wildcards aren't supported —
+Add staging and preview hostnames here. Wildcards aren't supported;
 list each origin explicitly.
 
 ## Common scenarios
@@ -108,7 +108,7 @@ Most teams end up on the second one after a few weeks.
 
 ### A new sub-site, same brand
 
-New site. Don't reuse the script tag from another property — the
+New site. Don't reuse the script tag from another property; the
 `source_hash` is per site, and the data has to be attributable.
 
 ### Moving to a new domain
@@ -129,9 +129,9 @@ and mark the old one inactive once traffic's moved over.
 
 ## Related
 
-- [Collection modes](/en/collection-modes) — what the beacon does,
+- [Collection modes](/en/collection-modes): what the beacon does,
   per site.
-- [The RUM Beacon](/en/beacon) — what the beacon collects.
-- [Releases](/en/concepts/releases) — versioned markers attached to
+- [The RUM Beacon](/en/beacon): what the beacon collects.
+- [Releases](/en/concepts/releases): versioned markers attached to
   a site.
-- [API: Sites endpoints](/en/api) — programmatic site CRUD.
+- [API: Sites endpoints](/en/api): programmatic site CRUD.

@@ -1,6 +1,6 @@
 ---
 title: Experience Score
-description: Eine einzelne 0–10-Zahl aus Core Web Vitals, Page Load Time und Fehlerrate — die Headline-Metrik fürs UX-Tracking über Zeit.
+description: "Eine einzelne 0–10-Zahl aus Core Web Vitals, Page Load Time und Fehlerrate: die Headline-Metrik fürs UX-Tracking über Zeit."
 ---
 
 **Experience Score** ist eine Composite-Metrik. Sie verdichtet
@@ -57,23 +57,23 @@ verteilt.
 
 ## Wann der Score berechnet wird
 
-Pro Pageview, beim Verstecken der Seite — derselbe Trigger, der die
+Pro Pageview, beim Verstecken der Seite. Das ist derselbe Trigger, der die
 zugrundeliegenden Metriken finalisiert. Die Aggregat-Scores im
 Dashboard sind Durchschnitte über den gewählten Zeitraum.
 
 ## Experience Score in Fastmon ansehen
 
 Die Headline-Zahl steht auf dem **Performance**-Dashboard.
-Darunter siehst du den Breakdown — welcher Sub-Score den Total nach
-unten zieht — und einen Trend-Chart über das gewählte Fenster.
+Darunter siehst du den Breakdown (welcher Sub-Score den Total nach
+unten zieht) und einen Trend-Chart über das gewählte Fenster.
 
 Nützliche Slices:
 
-- **Nach URL** — Group by URL. Welche Seiten dominieren den
+- **Nach URL**: Group by URL. Welche Seiten dominieren den
   Durchschnitt?
-- **Nach Release** — `compare_to_release_id`. Das beste einzelne
+- **Nach Release**: `compare_to_release_id`. Das beste einzelne
   Signal für "hat dieser Deploy UX verschlechtert?"
-- **Nach Land / Device** — Group by `country` oder `device_type`.
+- **Nach Land / Device**: Group by `country` oder `device_type`.
   Regionale oder Device-Klassen-Regressionen sind im globalen Score
   meist unsichtbar.
 
@@ -91,7 +91,7 @@ Der Composite ist nur so gesund wie sein schwächster Bestandteil:
    sauberes Vorher/Nachher.
 
 Nicht versuchen, alles gleichzeitig zu optimieren. Die
-Verbesserungen schlagen sich oft gegenseitig — LCP-Fix mit mehr JS
+Verbesserungen schlagen sich oft gegenseitig: LCP-Fix mit mehr JS
 kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach
 hinten schieben.
 
@@ -106,7 +106,7 @@ hinten schieben.
   Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des
   Deploys zu erwischen, zählt.
 - **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.**
-  Wenn Besucher nie interagieren, fällt INP weg — der Score
+  Wenn Besucher nie interagieren, fällt INP weg; der Score
   reflektiert dann nur LCP und CLS, was meist leichter ist.
 - **Interner vs. externer Traffic verzerrt den Composite.**
   Office-Traffic auf warmen Caches und schnellen Laptops scort
@@ -118,6 +118,6 @@ hinten schieben.
 
 - [LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp),
   [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp),
-  [TTFB](/de/web-vitals/ttfb) — die beitragenden Metriken.
-- [Web-Vitals-Übersicht](/de/web-vitals) — das vollständige Set
+  [TTFB](/de/web-vitals/ttfb): die beitragenden Metriken.
+- [Web-Vitals-Übersicht](/de/web-vitals): das vollständige Set
   inklusive diagnostischer Metriken.

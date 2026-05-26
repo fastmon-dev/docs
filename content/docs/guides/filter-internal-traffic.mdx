@@ -3,12 +3,12 @@ title: Filter internal traffic
 description: Keep office, staff, and synthetic traffic out of your real-user metrics.
 ---
 
-Internal traffic — your team's own visits, office IPs, automated
-checks — skews every metric. Office machines on warm caches and
+Internal traffic (your team's own visits, office IPs, automated
+checks) skews every metric. Office machines on warm caches and
 fast networks look great; mobile visitors in a tunnel look bad;
 average those two together and the number means nothing.
 
-There's no "ignore my IP" toggle, on purpose — we don't store IPs
+There's no "ignore my IP" toggle, on purpose; we don't store IPs
 (see [Privacy](/en/privacy)). The right move depends on what you
 want to exclude.
 
@@ -28,10 +28,10 @@ The cleanest answer for staging, preview, and dev environments.
 1. Create a second site in Fastmon called e.g. `acme-marketing-staging`.
 2. Use **its** `source_hash` in your staging deploy.
 3. Either ignore the staging site in dashboards, or use it
-   intentionally — staging metrics are useful for catching
+   intentionally; staging metrics are useful for catching
    regressions before production.
 
-Costs you nothing — no client-side logic, no flags, no risk of
+Costs you nothing: no client-side logic, no flags, no risk of
 leaking production data into staging or the other way around.
 
 ## Option 2: Skip the beacon for internal sessions
@@ -41,7 +41,7 @@ backend or admin UI, and you can mark them as internal there.
 
 The simplest approach: don't render the beacon `<script>` tag at all
 when the request comes from an internal session. Server-side render
-based on whatever "is internal" signal you already have — a session
+based on whatever "is internal" signal you already have: a session
 cookie, a JWT claim, an admin login.
 
 ```html
@@ -50,7 +50,7 @@ cookie, a JWT claim, an admin login.
 {% endif %}
 ```
 
-A client-only variant works too — gate the script-tag injection on a
+A client-only variant works too: gate the script-tag injection on a
 cookie set once when your team hits a `/staff` route:
 
 ```html
@@ -80,7 +80,7 @@ active stays intact.
 
 For Pingdom, UptimeRobot, your own E2E suite, etc., the cleanest move
 is to not load the script at all. Most monitors set a recognizable
-`User-Agent` — gate the script tag on the server side:
+`User-Agent`; gate the script tag on the server side:
 
 ```html
 {% if request.user_agent.is_synthetic %}
@@ -91,14 +91,14 @@ is to not load the script at all. Most monitors set a recognizable
 ```
 
 If your stack doesn't have an easy "is bot" check, gate the script
-tag on a small UA test in your template — same idea.
+tag on a small UA test in your template; same idea.
 
 ## Verifying the filter
 
 Open your site as an internal visitor. Check DevTools → Network →
 filter `c/`. You should see **no** request to
 `https://fastmon.site/c/...`. If you do, the script tag is still
-being rendered — double-check the gate condition on the server (or
+being rendered: double-check the gate condition on the server (or
 the cookie test in the inline snippet).
 
 In Fastmon, after the cutover, the **Sessions** view should show
@@ -120,8 +120,8 @@ doesn't, the filter isn't catching them.
 
 ## Related
 
-- [Sites](/en/concepts/sites) — separate sites for environments.
-- [Collection modes](/en/collection-modes) — runtime beacon
+- [Sites](/en/concepts/sites): separate sites for environments.
+- [Collection modes](/en/collection-modes): runtime beacon
   control.
-- [Privacy: what we don't collect](/en/privacy) — why there's no
+- [Privacy: what we don't collect](/en/privacy): why there's no
   server-side IP filter.

@@ -1,4 +1,4 @@
-import { getPageImage, getPageMarkdownUrl, source } from '@/lib/source';
+import { getPageImage, getPageMarkdownUrl, source } from "@/lib/source";
 import {
   DocsBody,
   DocsDescription,
@@ -6,15 +6,15 @@ import {
   DocsTitle,
   MarkdownCopyButton,
   ViewOptionsPopover,
-} from 'fumadocs-ui/layouts/docs/page';
-import { notFound } from 'next/navigation';
-import { getMDXComponents } from '@/components/mdx';
-import type { Metadata } from 'next';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
+} from "fumadocs-ui/layouts/docs/page";
+import { notFound } from "next/navigation";
+import { getMDXComponents } from "@/components/mdx";
+import type { Metadata } from "next";
+import { createRelativeLink } from "fumadocs-ui/mdx";
 
-export default async function Page(props: PageProps<'/[lang]/api'>) {
+export default async function Page(props: PageProps<"/[lang]/api">) {
   const params = await props.params;
-  const page = source.getPage(['api'], params.lang);
+  const page = source.getPage(["api"], params.lang);
   if (!page) notFound();
 
   const MDX = page.data.body;
@@ -39,9 +39,9 @@ export default async function Page(props: PageProps<'/[lang]/api'>) {
   );
 }
 
-export async function generateMetadata(props: PageProps<'/[lang]/api'>): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/[lang]/api">): Promise<Metadata> {
   const params = await props.params;
-  const page = source.getPage(['api'], params.lang);
+  const page = source.getPage(["api"], params.lang);
   if (!page) notFound();
 
   return {

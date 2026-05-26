@@ -1,0 +1,8 @@
+# OSV-Scanner ignore list. Mirror of the npm audit `--audit-level=high` threshold
+# in .github/workflows/security.yml. Re-evaluate each time package-lock.json changes.
+
+# No vulnerabilities currently ignored. Add entries as needed using:
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# reason = "Short rationale (dev-only dependency, no production exposure, …)."

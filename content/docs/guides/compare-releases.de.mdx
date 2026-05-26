@@ -17,7 +17,7 @@ Edit-Zugriff auf die CI/CD-Pipeline, eine Site, die schon
 ## 1. API-Token erzeugen
 
 1. In Fastmon **Account → API-Token** öffnen.
-2. **Generate token** klicken. Wert kopieren — beginnt mit `fm_`.
+2. **Generate token** klicken. Wert kopieren: beginnt mit `fm_`.
    Wird nicht erneut angezeigt.
 3. Im Secret-Store deines CI als `FASTMON_TOKEN` ablegen.
 
@@ -45,7 +45,7 @@ curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
 ```
 
 Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern
-und sparen sich den Progress-Output. `released_at` ist optional —
+und sparen sich den Progress-Output. `released_at` ist optional;
 wenn du's weglässt, setzt der Server einfach "jetzt".
 
 ### GitHub Actions
@@ -82,10 +82,10 @@ fastmon-release:
 Vercel führt keine beliebigen Post-Deploy-Commands im Build aus.
 Zwei Optionen:
 
-- **Deploy-Hook** — Webhook-Receiver einrichten, der auf
+- **Deploy-Hook**: Webhook-Receiver einrichten, der auf
   `deployment.succeeded` von Vercel hört und mit der SHA aus dem
   Payload den Fastmon-Endpoint aufruft.
-- **Edge-Function** — kleine Cron-getriggerte Function, die die
+- **Edge-Function**: kleine Cron-getriggerte Function, die die
   Vercel-API auf neue Deployments pollt und sie taggt.
 
 ## 4. Prüfen, ob der Release angekommen ist
@@ -105,7 +105,7 @@ auf.
 
 ## 5. Metriken vergleichen
 
-Das Dashboard hat einen Release-Picker auf **Performance** — Release
+Das Dashboard hat einen Release-Picker auf **Performance**: Release
 auswählen, Chart überlagert Vorher/Nachher. Programmatischer
 Vergleich: `compare_to_release_id` setzen:
 
@@ -131,7 +131,7 @@ Stunden direkt davor.
 
 - Jeder erfolgreiche Deploy taggt automatisch einen Release. Nichts
   von Hand.
-- Die Release-Version lässt sich auf einen Commit zurückführen —
+- Die Release-Version lässt sich auf einen Commit zurückführen:
   Git-SHA, Tag, Build-Nummer, was auch immer ihr nutzt.
 - Im CI gibt's einen Schritt, der den Deploy scheitern lässt, wenn
   der Release-Call hängt. Sonst hast du irgendwann stille Lücken
@@ -141,7 +141,7 @@ Stunden direkt davor.
 
 - **Ein Release ohne `released_at` setzt "jetzt".** Meistens passt
   das. Aufpassen, wenn dein Deploy-Job Minuten vor dem
-  tatsächlichen Live-Gehen läuft (Blue/Green-Flip kommt später) —
+  tatsächlichen Live-Gehen läuft (Blue/Green-Flip kommt später);
   dann lieber zurückdatieren.
 - **Releases hängen an einer Site.** Wer in einem Monorepo drei
   Sites ausliefert, braucht drei Release-Calls.
@@ -151,7 +151,7 @@ Stunden direkt davor.
 
 ## Verwandt
 
-- [Releases-Konzept](/de/concepts/releases) — was ein Release ist.
-- [Analytics-API](/de/analytics-api) — `compare_to_release_id`-Details.
-- [Notification Rules](/de/guides/notification-rules) — automatisch
+- [Releases-Konzept](/de/concepts/releases): was ein Release ist.
+- [Analytics-API](/de/analytics-api): `compare_to_release_id`-Details.
+- [Notification Rules](/de/guides/notification-rules): automatisch
   alarmieren bei Per-Release-Regressionen.

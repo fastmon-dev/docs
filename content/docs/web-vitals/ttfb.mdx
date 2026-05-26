@@ -1,6 +1,6 @@
 ---
 title: Time to First Byte (TTFB)
-description: How long the server took to send the first byte — and why it's the upper bound for everything else.
+description: "How long the server took to send the first byte, and why it's the upper bound for everything else."
 ---
 
 **TTFB** measures the time from navigation start to the first
@@ -8,7 +8,7 @@ byte of response landing in the browser. It's the floor every
 other metric sits on: nothing visual can happen before the first
 byte arrives.
 
-TTFB is **not** a Core Web Vital. A diagnostic metric — but the
+TTFB is **not** a Core Web Vital. A diagnostic metric, but the
 single most important one when you're trying to take apart a
 slow [LCP](/en/web-vitals/lcp) or [FCP](/en/web-vitals/fcp).
 
@@ -53,14 +53,14 @@ new navigation entry.
 
 The dashboard's **Performance** section shows TTFB at p50, p75, p95.
 
-- **By country** — group by `country`. RTT to your origin is the
+- **By country**: group by `country`. RTT to your origin is the
   dominant factor for cold connections, and it's lopsided by region.
   If your origin is in Frankfurt, TTFB to São Paulo will be bad
   regardless of your server.
-- **By URL** — group by URL. If a single page has a much worse TTFB,
+- **By URL**: group by URL. If a single page has a much worse TTFB,
   the application is doing per-page work (DB query, third-party
   fetch) that the others aren't.
-- **By release** — `compare_to_release_id`. A backend deploy that
+- **By release**: `compare_to_release_id`. A backend deploy that
   added a synchronous external call usually shows up here first.
 
 ## How to improve a slow TTFB
@@ -79,7 +79,7 @@ The dashboard's **Performance** section shows TTFB at p50, p75, p95.
    `http://` → `https://` → `www.` → final URL is three roundtrips
    before the browser even gets the HTML.
 5. **Use HTTP/2 or HTTP/3.** Most modern stacks already do, but
-   double-check — older origins still negotiate HTTP/1.1.
+   double-check; older origins still negotiate HTTP/1.1.
 
 ## Common surprises
 
@@ -96,6 +96,6 @@ The dashboard's **Performance** section shows TTFB at p50, p75, p95.
 
 ## What's next
 
-- [FCP](/en/web-vitals/fcp) — TTFB's downstream neighbor.
-- [LCP](/en/web-vitals/lcp) — what slow TTFB usually breaks.
+- [FCP](/en/web-vitals/fcp): TTFB's downstream neighbor.
+- [LCP](/en/web-vitals/lcp): what slow TTFB usually breaks.
 - [Web Vitals overview](/en/web-vitals).

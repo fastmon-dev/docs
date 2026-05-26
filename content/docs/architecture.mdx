@@ -3,8 +3,8 @@ title: Architecture
 description: How a beacon becomes a dashboard. The data flow, the stores, and what each one does.
 ---
 
-Fastmon is two services — an API backend and a single-page
-dashboard — on top of three data stores. Knowing the shape helps
+Fastmon is two services (an API backend and a single-page
+dashboard) on top of three data stores. Knowing the shape helps
 when a metric goes missing, when you're debugging slow ingestion,
 or when compliance asks how the thing actually works.
 
@@ -49,7 +49,7 @@ behavior:
 | ----------------- | --------------------------------------------------------------------------- |
 | Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
 | Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, geo derive. |
-| API               | `/v1/...` — authenticated REST. Powers the dashboard.                   |
+| API               | `/v1/...`: authenticated REST. Powers the dashboard.                   |
 | Dashboard         | Single-page app. Reads via the API. Static assets only.                     |
 | Configuration DB  | Users, organizations, sites, settings, billing.                             |
 | Analytics store   | Beacon events, aggregated metrics, error logs.                              |
@@ -78,7 +78,7 @@ migrations applied on deploy.
 | `/v1/...`                     | Authenticated REST API.                                        | Cookie or token |
 | `/openapi.json`                   | OpenAPI document for the v1 API.                               | Public        |
 
-The two public roots stay outside the `/v1` prefix on purpose —
+The two public roots stay outside the `/v1` prefix on purpose:
 short URLs keep the beacon payload smaller, and the cache rules are
 different (the beacon script is aggressively cached; API responses
 typically aren't).
@@ -91,7 +91,7 @@ typically aren't).
 | Site, org, member configuration    | Configuration DB    | Until deletion.                 |
 | Active sessions (auth)             | Session store       | Sliding window, default 30 days idle. |
 | Rate-limit counters                | Session store       | Per-window TTL, < 5 min.        |
-| Personal data (PII)                | —                   | Not collected. See [Privacy](/en/privacy). |
+| Personal data (PII)                | n/a                 | Not collected. See [Privacy](/en/privacy). |
 
 ## Why some things look the way they do
 
@@ -106,9 +106,9 @@ between a beacon arriving and it showing up in queries.
 
 So the script template (and the cache around it) can change
 without affecting the data pipeline. A beacon upgrade is just
-"roll a new template" — existing collector endpoints stay valid.
+"roll a new template"; existing collector endpoints stay valid.
 More on this under
-[The RUM Beacon — cache and rollouts](/en/concepts/beacon#cache-and-rollouts).
+[The RUM Beacon: cache and rollouts](/en/concepts/beacon#cache-and-rollouts).
 
 ### Why a columnar analytics store?
 
@@ -116,19 +116,19 @@ Analytics queries read a few columns (one metric, a couple of
 dimensions) across many rows. Columnar storage scans only those
 columns from disk instead of every row, and timing data compresses
 very well in that layout. Vectorized aggregation makes percentiles
-and group-bys faster again. Postgres could serve the same queries
-— it would just be noticeably slower and more expensive per query.
+and group-bys faster again. Postgres could serve the same queries;
+it would just be noticeably slower and more expensive per query.
 
-### Query freshness — live vs. aggregated
+### Query freshness: live vs. aggregated
 
 Analytics queries route by time range. Anything within the last
-**6 hours** reads the raw beacon stream directly — fresh, with the
-~30 s ingest delay above, no other latency. Longer ranges
+**6 hours** reads the raw beacon stream directly (fresh, with the
+~30 s ingest delay above, no other latency). Longer ranges
 (24 h, 7 d, 30 d, custom) read from hourly pre-aggregated tables
 that the backend rebuilds once per hour. Same numbers, sub-100 ms
 response, no scan-cost growth as your data retention grows.
 
-The crossover is invisible from the dashboard or the API — you
+The crossover is invisible from the dashboard or the API; you
 just see fast queries. The only user-visible consequence is that
 the most recent completed hour can lag by up to an hour before it
 folds into the aggregated view; the 6 h live window covers that
@@ -137,11 +137,11 @@ gap, so live dashboards stay accurate.
 ### Why a separate session store?
 
 Sessions and rate-limit counters need millisecond reads on every
-request — but no long-term durability. Keeping them out of the
+request, but no long-term durability. Keeping them out of the
 configuration DB keeps the auth path fast and cleanly isolated.
 
 ## Related
 
-- [Concepts](/en/concepts) — the customer-facing data model.
-- [The RUM Beacon](/en/concepts/beacon) — the client-side half.
-- [Privacy](/en/privacy) — what we don't keep.
+- [Concepts](/en/concepts): the customer-facing data model.
+- [The RUM Beacon](/en/concepts/beacon): the client-side half.
+- [Privacy](/en/privacy): what we don't keep.

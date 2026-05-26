@@ -3,12 +3,12 @@ title: Internen Traffic filtern
 description: Office-, Staff- und synthetischen Traffic aus deinen Real-User-Metriken raushalten.
 ---
 
-Interner Traffic — eigene Team-Besuche, Office-IPs, automatisierte
-Checks — verzieht dir jede Metrik. Office-Maschinen mit warmem Cache
+Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte
+Checks) verzieht dir jede Metrik. Office-Maschinen mit warmem Cache
 und schnellem Netz looken super; Mobile-Besucher im Tunnel looken
 mies; und der Durchschnitt von beidem sagt am Ende nichts mehr.
 
-Einen "meine IP ignorieren"-Toggle haben wir mit Absicht nicht — wir
+Einen "meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir
 speichern keine IPs, siehe [Privacy](/de/privacy). Was du
 ausschließen willst, entscheidet, welcher Weg passt.
 
@@ -28,10 +28,10 @@ Saubere Antwort für Staging, Preview, Dev.
 1. Zweite Site in Fastmon anlegen, z. B. `acme-marketing-staging`.
 2. **Deren** `source_hash` im Staging-Deploy nutzen.
 3. Entweder die Staging-Site in Dashboards ignorieren oder
-   absichtlich nutzen — Staging-Metriken sind nützlich, um
+   absichtlich nutzen; Staging-Metriken sind nützlich, um
    Regressionen vor Production zu fangen.
 
-Kostet dich nichts — keine Client-Logik, keine Flags, kein Risiko,
+Kostet dich nichts: keine Client-Logik, keine Flags, kein Risiko,
 dass Production-Daten in Staging landen oder umgekehrt.
 
 ## Option 2: Beacon bei internen Sessions weglassen
@@ -41,7 +41,7 @@ oder Admin-UI hat und du ihn dort als "intern" markieren kannst.
 
 Einfachster Weg: das Beacon-`<script>` einfach nicht rendern, wenn
 der Request aus einer internen Session kommt. Server-seitig ent-
-scheiden anhand des Signals, das du eh schon hast — Session-Cookie,
+scheiden anhand des Signals, das du eh schon hast: Session-Cookie,
 JWT-Claim, Admin-Login.
 
 ```html
@@ -50,7 +50,7 @@ JWT-Claim, Admin-Login.
 {% endif %}
 ```
 
-Reine Client-Variante geht auch — Script-Tag nur einfügen, wenn das
+Reine Client-Variante geht auch: Script-Tag nur einfügen, wenn das
 Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
 
 ```html
@@ -80,7 +80,7 @@ der aktiven Phase bleibt erhalten.
 
 Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar
 nicht erst laden. Die meisten Monitore setzen einen erkennbaren
-`User-Agent` — Tag server-seitig gaten:
+`User-Agent`; Tag server-seitig gaten:
 
 ```html
 {% if request.user_agent.is_synthetic %}
@@ -91,14 +91,14 @@ nicht erst laden. Die meisten Monitore setzen einen erkennbaren
 ```
 
 Wenn dein Stack keinen einfachen "ist Bot"-Check hat, gate das
-Script-Tag direkt im Template anhand des UA — gleiches Prinzip.
+Script-Tag direkt im Template anhand des UA; gleiches Prinzip.
 
 ## Filter verifizieren
 
 Site als interner Besucher öffnen. DevTools → Network → `c/`
 filtern. Du solltest **keinen** Request an
 `https://fastmon.site/c/...` sehen. Wenn doch, wird das Script-Tag
-weiter gerendert — Gate-Bedingung auf dem Server (oder den
+weiter gerendert; Gate-Bedingung auf dem Server (oder den
 Cookie-Check im Inline-Snippet) prüfen.
 
 In Fastmon nach dem Umschalten: Im **Sessions**-View sollte die
@@ -112,7 +112,7 @@ werden. Wenn nicht, fängt der Filter sie nicht.
   können wir nicht mehr sagen, ob der aus eurem Office kam. Also:
   an der Quelle filtern.
 - **Das Gate läuft pro Seite.** Auf jeder Seite weglassen, die du
-  ausschließen willst — nicht nur beim ersten Load.
+  ausschließen willst, nicht nur beim ersten Load.
 - **Country-Filter helfen nicht.** Dein Office sitzt im gleichen
   Land wie die meisten echten Besucher. Was funktioniert: an der
   Quelle filtern, wo der echte Kontext (User, Cookie, UA) noch da
@@ -120,8 +120,8 @@ werden. Wenn nicht, fängt der Filter sie nicht.
 
 ## Verwandt
 
-- [Sites](/de/concepts/sites) — separate Sites für Umgebungen.
-- [Collection Modes](/de/collection-modes) — Runtime-Steuerung des
+- [Sites](/de/concepts/sites): separate Sites für Umgebungen.
+- [Collection Modes](/de/collection-modes): Runtime-Steuerung des
   Beacons.
-- [Privacy: was wir nicht sammeln](/de/privacy) — warum es keinen
+- [Privacy: was wir nicht sammeln](/de/privacy): warum es keinen
   serverseitigen IP-Filter gibt.

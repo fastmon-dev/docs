@@ -12,11 +12,26 @@ This page is the technical reference. For setup head to
 [Implementation](/en/install); for the privacy posture, see
 [Privacy: what we don't collect](/en/privacy).
 
+## Three bundles, one URL
+
+The same `<script>` tag serves a different build per site,
+depending on the site's [collection mode](/en/collection-modes):
+
+| Mode | Bundle | Storage-free baseline |
+|---|---|:---:|
+| `anonymous` | `privacy.js` | Yes; no cookies, no `sessionStorage` |
+| `consent` | `consent.js` | Yes, until `__fastmon_consent(true)`; then `_fm_consent` cookie + `sessionStorage._s` |
+| `full` | `standard.js` | `sessionStorage._s` from first pageview, no cookie |
+
+You don't pick the bundle in the `<script>` tag; the server
+resolves it from the site's mode and ships the right build. A mode
+change rolls the script cache automatically.
+
 ## Why it matters
 
 The beacon is the boundary between Fastmon and the visitor.
-Whatever happens here — what's measured, when it flushes, which
-identifiers get minted — the browser sees, and anyone reading the
+Whatever happens here (what's measured, when it flushes, which
+identifiers get minted) the browser sees, and anyone reading the
 script can see too. So we keep the surface small on purpose:
 small means auditable, quick to load, and easy to defend in a
 privacy review.
@@ -28,25 +43,38 @@ privacy review.
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, paint entries, long animation frames, layout shifts.       |
 | `Navigation Timing`        | TTFB, redirect count, navigation type (`navigate`, `reload`, `back_forward`).  |
 | `Resource Timing`          | Per-resource size, duration, and category. Aggregated to per-domain rollups.   |
-| `error` event              | Type, message, stack frames (fingerprinted, not stored verbatim).              |
+| `error` event              | Type and count always; message + frames only under consent / `full`, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
 | Document & Window          | Page URL (sanitized per collection mode), referrer, viewport size class.       |
 
-Geo data (country, region) is **not** read in the browser — the
-collector derives it server-side from the request IP, then drops the
-IP. The beacon never asks for geolocation.
+Geo data (country, region) is **not** read in the browser. The
+edge derives it from the request IP and forwards a country code as
+a `FM-Country` header; the IP itself never reaches the application.
+Same for the bucketed browser / OS / device family, forwarded as
+`FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device`. The
+edge also computes a one-way `FM-Stitch` header
+(`HMAC-SHA256(rotating-24h-salt, IP | UA | collector_hash)`
+truncated to 128 bits) that the backend uses for bounded
+cross-pageview joins under all modes. See
+[Privacy → The edge-derived `stitch` identifier](/en/privacy#the-edge-derived-stitch-identifier)
+for the legal framing. The beacon itself never asks for
+geolocation.
 
 ## What the beacon does not do
 
-- Set cookies.
-- Read or write `localStorage` / `IndexedDB` / `Cache Storage`.
+- Read or write `localStorage` / `IndexedDB` / `Cache Storage` in
+  any mode.
+- Set cookies in `anonymous` or `full`. In `consent` it sets
+  exactly one (`_fm_consent`, after the visitor opts in) and
+  deletes it on opt-out.
 - Read URL query parameters or hash fragments.
 - Touch DOM content (no scroll-replay, no session-replay, no form
   capture).
 - Read the visitor's media devices, sensors, or geolocation.
-- Mint a persistent identifier — the per-page-view ID it generates is
-  not persisted.
+- Mint a cross-pageview identifier in `anonymous` or `consent` pre-
+  opt-in. The per-pageview `pvid` exists in every mode and dies
+  with the pageview.
 
 ## The lifecycle of a page-view
 
@@ -64,12 +92,18 @@ page loads
 The flush uses `navigator.sendBeacon()` when it's available, so
 the request survives even if the page is unloading. If
 `sendBeacon` isn't available, the beacon falls back to `fetch`
-with `keepalive: true`.
+with `keepalive: true`. If *both* fail (legacy browsers, very
+aggressive extension blocking), it falls back to a GET pixel at
+`/c/{collector_hash}.gif?…`. That URL serializes a safe subset of
+fields into the query string. Sensitive payloads (`sid`,
+referrer, errors, the large third-party / resource-breakdown /
+LoAF JSON blobs) are excluded from the pixel fallback by name, so
+they never travel through any access-log surface.
 
 ## The wire payload
 
 The payload is JSON with deliberately short keys to keep the wire
-size down. The body is capped at 4 KiB. All fields are optional;
+size down. The body is capped at 8 KiB. All fields are optional;
 a representative envelope looks like:
 
 ```json
@@ -99,27 +133,49 @@ a representative envelope looks like:
 }
 ```
 
-You don't usually need to read this — the dashboard and the
+You don't usually need to read this; the dashboard and the
 [Analytics API](/en/analytics-api) unpack it for you. It's
 documented here for transparency.
 
 Key abbreviations:
 
-- `sid` — session id. Dropped in `anonymous`.
-- `pvid` — per-page-view id.
-- `ver` — monotonic version of this page-view's payload.
-- `lifecycle` — one of `init`, `loaded`, `error_update`, `softnav`,
+- `sid`: session id. Lives in `sessionStorage._s`. Only emitted in
+  `full` and in `consent` post-opt-in.
+- `pvid`: per-page-view id. New on every pageview, not persisted.
+- `ver`: monotonic version of this page-view's payload.
+- `lifecycle`: one of `init`, `loaded`, `error_update`, `softnav`,
   `hidden`, `frozen`, `terminated`.
-- `pst` — page-started timestamp, visitor wall-clock (ms since epoch).
-- `cst` — client-sent-at timestamp, visitor wall-clock at flush.
+- `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
+- `cst`: client-sent-at timestamp, visitor wall-clock at flush.
   Used server-side to detect clock skew against receive time.
-- `u`, `r` — page URL and referrer (referrer dropped in `anonymous`).
-- `b`, `v`, `d`, `o`, `vc`, `c` — browser family, browser major,
-  device class, OS family, viewport class, connection type.
-- `t1`…`t36` — numeric timing slots (TTFB, FCP, LCP, INP, CLS, …).
-- `errs` — error entries (`t` type, `n` count, `m` message, `fr` frames).
-- `tv` — tracker version, format `YYMMDD-<git-sha>[-dirty]`.
-- `dlv` — delivery method (`b` for `sendBeacon`, empty for `fetch`).
+- `u`, `r`: page URL and referrer, both pre-sanitized at the
+  tracker to origin + pathname (query and hash dropped). `r` is
+  classified server-side into bucketed source + medium and the
+  raw value is dropped before any logging path. It never
+  persists, in any mode.
+- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`,
+  `utm_content`, `click_id_param`: campaign attribution
+  extracted from `window.location.search`. Each capped at 64
+  chars. `click_id_param` is the platform *label* only
+  (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped
+  by the tracker. Emitted in all modes.
+- `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major,
+  device class, OS family, viewport class, connection type. The
+  first four come from `FM-*` edge headers; `vc` and `c` come
+  from the browser. `rtt` / `dl` join the connection group as
+  real-time RTT and downlink estimates.
+- `pre`, `ad`, `vd`: prerender flag (Speculation Rules API),
+  activation delta (ms, prerendered pages only), and
+  visibility-dirty (was the tab backgrounded during the
+  pageview).
+- `t1`…`t36`: numeric timing slots (TTFB, FCP, LCP, INP, CLS,
+  cache hit rate, resource breakdowns, LoAF aggregates, …).
+- `errs`: error entries (`t` type, `n` count, `m` message, `fr`
+  frames). `m` and `fr` are consent-only; even then they run
+  through a scrubber that masks URLs, emails, IDs, and quoted
+  strings.
+- `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
+- `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 
 ## Cache and rollouts
 
@@ -135,36 +191,73 @@ invalidate the cache automatically:
 You don't need to redeploy your site to take a beacon upgrade.
 The browser picks up the new version on its next cache check.
 
+## Customer-facing JS API
+
+Two integration points, both namespace-stable across bundle
+versions:
+
+### Sample rate (all bundles)
+
+```js
+// 10% of pageviews are tracked (default 1.0 = 100%)
+window.__FASTMON_SAMPLE_RATE = 0.1;
+```
+
+Read once per pageview when the tracker resets. Decisions are
+per-pageview, not per-beacon: a sampled pageview emits all its
+lifecycle beacons, an unsampled one emits none. Allowed range is
+`[0, 1]`; out-of-range values are clamped silently. Set this before
+the script tag if you want the very first beacon respected.
+
+### Consent toggle (`consent` bundle only)
+
+```js
+window.__fastmon_consent(true);   // user opted in
+window.__fastmon_consent(false);  // user opted out or revoked
+```
+
+`true` sets the `_fm_consent` cookie and unlocks the full wire
+shape; `false` deletes the cookie *and* clears the in-memory
+session id. Idempotent. See [collection modes](/en/collection-modes)
+for the wire-level effect.
+
 ## Collection modes
 
 The beacon's runtime behavior depends on the site's
 [collection mode](/en/collection-modes):
 
-- `anonymous` — observes and sends without identifiers (no `sid`,
-  no referrer, no LCP image URL, no LoAF detail, no third-party
-  domain map).
-- `consent` — toggles between anonymous and full at request time
-  via the `?p=` query parameter on the collector URL (`p=1` for
-  full, absent or `0` for anonymous).
-- `full` — keeps all fields the beacon collected.
+- `anonymous`: observes and sends without an explicit visitor
+  identifier (no `sid`, no LCP image URL, no LoAF script paths,
+  no third-party domain map, error type + count only). The
+  edge-derived `stitch` header is present in all modes; see
+  [Privacy](/en/privacy#the-edge-derived-stitch-identifier).
+- `consent`: byte-identical to `anonymous` on the wire until the
+  customer's CMP calls `window.__fastmon_consent(true)`. After
+  opt-in, byte-identical to `full`. Internally the tracker reads
+  the `_fm_consent` cookie and signals the resolved mode to the
+  collector via a `?p=1` query parameter (the cookie is the source
+  of truth; the query parameter is the server-side resolution
+  hint).
+- `full`: keeps all fields the beacon collected.
 
 In every mode, the privacy guarantees in
 [Privacy](/en/privacy) hold.
 
 ## Rate limiting
 
-The collector rate-limits in memory per `(collector_hash, client_ip)`
-— the IP is used for that bucket only and never written to disk.
-It's defensive: a broken page or a synthetic load test shouldn't
-saturate ingestion for other tenants. Real traffic basically never
-hits it.
+The collector rate-limits per `(collector_hash, client_ip)`. The IP
+is read at the edge for that bucket only; the application sees a
+pre-derived bucket key, not the raw IP, and the IP is not written
+to disk. It's defensive: a broken page or a synthetic load test
+shouldn't saturate ingestion for other tenants. Real traffic
+basically never hits it.
 
 A rate-limited beacon gets a `429`. The browser drops its buffer
 and carries on; nothing else breaks.
 
-Payloads larger than 4 KiB return `413`. If `cst` is more than 5
+Payloads larger than 8 KiB return `413`. If `cst` is more than 5
 minutes off the server clock, the server falls back to its own
-receive time instead of rejecting — the beacon is still accepted.
+receive time instead of rejecting; the beacon is still accepted.
 
 ## Things worth knowing
 
@@ -174,17 +267,17 @@ receive time instead of rejecting — the beacon is still accepted.
   `softnav` beacon for the previous pageview. So one tab can emit
   many pageviews.
 - **Multiple flushes per pageview.** The buffer flushes on
-  lifecycle triggers — `init`, `loaded`, `error_update`, `softnav`,
-  `hidden`, `frozen`, `terminated` — not just on tab switch.
+  lifecycle triggers (`init`, `loaded`, `error_update`, `softnav`,
+  `hidden`, `frozen`, `terminated`), not just on tab switch.
   Expect more than one `POST /c/` per visit.
 - **`sendBeacon` doesn't show up under "Fetch/XHR" in DevTools.**
-  Filter Network on `c/` (or use the "All" tab) — sendBeacon
+  Filter Network on `c/` (or use the "All" tab); sendBeacon
   requests appear under "Other".
 
 ## Related
 
-- [Implementation](/en/install) — how to embed the beacon.
-- [Collection modes](/en/collection-modes) — runtime behavior.
-- [Privacy: what we don't collect](/en/privacy) — what we
+- [Implementation](/en/install): how to embed the beacon.
+- [Collection modes](/en/collection-modes): runtime behavior.
+- [Privacy: what we don't collect](/en/privacy): what we
   guarantee.
-- [Architecture](/en/architecture) — what happens after the POST.
+- [Architecture](/en/architecture): what happens after the POST.

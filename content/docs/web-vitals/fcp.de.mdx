@@ -1,11 +1,11 @@
 ---
 title: First Contentful Paint (FCP)
-description: Wann der erste Text oder das erste Bild erscheint — die diagnostische Metrik, die langsame LCPs erklärt.
+description: "Wann der erste Text oder das erste Bild erscheint: die diagnostische Metrik, die langsame LCPs erklärt."
 ---
 
 **FCP** misst die Zeit zwischen Navigation Start und dem ersten
 Text oder Bild, das der Browser auf den Schirm bringt. Das ist der
-Moment, in dem ein Besucher merkt: ah, da tut sich was — das erste
+Moment, in dem ein Besucher merkt: ah, da tut sich was, das erste
 Lebenszeichen der Seite.
 
 FCP ist **kein** Core Web Vital, fürs Ranking zählt's nicht. Es
@@ -23,7 +23,7 @@ FCP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
 | ≤ 3.000 ms      | Verbesserungswürdig |
 | > 3.000 ms      | Schlecht            |
 
-Ein guter FCP garantiert keinen guten LCP — er heißt nur, dass der
+Ein guter FCP garantiert keinen guten LCP; er heißt nur, dass der
 Besucher *irgendwas* schnell gesehen hat. Andersrum: ein schlechter
 FCP heißt fast immer auch einen schlechten LCP. Den FCP zuerst zu
 fixen, ist deshalb meistens der richtige Hebel.
@@ -38,7 +38,7 @@ Der Browser feuert einen FCP-Eintrag beim ersten Paint von:
 
 Eine leere Hintergrundfarbe, ein weißer Rahmen, ein CSS-Gradient ohne
 Text zählt nicht. Skeleton-Loader aus leeren `<div>`s mit
-Background-Color zählen ebenfalls nicht — ein Skeleton mit einem
+Background-Color zählen ebenfalls nicht; ein Skeleton mit einem
 einzigen sichtbaren Text-Label aber schon.
 
 ## Wann FCP reportet wird
@@ -95,7 +95,7 @@ Per **By URL**-Breakdown auffällig schlechte Seiten finden.
 - **FCP kann nahezu null sein mit einem Skeleton-Loader.** Der
   Browser zählt das erste Text-Element des Skeletons als FCP, auch
   wenn es "Lädt…" ist. Dein FCP sieht super aus, während LCP
-  schlecht ist — der Besucher merkt die Verzögerung trotzdem.
+  schlecht ist; der Besucher merkt die Verzögerung trotzdem.
 - **Critical-CSS-Extraktion ist der Hebel mit der höchsten
   Leverage.** Ein typischer Blog-Post kann FCP halbieren ohne
   weitere Änderungen.
@@ -104,6 +104,6 @@ Per **By URL**-Breakdown auffällig schlechte Seiten finden.
 
 ## Wie geht's weiter
 
-- [TTFB](/de/web-vitals/ttfb) — die vorgelagerte Metrik für FCP.
-- [LCP](/de/web-vitals/lcp) — was FCP meist vorhersagt.
+- [TTFB](/de/web-vitals/ttfb): die vorgelagerte Metrik für FCP.
+- [LCP](/de/web-vitals/lcp): was FCP meist vorhersagt.
 - [Web-Vitals-Übersicht](/de/web-vitals).

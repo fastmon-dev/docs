@@ -9,7 +9,7 @@ things like "average pages per visit" or "where in a session did
 the error happen?" without us having to identify the visitor.
 
 Sessions are anonymous by design. Fastmon never sets a persistent
-identifier — the session boundary is computed from the beacon
+identifier; the session boundary is computed from the beacon
 stream, not from a cookie.
 
 ## Why it matters
@@ -32,14 +32,14 @@ at all.
 A session contains the page-views that share **all** of these:
 
 - the same `site_id`,
-- the same `session_id` (`sid` on the wire) — minted client-side
+- the same `session_id` (`sid` on the wire), minted client-side
   per session and only sent when the [collection mode](/en/collection-modes)
   permits (`full`, or `consent` after opt-in),
 - a gap of **less than 30 minutes** between consecutive page-views.
 
 In `anonymous` (and in `consent` before opt-in) the `sid` is
 stripped before send, so those page-views don't form a session at
-all — they show up only in pageview-level views.
+all; they show up only in pageview-level views.
 
 The session ends when:
 
@@ -61,7 +61,7 @@ A new page-view after the boundary starts a new session.
 | `page_view_count`| int                 | Number of page-views in the session.                  |
 | `entry_url`      | string              | The pathname of the first page-view.                  |
 | `country`        | ISO 3166-1 alpha-2  | Derived from the first page-view's IP.                |
-| `device_type`    | enum                | `mobile` · `tablet` · `desktop`.                      |
+| `device_type`    | enum                | `mobile`, `tablet`, or `desktop`.                     |
 | `browser`        | string              | Family only.                                          |
 
 Note what's absent: no user ID, no fingerprint, no IP. The session
@@ -72,9 +72,9 @@ analytics window.
 
 The Analytics API exposes two endpoints:
 
-- `POST /analytics/sessions` — paginated list of sessions in a time
+- `POST /analytics/sessions`: paginated list of sessions in a time
   range, with filters. Cursor-paginated for high volumes.
-- `POST /analytics/sessions/detail` — page-views and timing for a
+- `POST /analytics/sessions/detail`: page-views and timing for a
   single session.
 
 See [Analytics API](/en/analytics-api) for the request shapes.
@@ -88,7 +88,7 @@ See [Analytics API](/en/analytics-api) for the request shapes.
 - **One visitor across two days = two sessions.** On purpose.
   Counting it as one would need persistent identity we don't have.
 - **No "users" concept.** There's nothing above the session. We
-  don't store who someone is — and that includes "is this the
+  don't store who someone is, and that includes "is this the
   same person who showed up yesterday?"
 - **Bot traffic still creates sessions.** The collector filters
   the obvious bots, but a deliberate headless browser looks like a
@@ -97,9 +97,9 @@ See [Analytics API](/en/analytics-api) for the request shapes.
 
 ## Related
 
-- [Collection modes](/en/collection-modes) — what the beacon
+- [Collection modes](/en/collection-modes): what the beacon
   collects per page-view, which is the data sessions are built from.
-- [Privacy: what we don't collect](/en/privacy) — why sessions are
+- [Privacy: what we don't collect](/en/privacy): why sessions are
   anonymous.
-- [Analytics API](/en/analytics-api) — querying sessions
+- [Analytics API](/en/analytics-api): querying sessions
   programmatically.

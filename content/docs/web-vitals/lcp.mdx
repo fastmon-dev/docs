@@ -1,11 +1,11 @@
 ---
 title: Largest Contentful Paint (LCP)
-description: What LCP is, what's a good LCP, and how to debug a slow one — with Fastmon's data.
+description: "What LCP is, what's a good LCP, and how to debug a slow one, with Fastmon's data."
 ---
 
 **LCP** measures how long it takes for the largest visible
 element on a page to actually show up. When someone says "the
-page felt slow to load," they're usually talking about LCP — the
+page felt slow to load," they're usually talking about LCP: the
 moment when something meaningful is finally on screen.
 
 LCP is part of [Core Web Vitals](/en/web-vitals), Google's
@@ -15,7 +15,7 @@ ranking.
 ## What's a good LCP?
 
 LCP is reported in milliseconds and bucketed into three thresholds. The
-threshold to track is the **75th percentile** across page-views — that's
+threshold to track is the **75th percentile** across page-views; that's
 how Google reports it, and it's the number you should optimize against.
 
 | LCP at p75      | Rating       |
@@ -42,7 +42,7 @@ the visible viewport. Eligible elements are:
 The "size" is the rendered area on screen, intersected with the
 viewport. Off-screen content does not count, even if it's bigger.
 
-The "largest" can change as the page loads — the browser keeps emitting
+The "largest" can change as the page loads. The browser keeps emitting
 LCP entries until the user interacts with the page (clicks, scrolls, or
 keys). The **last entry before that interaction** is the LCP value.
 
@@ -58,16 +58,16 @@ in the next batched payload.
 
 ## Examples
 
-**Marketing page with a hero image** — LCP is almost always the
+**Marketing page with a hero image.** LCP is almost always the
 hero `<img>`. If the image is below the fold or lazy-loaded, LCP
-ends up as a text block — usually faster.
+ends up as a text block, usually faster.
 
-**SaaS dashboard with a skeleton loader** — LCP is the skeleton
+**SaaS dashboard with a skeleton loader.** LCP is the skeleton
 container until real content paints, then it jumps to the
 largest data element. Watch out for falsely "fast" LCPs caused
 by a chunky skeleton box.
 
-**Article with embedded video** — LCP is the video poster, not
+**Article with embedded video.** LCP is the video poster, not
 the article text. Optimizing the poster image improves LCP, even
 though it's the article body the visitor actually reads.
 
@@ -76,11 +76,11 @@ though it's the article body the visitor actually reads.
 The dashboard's **Performance** section shows LCP at p50, p75, and p95
 out of the box. To break it down:
 
-- **By URL** — Performance → group by URL. Find the worst pages first.
-- **By device** — group by `device_type`. Mobile LCP is almost always
+- **By URL**: Performance → group by URL. Find the worst pages first.
+- **By device**: group by `device_type`. Mobile LCP is almost always
   worse than desktop.
-- **By country** — group by `country`. RTT to your origin matters.
-- **By release** — set `compare_to_release_id` in the [Analytics
+- **By country**: group by `country`. RTT to your origin matters.
+- **By release**: set `compare_to_release_id` in the [Analytics
   API](/en/analytics-api) to see whether a deploy regressed LCP.
 
 Programmatically:
@@ -100,7 +100,7 @@ curl https://api.fastmon.eu/v1/organizations/$ORG/analytics/query \
 ## How to improve a slow LCP
 
 LCP usually breaks down into one of four contributors. The Fastmon
-dashboard surfaces each — start with the one with the largest share.
+dashboard surfaces each; start with the one with the largest share.
 
 1. **TTFB.** If your time to first byte is already >1,500 ms, no
    amount of front-end optimization will save your LCP. Cache HTML at
@@ -116,7 +116,7 @@ dashboard surfaces each — start with the one with the largest share.
    non-critical scripts.
 
 For a deeper walkthrough, see web.dev's
-[Optimize LCP](https://web.dev/articles/optimize-lcp) — the underlying
+[Optimize LCP](https://web.dev/articles/optimize-lcp); the underlying
 optimization advice is the same regardless of which RUM tool you use.
 
 ## Common surprises
@@ -124,7 +124,7 @@ optimization advice is the same regardless of which RUM tool you use.
 - **LCP is usually an image, not text.** Tweaking fonts probably
   won't move your LCP at all.
 - **SPAs don't restart LCP on route change.** LCP is a
-  navigation-level metric — SPA route changes don't produce a new
+  navigation-level metric; SPA route changes don't produce a new
   one.
 - **Lazy-loading the hero kills LCP.** Classic copy-paste
   mistake. Don't lazy-load above-the-fold content.
@@ -133,10 +133,10 @@ optimization advice is the same regardless of which RUM tool you use.
 
 ## What's next
 
-- [Interaction to Next Paint (INP)](/en/web-vitals/inp) — the
+- [Interaction to Next Paint (INP)](/en/web-vitals/inp): the
   responsiveness metric that often regresses when you optimize LCP
   by adding more JavaScript.
-- [Cumulative Layout Shift (CLS)](/en/web-vitals/cls) — the
+- [Cumulative Layout Shift (CLS)](/en/web-vitals/cls): the
   visual-stability metric.
-- [Web Vitals overview](/en/web-vitals) — all five metrics and
+- [Web Vitals overview](/en/web-vitals): all five metrics and
   their thresholds.

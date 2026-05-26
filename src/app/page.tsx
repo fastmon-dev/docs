@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
-import { i18n } from '@/lib/i18n';
+import { redirect } from "next/navigation";
+import { i18n } from "@/lib/i18n";
 
 export default function RootRedirect() {
   // Static-export-friendly redirect: Next emits an HTML stub with meta-refresh

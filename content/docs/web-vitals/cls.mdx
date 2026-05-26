@@ -5,7 +5,7 @@ description: What CLS measures, what's a good CLS, and how to track down the ele
 
 **CLS** measures how often visible elements move around
 unexpectedly. It's the metric for the classic "the page jumped
-while I was reading it" — the bug that makes someone mistap a
+while I was reading it": the bug that makes someone mistap a
 button or lose the line they were reading.
 
 CLS is part of [Core Web Vitals](/en/web-vitals) and counts
@@ -13,7 +13,7 @@ toward search ranking.
 
 ## What's a good CLS?
 
-CLS is unitless — it's a sum of layout-shift scores. Track the
+CLS is unitless; it's a sum of layout-shift scores. Track the
 **75th percentile**.
 
 | CLS at p75      | Rating              |
@@ -37,12 +37,12 @@ the visitor causing it. The score per shift is:
 score = impact_fraction × distance_fraction
 ```
 
-- **Impact fraction** — the union of where the element was and where it
+- **Impact fraction**: the union of where the element was and where it
   ended up, as a share of the viewport.
-- **Distance fraction** — how far it moved, as a share of the
+- **Distance fraction**: how far it moved, as a share of the
   viewport's largest dimension.
 
-Shifts that happen within 500 ms of a visitor input are excluded —
+Shifts that happen within 500 ms of a visitor input are excluded;
 those are "expected" shifts caused by user action.
 
 CLS is the **sum of all unexpected shifts** across the page's life,
@@ -78,11 +78,11 @@ fixed height for the slot, even if the ad is shorter.
 
 The dashboard's **Performance** section shows CLS at p50, p75, p95.
 
-- **By URL** — group by URL. Pages with ads, late-loading widgets,
+- **By URL**: group by URL. Pages with ads, late-loading widgets,
   or consent banners almost always lead.
-- **By device** — group by `device_type`. Mobile CLS is usually worse
+- **By device**: group by `device_type`. Mobile CLS is usually worse
   because viewports are narrower and shifts are more visible.
-- **By release** — `compare_to_release_id` — a deploy that swapped a
+- **By release**: `compare_to_release_id`. A deploy that swapped a
   font or changed a layout often shows up immediately.
 
 ## How to improve a high CLS
@@ -91,7 +91,7 @@ The dashboard's **Performance** section shows CLS at p50, p75, p95.
    and `height` attributes (the browser reads them as aspect-ratio
    even when CSS sizes the element responsively).
 2. **Reserve space for asynchronous content.** Banners, ad slots,
-   embeds — give them a min-height before they load.
+   embeds: give them a min-height before they load.
 3. **Don't insert content above existing content.** Inject below or
    overlay. If you must inject above, do it in response to user
    action so the browser excludes it.
@@ -100,7 +100,7 @@ The dashboard's **Performance** section shows CLS at p50, p75, p95.
    the fallback's metrics.
 5. **Avoid `transform: translate` for non-layout reasons during load.**
    Animated entrances that move elements after the first paint count
-   as shifts — wait for user interaction or use `transform` from the
+   as shifts; wait for user interaction or use `transform` from the
    start (`transform: translate` doesn't trigger layout).
 
 For a deeper walkthrough, see web.dev's
@@ -113,17 +113,17 @@ For a deeper walkthrough, see web.dev's
   page-view scores badly, not just the first.
 - **A score of 0 isn't perfect.** It just means "no shift
   touched the visible viewport." A tiny shift below the fold
-  won't move CLS at all — but visitors can still notice it.
+  won't move CLS at all, but visitors can still notice it.
 - **Animations can count.** CSS transitions on `width`,
   `height`, `top`, `left`, `margin` push surrounding content
   around and count as shifts. Use `transform` instead.
 - **Fixing CLS rarely changes load time.** Reserving space is
-  mostly HTML/CSS — you can ship a big CLS improvement without
+  mostly HTML/CSS; you can ship a big CLS improvement without
   touching a line of JS.
 
 ## What's next
 
-- [LCP](/en/web-vitals/lcp) — load speed.
-- [INP](/en/web-vitals/inp) — runtime responsiveness.
-- [Experience Score](/en/web-vitals/experience-score) — a 0–10
+- [LCP](/en/web-vitals/lcp): load speed.
+- [INP](/en/web-vitals/inp): runtime responsiveness.
+- [Experience Score](/en/web-vitals/experience-score): a 0–10
   composite combining all the metrics above.

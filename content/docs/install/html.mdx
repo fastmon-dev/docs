@@ -4,7 +4,7 @@ description: Drop Fastmon onto any website with a single script tag. Five minute
 ---
 
 The universal route: a single `<script>` tag in your `<head>`. It
-works on any site you control — static HTML, a Vue or React app, a
+works on any site you control: static HTML, a Vue or React app, a
 Hugo blog, a Next.js project, a WordPress site, anything you can
 inject a `<script>` into.
 
@@ -16,23 +16,23 @@ inject a `<script>` into.
 Sign in, open the org you want to add this site to, and click **Create
 site**. Fill in:
 
-- **Name** — whatever helps you recognize it later (e.g. `acme-marketing`).
-- **Domain** — the bare hostname, no protocol. Example: `acme.com`.
-- **Allowed origins** *(optional)* — leave blank to accept beacons from
+- **Name**: whatever helps you recognize it later (e.g. `acme-marketing`).
+- **Domain**: the bare hostname, no protocol. Example: `acme.com`.
+- **Allowed origins** *(optional)*: leave blank to accept beacons from
   the domain itself. Add staging or preview hostnames here as a
   comma-separated list (`staging.acme.com, preview.acme.com`).
 
-Leave the rest at defaults for now — you can come back to
+Leave the rest at defaults for now; you can come back to
 [collection mode](/en/collection-modes) and retention later.
 
 Click **Save**. Fastmon generates two short hashes for the site:
 
-- `source_hash` — goes into the script URL.
-- `collector_hash` — used by the beacon to send data back. It's
+- `source_hash`: goes into the script URL.
+- `collector_hash`: used by the beacon to send data back. It's
   baked into the script, so you don't need to copy it.
 
 Both show up on the settings page, along with a copy-paste-ready
-snippet — that's exactly what step 2 walks through.
+snippet; that's exactly what step 2 walks through.
 
 ## 2. Add the script to your site
 
@@ -52,7 +52,7 @@ That's the whole setup. The beacon:
   flush.
 
 The tag is `async` so it won't block rendering. Where you place it
-isn't critical, but `<head>` is the better spot — it lets the
+isn't critical, but `<head>` is the better spot; it lets the
 beacon catch the very first paint.
 
 ### Where to put it
@@ -62,7 +62,7 @@ beacon catch the very first paint.
 | Plain HTML / Hugo / Jekyll | `<head>` of your base template.                              |
 | WordPress                  | A header-snippet plugin, or `header.php`.                    |
 | Next.js / Nuxt / Astro     | The framework's head/script primitive (e.g. Next.js `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
-| Single-page apps           | The static `index.html` shell — once is enough.              |
+| Single-page apps           | The static `index.html` shell (once is enough).              |
 
 ## 3. Deploy and load a page
 
@@ -70,18 +70,18 @@ Push the change to production (or whichever environment you want
 to monitor) and open any page on the site in your own browser.
 
 The beacon flushes periodically while the page is open, and again
-on `visibilitychange → hidden` and `pagehide` — switching tabs or
+on `visibilitychange → hidden` and `pagehide`. Switching tabs or
 closing the page is the most reliable way to force a flush during
 testing, but it's not the only trigger.
 
 ## 4. Verify it works
 
-Two checks — one in DevTools, one in the dashboard.
+Two checks: one in DevTools, one in the dashboard.
 
 ### In your browser
 
 Open DevTools → **Network** → filter for `/c/`. You should see a
-`POST` to `https://fastmon.site/c/{collector_hash}` — either after
+`POST` to `https://fastmon.site/c/{collector_hash}`, either after
 the periodic flush ticks over, or when you switch tabs / close the
 page. Status 204 means the beacon was accepted.
 
@@ -91,14 +91,14 @@ If you don't see it, jump to [Verifying it works](/en/install/verify).
 
 Open the site in the dashboard. After about a minute (beacons are
 batched into ClickHouse), the **Traffic** section will show
-non-zero sessions. The first beacon is the one you just sent —
+non-zero sessions. The first beacon is the one you just sent;
 your IP isn't stored, but the row is there.
 
 ## What's next
 
-- Pick a [collection mode](/en/collection-modes) — `anonymous` is
+- Pick a [collection mode](/en/collection-modes); `anonymous` is
   the right pick for most sites.
-- Read [Privacy: what we don't collect](/en/privacy) — handy when
+- Read [Privacy: what we don't collect](/en/privacy), handy when
   the legal team asks.
-- Tag releases for before/after comparisons — see
+- Tag releases for before/after comparisons: see
   [Compare releases](/en/guides/compare-releases).
