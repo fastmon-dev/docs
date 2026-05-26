@@ -1,0 +1,57 @@
+{
+  "name": "fastmon-docs",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/workspaces/docs",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/docs,type=bind,consistency=cached",
+  "mounts": [
+    // Sibling repos, mounted read-write so docs scripts can read
+    // OpenAPI / type sources directly from backend and frontend without
+    // leaving the container. Edits land on the host checkouts.
+    "source=${localWorkspaceFolder}/../backend,target=/workspaces/backend,type=bind",
+    "source=${localWorkspaceFolder}/../frontend,target=/workspaces/frontend,type=bind",
+    "source=fastmon-docs-node_modules,target=/workspaces/docs/node_modules,type=volume",
+    "source=${localEnv:HOME}/.claude-fastmon-docs,target=/home/node/.claude,type=bind",
+    // Claude Code persists OAuth credentials in ~/.claude/.credentials.json
+    // (covered by the bind above) AND account / onboarding state in
+    // ~/.claude.json (a sibling file, NOT inside ~/.claude). Both must
+    // persist or Claude re-prompts for login on every rebuild. Host file
+    // is auto-created by initializeCommand below.
+    "source=${localEnv:HOME}/.claude-fastmon-docs.json,target=/home/node/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,readonly",
+    // Per-repo deploy key (auth for git push/pull to this one repo only — no
+    // access to other repos, no ssh-agent forwarding).
+    "source=${localEnv:HOME}/.ssh/id_fastmon_docs,target=/home/node/.ssh/id_fastmon_docs,type=bind,readonly",
+    // Dedicated SSH signing key. Registered on the user account as a
+    // "Signing key" (not an authentication key) — GitHub's REST API splits
+    // /user/keys vs /user/ssh_signing_keys, so this key cannot authenticate
+    // git push. Pub-file is mounted because git's user.signingkey points at
+    // it and ssh-keygen -Y sign derives the private path from there.
+    "source=${localEnv:HOME}/.ssh/id_fastmon_signing,target=/home/node/.ssh/id_fastmon_signing,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh/id_fastmon_signing.pub,target=/home/node/.ssh/id_fastmon_signing.pub,type=bind,readonly"
+  ],
+  "appPort": [3000],
+  // Auto-create the bind sources on the host so Docker doesn't error with
+  // "bind source path does not exist" on first up. Idempotent. Array form
+  // forces shell invocation regardless of how the devcontainer client
+  // dispatches initializeCommand.
+  "initializeCommand": ["sh", "-c", "mkdir -p \"$HOME/.claude-fastmon-docs\" && touch \"$HOME/.claude-fastmon-docs.json\""],
+  "postCreateCommand": "sudo chown node:node node_modules /home/node/.claude && npm ci",
+  "remoteUser": "node",
+  "containerEnv": {
+    "GIT_CONFIG_COUNT": "4",
+    "GIT_CONFIG_KEY_0": "gpg.format",
+    "GIT_CONFIG_VALUE_0": "ssh",
+    "GIT_CONFIG_KEY_1": "user.signingkey",
+    "GIT_CONFIG_VALUE_1": "/home/node/.ssh/id_fastmon_signing.pub",
+    "GIT_CONFIG_KEY_2": "user.email",
+    // Per-developer — set FASTMON_GIT_EMAIL in your host shell. Empty
+    // fallback is intentional: unset surfaces as a git config error rather
+    // than silently attributing commits to someone else.
+    "GIT_CONFIG_VALUE_2": "${localEnv:FASTMON_GIT_EMAIL}",
+    "GIT_CONFIG_KEY_3": "commit.gpgsign",
+    "GIT_CONFIG_VALUE_3": "true"
+  },
+  "runArgs": ["--init", "--add-host=host.docker.internal:host-gateway"]
+}
