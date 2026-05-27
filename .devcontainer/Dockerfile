@@ -1,6 +1,6 @@
-# Upstream Node 24. Digest-pinned to defend against tag hijacking; bump
-# deliberately via `docker pull node:24-bookworm-slim` + inspect.
-FROM node:24-bookworm-slim@sha256:24dc26ef1e3c3690f27ebc4136c9c186c3133b25563ae4d7f0692e4d1fe5db0e
+# Upstream Node 26. Digest-pinned to defend against tag hijacking; bump
+# deliberately via `docker pull node:26-bookworm-slim` + inspect.
+FROM node:26-bookworm-slim@sha256:e89172f5e6154ba212269866bf3fbadbca8eb7901e10c0eccf08f2147bfae505
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends sudo git ca-certificates openssh-client gnupg fish make \
