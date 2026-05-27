@@ -42,7 +42,7 @@ Bau diesen Tag in den `<head>` jeder Seite ein, die du überwachen willst.
 `{source_hash}` durch den Wert aus Schritt 1 ersetzen:
 
 ```html title="<head>"
-<script src="https://fastmon.site/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
 Mehr ist es nicht. Der Beacon:
@@ -53,7 +53,7 @@ Mehr ist es nicht. Der Beacon:
   `visibilitychange → hidden`, bei `pagehide` und in periodischen
   Flushes.
 
-Das Tag ist `async`, blockiert also kein Rendering. Wo du es
+Das Tag nutzt `defer`: lädt parallel zum HTML-Parsing, blockiert den Parser nie und läuft in Reihenfolge, sobald das DOM steht. `async` würde auch ohne Blockieren laden, kann das Parsing aber jederzeit unterbrechen, und die Reihenfolge zwischen mehreren async-Tags ist „wer zuerst fertig ist". Für Web-Vitals-Messung ist vorhersagbares Timing wichtig — deshalb defer. Wo du es
 einbaust, ist relativ egal; der `<head>` ist trotzdem die bessere
 Wahl, dann erwischt der Beacon auch den ersten Paint.
 

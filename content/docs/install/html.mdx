@@ -40,7 +40,7 @@ Drop this single tag into the `<head>` of every page you want to
 monitor, with `{source_hash}` replaced by the hash from step 1:
 
 ```html title="<head>"
-<script src="https://fastmon.site/s/{source_hash}.js" async></script>
+<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
 That's the whole setup. The beacon:
@@ -51,7 +51,7 @@ That's the whole setup. The beacon:
   `visibilitychange → hidden`, on `pagehide`, and at a periodic
   flush.
 
-The tag is `async` so it won't block rendering. Where you place it
+The tag uses `defer`: it loads in parallel with HTML parsing, never blocks the parser, and runs in source order once the DOM is parsed. `async` would also load without blocking, but it can interrupt parsing the moment the download finishes, and the order between multiple async scripts is whoever-finishes-first — for Web Vitals measurement we want predictable timing, so defer wins. Where you place it
 isn't critical, but `<head>` is the better spot; it lets the
 beacon catch the very first paint.
 
