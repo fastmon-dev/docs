@@ -3,7 +3,7 @@ title: Interaction to Next Paint (INP)
 description: "Was INP misst, was ein guter INP ist, und wie man eine träge Seite debuggt, mit Fastmon-Daten."
 ---
 
-**INP** misst, wie lange die schlechteste User-Interaktion auf der
+**INP** misst, wie lange die schlechteste Besucherinteraktion auf der
 Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die
 Metrik für "die Seite fühlt sich beim Klicken träge an". Während
 LCP die Lade-Responsiveness misst, geht es bei INP um die
@@ -69,7 +69,7 @@ schon. Triggert diese Messung Layout, schlägt das auf INP durch.
 **SPA-Route-Wechsel.** Ein Klick auf einen Link triggert deinen
 Router, der gerne mal einen großen Baum komplett neu rendert. INP
 misst Klick → erster Paint der neuen Route. Wer Route-Chunks nicht
-lazy-loadet, kriegt hier richtig auf den Deckel.
+lazy-loadet, läuft hier in einen schlechten INP rein.
 
 ## INP in Fastmon ansehen
 
@@ -104,12 +104,12 @@ zurückführen:
    [Third-Party-Impact](/de/analytics-api) auditieren und
    entfernen oder deferren, was du nicht brauchst.
 
-Tieferer Walkthrough: web.devs
-[Optimize INP](https://web.dev/articles/optimize-inp).
+Tieferer Walkthrough: [Optimize INP](https://web.dev/articles/optimize-inp)
+auf web.dev.
 
 ## Häufige Überraschungen
 
-- **Eine Seite kann tollen LCP und beschissenen INP haben.** Beides
+- **Eine Seite kann tollen LCP und schlechten INP haben.** Beides
   misst was anderes. Versprich nicht "schnell ladend", wenn du
   Responsiveness nicht auch gemessen hast.
 - **INP kann sich verschlechtern, wenn LCP besser wird.**
@@ -124,7 +124,7 @@ Tieferer Walkthrough: web.devs
   bringt für INP aber nichts; Hydration ist JavaScript im
   Main-Thread.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [LCP](/de/web-vitals/lcp): Lade-Geschwindigkeit.
 - [CLS](/de/web-vitals/cls): visuelle Stabilität.

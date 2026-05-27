@@ -6,8 +6,8 @@ description: Was CLS misst, was ein guter CLS ist, und wie man das springende El
 **CLS** misst, wie oft sichtbare Elemente auf der Seite plötzlich
 ihre Position ändern. Das ist die Metrik für den klassischen
 "die-Seite-ist-mir-grad-weggehüpft"-Effekt: der Bug, bei dem
-jemand den Button verfehlt oder die Zeile verliert, die er gerade
-gelesen hat.
+jemand den Button verfehlt oder die Zeile verliert, die gerade
+gelesen wurde.
 
 CLS gehört zu den [Core Web Vitals](/de/web-vitals) und zählt fürs
 Suchranking.
@@ -43,8 +43,8 @@ score = impact_fraction × distance_fraction
 - **Distance Fraction**: wie weit es sich bewegt hat, als Anteil der
   größeren Viewport-Dimension.
 
-Shifts innerhalb von 500 ms nach einem Visitor-Input sind ausgenommen;
-das sind "erwartete" Shifts aus User-Action.
+Shifts innerhalb von 500 ms nach einem Besucher-Input sind ausgenommen;
+das sind "erwartete" Shifts aus Besucheraktion.
 
 CLS ist die **Summe aller unerwarteten Shifts** über die
 Page-Lifetime, gebündelt in "Session-Windows" (1 s Lücke oder 5 s
@@ -96,17 +96,17 @@ Der **Performance**-Bereich zeigt CLS bei p50, p75, p95.
    Embeds: Min-Height vor dem Laden setzen.
 3. **Keinen Content über existierendem Content einfügen.** Drunter
    einfügen oder overlayen. Wenn drüber sein muss, in Reaktion auf
-   Userinput; dann zählt es nicht.
+   Besucher-Input; dann zählt es nicht.
 4. **Fonts stabilisieren.** `font-display: optional` oder
    `font-display: swap` mit `size-adjust`/`ascent-override`, um die
    Metriken des Fallbacks anzugleichen.
 5. **Beim Laden keine `transform: translate`-Animationen, die nicht
    nötig sind.** Animierte Entrances, die Elemente nach dem ersten
-   Paint bewegen, zählen als Shifts; auf User-Interaktion warten
+   Paint bewegen, zählen als Shifts; auf Besucherinteraktion warten
    oder von Anfang an `transform` (das triggert kein Layout).
 
-Tieferer Walkthrough: web.devs
-[Optimize CLS](https://web.dev/articles/optimize-cls).
+Tieferer Walkthrough: [Optimize CLS](https://web.dev/articles/optimize-cls)
+auf web.dev.
 
 ## Häufige Überraschungen
 
@@ -124,7 +124,7 @@ Tieferer Walkthrough: web.devs
   ist meistens reines HTML/CSS; du kannst eine deutliche
   Verbesserung ausliefern, ohne ein einziges JS-Byte anzufassen.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [LCP](/de/web-vitals/lcp): Lade-Geschwindigkeit.
 - [INP](/de/web-vitals/inp): Runtime-Responsiveness.

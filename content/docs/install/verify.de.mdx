@@ -9,10 +9,10 @@ Schluss.
 
 ## Der Fünf-Sekunden-Check
 
-Site in einem frischen Tab öffnen, DevTools auf (`⌥⌘I` / `F12`), zu
-**Network** wechseln. Nach `c/` filtern.
+Öffne die Site in einem frischen Tab, öffne die DevTools (`⌥⌘I` / `F12`)
+und wechsle zu **Network**. Nach `c/` filtern.
 
-Jetzt zu einem anderen Tab wechseln, dann zurück. Du solltest einen
+Wechsle jetzt zu einem anderen Tab und dann zurück. Du solltest einen
 einzelnen `POST`-Request sehen:
 
 ```
@@ -20,12 +20,12 @@ POST https://fastmon.site/c/{collector_hash}     204
 ```
 
 Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's:
-dein Install läuft.
+deine Implementierung läuft.
 
 ## Der Dashboard-Check
 
 Site im Fastmon-Dashboard öffnen. Nach ungefähr einer Minute (Beacons
-werden gebatcht nach ClickHouse geschrieben) zeigt der Bereich
+werden in Batches in ClickHouse geschrieben) zeigt der Bereich
 **Traffic**:
 
 - **Sessions** &gt; 0,
@@ -47,7 +47,7 @@ vertippt oder die Site wurde gelöscht.
 
 **Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
 der Production-Seite "View Source". Das Tag muss tatsächlich im
-ausgelieferten HTML stehen. Manche CMSe filtern unbekannte Tags
+ausgelieferten HTML stehen. Manche CMS filtern unbekannte Tags
 aus Page-Buildern raus; dann brauchst du ein
 Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 
@@ -65,7 +65,7 @@ triggert sofort einen Flush.
 `204` ist die normale Erfolgsantwort, kommt aber auch, wenn der
 Beacon still verworfen wird. Häufigster Grund: die Site hat
 **Allowed origins** gesetzt, und der Origin, von dem du lädst,
-steht nicht drauf. Site-Settings öffnen, fehlenden Origin
+steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin
 hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache
 invalidiert automatisch. Andere stille Drops: Site auf inaktiv
 gesetzt, unbekannter `collector_hash`.
@@ -79,17 +79,17 @@ dann ist das Limit zurückgesetzt.
 
 ### Beacon geht durch, aber im Dashboard ist nichts
 
-Beacons werden gebatcht nach ClickHouse geschrieben; ungefähr eine
+Beacons werden in Batches in ClickHouse geschrieben; ungefähr eine
 Minute Verzögerung zwischen erfolgreichem `204` und der Zeile im
 Dashboard ist normal. Kurz warten und neu laden.
 
-Wenn dann immer noch nichts da ist: prüf, ob du die richtige Site
+Wenn dann immer noch nichts da ist: prüfe, ob du die richtige Site
 und den richtigen Zeitraum offen hast. Der Default sind die letzten
-24 h, das passt für frische Daten.
+24 h, das reicht für frische Daten.
 
 Bekommst du `204` zurück, und das Dashboard ist nach ein paar
 Minuten immer noch leer, ist die Ingestion vermutlich pausiert.
-Site-Settings öffnen und schauen, ob **Active** an ist. Inaktive
+Site-Einstellungen öffnen und schauen, ob **Active** an ist. Inaktive
 Sites nehmen Beacons an, schreiben sie aber nicht in die
 Analytics-Tabellen.
 
@@ -100,7 +100,7 @@ Hol dir den `X-Request-ID`-Header aus einer fehlerhaften Response
 ihn an den Support. Mit der Request-ID finden wir das passende
 Server-Log in Sekunden.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - Einen [Collection Mode](/de/collection-modes) wählen, falls
   `anonymous` nicht passt.

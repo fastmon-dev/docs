@@ -33,8 +33,8 @@ Metriken klar im roten Bereich.
 
 ## Wie der Score berechnet wird
 
-Jede Metrik wird per linearer Interpolation gegen ihre good/poor-
-Schwellen auf einen 0–10-Sub-Score abgebildet:
+Jede Metrik wird per linearer Interpolation gegen ihre Gut-/Schlecht-Schwellen
+auf einen 0–10-Sub-Score abgebildet:
 
 - Wert ≤ **gut** → 10
 - Wert bei **schlecht** → 5
@@ -64,15 +64,15 @@ Dashboard sind Durchschnitte über den gewählten Zeitraum.
 ## Experience Score in Fastmon ansehen
 
 Die Headline-Zahl steht auf dem **Performance**-Dashboard.
-Darunter siehst du den Breakdown (welcher Sub-Score den Total nach
-unten zieht) und einen Trend-Chart über das gewählte Fenster.
+Darunter siehst du den Breakdown (welcher Sub-Score den Gesamtscore
+nach unten zieht) und einen Trend-Chart über das gewählte Fenster.
 
 Nützliche Slices:
 
 - **Nach URL**: Group by URL. Welche Seiten dominieren den
   Durchschnitt?
-- **Nach Release**: `compare_to_release_id`. Das beste einzelne
-  Signal für "hat dieser Deploy UX verschlechtert?"
+- **Nach Release**: `compare_to_release_id`. Das beste Einzelsignal
+  dafür, ob ein Deploy die UX verschlechtert hat.
 - **Nach Land / Device**: Group by `country` oder `device_type`.
   Regionale oder Device-Klassen-Regressionen sind im globalen Score
   meist unsichtbar.
@@ -114,7 +114,7 @@ hinten schieben.
   schlechter. Interne IPs ausfiltern, damit die Zahl ehrlich
   bleibt.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp),
   [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp),

@@ -5,8 +5,8 @@ description: Office-, Staff- und synthetischen Traffic aus deinen Real-User-Metr
 
 Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte
 Checks) verzieht dir jede Metrik. Office-Maschinen mit warmem Cache
-und schnellem Netz looken super; Mobile-Besucher im Tunnel looken
-mies; und der Durchschnitt von beidem sagt am Ende nichts mehr.
+und schnellem Netz sehen super aus; Mobile-Besucher im Tunnel sehen
+mies aus; und der Durchschnitt von beidem sagt am Ende nichts mehr.
 
 Einen "meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir
 speichern keine IPs, siehe [Privacy](/de/privacy). Was du
@@ -25,11 +25,11 @@ ausschließen willst, entscheidet, welcher Weg passt.
 
 Saubere Antwort für Staging, Preview, Dev.
 
-1. Zweite Site in Fastmon anlegen, z. B. `acme-marketing-staging`.
-2. **Deren** `source_hash` im Staging-Deploy nutzen.
-3. Entweder die Staging-Site in Dashboards ignorieren oder
-   absichtlich nutzen; Staging-Metriken sind nützlich, um
-   Regressionen vor Production zu fangen.
+1. Leg eine zweite Site in Fastmon an, z. B. `acme-marketing-staging`.
+2. Nutze **deren** `source_hash` im Staging-Deploy.
+3. Ignorier die Staging-Site in Dashboards oder nutze sie absichtlich;
+   Staging-Metriken sind nützlich, um Regressionen vor Production
+   zu fangen.
 
 Kostet dich nichts: keine Client-Logik, keine Flags, kein Risiko,
 dass Production-Daten in Staging landen oder umgekehrt.
@@ -40,8 +40,8 @@ Nützlich für Office-Traffic, wenn der Besucher Zugang zum Backend
 oder Admin-UI hat und du ihn dort als "intern" markieren kannst.
 
 Einfachster Weg: das Beacon-`<script>` einfach nicht rendern, wenn
-der Request aus einer internen Session kommt. Server-seitig ent-
-scheiden anhand des Signals, das du eh schon hast: Session-Cookie,
+der Request aus einer internen Session kommt. Server-seitig
+entscheiden anhand des Signals, das du eh schon hast: Session-Cookie,
 JWT-Claim, Admin-Login.
 
 ```html
@@ -69,8 +69,8 @@ Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
 Für Wartungsfenster, eine Investigation oder eine
 Nicht-Production-Umgebung, die permanent laut ist:
 
-1. In Fastmon Site öffnen, **Settings**.
-2. **Active** abschalten.
+1. Öffne in Fastmon die Site und geh auf **Einstellungen**.
+2. Schalte **Active** ab.
 
 Beacons kommen weiter an, werden aber nicht in Analytics-Tabellen
 geschrieben. Wieder einschalten, wenn du Daten willst. Historie aus
@@ -80,7 +80,7 @@ der aktiven Phase bleibt erhalten.
 
 Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar
 nicht erst laden. Die meisten Monitore setzen einen erkennbaren
-`User-Agent`; Tag server-seitig gaten:
+`User-Agent`; Tag server-seitig ausschließen:
 
 ```html
 {% if request.user_agent.is_synthetic %}
@@ -105,7 +105,7 @@ In Fastmon nach dem Umschalten: Im **Sessions**-View sollte die
 Country-/Region-Zelle deines Office-Standorts deutlich kleiner
 werden. Wenn nicht, fängt der Filter sie nicht.
 
-## Häufige Überraschungen
+## Häufige Stolperfallen
 
 - **Nachträglich filtern geht nicht.** Wir speichern keine IPs
   (siehe [Privacy](/de/privacy)). Sobald ein Beacon drin ist,
@@ -115,7 +115,7 @@ werden. Wenn nicht, fängt der Filter sie nicht.
   ausschließen willst, nicht nur beim ersten Load.
 - **Country-Filter helfen nicht.** Dein Office sitzt im gleichen
   Land wie die meisten echten Besucher. Was funktioniert: an der
-  Quelle filtern, wo der echte Kontext (User, Cookie, UA) noch da
+  Quelle filtern, wo der echte Kontext (Besucher, Cookie, UA) noch da
   ist.
 
 ## Verwandt

@@ -25,7 +25,7 @@ Diese Regeln gelten unabhängig davon, in welchem
 | **Cross-Site-IDs**                 | Wir vergeben keine Kennung, die eine Domain-Grenze überlebt. Eine Session auf `acme.com` ist nicht mit einer auf `other.com` verknüpfbar. |
 | **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine "Audience"-Daten. |
 | **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. |
-| **URL-Query-Strings oder Hash-Fragmente** | Im Tracker entfernt, bevor irgendein Beacon rausgeht. `/orders/checkout?email=jane@x.com` kommt beim Collector als `/orders/checkout` an. |
+| **URL-Query-Strings oder Hash-Fragmente** | Im Beacon entfernt, bevor irgendein Beacon rausgeht. `/orders/checkout?email=jane@x.com` kommt beim Collector als `/orders/checkout` an. |
 | **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst.                     |
 
 ### Zu Cookies und Storage
@@ -36,7 +36,7 @@ API. Deshalb braucht der Modus unter TDDDG §25 / ePrivacy
 Art. 5(3) keinen Cookie-Banner.
 
 `consent` ist **vor Opt-In** ebenfalls speicherfrei: auf dem Wire
-byte-identisch zu `anonymous`. Bei Opt-In setzt der Tracker ein
+byte-identisch zu `anonymous`. Bei Opt-In setzt der Beacon ein
 `_fm_consent`-Cookie, das die Consent-Entscheidung persistiert, und
 schreibt eine Session-ID in den `sessionStorage` (`_s`). Das Cookie
 qualifiziert sich nach TDDDG §25(2) Nr. 2 als unbedingt erforderlich:
@@ -78,7 +78,7 @@ Seite auszurechnen:
   `prefers-color-scheme` und `prefers-reduced-motion` lesen wir
   nicht mehr: nach der breiten EDPB-Leitlinie 2/2023 fallen die
   unter „Zugriff auf gespeicherte Informationen" gem. TDDDG §25(1),
-  und wir haben sie ausgemustert, statt sie consent-zu-gaten.
+  und wir haben sie ausgemustert, statt sie hinter ein Consent-Gate zu stellen.
 - **Geo**: nur Land (zweistelliges ISO). Wird am Edge aus der IP
   abgeleitet und als Request-Header weitergereicht; die IP selbst
   erreicht die Anwendung nie.
@@ -95,7 +95,7 @@ Seite auszurechnen:
   Besucher über den CMP der Site Opt-In gegeben hat. Liegt im
   `sessionStorage`, gruppiert Pageviews einer Session, stirbt mit
   dem Tab.
-- **Referrer**: vom Tracker auf Origin + Pathname vorbereinigt
+- **Referrer**: vom Beacon auf Origin + Pathname vorbereinigt
   (Query und Hash werden bereits im Browser verworfen). Das
   Backend klassifiziert ihn per
   [Snowplow Referer-Parser](https://github.com/snowplow-referer-parser/referer-parser)
@@ -190,7 +190,7 @@ deinen CMP an den Beacon koppelt, stehen unter
   hinter dem Produkt. Im AVV stehen alle Sub-Auftragsverarbeiter,
   den schicken wir auf Anfrage.
 - **Retention.** Per Default 90 Tage. Pro Site einstellbar
-  (`data_retention_days` in den Site-Settings). Was abläuft, wird
+  (`data_retention_days` in den Site-Einstellungen). Was abläuft, wird
   weggeworfen, nicht archiviert.
 
 ## Vergleich
@@ -209,7 +209,7 @@ Delta:
 
 ## Deine Verantwortung
 
-Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
+Der Beacon garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
 
 - **Keine PII in URL-Pfaden.** Query-Strings und Hash-Fragmente
   werden entfernt, der Pathname bleibt erhalten.
@@ -222,7 +222,7 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
   niemals als `?utm_term=jane@example.com&utm_content=user-12345`
   für Per-Empfänger-Tracking. Jedes Feld wird serverseitig auf 64
   Zeichen gedeckelt, der Wert läuft aber nicht durch den Scrubber.
-  Ad-Plattform-Click-ID-*Werte* verwirft der Tracker selbst,
+  Ad-Plattform-Click-ID-*Werte* verwirft der Beacon selbst,
   damit greift das Per-Empfänger-Join-Risiko nur bei den
   UTM-Feldern.
 - **Kein roher User-Input in `throw`.** Der immer aktive Scrubber
@@ -242,12 +242,12 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
   uns.
 - **Schrems II ist für unsere Pipeline kein Thema.** Daten verlassen
   die EU schlicht nicht.
-- **Deinem DSB kannst du eine Ein-Seiter-Antwort geben**: Link auf
+- **Deinem Datenschutzbeauftragten (DSB) kannst du eine Ein-Seiter-Antwort geben**: Link auf
   diese Seite plus unseren AVV, fertig.
 - **Striktes Consent-Regime?** Nutze den
   [Collection Mode](/de/collection-modes) `consent`.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [Collection Modes](/de/collection-modes) ansehen.
 - Technische Details zum [Beacon](/de/beacon).

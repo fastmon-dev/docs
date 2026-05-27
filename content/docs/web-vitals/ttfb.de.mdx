@@ -81,23 +81,23 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
    Roundtrip. `http://` → `https://` → `www.` → Final-URL sind drei
    Roundtrips, bevor der Browser überhaupt das HTML hat.
 5. **HTTP/2 oder HTTP/3 nutzen.** Die meisten modernen Stacks tun
-   das schon, aber prüfen; ältere Origins negotiieren noch
+   das schon, aber prüfen; ältere Origins verhandeln noch
    HTTP/1.1.
 
 ## Häufige Überraschungen
 
 - **Ein schneller TTFB auf Vercel/Netlify kann einen langsamen
-  Origin verbergen.** Der Edge cached die Response; Cache-Misses
+  Origin verbergen.** Der Edge cacht die Response; Cache-Misses
   können 10× langsamer sein. Cache-Hit-Rate neben TTFB checken.
 - **TTFB enthält keine Client-Render-Zeit.** Eine Seite mit
   schnellem TTFB und langsamem LCP schickt viel Arbeit an den
   Browser, nicht den Server. SSR hilft nicht, wenn Hydration der
   Bottleneck ist.
-- **Service-Worker-Caches beeinflussen das TTFB-Erlebnis.** Wenn
+- **Service-Worker-Caches beeinflussen den TTFB-Wert.** Wenn
   dein Service Worker die Navigation bedient, kann TTFB bei
   Wiederbesuchen nahezu null sein.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [FCP](/de/web-vitals/fcp): TTFBs nachgelagerter Nachbar.
 - [LCP](/de/web-vitals/lcp): was langsamer TTFB meist bricht.

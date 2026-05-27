@@ -43,8 +43,8 @@ jedem Datenschutz-Review verteidigbar.
 | -------------------------- | ------------------------------------------------------------------------------ |
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, Paint-Einträge, Long Animation Frames, Layout Shifts.      |
 | `Navigation Timing`        | TTFB, Redirect-Count, Navigation-Typ (`navigate`, `reload`, `back_forward`).   |
-| `Resource Timing`          | Pro Resource: Größe, Dauer, Kategorie. Aggregiert zu Per-Domain-Rollups.       |
-| `error`-Event              | Typ und Count immer; Message + Frames nur mit Consent / `full`, und dort erst nach einem immer aktiven PII-Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert. |
+| `Resource Timing`          | Pro Resource: Größe, Dauer, Kategorie. Pro Domain aggregiert.                  |
+| `error`-Event              | Typ und Anzahl immer; Message + Frames nur mit Consent / `full`, und dort erst nach einem immer aktiven PII-Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert. |
 | `unhandledrejection`       | Selbe Form wie `error`.                                                        |
 | Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
 | Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
@@ -52,12 +52,12 @@ jedem Datenschutz-Review verteidigbar.
 Geo-Daten (Land, Region) werden im Browser **nicht** gelesen. Der
 Edge leitet sie aus der Request-IP ab und reicht einen Ländercode
 als `FM-Country`-Header weiter; die IP selbst erreicht die
-Anwendung nie. Genauso für die gebucketete Browser-/OS-/Device-
+Anwendung nie. Genauso für die in Buckets eingeteilte Browser-/OS-/Geräte-
 Familie, die als `FM-Browser` / `FM-Browser-Version` / `FM-OS` /
 `FM-Device` weitergereicht wird. Zusätzlich berechnet der Edge
 einen Einweg-`FM-Stitch`-Header
 (`HMAC-SHA256(rotierendes-24h-Salt, IP | UA | collector_hash)` auf
-128 Bit gekürzt), den das Backend für gedeckelte
+128 Bit gekürzt), den das Backend für begrenzte
 Cross-Pageview-Joins in allen Modi nutzt. Rechtlicher Rahmen unter
 [Privacy → Der am Edge abgeleitete `stitch`-Identifier](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
 Der Beacon selbst fragt nie nach Geolokation.
@@ -150,16 +150,16 @@ Schlüssel-Abkürzungen:
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
 - `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
   Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
-- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf
+- `u`, `r`: Seiten-URL und Referrer, beide vom Beacon auf
   Origin + Pathname vorbereinigt (Query und Hash entfernt). `r`
   wird serverseitig in gebucketete Source + Medium klassifiziert
   und der rohe Wert vor jedem Logging-Pfad verworfen. Er
   persistiert nie, in keinem Modus.
 - `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`,
   `utm_content`, `click_id_param`: Kampagnen-Attribution aus
-  `window.location.search`. Jeweils auf 64 Zeichen gedeckelt.
+  `window.location.search`. Jeweils auf 64 Zeichen begrenzt.
   `click_id_param` ist nur das Plattform-*Label* (`"gclid"` /
-  `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen.
+  `"fbclid"` / …); der Click-ID-Wert wird vom Beacon verworfen.
   In jedem Modus auf der Leitung.
 - `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major,
   Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die
@@ -176,7 +176,7 @@ Schlüssel-Abkürzungen:
   Frames). `m` und `fr` sind consent-only; auch dann laufen sie
   durch einen Scrubber, der URLs, E-Mails, IDs und Strings in
   Anführungszeichen maskiert.
-- `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
+- `tv`: Beacon-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
 
 ## Cache und Rollouts
@@ -205,11 +205,11 @@ Zwei Integrationspunkte, beide namensstabil über Bundle-Versionen:
 window.__FASTMON_SAMPLE_RATE = 0.1;
 ```
 
-Wird beim Tracker-Reset einmal pro Pageview gelesen. Die
+Wird beim Beacon-Reset einmal pro Pageview gelesen. Die
 Entscheidung gilt pro Pageview, nicht pro Beacon: ein gesampelter
 Pageview emittiert alle seine Lifecycle-Beacons, ein ungesampelter
 keinen. Erlaubter Bereich `[0, 1]`; Werte außerhalb werden
-schweigend geclamped. Setz das vor dem Script-Tag, wenn auch der
+ohne Hinweis begrenzt. Setz das vor dem Script-Tag, wenn auch der
 allererste Beacon respektiert werden soll.
 
 ### Consent-Toggle (nur `consent`-Bundle)
@@ -237,7 +237,7 @@ Die Runtime des Beacons hängt am
   [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
 - `consent`: auf dem Wire byte-identisch zu `anonymous`, bis der
   CMP des Kunden `window.__fastmon_consent(true)` aufruft. Nach
-  Opt-In byte-identisch zu `full`. Intern liest der Tracker das
+  Opt-In byte-identisch zu `full`. Intern liest der Beacon das
   `_fm_consent`-Cookie und signalisiert dem Collector den
   aufgelösten Modus per `?p=1`-Query-Parameter (das Cookie ist die
   Wahrheit; der Query-Parameter ist nur der Hinweis für die
@@ -252,7 +252,7 @@ In jedem Mode gelten die Datenschutz-Garantien aus
 Der Collector rate-limited pro `(collector_hash, Client-IP)`. Die
 IP wird am Edge nur für diesen Bucket gelesen; die Anwendung
 bekommt einen vorbereiteten Bucket-Key zu sehen, nicht die rohe IP,
-und die IP landet nicht auf der Platte. Das ist defensiv gemeint:
+und die IP landet nicht auf der Platte. Das ist eine Schutzmaßnahme:
 eine kaputte Seite oder ein synthetischer Lasttest soll den Ingest
 für andere Tenants nicht zumüllen. Mit echtem Traffic läufst du da
 praktisch nie rein.
@@ -262,7 +262,7 @@ wirft den Buffer weg und macht weiter; sonst passiert nichts.
 
 Payloads über 8 KiB werden mit `413` abgelehnt. Liegt `cst` mehr
 als 5 Minuten neben der Server-Uhr, fällt der Server auf seine
-eigene Empfangszeit zurück, statt zu rejecten; der Beacon wird
+eigene Empfangszeit zurück, statt abzulehnen; der Beacon wird
 trotzdem akzeptiert.
 
 ## Was du wissen solltest

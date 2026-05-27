@@ -5,15 +5,15 @@ description: "Was LCP ist, was ein guter LCP ist, und wie man einen schlechten d
 
 **LCP** misst, wie lange es dauert, bis das größte sichtbare
 Element einer Seite tatsächlich da ist. Wenn jemand sagt "die Seite
-hat sich beim Laden langsam angefühlt", redet er meistens über LCP:
+hat sich beim Laden langsam angefühlt", geht es meistens um LCP:
 den Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
 
 LCP gehört zu den [Core Web Vitals](/de/web-vitals), Googles
-Standard-Set für Nutzererlebnis, und zählt fürs Suchranking.
+Standard-Set für Besuchererlebnis, und zählt fürs Suchranking.
 
 ## Was ist ein guter LCP?
 
-LCP wird in Millisekunden gemessen und in drei Schwellen gebucketed.
+LCP wird in Millisekunden gemessen und in drei Kategorien eingeteilt.
 Die zu trackende Schwelle ist das **75. Perzentil** über alle
 Pageviews; so reportet es Google, und das ist die Zahl, gegen die du
 optimierst.
@@ -43,14 +43,14 @@ Die "Größe" ist die gerenderte Fläche am Schirm, geschnitten mit dem
 Viewport. Off-Screen-Inhalt zählt nicht, auch wenn er größer wäre.
 
 Das "größte" kann sich beim Laden ändern. Der Browser emittiert
-LCP-Einträge, bis der Nutzer interagiert (Klick, Scroll, Taste). Der
+LCP-Einträge, bis der Besucher interagiert (Klick, Scroll, Taste). Der
 **letzte Eintrag vor dieser Interaktion** ist der LCP-Wert.
 
 ## Wann LCP reportet wird
 
 LCP wird finalisiert:
 
-- wenn der Nutzer scrollt, klickt oder eine Taste drückt (was zuerst kommt), oder
+- wenn der Besucher scrollt, klickt oder eine Taste drückt (was zuerst kommt), oder
 - wenn die Seite versteckt wird (`visibilitychange`).
 
 Der Fastmon-Beacon greift den finalen LCP in genau diesem Moment ab
@@ -68,13 +68,13 @@ auf das größte Daten-Element. Pass auf falsch-"schnelle" LCPs auf,
 die nur kommen, weil eine fette Skeleton-Box davor stand.
 
 **Artikel mit eingebettetem Video.** LCP ist das Video-Poster,
-nicht der Text. Wer das Poster-Bild optimiert, verbessert den LCP,
-auch wenn der Besucher hinterher den Body liest.
+nicht der Text. Wenn du das Poster-Bild optimierst, verbesserst du
+den LCP, auch wenn der Besucher hinterher den Body liest.
 
 ## LCP in Fastmon ansehen
 
 Der Bereich **Performance** im Dashboard zeigt LCP bei p50, p75 und
-p95 out of the box. Für Breakdowns:
+p95 von Haus aus. Für Breakdowns:
 
 - **Nach URL**: Performance → Group by URL. Erst die schlimmsten
   Seiten suchen.
@@ -117,15 +117,15 @@ zeigt jeden; fang mit dem größten Anteil an.
    durch render-blocking CSS oder JavaScript blockiert. Critical CSS
    inlinen, unkritische Scripts deferren.
 
-Für einen tieferen Walkthrough siehe web.devs
-[Optimize LCP](https://web.dev/articles/optimize-lcp); die
+Für einen tieferen Walkthrough siehe
+[Optimize LCP](https://web.dev/articles/optimize-lcp) auf web.dev; die
 Optimierungs-Logik ist überall dieselbe, egal welches RUM-Tool du
 nutzt.
 
 ## Häufige Überraschungen
 
-- **LCP ist meistens ein Bild, kein Text.** Wer nur an Fonts
-  rumschraubt, verschiebt seinen LCP wahrscheinlich kein Stück.
+- **LCP ist meistens ein Bild, kein Text.** Wenn du nur an Fonts
+  rumschraubst, verschiebst du deinen LCP wahrscheinlich kein Stück.
 - **SPAs starten LCP bei Route-Change nicht neu.** LCP ist eine
   Navigations-Metrik; Route-Wechsel innerhalb der App erzeugen
   keinen neuen LCP-Wert.
@@ -135,7 +135,7 @@ nutzt.
 - **`background-image` zählt mit.** Wenn dein "Hero" ein
   CSS-Hintergrund ist, misst der Browser den trotzdem als LCP.
 
-## Wie geht's weiter
+## Nächste Schritte
 
 - [Interaction to Next Paint (INP)](/de/web-vitals/inp): die
   Responsiveness-Metrik, die häufig regrediert, wenn man LCP durch

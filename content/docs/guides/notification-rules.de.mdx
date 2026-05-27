@@ -21,14 +21,14 @@ Rules (jede Rolle reicht für eigene Rules).
 
 ## Wo Rules leben
 
-Rules sind Organisations-Ressourcen. Jede Rule gehört dem User, der
+Rules sind Organisationsressourcen. Jede Rule gehört dem User, der
 sie erstellt hat, aber andere Org-Mitglieder können sie sehen.
 Notifications gehen ans Delivery-Target der Rule; Default ist die
 E-Mail des Erstellers.
 
 ## 1. Preset wählen (oder leer starten)
 
-In Fastmon **Notifications → Rules → New rule** öffnen. Der erste
+Öffne in Fastmon **Notifications → Rules → New rule**. Der erste
 Schritt zeigt **Presets**: übliche Rule-Formen mit sinnvollen
 Defaults:
 
@@ -38,7 +38,7 @@ Defaults:
 - *Experience Score gefallen*
 - … und ein paar weitere.
 
-Den nehmen, der am nächsten dran ist. Felder lassen sich danach
+Nimm den, der am nächsten dran ist. Felder lassen sich danach
 beliebig anpassen. Passt nichts: **Blank rule** und weiter zu
 Schritt 3.
 
@@ -57,7 +57,7 @@ Mehrere Targets pro Rule möglich. Jedes feuert auf dasselbe Event.
 
 ## 3. Bedingung definieren
 
-Der Teil mit dem meisten Hirnschmalz. Eine Rule besteht aus drei
+Der zentrale Teil. Eine Rule besteht aus drei
 Bausteinen:
 
 ### Was du misst
@@ -65,7 +65,7 @@ Bausteinen:
 - Eine **Site** (oder "all sites" für eine Portfolio-Rule).
 - Eine **Metrik** (LCP, INP, CLS, FCP, TTFB, Fehlerrate, Sessions, …).
 - Eine **Aggregation** (p50, p75, p95, count, avg, …).
-- Optional **Filter** (nur Mobile, ein bestimmter URL-Pattern, eine
+- Optional **Filter** (nur Mobile, ein bestimmtes URL-Pattern, eine
   Länderliste, …).
 
 ### Wann du misst
@@ -100,9 +100,9 @@ Jede Variante hat ihre eigene Stolperfalle:
   Releases auch wirklich getaggt hast. Siehe
   [Releases vergleichen](/de/guides/compare-releases).
 
-## 4. Rule trocken testen
+## 4. Rule im Trockenlauf testen
 
-Bevor du speicherst, **Evaluate now** klicken. Damit läuft die
+Bevor du speicherst, klicke **Evaluate now**. Damit läuft die
 Rule einmal gegen das **aktuelle** Fenster und sagt dir, ob sie
 feuern würde. Guter Sanity-Check für deine Schwelle: feuert sie
 bei jedem Test, ist die Schwelle zu eng.
@@ -111,7 +111,7 @@ API-Pendant: `POST /notification-rules/{id}/evaluate`.
 
 ## 5. Synthetischen Test schicken
 
-Nach dem Speichern **Send test notification** klicken. Schickt eine
+Nach dem Speichern klicke **Send test notification**. Schickt eine
 Beispiel-Nachricht an alle Delivery-Targets, damit du bestätigen
 kannst, dass sie ankommen.
 
@@ -124,7 +124,7 @@ sie gefeuert hat und (wenn ja) wohin die Notification ging. Wenn
 ein Alarm mal nicht zu dem passt, was du im Dashboard siehst, ist
 die History der Audit-Trail.
 
-## Worked Example: LCP-Regression auf Production
+## Beispiel: LCP-Regression auf Production
 
 Ziel: Alarm, wenn LCP bei p75 auf der Production-Site mehr als 20%
 schlechter ist als die vorherigen 24 Stunden.
@@ -145,7 +145,7 @@ Der Min-Volume-Guard ist das, was am häufigsten vergessen wird.
 Ohne ihn feuern dir nächtliche Low-Volume-Phasen pausenlos
 False-Positives.
 
-## Häufige Überraschungen
+## Häufige Stolperfallen
 
 - **Rules dedupen nicht zwischen Cadences.** Eine 15-Minuten-Rule
   feuert bei anhaltender Regression locker 4× in der Stunde. Wer

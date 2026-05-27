@@ -62,15 +62,15 @@ Ein Pageview nach der Grenze startet eine neue Session.
 | `id`             | string               | Anonym, zeitlich begrenzt. Nicht stabil über Sessions.  |
 | `site_id`        | UUID v7              | Die zugehörige Site.                                    |
 | `started_at`     | timestamp            | `pst` des ersten Pageviews.                             |
-| `ended_at`       | timestamp            | `pst` des letzten Pageviews oder Schließ-Moment.        |
+| `ended_at`       | timestamp            | `pst` des letzten Pageviews oder Zeitpunkt des Schließens. |
 | `page_view_count`| int                  | Anzahl Pageviews in der Session.                        |
 | `entry_url`      | string               | Pathname des ersten Pageviews.                          |
 | `country`        | ISO 3166-1 alpha-2   | Aus der IP des ersten Pageviews abgeleitet.             |
 | `device_type`    | enum                 | `mobile`, `tablet` oder `desktop`.                      |
 | `browser`        | string               | Nur Familie.                                            |
 
-Was fehlt: keine User-ID, kein Fingerprint, keine IP. Die Session-ID
-selbst ist kurzlebig und nicht dafür da, außerhalb des
+Was fehlt: keine Besucher-ID, kein Fingerprint, keine IP. Die Session-ID
+selbst ist kurzlebig und nicht dafür gedacht, außerhalb des
 Analytics-Fensters verwendet zu werden.
 
 ## Sessions abfragen

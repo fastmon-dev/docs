@@ -1,11 +1,11 @@
 ---
 title: Sites
-description: Eine Site ist eine Property, die du monitorst. Jede Site hat eigene Beacon-Hashes und Settings.
+description: Eine Site ist eine Property, die du monitorst. Jede Site hat eigene Beacon-Hashes und Einstellungen.
 ---
 
 Eine **Site** ist die Monitoring-Einheit in Fastmon. Praktisch
 entspricht das einer Property: meistens einem Origin, einer App
-oder einer Brand. Beacon-URL, Settings, Dashboard-Filter: alles
+oder einer Brand. Beacon-URL, Einstellungen, Dashboard-Filter: alles
 pro Site.
 
 ## Warum das zählt
@@ -23,7 +23,7 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 
 - **Neue Property hinzufügen.** Site anlegen, Snippet kopieren,
   einbetten.
-- **Was der Beacon erfasst ändern.** Collection Mode der Site
+- **Beacon-Erfassung anpassen.** Collection Mode der Site
   bearbeiten.
 - **Staging oder Preview hinzufügen.** Staging-Origin in **Allowed
   Origins** eintragen, oder eine separate Site für Staging anlegen,
@@ -43,7 +43,7 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 | `organization_id`     | UUID v7                               | Die besitzende Organisation.                                                      |
 | `name`                | string                                | Wie die Site im UI erscheint.                                                     |
 | `domain`              | string                                | Reiner Hostname, kein Protokoll (z. B. `acme.com`).                               |
-| `allowed_origins`     | komma-separierter String              | Zusätzliche Origins, die ingesten dürfen. Leer = nur `domain` selbst.             |
+| `allowed_origins`     | komma-separierter String              | Zusätzliche Origins, deren Beacons akzeptiert werden. Leer = nur `domain` selbst. |
 | `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.eu`.          |
 | `source_hash`         | string                                | Per-Site-Hash für die Script-URL (`/s/{source_hash}.js`).                         |
 | `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
@@ -51,7 +51,7 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 | `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
 | `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
 | `tags`                | Liste von Strings (max 10)            | Freie Labels für Dashboard- und Analytics-Filter.                                 |
-| `is_active`           | bool                                  | Bei false werden Beacons akzeptiert, aber nicht in Analytics-Tabellen geschrieben. |
+| `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
 
 ## Die zwei Hashes
 
@@ -88,7 +88,7 @@ Max 10 Tags pro Site.
 
 Der Collector akzeptiert Beacons, deren `Origin`-Header dem `domain`
 der Site oder einem Eintrag in `allowed_origins` entspricht. Lädt
-das Script auf einer nicht-erlaubten Domain, antwortet der Collector
+das Script auf einer nicht erlaubten Domain, antwortet der Collector
 mit `403`.
 
 Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
@@ -125,8 +125,8 @@ inactive setzen.
 
 - **Sites lassen sich nicht zwischen Organisationen umziehen.**
   Falls doch nötig: Support melden.
-- **`is_active = false` behält die Historie.** Es stoppt nur neuen
-  Schreibvorgang; gut für Pausen, nicht zum Retention-Kürzen.
+- **`is_active = false` behält die Historie.** Es stoppt nur neue
+  Schreibvorgänge; gut für Pausen, nicht zum Retention-Kürzen.
 - **Site umbenennen ändert die Hashes nicht.** Schon eingebettete
   Scripts laufen einfach weiter.
 - **Site löschen löscht auch die Beacon-Daten.** Mit Bestätigung.

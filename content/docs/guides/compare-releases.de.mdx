@@ -4,9 +4,9 @@ description: Deploys aus CI/CD taggen und "hat dieser Deploy LCP verschlechtert?
 ---
 
 Wenn du Performance-Regressionen sauber erwischen willst, taggst du
-jeden Deploy als [Release](/de/concepts/releases) und lässt die
-Analytics-API den Vorher-Nachher-Vergleich machen. Dieser Guide
-verdrahtet alles von Anfang bis Ende: API-Token, Release-Call aus
+jeden Deploy als [Release](/de/concepts/releases), und die
+Analytics-API macht den Vorher-Nachher-Vergleich. Dieser Guide
+deckt den kompletten Ablauf ab: API-Token, Release-Call aus
 CI/CD, Vergleichs-Query.
 
 **Setup-Zeit:** 10–15 Minuten.
@@ -16,18 +16,19 @@ Edit-Zugriff auf die CI/CD-Pipeline, eine Site, die schon
 
 ## 1. API-Token erzeugen
 
-1. In Fastmon **Account → API-Token** öffnen.
-2. **Generate token** klicken. Wert kopieren: beginnt mit `fm_`.
+1. Öffne in Fastmon **Account → API-Token**.
+2. Klicke **Generate token** und kopier den Wert: beginnt mit `fm_`.
    Wird nicht erneut angezeigt.
-3. Im Secret-Store deines CI als `FASTMON_TOKEN` ablegen.
+3. Leg ihn im Secret-Store deines CI als `FASTMON_TOKEN` ab.
 
-Token verloren? Mit `POST /v1/account/api-token` neu erzeugen.
+Token verloren? Erzeug ihn neu mit `POST /v1/account/api-token`.
 Der alte funktioniert sofort nicht mehr.
 
 ## 2. Site-ID finden
 
-In Fastmon Site öffnen, **Settings**. Site-`id` kopieren (UUID v7,
-sieht aus wie `01HZX...`). Im CI als `FASTMON_SITE_ID` ablegen.
+Öffne in Fastmon die Site und geh auf **Einstellungen**. Kopier die
+Site-`id` (UUID v7, sieht aus wie `01HZX...`). Leg sie im CI als
+`FASTMON_SITE_ID` ab.
 
 ## 3. Release-Call zum Deploy-Job hinzufügen
 
@@ -45,7 +46,7 @@ curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
 ```
 
 Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern
-und sparen sich den Progress-Output. `released_at` ist optional;
+und unterdrücken den Progress-Output. `released_at` ist optional;
 wenn du's weglässt, setzt der Server einfach "jetzt".
 
 ### GitHub Actions
@@ -84,11 +85,11 @@ Zwei Optionen:
 
 - **Deploy-Hook**: Webhook-Receiver einrichten, der auf
   `deployment.succeeded` von Vercel hört und mit der SHA aus dem
-  Payload den Fastmon-Endpoint aufruft.
+  Payload den Fastmon-Endpunkt aufruft.
 - **Edge-Function**: kleine Cron-getriggerte Function, die die
   Vercel-API auf neue Deployments pollt und sie taggt.
 
-## 4. Prüfen, ob der Release angekommen ist
+## 4. Release-Eingang prüfen
 
 Release-Liste der Site abfragen:
 
@@ -127,7 +128,7 @@ für ein **gleich langes Fenster, das beim `released_at` des Release
 endet**. Beispiel oben: 24 Stunden nach dem Release vs. die 24
 Stunden direkt davor.
 
-## Wie "gut" aussieht
+## Was gut aussieht
 
 - Jeder erfolgreiche Deploy taggt automatisch einen Release. Nichts
   von Hand.
@@ -137,7 +138,7 @@ Stunden direkt davor.
   der Release-Call hängt. Sonst hast du irgendwann stille Lücken
   und glaubst den Vergleichen nicht mehr.
 
-## Häufige Überraschungen
+## Häufige Stolperfallen
 
 - **Ein Release ohne `released_at` setzt "jetzt".** Meistens passt
   das. Aufpassen, wenn dein Deploy-Job Minuten vor dem
