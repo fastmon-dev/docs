@@ -56,6 +56,12 @@ Faustregel: Wenn ein Teil englisch ist, mit Bindestrich. Wenn beide deutsch, zus
 
 Im Zweifel: Wer wird gemessen → **Besucher**. Wer benutzt Fastmon → **User**.
 
+**Tracker vs. Beacon — bewusste Trennung (analog zu EN):**
+- **Tracker** = der ausgeführte JavaScript-Agent im Browser (die Instanz, die misst, sammelt, sendet, Cookies setzt, URLs strippt). Subjekt der Sätze: „Der Tracker entfernt …", „Der Tracker setzt das Cookie …".
+- **Beacon** = die einzelne Payload, die der Tracker zum Collector schickt („ein Beacon geht raus", „Beacons werden in Batches geschrieben"). Auch als Sammelbegriff für die Technologie/das Script in Komposita okay: „Beacon-Script", „Beacon-Upgrade", „Beacon-Version" (das deckt sich mit dem EN-Sprachgebrauch).
+
+Faustregel: Wenn ein Satz beschreibt, was *im Moment passiert* (Aktion auf einem Pageview), ist es der **Tracker**. Wenn es um die *ausgehende Nachricht*, das *Produktfeature* oder die *Code-Version* geht, ist es der **Beacon**.
+
 **Verben aus dem Englischen werden eingedeutscht**, nicht zusammengesetzt:
 - „du committest", „gepusht", „gemerged", „deployt", „gebuildet"
 - Konjugation folgt deutscher Grammatik

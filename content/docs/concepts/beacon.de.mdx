@@ -150,7 +150,7 @@ Schlüssel-Abkürzungen:
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
 - `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
   Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
-- `u`, `r`: Seiten-URL und Referrer, beide vom Beacon auf
+- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf
   Origin + Pathname vorbereinigt (Query und Hash entfernt). `r`
   wird serverseitig in gebucketete Source + Medium klassifiziert
   und der rohe Wert vor jedem Logging-Pfad verworfen. Er
@@ -159,7 +159,7 @@ Schlüssel-Abkürzungen:
   `utm_content`, `click_id_param`: Kampagnen-Attribution aus
   `window.location.search`. Jeweils auf 64 Zeichen begrenzt.
   `click_id_param` ist nur das Plattform-*Label* (`"gclid"` /
-  `"fbclid"` / …); der Click-ID-Wert wird vom Beacon verworfen.
+  `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen.
   In jedem Modus auf der Leitung.
 - `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major,
   Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die
@@ -176,7 +176,7 @@ Schlüssel-Abkürzungen:
   Frames). `m` und `fr` sind consent-only; auch dann laufen sie
   durch einen Scrubber, der URLs, E-Mails, IDs und Strings in
   Anführungszeichen maskiert.
-- `tv`: Beacon-Version, Format `YYMMDD-<git-sha>[-dirty]`.
+- `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
 
 ## Cache und Rollouts
@@ -205,7 +205,7 @@ Zwei Integrationspunkte, beide namensstabil über Bundle-Versionen:
 window.__FASTMON_SAMPLE_RATE = 0.1;
 ```
 
-Wird beim Beacon-Reset einmal pro Pageview gelesen. Die
+Wird beim Tracker-Reset einmal pro Pageview gelesen. Die
 Entscheidung gilt pro Pageview, nicht pro Beacon: ein gesampelter
 Pageview emittiert alle seine Lifecycle-Beacons, ein ungesampelter
 keinen. Erlaubter Bereich `[0, 1]`; Werte außerhalb werden
@@ -237,7 +237,7 @@ Die Runtime des Beacons hängt am
   [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
 - `consent`: auf dem Wire byte-identisch zu `anonymous`, bis der
   CMP des Kunden `window.__fastmon_consent(true)` aufruft. Nach
-  Opt-In byte-identisch zu `full`. Intern liest der Beacon das
+  Opt-In byte-identisch zu `full`. Intern liest der Tracker das
   `_fm_consent`-Cookie und signalisiert dem Collector den
   aufgelösten Modus per `?p=1`-Query-Parameter (das Cookie ist die
   Wahrheit; der Query-Parameter ist nur der Hinweis für die
