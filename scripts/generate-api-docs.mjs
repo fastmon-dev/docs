@@ -229,6 +229,7 @@ const apiMeta = {
     "sites",
     "releases",
     "analytics",
+    "synthetic",
     "notifications",
     "partners",
     "weekly-summary",

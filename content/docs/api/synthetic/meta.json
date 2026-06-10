@@ -1,0 +1,24 @@
+{
+  "title": "Synthetic",
+  "description": "**Beta.** Synthetic monitoring (Commerce-Score): scheduled Lighthouse-style lab runs for key pages, with lab-vs-field comparison and historical trends. Requires the organization to opt in to Synthetic Monitoring; available to all organization members. Surface and response shape may still change before general availability.",
+  "pages": [
+    "listSyntheticPages",
+    "createSyntheticPage",
+    "getSyntheticSummary",
+    "refreshSyntheticAutoPages",
+    "updateSyntheticPage",
+    "deleteSyntheticPage",
+    "runSyntheticPage",
+    "getSyntheticAnalysisStatus",
+    "listSyntheticResults",
+    "listSyntheticRuns",
+    "getSyntheticScreenshot",
+    "getSyntheticLabVsField",
+    "getSyntheticTtfb",
+    "getSyntheticTimeseries",
+    "getSyntheticLighthouse",
+    "getSyntheticLighthouseRaw",
+    "getStoredSyntheticLighthouseSummary",
+    "getSyntheticLighthouseSummary"
+  ]
+}
