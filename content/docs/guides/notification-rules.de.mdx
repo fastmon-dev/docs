@@ -1,16 +1,16 @@
 ---
 title: Notification Rules
-description: Alarm, wenn eine Metrik eine Schwelle reißt oder gegen ein Release regrediert.
+description: Alarm, wenn eine Metrik eine Schwelle reißt oder sich gegen das Vorfenster verschlechtert.
 ---
 
 Eine **Notification Rule** prüft im Takt eine Bedingung und feuert
 eine Notification, wenn die Bedingung zutrifft. Zwei Muster decken
 ab, was die meisten Teams brauchen:
 
-- **Schwellenüberschreitung**: "Alarm, wenn LCP bei p75 über 3.000
+- **Schwellenüberschreitung**: „Alarm, wenn LCP bei p75 über 3.000
   ms steigt."
-- **Release-Regression**: "Alarm, wenn eine Metrik nach dem
-  Release deutlich schlechter ist als davor."
+- **Relative Veränderung**: „Alarm, wenn eine Metrik deutlich
+  schlechter ist als im Fenster davor."
 
 Dieser Guide zeigt beide. Die Engine dahinter ist dieselbe; nur
 die Bedingung sieht anders aus.
@@ -32,11 +32,13 @@ E-Mail des Erstellers.
 Schritt zeigt **Presets**: übliche Rule-Formen mit sinnvollen
 Defaults:
 
-- *LCP-Regression auf Production*
-- *Error-Spike auf einer URL*
-- *INP wurde poor*
-- *Experience Score gefallen*
-- … und ein paar weitere.
+- *LCP regression*: LCP p75 über der „Good"-Schwelle (2.500 ms)
+  in den letzten 24 h
+- *CLS regression*: CLS p75 über 0,1
+- *INP regression*: INP p75 über 200 ms
+- *Traffic drop*: Pageview-Zahl 50 % unter den vorherigen 24 h
+- *Error rate too high*: mehr als 1 % der Pageviews mit JS-Fehler
+- *Page weight bloat*: übertragene Bytes p75 über 3 MB in 7 Tagen
 
 Nimm den, der am nächsten dran ist. Felder lassen sich danach
 beliebig anpassen. Passt nichts: **Blank rule** und weiter zu
@@ -44,7 +46,7 @@ Schritt 3.
 
 ## 2. Delivery-Target wählen
 
-Vier Target-Typen sind unterstützt:
+Vier Target-Typen werden unterstützt:
 
 - **E-Mail**: eine oder mehrere Adressen.
 - **Slack**: native Incoming-Webhook-Integration.
@@ -62,30 +64,31 @@ Bausteinen:
 
 ### Was du misst
 
-- Eine **Site** (oder "all sites" für eine Portfolio-Rule).
-- Eine **Metrik** (LCP, INP, CLS, FCP, TTFB, Fehlerrate, Sessions, …).
+- Einen **Scope**: eine einzelne Site oder ein Site-**Tag**, um
+  eine Gruppe von Sites mit einer Rule abzudecken (die Rule wertet
+  jede Site im Tag einzeln aus).
+- Eine **Metrik** (LCP, INP, CLS, FCP, TTFB, Fehlerrate, Pageviews, …).
 - Eine **Aggregation** (p50, p75, p95, count, avg, …).
 - Optional **Filter** (nur Mobile, ein bestimmtes URL-Pattern, eine
   Länderliste, …).
 
 ### Wann du misst
 
-- Ein **Zeitfenster**, meist 1 h oder 24 h. Kürzere Fenster fangen
-  schneller, sind aber lauter.
-- Eine **Evaluation-Cadence**: wie oft die Rule läuft (alle 15 min,
-  stündlich, täglich).
+- Ein **Zeitfenster**: 1 h, 6 h, 24 h, 7 Tage oder 30 Tage.
+  Kürzere Fenster fangen schneller, sind aber lauter.
+- Eine Cadence stellst du nicht ein. Fastmon leitet den
+  Auswertungstakt aus dem Fenster ab (ein Fünftel des Fensters,
+  begrenzt auf 1 bis 15 Minuten): Eine 1-h-Rule wird also etwa
+  alle 12 Minuten geprüft, eine 24-h-Rule alle 15.
 
 ### Was eine Verletzung ist
 
-Wähle eines von:
+Wähle eine der beiden Varianten:
 
-- **Über/unter Schwelle**: fixe Zahl. "LCP p75 > 3.000 ms."
-- **Regrediert vs. Vorfenster**: relativ zum gleich langen
-  Vorgänger-Fenster. "LCP p75 +20%."
-- **Regrediert vs. Release**: relativ zum gleich langen Fenster,
-  das beim `released_at` eines Release endet. "LCP p75 +20% vs.
-  Release `01HZX...`." (Nützlich, um in CI Deploys scheitern zu
-  lassen.)
+- **Über/unter Schwelle** (absolut): fixe Zahl. „LCP p75 > 3.000 ms."
+- **Verändert sich vs. Vorfenster** (relativ): verglichen mit dem
+  Baseline-Fenster direkt vor dem aktuellen. „LCP p75 +20 %." Die
+  Baseline ist standardmäßig genauso lang wie das Messfenster.
 
 Jede Variante hat ihre eigene Stolperfalle:
 
@@ -93,12 +96,10 @@ Jede Variante hat ihre eigene Stolperfalle:
   Tag, an dem dir ein neues, großes Segment auf die Site kommt
   (mehr Slow-Network-Besucher → schlechtere Metrik → Alarm, gegen
   den du nichts machen kannst).
-- **Relative Schwellen sind empfindlich**, dafür auf
+- **Relative Schwellen sind empfindlich**, aber auf
   Low-Volume-Sites laut. Ein schlechter Day-over-Day-Vergleich
-  reicht zum Feuern. Da hilft der `min_volume`-Guard.
-- **Per-Release-Schwellen sind präzise**, feuern aber nur, wenn du
-  Releases auch wirklich getaggt hast. Siehe
-  [Releases vergleichen](/de/guides/compare-releases).
+  reicht zum Feuern. Auf traffic-schwachen Sites nimm lieber ein
+  längeres Fenster (7 oder 30 Tage).
 
 ## 4. Rule im Trockenlauf testen
 
@@ -126,41 +127,42 @@ die History der Audit-Trail.
 
 ## Beispiel: LCP-Regression auf Production
 
-Ziel: Alarm, wenn LCP bei p75 auf der Production-Site mehr als 20%
+Ziel: Alarm, wenn LCP bei p75 auf der Production-Site mehr als 20 %
 schlechter ist als die vorherigen 24 Stunden.
 
 | Feld             | Wert                                      |
 | ---------------- | ----------------------------------------- |
-| Site             | `acme-marketing` (Production)             |
+| Scope            | Site `acme-marketing` (Production)        |
 | Metrik           | `lcp`                                     |
 | Aggregation      | `p75`                                     |
-| Filter           | `tags: [env:production]`                  |
 | Zeitfenster      | letzte 24 Stunden                         |
-| Cadence          | stündlich                                 |
-| Bedingung        | Regrediert vs. Vorfenster (+20 %)         |
-| Min Volume       | 500 Pageviews im Fenster                  |
+| Bedingung        | Verändert sich vs. Vorfenster (+20 %)     |
+| Re-notify after  | 24 Stunden                                |
 | Delivery         | `team-perf@example.com`                   |
 
-Der Min-Volume-Guard ist das, was am häufigsten vergessen wird.
-Ohne ihn feuern dir nächtliche Low-Volume-Phasen pausenlos
-False-Positives.
+Auf einer traffic-schwachen Site beißt der
+Day-over-Day-Vergleich: Eine einzige langsame Nachtphase kann ein
+24-h-p75 allein um 20 % verschieben. Bei dünnem Traffic erst das
+Fenster auf 7 Tage verbreitern, dann über die Schwelle nachdenken.
 
 ## Häufige Stolperfallen
 
-- **Rules dedupen nicht zwischen Cadences.** Eine 15-Minuten-Rule
-  feuert bei anhaltender Regression locker 4× in der Stunde. Wer
-  nur eine Notification pro Vorfall will: längere Cadence oder
-  `min_silence_minutes` auf der Rule.
+- **Rules feuern beim Übergang, nicht bei jeder Auswertung.** Eine
+  Rule benachrichtigt, wenn ihre Bedingung von „nicht erfüllt" auf
+  „erfüllt" kippt; solange die Regression anhält, bleibt sie
+  still. Wer während eines längeren Vorfalls Erinnerungen will,
+  setzt **Re-notify after** auf der Rule; dann sendet sie nach
+  dieser Zeit erneut, falls die Bedingung weiterhin erfüllt ist.
 - **Auch in einem geplanten Wartungsfenster ist ein Alarm Lärm.**
   Rule pausieren, oder per URL die betroffenen Pfade ausschließen.
-- **Notification Rules taggen Releases nicht von selbst.** Für
-  Per-Release-Alarme musst du
-  [Releases vergleichen](/de/guides/compare-releases) erst mal
-  verdrahten.
+- **Per-Release-Bedingungen gibt es nicht.** Rules vergleichen
+  gegen Schwellen oder das Vorfenster, nicht gegen ein Release. Um
+  einen konkreten Deploy zu beurteilen, nimm nach dem Alarm
+  [Releases vergleichen](/de/guides/compare-releases).
 
 ## Verwandt
 
 - [Notification Rules API](/de/api): programmatisches Anlegen.
-- [Releases-Konzept](/de/concepts/releases): für Per-Release-Rules.
+- [Releases-Konzept](/de/concepts/releases): Deploys taggen.
 - [Releases vergleichen](/de/guides/compare-releases): CI/CD
   verdrahten, um Deploys zu taggen.

@@ -34,12 +34,13 @@ you load it:
 `{source_hash}` is the per-site hash Fastmon generates when you
 create the site. Copy it from the site's settings page.
 
-The beacon:
+The tracker:
 
 - registers `PerformanceObserver` for Web Vitals,
 - buffers events in memory, and
-- POSTs a single batched payload to `/c/{collector_hash}` on
-  `pagehide`, `visibilitychange → hidden`, or a periodic flush.
+- POSTs batched payloads to `/c/{collector_hash}` over the
+  page view's lifecycle: on load, on `pagehide`,
+  `visibilitychange → hidden`, and periodic flushes.
 
 It doesn't set cookies, store IPs, or fingerprint the visitor;
 see [Privacy](/en/privacy) for the full statement.

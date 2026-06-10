@@ -15,7 +15,7 @@ oder über einen Tag-Manager.
   <Card title="HTML" href="/de/install/html" description="Jede Website, die du kontrollierst. Läuft mit statischen Sites, Hugo, Jekyll, plain HTML und jedem Framework über dessen Head/Script-Primitive." />
 </Cards>
 
-## Nachdem der Tag drin ist
+## Nachdem das Tag drin ist
 
 - [Implementierung verifizieren](/de/install/verify):
   Fünf-Sekunden-Check in DevTools und Dashboard.
@@ -36,13 +36,14 @@ egal wie du es lädst:
 `{source_hash}` ist der Per-Site-Hash, den Fastmon beim Anlegen der
 Site erzeugt hat. Aus den Site-Einstellungen kopieren.
 
-Der Beacon:
+Der Tracker:
 
 - registriert `PerformanceObserver` für Web Vitals,
 - puffert Events im Speicher und
-- schickt einen gebündelten POST an `/c/{collector_hash}` bei
-  `pagehide`, `visibilitychange → hidden` oder einem periodischen
-  Flush.
+- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt
+  über den Lebenszyklus des Pageviews: beim Laden, bei
+  `pagehide`, `visibilitychange → hidden` und in periodischen
+  Flushes.
 
 Er setzt keine Cookies, speichert keine IPs und macht kein Fingerprinting.
 Volles Statement in [Privacy](/de/privacy).

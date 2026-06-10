@@ -21,7 +21,7 @@ your CI/CD pipeline, and a site that's already
 3. Store it in your CI's secret store as `FASTMON_TOKEN`.
 
 If you ever lose the token, regenerate it via `POST
-/v1/account/api-token`. The old one stops working immediately.
+/v1/account/api-key`. The old one stops working immediately.
 
 ## 2. Find the site ID
 
@@ -139,7 +139,7 @@ the example above compares 24 hours after the release against the
 
 ## Common surprises
 
-- **No `released_at` defaults to "now."** That fits most of the
+- **Omitting `released_at` defaults to "now."** That fits most of the
   time. Watch out when your deploy job runs minutes before the
   artifact is actually live (blue/green flips later, etc.).
   Then back-date it.
@@ -153,7 +153,7 @@ the example above compares 24 hours after the release against the
 ## Related
 
 - [Releases concept](/en/concepts/releases): what a release is.
-- [Analytics API](/en/analytics-api): `compare_to_release_id`
+- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to_release_id`
   details.
 - [Notification rules](/en/guides/notification-rules): alert
   automatically on per-release regressions.

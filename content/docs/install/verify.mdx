@@ -11,8 +11,9 @@ fine. If both pass, you can stop reading.
 Open your site in a fresh browser tab, open DevTools (`⌥⌘I` /
 `F12`), and switch to **Network**. Filter for `c/`.
 
-Now switch to another tab, then come back. You should see a single
-`POST` request:
+Now switch to another tab, then come back. You should see one or
+more `POST` requests (the tracker sends several beacons over a
+page view's lifecycle; more than one is normal):
 
 ```
 POST https://fastmon.site/c/{collector_hash}     204
@@ -27,8 +28,9 @@ Open the site in the Fastmon dashboard. After about a minute
 (beacons are batched into ClickHouse), the **Traffic** section will
 show:
 
-- non-zero **sessions**,
-- non-zero **page views**,
+- non-zero **page views** (sessions stay at zero in the default
+  `anonymous` mode; that's expected. See
+  [Sessions](/en/concepts/sessions)),
 - a **Web Vitals** snapshot for at least the page you opened.
 
 If the only traffic you see is your own visit so far, that's
@@ -55,7 +57,7 @@ for a CSP violation mentioning `fastmon.site`. If there is one, add
 `https://fastmon.site` to your `script-src` and `connect-src`
 directives.
 
-**Force a flush.** The beacon flushes periodically and on
+**Force a flush.** The tracker flushes periodically and on
 `pagehide` / `visibilitychange`. If nothing has shown up yet,
 switch tabs (or close and reopen the page); that triggers an
 immediate flush.

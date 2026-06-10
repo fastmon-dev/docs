@@ -17,11 +17,12 @@ Fastmon-Account.
 Logg dich ein, öffne die gewünschte Organisation und klick **Create site**.
 Ausfüllen:
 
-- **Name**: wie auch immer du sie später erkennst (z. B. `acme-marketing`).
+- **Name**: ein Name, an dem du die Site später wiedererkennst (z. B. `acme-marketing`).
 - **Domain**: der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
-- **Allowed origins** *(optional)*: leer lassen, um Beacons von der
-  Domain selbst zu akzeptieren. Staging- oder Preview-Hostnames hier
-  als Komma-Liste eintragen (`staging.acme.com, preview.acme.com`).
+- **Allowed origins** *(optional)*: leer lassen, dann gibt es
+  keinen Origin-Check. Sobald gesetzt, ist die Liste eine strikte
+  Allow-List; trag die Production-Domain mit ein, als Komma-Liste
+  (`acme.com, staging.acme.com, preview.acme.com`).
 
 Den Rest erstmal auf Default lassen; [Collection Mode](/de/collection-modes)
 und Retention drehst du später bei Bedarf.
@@ -38,20 +39,22 @@ Schritt erklärt wird.
 
 ## 2. Script auf deiner Site einbinden
 
-Bau diesen Tag in den `<head>` jeder Seite ein, die du überwachen willst.
+Bau dieses Tag in den `<head>` jeder Seite ein, die du überwachen willst.
 `{source_hash}` durch den Wert aus Schritt 1 ersetzen:
 
 ```html title="<head>"
 <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
-Mehr ist es nicht. Der Beacon:
+Mehr ist es nicht. Der Tracker:
 
 - registriert `PerformanceObserver` für Web Vitals,
 - puffert Events im Speicher,
-- schickt einen gebündelten POST an `/c/{collector_hash}` bei
+- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt
+  über den Lebenszyklus des Pageviews: beim Laden, bei
   `visibilitychange → hidden`, bei `pagehide` und in periodischen
-  Flushes.
+  Flushes. Rechne mit einigen wenigen pro Pageview, nicht mit
+  genau einem.
 
 Das Tag nutzt `defer`: lädt parallel zum HTML-Parsing, blockiert den Parser nie und läuft in Reihenfolge, sobald das DOM steht. `async` würde auch ohne Blockieren laden, kann das Parsing aber jederzeit unterbrechen, und die Reihenfolge zwischen mehreren async-Tags ist „wer zuerst fertig ist". Für Web-Vitals-Messung ist vorhersagbares Timing wichtig — daher defer. Wo du es
 einbaust, ist relativ egal; der `<head>` ist trotzdem die bessere
@@ -71,7 +74,7 @@ Wahl, dann erwischt der Beacon auch den ersten Paint.
 Pushe die Änderung nach Production (oder in die Umgebung, die du
 überwachen willst), und ruf eine beliebige Seite im Browser auf.
 
-Der Beacon flusht periodisch, solange die Seite offen ist, und
+Der Tracker flusht periodisch, solange die Seite offen ist, und
 zusätzlich bei `visibilitychange → hidden` und `pagehide`.
 Tab-Wechsel oder Schließen der Seite ist beim Testen der
 zuverlässigste Weg, einen Flush zu erzwingen, aber nicht der einzige
@@ -94,7 +97,9 @@ Wenn nichts kommt: [Implementierung verifizieren](/de/install/verify).
 
 Site im Dashboard öffnen. Nach ungefähr einer Minute (Beacons
 werden in Batches in ClickHouse geschrieben) zeigt der
-**Traffic**-Bereich Sessions &gt; 0. Der erste Beacon ist der, den
+**Traffic**-Bereich Pageviews &gt; 0. (Sessions bleiben im
+Default-Modus `anonymous` bei null; das ist so gewollt, siehe
+[Sessions](/de/concepts/sessions).) Der erste Beacon ist der, den
 du gerade abgeschickt hast; deine IP behalten wir nicht, aber die
 Zeile ist da.
 

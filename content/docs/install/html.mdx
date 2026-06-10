@@ -18,9 +18,10 @@ site**. Fill in:
 
 - **Name**: whatever helps you recognize it later (e.g. `acme-marketing`).
 - **Domain**: the bare hostname, no protocol. Example: `acme.com`.
-- **Allowed origins** *(optional)*: leave blank to accept beacons from
-  the domain itself. Add staging or preview hostnames here as a
-  comma-separated list (`staging.acme.com, preview.acme.com`).
+- **Allowed origins** *(optional)*: leave blank to skip the origin
+  check. If you set it, it becomes a strict allow-list; include
+  the production domain too, as a comma-separated list
+  (`acme.com, staging.acme.com, preview.acme.com`).
 
 Leave the rest at defaults for now; you can come back to
 [collection mode](/en/collection-modes) and retention later.
@@ -28,7 +29,7 @@ Leave the rest at defaults for now; you can come back to
 Click **Save**. Fastmon generates two short hashes for the site:
 
 - `source_hash`: goes into the script URL.
-- `collector_hash`: used by the beacon to send data back. It's
+- `collector_hash`: used by the tracker to send data back. It's
   baked into the script, so you don't need to copy it.
 
 Both show up on the settings page, along with a copy-paste-ready
@@ -43,17 +44,18 @@ monitor, with `{source_hash}` replaced by the hash from step 1:
 <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
-That's the whole setup. The beacon:
+That's the whole setup. The tracker:
 
 - registers `PerformanceObserver` for Web Vitals,
-- buffers events in memory,
-- sends a single batched POST to `/c/{collector_hash}` on
-  `visibilitychange → hidden`, on `pagehide`, and at a periodic
-  flush.
+- buffers events in memory, and
+- sends batched POSTs to `/c/{collector_hash}` over the
+  page view's lifecycle: on load, on `visibilitychange → hidden`,
+  on `pagehide`, and at periodic flushes. Expect a few per
+  page view, not exactly one.
 
-The tag uses `defer`: it loads in parallel with HTML parsing, never blocks the parser, and runs in source order once the DOM is parsed. `async` would also load without blocking, but it can interrupt parsing the moment the download finishes, and the order between multiple async scripts is whoever-finishes-first — for Web Vitals measurement we want predictable timing, so defer wins. Where you place it
+The tag uses `defer`: it loads in parallel with HTML parsing, never blocks the parser, and runs in source order once the DOM is parsed. `async` would also load without blocking, but it can interrupt parsing the moment the download finishes, and the order between multiple async scripts is whichever-finishes-first — for Web Vitals measurement we want predictable timing, so defer wins. Where you place it
 isn't critical, but `<head>` is the better spot; it lets the
-beacon catch the very first paint.
+tracker catch the very first paint.
 
 ### Where to put it
 
@@ -69,7 +71,7 @@ beacon catch the very first paint.
 Push the change to production (or whichever environment you want
 to monitor) and open any page on the site in your own browser.
 
-The beacon flushes periodically while the page is open, and again
+The tracker flushes periodically while the page is open, and again
 on `visibilitychange → hidden` and `pagehide`. Switching tabs or
 closing the page is the most reliable way to force a flush during
 testing, but it's not the only trigger.
@@ -91,8 +93,10 @@ If you don't see it, jump to [Verifying it works](/en/install/verify).
 
 Open the site in the dashboard. After about a minute (beacons are
 batched into ClickHouse), the **Traffic** section will show
-non-zero sessions. The first beacon is the one you just sent;
-your IP isn't stored, but the row is there.
+non-zero page views. (Sessions stay at zero in the default
+`anonymous` mode; that's expected. See
+[Sessions](/en/concepts/sessions).) The first beacon is the one
+you just sent; your IP isn't stored, but the row is there.
 
 ## What's next
 

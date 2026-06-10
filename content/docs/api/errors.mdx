@@ -138,8 +138,9 @@ The full list, grouped by category.
 
 | Code                | Meaning                                                                   |
 | ------------------- | ------------------------------------------------------------------------- |
-| `plan_insufficient` | The action requires a higher plan tier than the organization is on.       |
-| `ai_disabled`       | AI features are turned off for this organization or globally.             |
+| `plan_insufficient`  | The action requires a higher plan tier than the organization is on.      |
+| `ai_disabled`        | AI features are turned off for this organization or globally.            |
+| `synthetic_disabled` | Synthetic Monitoring isn't enabled for this organization. An owner can turn it on under Organization Settings. |
 
 ### Resource limits / upstream
 
@@ -147,9 +148,14 @@ The full list, grouped by category.
 | ------------------------- | ----------------------------------------------------------------------------- |
 | `beacon_buffer_full`      | The beacon ingestion buffer is saturated. Retry shortly.                      |
 | `clickhouse_unavailable`  | The analytics store is temporarily unavailable.                               |
-| `audio_quota_exceeded`    | TTS/audio generation quota for this organization is used up.                  |
 | `upstream_unavailable`    | A required upstream service didn't respond. Retry with backoff.               |
 | `oauth_error`             | An OAuth provider returned an error or the state didn't validate.             |
+
+### Feature lifecycle
+
+| Code              | Meaning                                                                       |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `feature_removed` | The endpoint or feature has been removed and no longer accepts requests.       |
 
 ### Generic
 

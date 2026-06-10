@@ -33,17 +33,17 @@ need to find out *why* LCP is slow.
 ## How to read a percentile
 
 By convention, Web Vitals are reported at the **75th percentile**.
-Means: across all the page-views in the time window, 75% of
+That means: across all the page-views in the time window, 75% of
 visitors had a better value than p75 and 25% had a worse one.
 
 If your LCP at p75 is 2,400 ms, that's the value the
-*worst-quarter of your traffic* is actually living with. p50 is
+*worst quarter of your traffic* is actually living with. p50 is
 "what most people see": comfortable, but not a useful target if
 you care about visitors on slow networks or older devices.
 
 ## How Fastmon collects them
 
-The beacon uses the same browser APIs the
+The tracker uses the same browser APIs the
 [`web-vitals`](https://github.com/GoogleChrome/web-vitals) library is
 built on:
 
@@ -53,9 +53,10 @@ built on:
 - The browser's own attribution data for INP.
 
 Each metric is finalized at a different moment, usually when the
-page becomes hidden, or when the user interacts. The beacon
-batches the final values and sends a single POST per page-view.
-Details under [The RUM Beacon](/en/beacon).
+page becomes hidden, or when the user interacts. The tracker
+batches values and sends them in a handful of beacons over the
+page-view's lifecycle. Details under
+[The RUM Beacon](/en/concepts/beacon).
 
 ## Where they show up in the product
 
@@ -66,9 +67,9 @@ Details under [The RUM Beacon](/en/beacon).
   number. See
   [Experience Score](/en/web-vitals/experience-score).
 - **Notification rules**: alert when a metric crosses a threshold or
-  regresses against a previous release.
-- **Analytics API**: query any metric programmatically. See
-  [Analytics API](/en/analytics-api).
+  worsens against the previous window.
+- **Analytics API**: query any metric programmatically. See the
+  [Analytics endpoints](/en/api/analytics/queryAnalytics).
 
 ## What's next
 

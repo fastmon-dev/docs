@@ -12,7 +12,7 @@ deploy. With releases you can ask "did LCP go up after we shipped
 Performance regressions almost always line up with a deploy.
 Without release markers, you've got to remember when each deploy
 happened and compare by hand. With markers, the
-[Analytics API](/en/analytics-api) does the before/after comparison
+[Analytics API](/en/api/analytics/queryAnalytics) does the before/after comparison
 for you in a single request.
 
 ## When you'd touch it
@@ -101,7 +101,7 @@ stay queryable by ID.
 
 ### Long-running release branches
 
-Tag in the moment the new version actually reaches meaningful
+Tag at the moment the new version actually reaches meaningful
 traffic: when you flip the feature flag, swap the canary, or
 move the load balancer. Don't tag on "deploy finished, nobody
 saw it yet."
@@ -128,6 +128,6 @@ brings metrics back to baseline.
 ## Related
 
 - [Sites](/en/concepts/sites): releases live under a site.
-- [Analytics API](/en/analytics-api): `compare_to_release_id`.
+- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to_release_id`.
 - [Compare releases](/en/guides/compare-releases): step-by-step
   guide for hooking up CI/CD.

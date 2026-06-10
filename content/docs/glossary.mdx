@@ -38,9 +38,14 @@ The metrics that affect search ranking.
 
 ## Beacon and ingestion
 
-**Beacon**: The JS file at `/s/{source_hash}.js`. Captures metrics
-in the browser and POSTs them. See
+**Beacon**: A single batched payload the tracker POSTs to
+`/c/{collector_hash}`. Also shorthand for the script at
+`/s/{source_hash}.js` that produces them. See
 [The RUM Beacon](/en/concepts/beacon).
+
+**Tracker**: The running JavaScript agent the beacon script starts
+in the visitor's browser. It registers the observers, buffers
+values, strips URLs, and sends the beacons.
 
 **Collector**: The server endpoint at `/c/{collector_hash}` that
 receives beacons, validates them, and writes them to the analytics
@@ -56,7 +61,7 @@ invalidating data.
 **Collection mode**: Per-site setting: `anonymous`, `consent`,
 `full`. See [Collection modes](/en/collection-modes).
 
-**Page-view ID (`pvid`)**: Per-page-view identifier the beacon
+**Page-view ID (`pvid`)**: Per-page-view identifier the tracker
 generates client-side. Not persisted.
 
 **`pst` / `cst`**: Page-started timestamp / client-sent-at
@@ -140,10 +145,11 @@ that took longer than 50 ms; usually the root cause of bad INP.
 own. Fastmon groups these by domain and category for impact
 analysis. See `/analytics/third-party`.
 
-**`fastmon:consent` / `fastmon:revoke`**: Window events the
-beacon listens for in `consent` mode. See
-[Collection modes](/en/collection-modes#consent--wait-for-opt-in).
+**`window.__fastmon_consent(true|false)`**: The function your CMP
+calls to grant or revoke consent in `consent` mode. See
+[Collection modes](/en/collection-modes#consent-let-the-page-choose-controlled-by-your-cmp).
 
-**`__fastmon_disabled`**: Window flag the beacon respects to
-suppress sending on a single page-view. See
-[Filter internal traffic](/en/guides/filter-internal-traffic).
+**`__FASTMON_SAMPLE_RATE`**: Window variable (0–1) the tracker
+reads at page load to decide whether this page-view sends beacons.
+Set it to `0` before the script tag to suppress sending entirely
+on that page-view.

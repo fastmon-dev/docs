@@ -1,6 +1,6 @@
 ---
 title: Time to First Byte (TTFB)
-description: "How long the server took to send the first byte, and why it's the upper bound for everything else."
+description: "How long the server took to send the first byte, and why it's the floor every other metric sits on."
 ---
 
 **TTFB** measures the time from navigation start to the first
@@ -46,7 +46,7 @@ posture.
 ## When TTFB is reported
 
 TTFB is captured from the Navigation Timing API as `responseStart -
-fetchStart`. The beacon includes it with every page-view that has a
+fetchStart`. The tracker includes it with every page-view that has a
 new navigation entry.
 
 ## How to see TTFB in Fastmon
@@ -84,7 +84,7 @@ The dashboard's **Performance** section shows TTFB at p50, p75, p95.
 ## Common surprises
 
 - **A fast TTFB on Vercel/Netlify can hide a slow origin.** The edge
-  caches the response; cache-misses might be 10× slower. Check your
+  caches the response; cache misses might be 10× slower. Check your
   cache hit rate alongside TTFB.
 - **TTFB doesn't include client-side render time.** A page with a
   fast TTFB and a slow LCP is shipping a lot of work to the

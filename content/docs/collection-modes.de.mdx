@@ -4,7 +4,7 @@ description: Anonymous, Consent, Full. Was sie sind, was sie sammeln, welchen du
 ---
 
 Jede Fastmon-Site hat einen **Collection Mode**. Der legt fest, was
-der Beacon im Browser des Besuchers tatsächlich macht. Pro Site,
+der Tracker im Browser des Besuchers tatsächlich macht. Pro Site,
 jederzeit umschaltbar; der Script-Cache wird dabei automatisch
 invalidiert.
 
@@ -29,10 +29,10 @@ und für fast alle ist das genau richtig.
 
 ## `anonymous`: der Default
 
-Der Beacon sendet sofort beim Pageload, ohne Consent-Gate. Erfasst
-wird nur, was unter [Privacy: Was wir nicht sammeln](/de/privacy)
-steht. Nichts, womit man einen Besucher seitenübergreifend
-wiedererkennen könnte.
+Der Tracker sendet sofort beim Pageload, ohne Consent-Gate.
+Erfasst wird nur das Basis-Inventar aus [Privacy](/de/privacy).
+Nichts davon taugt dazu, einen Besucher seitenübergreifend
+wiederzuerkennen.
 
 **Passt für dich, wenn:**
 
@@ -42,11 +42,11 @@ wiedererkennen könnte.
   und keine IPs gespeichert werden. Andere Tools auf der Seite
   können trotzdem einen Banner verlangen, das liegt aber nicht
   an uns.
-- du kein CMP integriert hast,
+- du kein CMP integriert hast.
 - du das Setup live schalten willst, ohne erst Engineering und
   Legal an einen Tisch zu setzen.
 
-**Was der Beacon tut:**
+**Was der Tracker tut:**
 
 - Registriert `PerformanceObserver` beim Pageload.
 - Puffert Web Vitals, Fehler und Resource-Timing im Speicher.
@@ -54,7 +54,7 @@ wiedererkennen könnte.
   `visibilitychange` / periodischem Flush.
 - Vergibt eine Per-Pageview-ID, die mit der Seite verschwindet.
 
-**Was der Beacon nicht tut:**
+**Was der Tracker nicht tut:**
 
 - Cookies setzen.
 - `localStorage` / `IndexedDB` lesen oder schreiben.
@@ -90,15 +90,15 @@ zuvor zusammengeführte Session nach Widerruf nicht
 liegenbleibt. Der Call ist idempotent; mehrfacher Aufruf mit
 gleichem Argument macht nichts zusätzlich.
 
-Bis zum Opt-In geht jedes Beacon **byte-identisch zu `anonymous`**
+Bis zum Opt-In geht jeder Beacon **byte-identisch zu `anonymous`**
 raus: speicherfrei, keine Session-ID, keine LCP-Image-URL, kein
 LoAF-Detail, keine Third-Party-Domain-Map, bei Fehlern nur Typ +
 Count (keine Message, keine Frames). Web Vitals fließen weiter.
 Consent schaltet **Verknüpfbarkeit** frei, keine neuen
 Datenkategorien.
 
-Das `_fm_consent`-Cookie qualifiziert sich nach TDDDG §25(2)
-Nr. 2 / ePrivacy 5(3) als unbedingt erforderlich: ohne
+Das `_fm_consent`-Cookie gilt nach TDDDG §25(2) Nr. 2 /
+ePrivacy 5(3) als unbedingt erforderlich: ohne
 Persistierung würde das Opt-In den nächsten Seitenwechsel nicht
 überleben und der Consent-Mechanismus selbst wäre sinnlos.
 
@@ -148,24 +148,24 @@ Datum.
   und Consent-Kontext anders aussehen,
 - du in einer Jurisdiktion sitzt, in der Session-Verknüpfung ohne
   separate Rechtsgrundlage erlaubt ist,
-- du einen AVV unterschrieben hast, der das explizit abdeckt,
-- oder du entschieden hast, dass `consent` die bessere Wahl ist
-  und du das Opt-In-Gate willst.
+- du einen AVV unterschrieben hast, der das explizit abdeckt.
 
-Im Zweifel: lass `full` weg. Regulatoren belohnen niemanden dafür,
-Sessions zu verknüpfen, die er nicht hätte verknüpfen müssen.
+Im Zweifel: lass `full` weg. Und wenn du eigentlich das
+Opt-In-Gate willst, ist `consent` dein Modus, nicht `full`.
+Aufsichtsbehörden belohnen niemanden dafür, Sessions zu
+verknüpfen, die er nicht hätte verknüpfen müssen.
 
 ## Mode ändern
 
-Site in Fastmon öffnen, **Einstellungen**, **Collection mode** umstellen,
-speichern. Die Änderung greift, sobald der Script-Cache rolliert;
+Site in Fastmon öffnen, **Einstellungen**, **Erfassungsmodus**
+(so heißt der Collection Mode in der UI) umstellen, speichern. Die Änderung greift, sobald der Script-Cache rolliert;
 für aktive Besucher meistens binnen Minuten, für neue Sessions
 sofort.
 
-Redeployen oder das `<script>`-Tag anpassen musst du nichts.
+Du musst weder redeployen noch das `<script>`-Tag anpassen.
 
 ## Nächste Schritte
 
-- Was der Beacon genau schickt: [Der RUM-Beacon](/de/beacon).
+- Was der Beacon genau schickt: [Der RUM-Beacon](/de/concepts/beacon).
 - [Privacy: Was wir nicht sammeln](/de/privacy). Die
   Zero-Cookie-Story gilt für alle drei Modes.

@@ -1,10 +1,10 @@
 ---
 title: Releases
-description: Versionierter Marker auf einer Site. Der Mechanismus für "hat dieser Deploy Performance verschlechtert?"
+description: Versionierter Marker auf einer Site. Der Mechanismus für „hat dieser Deploy die Performance verschlechtert?"
 ---
 
 Ein **Release** ist ein benannter Zeitpunkt auf einer Site,
-meistens ein Deploy. Damit lässt sich "ist LCP gestiegen, nachdem
+meistens ein Deploy. Damit lässt sich „ist LCP gestiegen, nachdem
 wir `v2.4.1` ausgerollt haben?" per API-Call beantworten, statt
 sich durch Charts zu klicken.
 
@@ -13,7 +13,7 @@ sich durch Charts zu klicken.
 Performance-Regressionen hängen fast immer an einem Deploy. Ohne
 Release-Marker musst du dir merken, wann was live ging, und dann
 manuell vergleichen. Mit Markern macht die
-[Analytics-API](/de/analytics-api) den Vorher-Nachher-Vergleich in
+[Analytics-API](/en/api/analytics/queryAnalytics) den Vorher-Nachher-Vergleich in
 einem einzigen Request.
 
 ## Wann du sie anfasst
@@ -28,8 +28,8 @@ einem einzigen Request.
   beide Übergänge im Chart sehen.
 
 Wenn du keine Releases taggst, ist nichts kaputt. Das Dashboard
-funktioniert auch ohne. Du verschenkst dir nur die
-Deploy-Korrelation als Abkürzung.
+funktioniert auch ohne. Dir entgeht nur die Deploy-Korrelation
+als Abkürzung.
 
 ## Was auf einem Release steht
 
@@ -38,7 +38,7 @@ Deploy-Korrelation als Abkürzung.
 | `id`          | UUID v7     | Wird in `compare_to_release_id`-Queries verwendet.                         |
 | `site_id`     | UUID v7     | Die zugehörige Site.                                                       |
 | `version`     | string      | Pflicht. Freiform (`v2.4.1`, `2026-05-07`, `git:abcdef0`).                |
-| `released_at` | timestamp   | Optional. Wann der Deploy live ging. Default "jetzt", wenn weggelassen.    |
+| `released_at` | timestamp   | Optional. Wann der Deploy live ging. Default „jetzt", wenn weggelassen.    |
 
 Mehr ist da nicht. Releases sind mit Absicht minimal; wir wollen
 Korrelation, keine Deploy-Datenbank bauen.
@@ -88,30 +88,30 @@ gerechnet auf dem Fenster *direkt vor* dem Release.
 }
 ```
 
-Das "Vorher"-Fenster ist genauso lang wie `time_range` und endet
-beim `released_at` des Release. Heißt: ein 24-Stunden-Fenster
-"danach" wird gegen die 24 Stunden direkt davor verglichen.
+Das „Vorher"-Fenster ist genauso lang wie `time_range` und endet
+beim `released_at` des Releases. Heißt: ein 24-Stunden-Fenster
+„danach" wird gegen die 24 Stunden direkt davor verglichen.
 
 ## Häufige Szenarien
 
 ### Continuous Deploys
 
 Zehn Deploys am Tag? Tagg sie alle. Die Menge ist kein Problem.
-Der Release-Picker zeigt die neuesten zuerst, ältere kommst du
+Der Release-Picker zeigt die neuesten zuerst, an ältere kommst du
 per ID jederzeit dran.
 
 ### Lang laufende Release-Branches
 
 Tagge in dem Moment, in dem die neue Version wirklich Traffic
 abbekommt: beim Flippen des Feature-Flags, beim Umschalten des
-Canary, beim Umstellen des Load-Balancers. Nicht "Deploy ist
+Canary, beim Umstellen des Load-Balancers. Nicht „Deploy ist
 durch, gesehen hat's aber noch keiner".
 
 ### Rollbacks
 
 Den Rollback als eigenen Release taggen, gerne mit einer Version
 wie `rollback-v2.4.0`. Im Dashboard sollen alle drei Übergänge
-sichtbar sein: das kaputte Release live, die Regression, und der
+sichtbar sein: der kaputte Release live, die Regression und der
 Rollback, der die Metriken wieder einfängt.
 
 ## Häufige Überraschungen
@@ -129,6 +129,6 @@ Rollback, der die Metriken wieder einfängt.
 ## Verwandt
 
 - [Sites](/de/concepts/sites): Releases liegen unter einer Site.
-- [Analytics-API](/de/analytics-api): `compare_to_release_id`.
+- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to_release_id`.
 - [Releases vergleichen](/de/guides/compare-releases):
   Schritt-für-Schritt-Guide, um CI/CD anzubinden.

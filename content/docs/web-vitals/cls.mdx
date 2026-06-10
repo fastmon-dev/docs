@@ -23,7 +23,7 @@ CLS is unitless; it's a sum of layout-shift scores. Track the
 | > 0.25          | Poor                |
 
 A score of 0 means nothing visible moved. A score of 0.1 is
-roughly "a small banner at the top of a 1080-tall viewport
+roughly "a small banner at the top of a 1080-pixel-tall viewport
 shoved everything down once." CLS climbs fast as soon as shifts
 start repeating.
 
@@ -98,10 +98,11 @@ The dashboard's **Performance** section shows CLS at p50, p75, p95.
 4. **Stabilize fonts.** Use `font-display: optional` or
    `font-display: swap` with `size-adjust`/`ascent-override` to match
    the fallback's metrics.
-5. **Avoid `transform: translate` for non-layout reasons during load.**
-   Animated entrances that move elements after the first paint count
-   as shifts; wait for user interaction or use `transform` from the
-   start (`transform: translate` doesn't trigger layout).
+5. **Don't animate layout properties (`top`, `left`, `margin`)
+   during load.** Animated entrances that move elements after the
+   first paint count as shifts. Wait for user interaction, or
+   animate with `transform: translate` instead; transforms don't
+   trigger layout and don't count as shifts.
 
 For a deeper walkthrough, see web.dev's
 [Optimize CLS](https://web.dev/articles/optimize-cls).

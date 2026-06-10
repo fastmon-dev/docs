@@ -1,6 +1,6 @@
 ---
 title: Time to First Byte (TTFB)
-description: "Wie lange der Server bis zum ersten Byte braucht, und warum es die Obergrenze für alles andere ist."
+description: "Wie lange der Server bis zum ersten Byte braucht und warum jede andere Metrik darauf aufsetzt."
 ---
 
 **TTFB** misst die Zeit zwischen Navigation Start und dem ersten
@@ -48,7 +48,7 @@ deinem Netzwerk und deiner Edge-Aufstellung.
 ## Wann TTFB reportet wird
 
 TTFB wird aus der Navigation-Timing-API als
-`responseStart - fetchStart` errechnet. Der Beacon nimmt es bei
+`responseStart - fetchStart` errechnet. Der Tracker nimmt es bei
 jedem Pageview mit neuem Navigation-Eintrag mit.
 
 ## TTFB in Fastmon ansehen
@@ -65,7 +65,7 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
 - **Nach Release**: `compare_to_release_id`. Ein Backend-Deploy
   mit einem neuen synchronen externen Call zeigt sich hier zuerst.
 
-## Wie man einen schlechten TTFB verbessert
+## Schlechten TTFB verbessern
 
 1. **HTML am Edge cachen.** Eine statische oder nahezu statische
    Seite sollte aus einem CDN-Cache kommen, nicht von deinem
@@ -81,8 +81,8 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
    Roundtrip. `http://` → `https://` → `www.` → Final-URL sind drei
    Roundtrips, bevor der Browser überhaupt das HTML hat.
 5. **HTTP/2 oder HTTP/3 nutzen.** Die meisten modernen Stacks tun
-   das schon, aber prüfen; ältere Origins verhandeln noch
-   HTTP/1.1.
+   das schon, aber prüfen; ältere Origins handeln noch
+   HTTP/1.1 aus.
 
 ## Häufige Überraschungen
 
@@ -100,5 +100,5 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
 ## Nächste Schritte
 
 - [FCP](/de/web-vitals/fcp): TTFBs nachgelagerter Nachbar.
-- [LCP](/de/web-vitals/lcp): was langsamer TTFB meist bricht.
+- [LCP](/de/web-vitals/lcp): was ein langsamer TTFB meist kaputt macht.
 - [Web-Vitals-Übersicht](/de/web-vitals).

@@ -14,7 +14,7 @@ ranking.
 
 ## What's a good LCP?
 
-LCP is reported in milliseconds and bucketed into three thresholds. The
+LCP is reported in milliseconds and bucketed into three ranges. The
 threshold to track is the **75th percentile** across page-views; that's
 how Google reports it, and it's the number you should optimize against.
 
@@ -53,8 +53,8 @@ LCP is finalized:
 - when the user scrolls, clicks, or presses a key (whichever comes first), or
 - when the page becomes hidden (`visibilitychange`).
 
-Fastmon's beacon picks up the final LCP at that moment and includes it
-in the next batched payload.
+Fastmon's tracker picks up the final LCP at that moment and includes
+it in the next batched payload.
 
 ## Examples
 
@@ -81,7 +81,7 @@ out of the box. To break it down:
   worse than desktop.
 - **By country**: group by `country`. RTT to your origin matters.
 - **By release**: set `compare_to_release_id` in the [Analytics
-  API](/en/analytics-api) to see whether a deploy regressed LCP.
+  API](/en/api/analytics/queryAnalytics) to see whether a deploy regressed LCP.
 
 Programmatically:
 

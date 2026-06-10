@@ -30,7 +30,7 @@ ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe
 [TTFB](/de/web-vitals/ttfb).
 
 **Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP,
-INP, CLS, FCP, TTFB, Page-Load-Time und Error-Rate. Gemappt auf
+INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate. Gemappt auf
 Schulnoten A+ bis F. Siehe
 [Experience Score](/de/web-vitals/experience-score).
 
@@ -39,9 +39,14 @@ Metriken, die das Suchranking beeinflussen.
 
 ## Beacon und Ingestion
 
-**Beacon**: Das Beacon-Script unter `/s/{source_hash}.js`. Erfasst
-Metriken im Browser und POSTet sie. Siehe
+**Beacon**: Eine einzelne gebündelte Payload, die der Tracker an
+`/c/{collector_hash}` POSTet. Auch Kurzname für das Script unter
+`/s/{source_hash}.js`, das sie erzeugt. Siehe
 [Der RUM-Beacon](/de/concepts/beacon).
+
+**Tracker**: Der laufende JavaScript-Agent, den das Beacon-Script
+im Browser des Besuchers startet. Er registriert die Observer,
+puffert Werte, bereinigt URLs und sendet die Beacons.
 
 **Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`,
 der Beacons empfängt, validiert und in den Analytics-Store
@@ -58,7 +63,7 @@ ohne Daten zu invalidieren.
 `consent`, `full`. Siehe
 [Collection Modes](/de/collection-modes).
 
-**Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Beacon
+**Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker
 clientseitig erzeugt. Nicht persistiert.
 
 **`pst` / `cst`**: Page-Started-Timestamp / Client-Sent-At-Timestamp.
@@ -75,7 +80,7 @@ Mitglieder, Notification Rules, API-Tokens. Siehe
 **Plan**: Organisations-Tier: `beta`, `starter`, `pro`, `partner`,
 `enterprise`. Steuert Features und Quotas.
 
-**Site**: Eine monitorte Property. Hat eigene Beacon-Hashes und
+**Site**: Eine überwachte Property. Hat eigene Beacon-Hashes und
 Einstellungen. Siehe [Sites](/de/concepts/sites).
 
 **Session**: 30-Minuten-Fenster von Pageviews desselben Browsers.
@@ -86,7 +91,7 @@ Anonym per Konstruktion. Siehe
 Analytics über `compare_to_release_id` für Vorher/Nachher genutzt.
 Siehe [Releases](/de/concepts/releases).
 
-**Tag**: Freies Label auf einer Site (max 10) für
+**Tag**: Freies Label auf einer Site (max. 10) für
 Dashboard-Filter. Konventionen: `env:production`, `team:growth`
 etc.
 
@@ -95,7 +100,7 @@ etc.
 
 **Invite**: Schwebende Mitgliedschaft, wartet auf Annahme.
 
-**API-Token**: `fm_…`-prefixed Bearer-Token für programmatischen
+**API-Token**: Bearer-Token mit Präfix `fm_…` für programmatischen
 Zugriff. Server-seitig gehasht; verlorene Tokens nicht
 wiederherstellbar.
 
@@ -110,8 +115,8 @@ aggregierte Metriken.
 **Session-Store**: In-Memory-Store für Sessions, Rate-Limits,
 kurzlebige Caches.
 
-**Partner-Client**: Sub-Organisation, die eine
-`partner`-Plan-Org für jemand anderen betreibt.
+**Partner-Client**: Sub-Organisation, die von einer
+`partner`-Plan-Org für jemand anderen betrieben wird.
 
 ## API
 
@@ -130,7 +135,7 @@ mit `meta.total` und `meta.has_more`.
 `error.request_id` gespiegelt. Beim Reporting immer mitsenden.
 
 **UUID v7**: Zeitlich sortierbares UUID-Format für alle
-Ressource-IDs.
+Ressourcen-IDs.
 
 ## Sonstiges
 
@@ -138,16 +143,18 @@ Ressource-IDs.
 Besucher-Browsern, im Gegensatz zu synthetischen Lab-Tests.
 
 **LoAF**: *Long Animation Frame.* Browser-API für Frames, die
-länger als 50 ms dauerten; meist die Ursache schlechter INP.
+länger als 50 ms dauerten; meist die Ursache eines schlechten INP.
 
 **Third-Party**: Request an eine andere Domain als die der Site
 selbst. Fastmon gruppiert nach Domain und Kategorie für
 Impact-Analyse. Siehe `/analytics/third-party`.
 
-**`fastmon:consent` / `fastmon:revoke`**: Window-Events, auf die
-der Beacon im `consent`-Mode hört. Siehe
-[Collection Modes](/de/collection-modes#consent--auf-opt-in-warten).
+**`window.__fastmon_consent(true|false)`**: Die Funktion, die dein
+CMP aufruft, um im `consent`-Mode die Zustimmung zu erteilen oder
+zu widerrufen. Siehe
+[Collection Modes](/de/collection-modes#consent-vom-cmp-entscheiden-lassen).
 
-**`__fastmon_disabled`**: Window-Flag, das der Beacon respektiert,
-um auf einem Pageview nicht zu senden. Siehe
-[Internen Traffic filtern](/de/guides/filter-internal-traffic).
+**`__FASTMON_SAMPLE_RATE`**: Window-Variable (0–1), die der Tracker
+beim Laden der Seite liest, um zu entscheiden, ob dieser Pageview
+Beacons sendet. Vor dem Script-Tag auf `0` setzen, und der Pageview
+sendet gar nicht.

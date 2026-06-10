@@ -8,7 +8,7 @@ The **beacon** is the JavaScript file Fastmon serves at
 client-side code we ship, and the only thing your visitors load
 from us.
 
-This page is the technical reference. For setup head to
+This page is the technical reference. For setup, head to
 [Implementation](/en/install); for the privacy posture, see
 [Privacy: what we don't collect](/en/privacy).
 
@@ -19,9 +19,9 @@ depending on the site's [collection mode](/en/collection-modes):
 
 | Mode | Bundle | Storage-free baseline |
 |---|---|:---:|
-| `anonymous` | `privacy.js` | Yes; no cookies, no `sessionStorage` |
+| `anonymous` | `anonymous.js` | Yes; no cookies, no `sessionStorage` |
 | `consent` | `consent.js` | Yes, until `__fastmon_consent(true)`; then `_fm_consent` cookie + `sessionStorage._s` |
-| `full` | `standard.js` | `sessionStorage._s` from first pageview, no cookie |
+| `full` | `full.js` | `sessionStorage._s` from first pageview, no cookie |
 
 You don't pick the bundle in the `<script>` tag; the server
 resolves it from the site's mode and ships the right build. A mode
@@ -32,7 +32,7 @@ change rolls the script cache automatically.
 The beacon is the boundary between Fastmon and the visitor.
 Whatever happens here (what's measured, when it flushes, which
 identifiers get minted) the browser sees, and anyone reading the
-script can see too. So we keep the surface small on purpose:
+script can see it too. So we keep the surface small on purpose:
 small means auditable, quick to load, and easy to defend in a
 privacy review.
 
@@ -48,7 +48,7 @@ privacy review.
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
 | Document & Window          | Page URL (sanitized per collection mode), referrer, viewport size class.       |
 
-Geo data (country, region) is **not** read in the browser. The
+Geo data (the country) is **not** read in the browser. The
 edge derives it from the request IP and forwards a country code as
 a `FM-Country` header; the IP itself never reaches the application.
 Same for the bucketed browser / OS / device family, forwarded as
@@ -76,14 +76,14 @@ geolocation.
   opt-in. The per-pageview `pvid` exists in every mode and dies
   with the pageview.
 
-## The lifecycle of a page-view
+## The lifecycle of a pageview
 
 ```
 page loads
   ├── beacon script downloads (async, cached, ETag-validated)
-  ├── beacon registers PerformanceObserver and event listeners
+  ├── tracker registers PerformanceObserver and event listeners
   ├── visitor uses the page
-  │     └── beacon buffers events in memory
+  │     └── tracker buffers events in memory
   └── flush triggers (visibilitychange→hidden, pagehide, soft-nav,
       error update, or terminate) cause a POST to /c/{collector_hash}
       with a versioned payload (lifecycle marks each emission)
@@ -91,7 +91,7 @@ page loads
 
 The flush uses `navigator.sendBeacon()` when it's available, so
 the request survives even if the page is unloading. If
-`sendBeacon` isn't available, the beacon falls back to `fetch`
+`sendBeacon` isn't available, the tracker falls back to `fetch`
 with `keepalive: true`. If *both* fail (legacy browsers, very
 aggressive extension blocking), it falls back to a GET pixel at
 `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of
@@ -134,15 +134,15 @@ a representative envelope looks like:
 ```
 
 You don't usually need to read this; the dashboard and the
-[Analytics API](/en/analytics-api) unpack it for you. It's
+[Analytics API](/en/api/analytics/queryAnalytics) unpack it for you. It's
 documented here for transparency.
 
 Key abbreviations:
 
 - `sid`: session id. Lives in `sessionStorage._s`. Only emitted in
   `full` and in `consent` post-opt-in.
-- `pvid`: per-page-view id. New on every pageview, not persisted.
-- `ver`: monotonic version of this page-view's payload.
+- `pvid`: per-pageview id. New on every pageview, not persisted.
+- `ver`: monotonic version of this pageview's payload.
 - `lifecycle`: one of `init`, `loaded`, `error_update`, `softnav`,
   `hidden`, `frozen`, `terminated`.
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
@@ -205,7 +205,7 @@ window.__FASTMON_SAMPLE_RATE = 0.1;
 
 Read once per pageview when the tracker resets. Decisions are
 per-pageview, not per-beacon: a sampled pageview emits all its
-lifecycle beacons, an unsampled one emits none. Allowed range is
+lifecycle beacons; an unsampled one emits none. Allowed range is
 `[0, 1]`; out-of-range values are clamped silently. Set this before
 the script tag if you want the very first beacon respected.
 
@@ -238,7 +238,7 @@ The beacon's runtime behavior depends on the site's
   collector via a `?p=1` query parameter (the cookie is the source
   of truth; the query parameter is the server-side resolution
   hint).
-- `full`: keeps all fields the beacon collected.
+- `full`: keeps all fields the tracker collected.
 
 In every mode, the privacy guarantees in
 [Privacy](/en/privacy) hold.

@@ -39,7 +39,7 @@ A session contains the page-views that share **all** of these:
 
 In `anonymous` (and in `consent` before opt-in) the `sid` is
 stripped before send, so those page-views don't form a session at
-all; they show up only in pageview-level views.
+all; they show up only in page-view-level views.
 
 The session ends when:
 
@@ -77,7 +77,7 @@ The Analytics API exposes two endpoints:
 - `POST /analytics/sessions/detail`: page-views and timing for a
   single session.
 
-See [Analytics API](/en/analytics-api) for the request shapes.
+See [Analytics API](/en/api/analytics/queryAnalytics) for the request shapes.
 
 ## Common surprises
 
@@ -101,5 +101,5 @@ See [Analytics API](/en/analytics-api) for the request shapes.
   collects per page-view, which is the data sessions are built from.
 - [Privacy: what we don't collect](/en/privacy): why sessions are
   anonymous.
-- [Analytics API](/en/analytics-api): querying sessions
+- [Analytics API](/en/api/analytics/queryAnalytics): querying sessions
   programmatically.

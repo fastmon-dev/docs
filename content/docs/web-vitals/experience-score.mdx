@@ -6,7 +6,7 @@ description: "A single 0–10 number that combines Core Web Vitals, page load ti
 **Experience Score** is a composite metric. It condenses LCP,
 INP, CLS, FCP, TTFB, page load time, and error rate into a single
 0–10 number with a letter grade. Practically: this is the number
-you put on a dashboard, a status report, or in a slide when you're
+you put on a dashboard, in a status report, or on a slide when you're
 explaining performance to people who don't care about the
 engineering detail.
 
@@ -107,8 +107,9 @@ later.
   only LCP and CLS, which are usually easier.
 - **Internal vs external traffic skews the composite.** Office
   traffic on warm caches and fast laptops scores great; real visitors
-  on mobile in a tunnel score worse. Filter out internal IPs to keep
-  the number honest.
+  on mobile in a tunnel score worse. Filter internal traffic out at
+  the source to keep the number honest; see
+  [Filter internal traffic](/en/guides/filter-internal-traffic).
 
 ## What's next
 

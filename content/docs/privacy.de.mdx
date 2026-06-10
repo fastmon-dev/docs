@@ -147,10 +147,7 @@ Eigenschaften:
 Grundlage von DSGVO Art. 6 Abs. 1 lit. f. IP und User-Agent
 werden am Edge unter derselben Rechtsgrundlage verarbeitet, die
 auch den Ländercode produziert; das Backend sieht nur den Output
-des HMAC. Die klassische Aussage „im `anonymous`-Modus gibt es
-keinen seitenübergreifenden Identifier" wird damit ersetzt durch
-„zeitlich begrenzter, forward-secret seitenübergreifender
-Identifier". Die explizite, consent-gedeckte `sid` (mehrtägige
+des HMAC. Die explizite, consent-gedeckte `sid` (die tab-gebundene
 Session-ID in `full` / `consent` nach Opt-In) bleibt unverändert.
 
 ### Site-Metadaten vs. Besucherdaten
@@ -250,5 +247,5 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
 ## Nächste Schritte
 
 - [Collection Modes](/de/collection-modes) ansehen.
-- Technische Details zum [Beacon](/de/beacon).
+- Technische Details zum [Beacon](/de/concepts/beacon).
 - AVV gewünscht? Mail an [support@fastmon.eu](mailto:support@fastmon.eu).

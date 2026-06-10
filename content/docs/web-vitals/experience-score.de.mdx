@@ -10,7 +10,7 @@ das die Zahl fürs Dashboard, fürs Status-Reporting und für den
 Moment, in dem du Performance jemandem erklärst, der keinen
 Engineering-Hintergrund hat.
 
-Die Schwellen folgen Googles "gut"-/"schlecht"-Grenzen für die Web
+Die Schwellen folgen Googles „gut"-/„schlecht"-Grenzen für die Web
 Vitals; den Score rechnen wir aus deinen Real-User-Daten.
 
 ## Was ist ein guter Score?
@@ -27,8 +27,8 @@ Scores werden auf eine Nachkommastelle gerundet. Buchstaben-Grades:
 | < 5,0   | F     |
 
 Score 10 heißt: jede Metrik liegt für den Großteil deines Traffics
-auf oder unter ihrer "gut"-Schwelle. Score 5 heißt: die Metriken
-liegen im Schnitt um die "schlecht"-Grenze. Darunter sind mehrere
+auf oder unter ihrer „gut"-Schwelle. Score 5 heißt: die Metriken
+liegen im Schnitt um die „schlecht"-Grenze. Darunter sind mehrere
 Metriken klar im roten Bereich.
 
 ## Wie der Score berechnet wird
@@ -77,7 +77,7 @@ Nützliche Slices:
   Regionale oder Device-Klassen-Regressionen sind im globalen Score
   meist unsichtbar.
 
-## Wie man einen niedrigen Score verbessert
+## Niedrigen Score verbessern
 
 Der Composite ist nur so gesund wie sein schwächster Bestandteil:
 
@@ -91,7 +91,7 @@ Der Composite ist nur so gesund wie sein schwächster Bestandteil:
    sauberes Vorher/Nachher.
 
 Nicht versuchen, alles gleichzeitig zu optimieren. Die
-Verbesserungen schlagen sich oft gegenseitig: LCP-Fix mit mehr JS
+Verbesserungen beißen sich oft: LCP-Fix mit mehr JS
 kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach
 hinten schieben.
 
@@ -100,7 +100,7 @@ hinten schieben.
 - **Der Score kann fallen, ohne dass eine einzelne Metrik eine
   Schwelle reißt.** Eine kleine Regression in zwei Metriken kann
   den Composite um einen halben Punkt bewegen, während jede
-  Metrik einzeln noch "Gut" sagt.
+  Metrik einzeln noch „Gut" sagt.
 - **Ein einzelner Deploy kann eine permanente Score-Lücke
   erzeugen.** Sobald eine Regression live ist, trägt jeder folgende
   Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des
@@ -111,8 +111,9 @@ hinten schieben.
 - **Interner vs. externer Traffic verzerrt den Composite.**
   Office-Traffic auf warmen Caches und schnellen Laptops scort
   super; echte Besucher auf Mobile in einem Tunnel scoren
-  schlechter. Interne IPs ausfiltern, damit die Zahl ehrlich
-  bleibt.
+  schlechter. Internen Traffic an der Quelle ausfiltern, damit die
+  Zahl ehrlich bleibt; siehe
+  [Internen Traffic filtern](/de/guides/filter-internal-traffic).
 
 ## Nächste Schritte
 

@@ -1,11 +1,11 @@
 ---
 title: Interaction to Next Paint (INP)
-description: "Was INP misst, was ein guter INP ist, und wie man eine träge Seite debuggt, mit Fastmon-Daten."
+description: "Was INP misst, was ein guter INP ist und wie du eine träge Seite debuggst, mit Fastmon-Daten."
 ---
 
 **INP** misst, wie lange die schlechteste Besucherinteraktion auf der
 Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die
-Metrik für "die Seite fühlt sich beim Klicken träge an". Während
+Metrik für „die Seite fühlt sich beim Klicken träge an". Während
 LCP die Lade-Responsiveness misst, geht es bei INP um die
 *Runtime-Responsiveness* über die ganze Zeit, in der jemand auf
 der Seite ist.
@@ -24,7 +24,7 @@ INP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
 | > 500 ms        | Schlecht            |
 
 200 ms ist ungefähr die Obergrenze dafür, dass sich was für einen
-Menschen noch "sofort" anfühlt. Über 500 ms wirkt jede Interaktion
+Menschen noch „sofort" anfühlt. Über 500 ms wirkt jede Interaktion
 spürbar verzögert.
 
 ## Was als Interaktion zählt
@@ -40,8 +40,8 @@ nicht.
 
 Pro Interaktion ist INP die Zeit vom Input bis zum **nächsten Paint,
 der das Ergebnis visuell reflektiert**. Wenn dein Click-Handler 80 ms
-läuft und der Browser dann nochmal 120 ms braucht, das Ergebnis zu
-rendern, ist dein INP 200 ms.
+läuft und der Browser dann nochmal 120 ms braucht, um das Ergebnis
+zu rendern, ist dein INP 200 ms.
 
 ## Wann INP reportet wird
 
@@ -61,7 +61,7 @@ jeder Tastendruck einen INP-Kandidaten, und der schlechteste
 gewinnt. Was hilft: Debounce, Arbeit in `requestIdleCallback`
 schieben, oder auf einen Worker auslagern.
 
-**"Details anzeigen"-Disclosure auf einer Produktseite.** Beim
+**„Details anzeigen"-Disclosure auf einer Produktseite.** Beim
 Öffnen läuft eine Height-Transition. Die Animation selbst zählt
 nicht, aber das synchrone JS davor, das die Content-Höhe misst,
 schon. Triggert diese Messung Layout, schlägt das auf INP durch.
@@ -83,7 +83,7 @@ nützliche Slices:
 - **Nach Browser**: Group by `browser`. Firefox und Safari zeigen
   manchmal andere INP-Profile als Chromium.
 
-## Wie man einen schlechten INP verbessert
+## Schlechten INP verbessern
 
 INP-Regressionen lassen sich fast immer auf eine dieser Ursachen
 zurückführen:
@@ -97,11 +97,11 @@ zurückführen:
    (`offsetHeight`, `getBoundingClientRect`) direkt nach DOM-Writes
    lesen erzwingt einen synchronen Reflow. Reads vor Writes batchen.
 3. **Schwere Framework-Arbeit pro Change.** Tausende Nodes pro
-   Tastendruck rerendern. Memoize, virtualisiere, oder zu
-   uncontrolled Inputs wechseln.
+   Tastendruck rerendern. Memoisiere, virtualisiere oder wechsle
+   zu uncontrolled Inputs.
 4. **Third-Party-Scripts.** Tag-Manager, A/B-Test-Frameworks,
    Chat-Widgets: viele laufen auf jedem Event. Deinen
-   [Third-Party-Impact](/de/analytics-api) auditieren und
+   [Third-Party-Impact](/en/api/analytics/queryAnalytics) auditieren und
    entfernen oder deferren, was du nicht brauchst.
 
 Tieferer Walkthrough: [Optimize INP](https://web.dev/articles/optimize-inp)
@@ -110,13 +110,13 @@ auf web.dev.
 ## Häufige Überraschungen
 
 - **Eine Seite kann tollen LCP und schlechten INP haben.** Beides
-  misst was anderes. Versprich nicht "schnell ladend", wenn du
+  misst was anderes. Versprich nicht „schnell ladend", wenn du
   Responsiveness nicht auch gemessen hast.
 - **INP kann sich verschlechtern, wenn LCP besser wird.**
   Lazy-Loading und Hydration schieben Arbeit *nach* dem ersten
   Paint: gut für LCP, doof für INP. Immer beides zusammen
   anschauen.
-- **INP schwankt stark nach Interaktion.** Der erste Klick auf
+- **INP schwankt stark je nach Interaktion.** Der erste Klick auf
   einer frischen Seite ist meistens der schlimmste (kalter Cache,
   Code noch nicht warm). Lass dir die Daten pro Interaktion zeigen,
   nicht nur den Durchschnitt.

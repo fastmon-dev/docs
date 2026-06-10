@@ -36,8 +36,9 @@ or when compliance asks how the thing actually works.
 Two spots in the pipeline matter if you want to understand the
 behavior:
 
-- **Browser → collector.** A single batched `POST` per page-view, on
-  `pagehide` / `visibilitychange` / periodic flush. See
+- **Browser → collector.** A few batched `POST`s per page-view,
+  spread over its lifecycle (load, `pagehide` /
+  `visibilitychange`, periodic flush). See
   [The RUM Beacon](/en/concepts/beacon).
 - **Collector → analytics store.** Beacons land in a per-process
   buffer and flush every few seconds via batched insert. That's why
@@ -99,8 +100,10 @@ typically aren't).
 
 Because per-row inserts at this scale would melt any analytics
 database. Batching into a per-process buffer that flushes every
-few seconds is the standard pattern. The price: a ~30 s delay
-between a beacon arriving and it showing up in queries.
+few seconds is the standard pattern, and the analytics store
+batches those inserts again on its side. The combined price: a
+~30 s delay between a beacon arriving and it showing up in
+queries.
 
 ### Why separate `source_hash` and `collector_hash`?
 
@@ -116,7 +119,7 @@ Analytics queries read a few columns (one metric, a couple of
 dimensions) across many rows. Columnar storage scans only those
 columns from disk instead of every row, and timing data compresses
 very well in that layout. Vectorized aggregation makes percentiles
-and group-bys faster again. Postgres could serve the same queries;
+and group-bys faster still. Postgres could serve the same queries;
 it would just be noticeably slower and more expensive per query.
 
 ### Query freshness: live vs. aggregated

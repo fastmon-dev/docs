@@ -101,9 +101,9 @@ filter `c/`. You should see **no** request to
 being rendered: double-check the gate condition on the server (or
 the cookie test in the inline snippet).
 
-In Fastmon, after the cutover, the **Sessions** view should show
-your office's country/IP-derived region drop substantially. If it
-doesn't, the filter isn't catching them.
+In Fastmon, after the cutover, traffic from your office's country
+should drop noticeably (country is the only geo dimension we
+store). If it doesn't, the filter isn't catching those visits.
 
 ## Common surprises
 

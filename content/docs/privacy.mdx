@@ -25,7 +25,7 @@ the site is set to:
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
 | **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. |
 | **URL query strings or hash fragments** | Stripped at the tracker before any beacon goes out. `/orders/checkout?email=jane@x.com` arrives at the collector as `/orders/checkout`. |
-| **Personal identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
+| **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
 
 ### A note on cookies and storage
 
@@ -46,7 +46,7 @@ Opt-out deletes both immediately.
 pageview. No cookies. Storage on the device is one `sessionStorage`
 entry, gone when the tab closes.
 
-That's the full inventory of what the beacon ever touches on the
+That's the full inventory of what the tracker ever touches on the
 visitor's device. No localStorage in any mode. No IndexedDB in any
 mode. No Cache API in any mode.
 
@@ -56,7 +56,7 @@ Just enough to compute Web Vitals and per-page performance
 breakdowns:
 
 - **Page URL**: sanitized per [collection mode](/en/collection-modes).
-- **Web Vitals**: LCP, INP, CLS, FCP, TTFB and related timings.
+- **Web Vitals**: LCP, INP, CLS, FCP, TTFB, and related timings.
 - **Navigation timing**: nav type, TTFB, page-load timing.
 - **Resource timing**: per-category byte sizes and counts
   (script, css, img, font, other).
@@ -137,8 +137,8 @@ truncated to 128 bits (32 hex chars on the wire). Properties:
 GDPR Art. 6(1)(f). The IP and UA inputs are processed at the
 edge under the same basis that produces `country`, and the
 backend only ever sees the post-HMAC output. The explicit,
-consent-covered `sid` (multi-day session identifier in `full` /
-`consent` post-opt-in) is unchanged.
+consent-covered `sid` (the tab-scoped session identifier in
+`full` / `consent` post-opt-in) is unchanged.
 
 ### Site metadata vs. visitor data
 
@@ -208,7 +208,7 @@ of the line:
   Don't embed visitor PII. Never construct campaign URLs like
   `?utm_term=jane@example.com&utm_content=user-12345` for
   per-recipient tracking. Each field is server-side capped at 64
-  chars but the value is not pattern-scrubbed. Ad-platform
+  chars, but the value is not pattern-scrubbed. Ad-platform
   click-ID *values* are dropped by the tracker, so the
   per-recipient join risk applies only to the UTM fields.
 - **Don't pass raw user input to `throw`.** The always-on scrubber
@@ -235,5 +235,5 @@ of the line:
 ## What's next
 
 - Review [collection modes](/en/collection-modes).
-- Read about [the beacon](/en/beacon) for the technical detail.
+- Read about [the beacon](/en/concepts/beacon) for the technical detail.
 - Want the DPA? Email [support@fastmon.eu](mailto:support@fastmon.eu).

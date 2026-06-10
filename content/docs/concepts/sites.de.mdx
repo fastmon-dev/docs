@@ -43,8 +43,8 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 | `organization_id`     | UUID v7                               | Die besitzende Organisation.                                                      |
 | `name`                | string                                | Wie die Site im UI erscheint.                                                     |
 | `domain`              | string                                | Reiner Hostname, kein Protokoll (z. B. `acme.com`).                               |
-| `allowed_origins`     | komma-separierter String              | Zusätzliche Origins, deren Beacons akzeptiert werden. Leer = nur `domain` selbst. |
-| `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.eu`.          |
+| `allowed_origins`     | komma-separierter String              | Origin-Allow-List für den Ingest. Leer = Origin-Check komplett aus.               |
+| `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.site`.        |
 | `source_hash`         | string                                | Per-Site-Hash für die Script-URL (`/s/{source_hash}.js`).                         |
 | `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
 | `collection_mode`     | enum                                  | `anonymous`, `consent` oder `full`. Siehe [Collection Modes](/de/collection-modes). |
@@ -72,24 +72,30 @@ automatisch mit.
 ## Tags
 
 Tags sind kurze Labels, die du an eine Site klebst. Dashboard und
-Analytics-API filtern danach; so baust du "Production-Sites" oder
-"Marketing-Sites"-Views über mehrere Properties.
+Analytics-API filtern danach; so baust du „Production-Sites"- oder
+„Marketing-Sites"-Views über mehrere Properties.
 
 Konventionen, die gut funktionieren:
 
 - `env:production`, `env:staging`, `env:preview`
 - `team:growth`, `team:product`
 - `region:eu`, `region:us`
-- `tier:critical` für Sites, auf die du aggressiv alarmierst
+- `tier:critical` für Sites, für die du aggressive Alarme einrichtest
 
 Max 10 Tags pro Site.
 
 ## Allowed Origins
 
-Der Collector akzeptiert Beacons, deren `Origin`-Header dem `domain`
-der Site oder einem Eintrag in `allowed_origins` entspricht. Lädt
-das Script auf einer nicht erlaubten Domain, antwortet der Collector
-mit `403`.
+`allowed_origins` ist eine Opt-In-Allow-List. Sobald sie gesetzt
+ist, akzeptiert der Collector nur Beacons, deren `Origin`-Header
+einem Eintrag entspricht; die `domain` der Site ist dabei **nicht**
+automatisch enthalten, also trag sie mit ein. Ist die Liste leer
+(der Default), prüft der Collector den Origin gar nicht.
+
+Beacons von nicht gelisteten Origins werden **still verworfen**:
+Der Collector antwortet trotzdem mit `204`, damit im Browser nichts
+bricht; es landen nur keine Daten. Fehlen Daten einer Domain auf
+mysteriöse Weise, prüfe zuerst diese Liste.
 
 Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
 unterstützt; jeden Origin explizit listen.
@@ -100,9 +106,10 @@ unterstützt; jeden Origin explizit listen.
 
 Zwei Wege, beide tragen:
 
-- **Eine Site, drei Origins** (`acme.com`, `staging.acme.com`,
-  `preview-*.acme.com`). Alle Daten in einem Topf, im Dashboard
-  nach `domain` filtern. Billiger, dafür weniger sauber.
+- **Eine Site, mehrere Origins** (`acme.com`, `staging.acme.com`
+  und jeder Preview-Origin, der dich interessiert; keine
+  Wildcards). Alle Daten in einem Topf, im Dashboard nach `domain`
+  filtern. Billiger, dafür weniger sauber.
 - **Drei Sites** mit eigener Retention und eigenen Tags. Saubere
   Daten, etwas mehr Setup.
 
@@ -136,7 +143,7 @@ inactive setzen.
 
 - [Collection Modes](/de/collection-modes): was der Beacon pro
   Site tut.
-- [Der RUM-Beacon](/de/beacon): was der Beacon erfasst.
+- [Der RUM-Beacon](/de/concepts/beacon): was der Beacon erfasst.
 - [Releases](/de/concepts/releases): versionierte Marker auf einer
   Site.
 - [API: Sites-Endpunkte](/de/api): programmatisches Site-CRUD.

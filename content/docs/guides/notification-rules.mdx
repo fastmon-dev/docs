@@ -1,6 +1,6 @@
 ---
 title: Notification rules
-description: Alert when a metric crosses a threshold or regresses against a release.
+description: Alert when a metric crosses a threshold or changes against the previous window.
 ---
 
 A **notification rule** evaluates a condition on a schedule and
@@ -9,8 +9,8 @@ cover what most teams want:
 
 - **Threshold breach**: "alert when LCP at p75 goes above
   3,000 ms."
-- **Release regression**: "alert when a metric is meaningfully
-  worse after a release than before."
+- **Relative change**: "alert when a metric is meaningfully
+  worse than in the previous window."
 
 This guide walks through both. The engine's the same; only the
 condition looks different.
@@ -32,11 +32,13 @@ Open **Notifications → Rules → New rule** in the Fastmon dashboard.
 The first step shows a list of **presets**: common rule shapes
 pre-filled with sensible defaults:
 
-- *LCP regression on production*
-- *Error spike on a single URL*
-- *INP went poor*
-- *Experience score dropped*
-- … and a few others.
+- *LCP regression*: LCP p75 above the "Good" threshold (2,500 ms)
+  over the last 24 h
+- *CLS regression*: CLS p75 above 0.1
+- *INP regression*: INP p75 above 200 ms
+- *Traffic drop*: pageview count down 50% vs. the previous 24 h
+- *Error rate too high*: more than 1% of pageviews with a JS error
+- *Page weight bloat*: transferred bytes p75 above 3 MB over 7 days
 
 Pick the one closest to what you want. You can edit any field
 afterward. If nothing matches, choose **Blank rule** and skip to
@@ -62,29 +64,33 @@ The part that takes a bit of thought. A rule has three pieces:
 
 ### What you're measuring
 
-- A **site** (or "all sites" for a portfolio rule).
-- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, sessions, …).
+- A **scope**: a single site, or a site **tag** to cover a group
+  of sites with one rule (the rule evaluates each site in the tag
+  separately).
+- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, pageviews, …).
 - An **aggregation** (p50, p75, p95, count, avg, …).
 - An optional **filter** (mobile only, a specific URL pattern, a
   country list, …).
 
 ### When you're measuring it
 
-- A **time window**, usually 1 hour or 24 hours. Shorter windows
-  catch things faster but are noisier.
-- An **evaluation cadence**: how often the rule runs (every 15
-  minutes, hourly, daily).
+- A **time window**: 1 hour, 6 hours, 24 hours, 7 days, or
+  30 days. Shorter windows catch things faster but are noisier.
+- There's no cadence to configure. Fastmon derives the evaluation
+  interval from the window (a fifth of the window, clamped
+  between 1 and 15 minutes), so a 1-hour rule is checked every
+  ~12 minutes and a 24-hour rule every 15.
 
 ### What's a breach
 
 Pick one of:
 
-- **Above / below threshold**: fixed number. "LCP p75 > 3,000 ms."
-- **Regresses against previous window**: relative to the prior
-  same-length window. "LCP p75 +20%."
-- **Regresses against a release**: relative to the same-length
-  window ending at a release's `released_at`. "LCP p75 +20% vs.
-  release `01HZX...`." (Useful in CI to fail a deploy.)
+- **Above / below threshold** (absolute): fixed number.
+  "LCP p75 > 3,000 ms."
+- **Changes against the previous window** (relative): compared to
+  the baseline window directly before the current one.
+  "LCP p75 +20%." The baseline defaults to the same length as
+  the measurement window.
 
 Each shape has its own gotcha:
 
@@ -92,11 +98,8 @@ Each shape has its own gotcha:
   the day a big new segment hits your site (more slow-network
   visitors → metrics dip → alert you can't do anything about).
 - **Relative thresholds are sensitive** but noisy on low-volume
-  sites. One bad day-over-day comparison fires the alert. Use a
-  `min_volume` guard.
-- **Per-release thresholds are precise**, but only fire on
-  releases you actually tagged. See
-  [Compare releases](/en/guides/compare-releases).
+  sites. One bad day-over-day comparison fires the alert. On a
+  low-traffic site, prefer a longer window (7 or 30 days).
 
 ## 4. Dry-run the rule
 
@@ -127,39 +130,40 @@ history is the audit trail to start from.
 Goal: alert when LCP at p75 on the production site is more than 20%
 worse than the previous 24 hours.
 
-| Field            | Value                                     |
-| ---------------- | ----------------------------------------- |
-| Site             | `acme-marketing` (production)             |
-| Metric           | `lcp`                                     |
-| Aggregation      | `p75`                                     |
-| Filter           | `tags: [env:production]`                  |
-| Time window      | last 24 hours                             |
-| Cadence          | every hour                                |
-| Condition        | regresses against previous window (+20 %) |
-| Min volume       | 500 page-views in window                  |
-| Delivery         | `team-perf@example.com`                   |
+| Field            | Value                                       |
+| ---------------- | ------------------------------------------- |
+| Scope            | site `acme-marketing` (production)          |
+| Metric           | `lcp`                                       |
+| Aggregation      | `p75`                                       |
+| Time window      | last 24 hours                               |
+| Condition        | changes against previous window (+20%)      |
+| Re-notify after  | 24 hours                                    |
+| Delivery         | `team-perf@example.com`                     |
 
-The min-volume guard is the piece people forget most often.
-Without it, overnight low-volume periods will fire false
-positives non-stop.
+On a low-volume site, the day-over-day comparison is the piece
+that bites: one slow overnight period can swing a 24-hour p75 by
+20% on its own. If your traffic is thin, widen the window to 7
+days before you loosen the threshold.
 
 ## Common surprises
 
-- **Rules don't deduplicate across cadences.** A 15-minute rule
-  fires 4× an hour during a sustained regression, easily. If
-  you'd rather get one notification per incident, use a longer
-  cadence or set `min_silence_minutes` on the rule.
+- **Rules fire on the transition, not on every evaluation.** A
+  rule notifies when its condition flips from not met to met;
+  while the regression persists, it stays silent. If you want
+  periodic reminders during a long incident, set **Re-notify
+  after** on the rule; it re-sends after that much time if the
+  condition is still met.
 - **A regression alert during a known maintenance window is
   still noise.** Pause the rule, or filter by URL to skip the
   affected paths.
-- **Notification rules don't auto-create release tags.** If you
-  want per-release alerts, wire up
-  [Compare releases](/en/guides/compare-releases) first.
+- **There are no per-release alert conditions.** Rules compare
+  against thresholds or the previous window, not against a
+  release. To judge a specific deploy, use
+  [Compare releases](/en/guides/compare-releases) after the alert.
 
 ## Related
 
 - [Notification rules API](/en/api): programmatic creation.
-- [Releases concept](/en/concepts/releases): for per-release
-  rules.
+- [Releases concept](/en/concepts/releases): tagging deploys.
 - [Compare releases](/en/guides/compare-releases): wire CI/CD to
   tag deploys.

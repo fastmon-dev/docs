@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+### Add: Feature pages for Analytics and Synthetic Monitoring (EN + DE)
+
+- New top-level pages `analytics` and `synthetic` in a new "Features" sidebar section, plus landing-page cards in both languages. Both marked Beta (open to all org members), matching the backend/frontend release state.
+- Analytics covers the dashboard (live visitors, headline metrics, breakdowns, campaigns, tech panel), Error Analytics (fingerprints, drill-down), the sessions explorer, and per-segment Experience Scores — including the collection-mode caveats (no sessions and no stack traces in `anonymous`).
+- Synthetic covers the Commerce-Score-backed Lighthouse + TTFB lab tests: org-level opt-in (owner-only "External measurements", sub-processor note), page sources (manual / auto / one-shot) with per-plan quotas verified against `services/synthetic/constants.py`, schedules (24 h Lighthouse, ~5 min TTFB), cache bypass, lab-vs-field verdicts (≥50-sample guard), and the AI summaries (30/h org rate limit).
+- German versions written natively per SKILL.md; UI terms taken from the frontend Lingui catalogs („Auto-Befüllung", „Wiederkehrende Lighthouse-Messung", „Cache umgehen", „Zu diesem Test fragen", „Erfassungsmodus").
+
+### Change: API reference regenerated — synthetic tag added, stale pages dropped
+
+- Regenerated from the production OpenAPI: new `synthetic` tag with 19 endpoint pages; added to the curated sidebar order in `generate-api-docs.mjs`. All other tags were already current.
+- `api/index.mdx` endpoint cards: removed the dead Account card (`account` tag no longer exists in the spec), added Synthetic, Members, and Partners.
+- Deleted stale route-colliding duplicates `api.mdx` / `concepts.mdx` (+ `.de` variants) — superseded by `api/index.mdx` / `concepts/index.mdx`, and the old `api.mdx` contradicted `api/authentication.mdx` on auth and undercounted the analytics endpoints.
+
+### Fix: Code-verified content audit across all hand-written pages (EN + DE)
+
+- **Notification rules guide rewritten to match the backend.** The documented "regresses against a release" condition type, `min_volume`, and `min_silence_minutes` don't exist (`ConditionType` is `absolute` | `relative_change`; the field is `re_notify_after_seconds`). Now documents the real model: site-or-tag scope, fixed window set (1 h–30 d), derived evaluation cadence (window/5 clamped to 1–15 min), edge-triggered firing with re-notify, and the six real presets. Echoes on the landing page, guides index, and web-vitals overview corrected too.
+- **`allowed_origins` semantics corrected** (sites concept + install): empty list = no origin check (not "domain only"); when set, `domain` is *not* implicitly included; mismatches are silently dropped with `204` (not `403`). `collector_endpoint` default is `fastmon.site`, not `fastmon.eu`. Wildcard example removed.
+- **Phantom APIs removed from the glossary**: `fastmon:consent` / `fastmon:revoke` events and `__fastmon_disabled` never existed; replaced with the real `window.__fastmon_consent()` and `__FASTMON_SAMPLE_RATE`. Glossary now defines Beacon as the payload and gains a proper Tracker entry (both languages).
+- **Copy-pasteable curl fixed**: `POST /v1/account/api-token` → `/v1/account/api-key` (compare-releases, EN + DE).
+- **Error-code reference synced with `ErrorCode`**: dropped `audio_quota_exceeded`, added `synthetic_disabled` and `feature_removed`.
+- **Multi-beacon reality**: removed the "a single batched POST per page-view" claim from five pages (the tracker is multi-beacon: init/loaded/softnav/hidden/…); install/verify no longer promises non-zero *sessions* on a default (`anonymous`) site.
+- Smaller fixes: `sid` is tab-scoped (not "multi-day"); geo is country-only (no "region"); served bundle names are `anonymous.js`/`full.js`; the `full`-mode pick-list no longer tells you to pick `full` when you want the consent gate; the Experience-Score page no longer suggests (non-existent) IP filtering; ~19 links now point at real targets instead of "moved" stubs; DE privacy paragraph re-synced with the current EN framing.
+
+### Fix: Line-by-line language pass over both languages
+
+- **DE** (~70 findings): grammar (congruence, missing commas before infinitive clauses, wrong genitive), translation artifacts („qualifiziert sich als", „unter DSGVO", „Regulatoren", „verhandeln HTTP/1.1"), SKILL.md violations — most commonly the tracker/beacon distinction (10 pages let „der Beacon" act), plus „man"-headings → substantive headings, du-form breaks, Deppenleerzeichen, „…"-quote style unified, der/das Tag and Release genus unified, UI label corrected to „Erfassungsmodus".
+- **EN** (~50 findings): the same tracker/beacon subject fix across 8 pages, comma splices, missing serial commas, broken parallelism, garbled sentences ("No `released_at` defaults to…", "static HTML through Next.js"), wrong words ("three thresholds" → ranges, "faster again" → faster still, "counter-party" → counterparty), per-file pageview/page-view normalization, percent style normalized, and the architecture 30-s-buffer vs. flush-every-few-seconds contradiction reconciled (client buffer flushes ~2 s; the ~30 s comes from server-side insert batching).
+
+### Add: Makefile (dev/build/test targets)
+
+- `make dev` runs the Next.js dev server bound to `0.0.0.0` (devcontainer/LAN), mirroring the frontend Makefile. Also: `build`, `start`, `test` (typecheck + lint + format-check), `format`, `format-check`, `generate-api`. Help text as default target.
+
 ### Fix: Address security advisories surfaced by the new OSV-Scanner CI job
 
 - Bump `next` 16.2.4 → 16.2.6 (and `eslint-config-next` to match) to clear 13 advisories on the next 16.2.4 line, including high-severity Middleware / Proxy bypasses, SSRF via WebSocket upgrades, cache poisoning, and XSS in App Router CSP-nonce + `beforeInteractive` scripts.

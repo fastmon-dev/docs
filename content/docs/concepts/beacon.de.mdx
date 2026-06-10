@@ -1,6 +1,6 @@
 ---
 title: Der RUM-Beacon
-description: Die kleine JavaScript-Datei, die Fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie sendet, und was sie nie tut.
+description: Die kleine JavaScript-Datei, die Fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie sendet und was sie nie tut.
 ---
 
 Der **Beacon** ist die JavaScript-Datei, die Fastmon unter
@@ -20,13 +20,13 @@ anderen Build aus, abhängig vom
 
 | Mode | Bundle | Speicherfreier Default |
 |---|---|:---:|
-| `anonymous` | `privacy.js` | Ja; keine Cookies, kein `sessionStorage` |
+| `anonymous` | `anonymous.js` | Ja; keine Cookies, kein `sessionStorage` |
 | `consent` | `consent.js` | Ja, bis `__fastmon_consent(true)`: danach `_fm_consent`-Cookie + `sessionStorage._s` |
-| `full` | `standard.js` | `sessionStorage._s` ab dem ersten Pageview, kein Cookie |
+| `full` | `full.js` | `sessionStorage._s` ab dem ersten Pageview, kein Cookie |
 
 Du wählst das Bundle nicht im `<script>`-Tag; der Server löst es
 aus dem Site-Mode auf und liefert den passenden Build aus. Ein
-Mode-Wechsel rolliert den Script-Cache automatisch.
+Mode-Wechsel rollt den Script-Cache automatisch.
 
 ## Warum das zählt
 
@@ -49,7 +49,7 @@ jedem Datenschutz-Review verteidigbar.
 | Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
 | Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
 
-Geo-Daten (Land, Region) werden im Browser **nicht** gelesen. Der
+Geo-Daten (das Land) werden im Browser **nicht** gelesen. Der
 Edge leitet sie aus der Request-IP ab und reicht einen Ländercode
 als `FM-Country`-Header weiter; die IP selbst erreicht die
 Anwendung nie. Genauso für die in Buckets eingeteilte Browser-/OS-/Geräte-
@@ -136,7 +136,7 @@ optional; ein typischer Envelope sieht so aus:
 ```
 
 In der Praxis musst du das nicht lesen; Dashboard und
-[Analytics-API](/de/analytics-api) packen das für dich aus.
+[Analytics-API](/en/api/analytics/queryAnalytics) packen das für dich aus.
 Steht hier zum Nachschlagen.
 
 Schlüssel-Abkürzungen:
@@ -249,7 +249,7 @@ In jedem Mode gelten die Datenschutz-Garantien aus
 
 ## Rate-Limiting
 
-Der Collector rate-limited pro `(collector_hash, Client-IP)`. Die
+Der Collector rate-limitet pro `(collector_hash, Client-IP)`. Die
 IP wird am Edge nur für diesen Bucket gelesen; die Anwendung
 bekommt einen vorbereiteten Bucket-Key zu sehen, nicht die rohe IP,
 und die IP landet nicht auf der Platte. Das ist eine Schutzmaßnahme:
@@ -257,7 +257,7 @@ eine kaputte Seite oder ein synthetischer Lasttest soll den Ingest
 für andere Tenants nicht zumüllen. Mit echtem Traffic läufst du da
 praktisch nie rein.
 
-Wird ein Beacon rate-limited, kommt eine `429` zurück. Der Browser
+Wird ein Beacon rate-limitet, kommt eine `429` zurück. Der Browser
 wirft den Buffer weg und macht weiter; sonst passiert nichts.
 
 Payloads über 8 KiB werden mit `413` abgelehnt. Liegt `cst` mehr
@@ -277,9 +277,9 @@ trotzdem akzeptiert.
   Triggern `init`, `loaded`, `error_update`, `softnav`, `hidden`,
   `frozen`, `terminated`: nicht nur beim Tab-Wechsel. Pro Besuch
   siehst du in der Regel mehrere `POST /c/`.
-- **`sendBeacon` taucht in DevTools nicht unter "Fetch/XHR" auf.**
-  Network-Tab nach `c/` filtern (oder "All" benutzen); sendBeacon-
-  Requests landen unter "Other".
+- **`sendBeacon` taucht in DevTools nicht unter „Fetch/XHR" auf.**
+  Network-Tab nach `c/` filtern (oder „All" benutzen); sendBeacon-
+  Requests landen unter „Other".
 
 ## Verwandt
 

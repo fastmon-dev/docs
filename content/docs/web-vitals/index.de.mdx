@@ -6,7 +6,7 @@ description: "Die fünf Performance-Metriken, die Fastmon trackt: was sie messen
 **Web Vitals** sind ein Set von Performance-Metriken, die in Zahlen
 fassen, wie sich eine Seite beim Laden und Benutzen anfühlt.
 Definitionen und Schwellen kommen von Google, die APIs vom
-Browser, und unser Beacon sammelt das Ganze direkt von deinen
+Browser, und unser Tracker sammelt das Ganze direkt bei deinen
 echten Besuchern.
 
 Diese Seite ist nur die Übersicht. Zu jeder Metrik gibt's eine
@@ -39,13 +39,13 @@ einen besseren Wert als p75, 25 % einen schlechteren.
 
 Wenn dein LCP bei p75 bei 2.400 ms liegt, dann sieht das
 *schlechteste Viertel deines Traffics* genau diese Zahl. p50 ist
-"was die meisten sehen": bequem, aber als Optimierungsziel
+„was die meisten sehen": bequem, aber als Optimierungsziel
 ungeeignet, wenn dir Besucher mit schwacher Verbindung oder
 älteren Geräten wichtig sind.
 
 ## Wie Fastmon sie erfasst
 
-Der Beacon nutzt dieselben Browser-APIs wie die
+Der Tracker nutzt dieselben Browser-APIs wie die
 [`web-vitals`](https://github.com/GoogleChrome/web-vitals)-Library:
 
 - `PerformanceObserver` für `largest-contentful-paint`,
@@ -55,9 +55,9 @@ Der Beacon nutzt dieselben Browser-APIs wie die
 
 Jede Metrik wird zu einem anderen Zeitpunkt finalisiert,
 meistens wenn die Seite versteckt wird oder der Besucher
-interagiert. Der Beacon bündelt die finalen Werte und schickt
-genau einen POST pro Pageview. Mehr dazu unter
-[Der RUM-Beacon](/de/beacon).
+interagiert. Der Tracker bündelt die Werte und schickt sie über
+den Lebenszyklus des Pageviews verteilt in einigen wenigen
+Beacons. Mehr dazu unter [Der RUM-Beacon](/de/concepts/beacon).
 
 ## Wo sie im Produkt auftauchen
 
@@ -66,10 +66,10 @@ genau einen POST pro Pageview. Mehr dazu unter
 - **Experience Score**: eine Zahl von 0–10, die LCP, INP, CLS,
   FCP, TTFB, Fehlerrate und Page Load Time zusammenfasst. Siehe
   [Experience Score](/de/web-vitals/experience-score).
-- **Notification Rules**: Alarm wenn eine Metrik eine Schwelle
-  überschreitet oder gegen ein Vorgänger-Release regrediert.
-- **Analytics-API**: jede Metrik programmatisch abfragen. Siehe
-  [Analytics-API](/de/analytics-api).
+- **Notification Rules**: Alarm, wenn eine Metrik eine Schwelle
+  überschreitet oder sich gegen das Vorfenster verschlechtert.
+- **Analytics-API**: jede Metrik programmatisch abfragen. Siehe die
+  [Analytics-Endpunkte](/en/api/analytics/queryAnalytics).
 
 ## Nächste Schritte
 

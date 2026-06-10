@@ -41,8 +41,8 @@ site-group concept on purpose; tags cover it.
 | `organization_id`     | UUID v7                               | The owning organization.                                                         |
 | `name`                | string                                | How the site appears in the UI.                                                  |
 | `domain`              | string                                | Bare hostname, no protocol (e.g. `acme.com`).                                    |
-| `allowed_origins`     | comma-separated string                | Extra origins that can ingest. Empty means only `domain` itself.                 |
-| `collector_endpoint`  | string · nullable                     | Custom collector hostname for enterprise routing. Defaults to `fastmon.eu`.      |
+| `allowed_origins`     | comma-separated string                | Origin allow-list for ingest. Empty disables the origin check entirely.          |
+| `collector_endpoint`  | string · nullable                     | Custom collector hostname for enterprise routing. Defaults to `fastmon.site`.    |
 | `source_hash`         | string                                | Per-site hash used in the script URL (`/s/{source_hash}.js`).                    |
 | `collector_hash`      | string                                | Per-site hash used in the ingest URL (`/c/{collector_hash}`).                    |
 | `collection_mode`     | enum                                  | `anonymous`, `consent`, or `full`. See [Collection modes](/en/collection-modes). |
@@ -84,10 +84,16 @@ Max 10 tags per site.
 
 ## Allowed origins
 
-The collector accepts beacons whose `Origin` header matches the
-site's `domain` *or* one of the entries in `allowed_origins`. If you
-load the script on a domain that isn't allow-listed, the collector
-returns `403`.
+`allowed_origins` is an opt-in allow-list. When it's set, the
+collector only accepts beacons whose `Origin` header matches one
+of its entries; the site's `domain` is **not** implicitly
+included, so list it too. When the list is empty (the default),
+the collector doesn't check the origin at all.
+
+A beacon from a non-listed origin is **silently dropped**: the
+collector still answers `204` so nothing breaks in the browser,
+but no data lands. If a domain's data is mysteriously missing,
+this list is the first thing to check.
 
 Add staging and preview hostnames here. Wildcards aren't supported;
 list each origin explicitly.
@@ -98,9 +104,10 @@ list each origin explicitly.
 
 Two shapes that work:
 
-- **One site, three origins** (`acme.com`, `staging.acme.com`,
-  `preview-*.acme.com`). All data lands in one bucket; filter by
-  `domain` in the dashboard. Cheaper, less clean.
+- **One site, several origins** (`acme.com`, `staging.acme.com`,
+  and each preview origin you care about; no wildcards). All data
+  lands in one bucket; filter by `domain` in the dashboard.
+  Cheaper, less clean.
 - **Three sites** with their own retention and tags. Cleaner
   data, more setup.
 
@@ -131,7 +138,7 @@ and mark the old one inactive once traffic's moved over.
 
 - [Collection modes](/en/collection-modes): what the beacon does,
   per site.
-- [The RUM Beacon](/en/beacon): what the beacon collects.
+- [The RUM Beacon](/en/concepts/beacon): what the beacon collects.
 - [Releases](/en/concepts/releases): versioned markers attached to
   a site.
 - [API: Sites endpoints](/en/api): programmatic site CRUD.

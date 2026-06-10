@@ -85,8 +85,8 @@ curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
 ```
 
 The cursor is **opaque** — it encodes whatever the server needs to
-resume. Don't parse it, don't construct it, don't persist it across
-deploys longer than your normal use.
+resume. Don't parse it, don't construct it, and don't persist it
+beyond your immediate paging loop; it won't survive deploys.
 
 When `meta.next_cursor` is absent, you've reached the end.
 
@@ -124,7 +124,7 @@ Everything else is offset-paginated.
   `aggregations: ["count"]`) with the listing.
 - **Cursors expire.** They're not designed to be persisted for
   hours or days. If you stash a cursor in a queue and process it
-  next morning, expect a `400` or stale results.
+  the next morning, expect a `400` or stale results.
 - **Cursors are not URLs.** Don't URL-encode them yourself if you're
   passing them through `?cursor=` — most HTTP clients handle that
   automatically.
@@ -136,5 +136,5 @@ Everything else is offset-paginated.
 ## Related
 
 - [API overview](/en/api).
-- [Analytics API](/en/analytics-api) — the cursor-paginated
+- [Analytics API](/en/api/analytics/queryAnalytics) — the cursor-paginated
   feeds.

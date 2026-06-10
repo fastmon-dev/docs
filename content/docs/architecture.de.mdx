@@ -37,8 +37,9 @@ funktioniert.
 Zwei Stellen in der Pipeline sind wichtig, wenn du das Verhalten
 verstehen willst:
 
-- **Browser → Collector.** Ein gebündelter `POST` pro Pageview, bei
-  `pagehide` / `visibilitychange` / periodischem Flush. Siehe
+- **Browser → Collector.** Einige wenige gebündelte `POST`s pro
+  Pageview, verteilt über dessen Lebenszyklus (Laden, `pagehide` /
+  `visibilitychange`, periodischer Flush). Siehe
   [Der RUM-Beacon](/de/concepts/beacon).
 - **Collector → Analytics-Store.** Beacons landen in einem
   Per-Prozess-Buffer und flushen alle paar Sekunden via gebündeltem
@@ -91,7 +92,7 @@ gecached; API-Responses typischerweise nicht).
 | ----------------------------------- | ------------------- | ------------------------------- |
 | Beacon-Events (raw + roll-ups)      | Analytics-Store     | `data_retention_days` pro Site (Default 90). |
 | Site-, Org-, Member-Config          | Config-DB           | Bis zur Löschung.               |
-| Aktive Sessions (Auth)              | Session-Store       | Gleitendes Fenster, default 30 Tage idle. |
+| Aktive Sessions (Auth)              | Session-Store       | Gleitendes Fenster, per Default 30 Tage idle. |
 | Rate-Limit-Counter                  | Session-Store       | Per-Fenster-TTL, < 5 min.       |
 | Personenbezogene Daten (PII)        | k. A.               | Nicht gesammelt. Siehe [Privacy](/de/privacy). |
 
@@ -101,8 +102,9 @@ gecached; API-Responses typischerweise nicht).
 
 Weil Inserts pro Zeile in dieser Größenordnung jede Analytics-DB
 killen würden. Batching in einen Per-Prozess-Buffer, der alle paar
-Sekunden flusht, ist Standard. Preis dafür: ~30 s Verzögerung,
-bis ein Beacon in den Queries auftaucht.
+Sekunden flusht, ist Standard; der Analytics-Store batcht die
+Inserts auf seiner Seite noch einmal. Der Preis in Summe: ~30 s
+Verzögerung, bis ein Beacon in den Queries auftaucht.
 
 ### Warum `source_hash` und `collector_hash` getrennt?
 
@@ -116,8 +118,8 @@ gültig. Mehr dazu unter
 
 Analytics-Queries lesen wenige Spalten (eine Metrik, ein paar
 Dimensionen) über viele Zeilen. Spaltenweise Speicherung liest
-nur diese Spalten von der Platte statt jeder Zeile, und Timing-
-Daten komprimieren in dieser Form sehr gut. Vektorisierte
+nur diese Spalten von der Platte statt jeder Zeile, und
+Timing-Daten komprimieren in dieser Form sehr gut. Vektorisierte
 Aggregation pro Spalte macht Perzentile und Group-Bys nochmal
 deutlich schneller. Auf Postgres ginge das auch, wäre nur
 spürbar langsamer und teurer pro Query.
@@ -142,7 +144,7 @@ Lücke ab, also stimmen die Live-Dashboards trotzdem.
 
 Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich
 auf jedem Request, aber keine Langzeit-Durability. In der
-Config-DB hätten sie nichts zu suchen; sie wegzulagern hält den
+Config-DB hätten sie nichts zu suchen; sie auszulagern hält den
 Auth-Pfad schnell und sauber getrennt.
 
 ## Verwandt

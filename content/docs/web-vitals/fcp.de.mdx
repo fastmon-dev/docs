@@ -24,9 +24,9 @@ FCP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
 | > 3.000 ms      | Schlecht            |
 
 Ein guter FCP garantiert keinen guten LCP; er heißt nur, dass der
-Besucher *irgendwas* schnell gesehen hat. Andersrum: ein schlechter
-FCP heißt fast immer auch einen schlechten LCP. Den FCP zuerst zu
-fixen, ist daher meistens der richtige Hebel.
+Besucher *irgendwas* schnell gesehen hat. Andersrum: Ein schlechter
+FCP bedeutet fast immer auch einen schlechten LCP. Den FCP zuerst
+zu fixen, ist daher meistens der richtige Hebel.
 
 ## Was als First Contentful Paint zählt
 
@@ -36,15 +36,15 @@ Der Browser feuert einen FCP-Eintrag beim ersten Paint von:
 - Bildern (`<img>`, SVG-Bilder, Canvas mit Inhalt),
 - einem nicht-weißen Background-Image.
 
-Eine leere Hintergrundfarbe, ein weißer Rahmen, ein CSS-Gradient ohne
-Text zählt nicht. Skeleton-Loader aus leeren `<div>`s mit
+Eine reine Hintergrundfarbe, ein weißer Rahmen, ein CSS-Gradient
+ohne Text zählen nicht. Skeleton-Loader aus leeren `<div>`s mit
 Background-Color zählen ebenfalls nicht; ein Skeleton mit einem
 einzigen sichtbaren Text-Label aber schon.
 
 ## Wann FCP reportet wird
 
-FCP feuert beim ersten berechtigten Paint. Der Beacon nimmt es in den
-nächsten gebündelten Payload. FCP ist pro Navigation;
+FCP feuert beim ersten qualifizierenden Paint. Der Tracker nimmt
+es in den nächsten gebündelten Payload. FCP ist pro Navigation;
 SPA-Route-Wechsel erzeugen keinen neuen FCP.
 
 ## Wie FCP zu anderen Metriken steht
@@ -73,7 +73,7 @@ nützlichste Vergleich ist FCP neben TTFB:
 
 Per **By URL**-Breakdown auffällig schlechte Seiten finden.
 
-## Wie man einen schlechten FCP verbessert
+## Schlechten FCP verbessern
 
 1. **Erst TTFB verbessern.** Siehe [TTFB](/de/web-vitals/ttfb).
 2. **Render-blocking CSS reduzieren.** Critical CSS für
@@ -82,9 +82,9 @@ Per **By URL**-Breakdown auffällig schlechte Seiten finden.
 3. **Unkritisches JavaScript deferren.** Ein synchrones `<script>` im
    `<head>` blockiert den Parser bis zur Ausführung. `defer` nutzen
    oder ans `<body>`-Ende verschieben.
-4. **Web-Fonts optimieren.** `font-display: swap` damit Text im
+4. **Web-Fonts optimieren.** `font-display: swap`, damit Text im
    Fallback rendert, während der Web-Font lädt. `font-display:
-   optional` wenn du auf langsamen Verbindungen ohne den Web-Font
+   optional`, wenn du auf langsamen Verbindungen ohne den Web-Font
    leben kannst.
 5. **HTML-Payload reduzieren.** Ein 500-KB-HTML-Dokument blockiert
    den Parser auf langsamen Netzen lange genug, um FCP zu
@@ -94,10 +94,11 @@ Per **By URL**-Breakdown auffällig schlechte Seiten finden.
 
 - **FCP kann nahezu null sein mit einem Skeleton-Loader.** Der
   Browser zählt das erste Text-Element des Skeletons als FCP, auch
-  wenn es "Lädt…" ist. Dein FCP sieht super aus, während LCP
+  wenn es „Lädt…" ist. Dein FCP sieht super aus, während LCP
   schlecht ist; der Besucher merkt die Verzögerung trotzdem.
-- **Critical-CSS-Extraktion ist der wichtigste Hebel.** Ein
-  typischer Blog-Post kann FCP halbieren ohne weitere Änderungen.
+- **Critical-CSS-Extraktion ist der wichtigste Hebel.** Bei einem
+  typischen Blog-Post kann sie FCP ohne weitere Änderungen
+  halbieren.
 - **Web-Font-Tricks sind verlockend, aber klein.** Sie helfen, bewegen
   FCP aber selten alleine um Hunderte ms.
 

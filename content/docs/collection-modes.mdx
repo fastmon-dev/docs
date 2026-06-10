@@ -28,10 +28,10 @@ Three modes: `anonymous`, `consent`, `full`. The default is
 
 ## `anonymous`: the default
 
-The beacon sends right away on page load, no consent gate. It
-only collects what's listed in
-[Privacy: what we don't collect](/en/privacy), so nothing that
-could be used to identify a visitor across pages or sites.
+The tracker sends right away on page load, no consent gate. It
+collects only the baseline fields listed in
+[Privacy](/en/privacy): nothing that could be used to identify
+a visitor across pages or sites.
 
 **Pick this if:**
 
@@ -39,17 +39,17 @@ could be used to identify a visitor across pages or sites.
   posture. `anonymous` doesn't need a cookie banner *for our
   beacon*: it sets no cookies and stores no IPs. Other tools on
   the page may still need one, but that's not on us.
-- you don't have a CMP integrated,
+- you don't have a CMP integrated.
 - you want to ship the setup without dragging engineering and
   legal into a meeting.
 
-**What the beacon does:**
+**What the tracker does:**
 
 - Registers `PerformanceObserver` on page load.
 - Buffers Web Vitals, errors, and resource timing in memory.
 - Sends a batched POST on `pagehide` / `visibilitychange` /
   periodic flush.
-- Mints a per-page-view ID that disappears with the page.
+- Mints a per-pageview ID that disappears with the page.
 
 **What it doesn't do:**
 
@@ -94,8 +94,8 @@ Consent unlocks **linkability**, not new categories of data.
 
 The `_fm_consent` cookie qualifies as strictly necessary under
 TDDDG §25(2) Nr. 2 / ePrivacy 5(3): without persisting the
-decision, the opt-in would not survive page navigation and the
-consent mechanism becomes meaningless.
+decision, the opt-in would not survive page navigation, and the
+consent mechanism would become meaningless.
 
 **Pick this if:**
 
@@ -106,7 +106,7 @@ consent mechanism becomes meaningless.
 - you want one consent decision to govern Fastmon along with other
   tools.
 
-## `full`: keep everything the beacon collected, no consent gate
+## `full`: keep everything the tracker collects, no consent gate
 
 `full` keeps a handful of fields that `anonymous` strips:
 
@@ -140,12 +140,11 @@ EU readings.
   visitor base and consent context look different,
 - you're in a jurisdiction that explicitly permits session-level
   linkage without a separate basis,
-- you've signed a DPA that covers it explicitly,
-- or you've decided that `consent` is the better fit and you
-  actually want the opt-in gate.
+- you've signed a DPA that covers it explicitly.
 
-If you're not sure, skip `full`. Regulators aren't going to thank
-you for linking sessions you didn't have to.
+If you're not sure, skip `full`. And if what you actually want is
+the opt-in gate, that's `consent`, not `full`. Regulators aren't
+going to thank you for linking sessions you didn't have to.
 
 ## Changing the mode
 
@@ -158,6 +157,6 @@ You don't need to redeploy your site or change the `<script>` tag.
 
 ## What's next
 
-- See exactly what the beacon ships in [The RUM Beacon](/en/beacon).
+- See exactly what the beacon ships in [The RUM Beacon](/en/concepts/beacon).
 - Read [Privacy: what we don't collect](/en/privacy). The
   zero-cookie story applies to all three modes.
