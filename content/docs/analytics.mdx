@@ -1,0 +1,103 @@
+---
+title: Analytics
+description: Traffic, sessions, errors, and the Experience Score. The field-data dashboards on top of your beacons.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Analytics is the exploration layer on top of everything your
+beacons collect: who's on the site right now, where traffic comes
+from, which pages get viewed, which errors fire, and how whole
+sessions unfold. It complements the
+[Web Vitals dashboard](/en/web-vitals): same data, different
+question. Web Vitals asks "how fast is the site?"; Analytics asks
+"what's happening on it?"
+
+<Callout type="warn" title="Beta">
+  Analytics is in beta and open to every member of the
+  organization. Layout and metrics may still change.
+</Callout>
+
+## The dashboard
+
+The main Analytics view for a site shows:
+
+- **Current visitors**: unique visitors in the last 5 minutes,
+  expandable to a per-minute chart of the last 15.
+- **Three headline metrics**: Unique Visitors, Pageviews, and
+  Views per Visit, each with a sparkline and the change against
+  the previous period.
+- **Trend chart**: the headline metrics over the selected range,
+  with an optional previous-period overlay.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and
+  Devices, each with sub-tabs for drilling down (channel vs. UTM
+  source, country lists, browser vs. OS, …).
+- **Campaigns & attribution**: UTM coverage and
+  source/medium/campaign lists, including ad-platform click-ID
+  labels.
+- **Tech panel**: back/forward-cache hit rate, top third-party
+  categories, and whether errors originate first- or third-party.
+
+Visitor counts are anonymous by construction; see
+[Privacy](/en/privacy) for what a "visitor" can and cannot mean
+here.
+
+## Error Analytics
+
+The Errors view tracks JavaScript errors across the site:
+
+- **Error rate over time**: the share of pageviews with at least
+  one error.
+- **Error types**: errors grouped by fingerprint (type + message
+  + stack shape), ranked by count.
+- **Detail drill-down**: for one fingerprint: total count,
+  sessions affected, first/last seen, a time series, breakdowns by
+  URL, browser, device, OS, and country, and sample pageviews with
+  stack frames.
+
+How much detail you see depends on the site's
+[collection mode](/en/collection-modes): in `anonymous` mode the
+tracker sends error **type and count only**. Messages and stack
+frames arrive in `full` mode, or in `consent` mode after the
+visitor opts in.
+
+## Sessions
+
+The sessions explorer lists browsing sessions (start and end
+time, duration, page count, device info, average LCP/FCP, error
+count) with filters for page count, duration, errors, and LCP
+range, and a per-session detail view showing every pageview in order, each
+with its Web Vitals and errors.
+
+Sessions require a cross-page `session_id`, which the tracker only
+carries in `full` mode or in `consent` mode after opt-in. On an
+`anonymous`-mode site the explorer stays empty by design. See
+[Sessions](/en/concepts/sessions) for how a session is defined.
+
+## Experience Score
+
+The [Experience Score](/en/web-vitals/experience-score) panel
+breaks the score down by segment (all visitors, desktop, mobile,
+and slow connections), each with its grade, numeric score, and the
+per-metric values behind it. Useful for the classic case where the
+overall grade looks fine but mobile-on-3G is failing.
+
+## API
+
+Every panel maps to a query endpoint under
+`/v1/organizations/{org_id}/analytics/…`: a flexible
+[query endpoint](/en/api/analytics/queryAnalytics) for time series
+and breakdowns, plus dedicated endpoints for histograms, error
+types and details, sessions, resource and third-party breakdowns,
+LoAF, and the Experience Score. See the
+[Analytics endpoint reference](/en/api/analytics/queryAnalytics).
+
+## What's next
+
+- [Collection modes](/en/collection-modes): what the tracker
+  collects per mode, and why sessions or stack traces may be
+  missing.
+- [Sessions](/en/concepts/sessions): how pageviews become a
+  session.
+- [Synthetic Monitoring](/en/synthetic): the lab-data complement
+  to these field dashboards.

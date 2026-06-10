@@ -1,0 +1,150 @@
+---
+title: Synthetic Monitoring
+description: Lighthouse- und TTFB-Labortests für deine Seiten, direkt neben den Felddaten echter Besucher.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Synthetic Monitoring misst deine Seiten im Labor (geplante
+Lighthouse-Messungen plus leichtgewichtige TTFB-Checks) und zeigt
+die Ergebnisse direkt neben deinen RUM-Felddaten. Auf den
+Laborwert allein kommt es nicht an. Interessant ist, wo Labor und
+Feld voneinander abweichen, und welchem Wert du dann glauben
+solltest.
+
+<Callout type="warn" title="Beta">
+  Synthetic Monitoring ist Beta. Jedes Mitglied der Organisation
+  kann es nutzen, aber Antwortformate und UI können sich noch
+  ändern.
+</Callout>
+
+## Labor vs. Feld, je ein Satz
+
+- **Labor (synthetisch):** ein simuliertes Gerät, ein Standort,
+  ideale Bedingungen, reproduzierbar. Stark beim Aufspüren von
+  Regressionen und beim Debugging, blind für das, was echte
+  Besucher erleben.
+- **Feld (RUM):** alle echten Besucher, echte Netze, echte Geräte,
+  aggregiert als p75. Die Wahrheit, aber verrauscht und träger.
+
+Fastmon zeigt beides in denselben Charts, damit du keins von
+beidem mit dem anderen verwechselst.
+
+## Einschalten
+
+Synthetic Monitoring ist **standardmäßig aus** und wird pro
+Organisation aktiviert: **Organisationseinstellungen → Synthetic
+Monitoring → Externe Messungen**. Nur der Owner der Organisation
+kann den Schalter umlegen.
+
+Das Opt-In hat einen Grund: Die Messungen laufen bei einem externen
+Anbieter (Commerce-Score). Dorthin gehen die URLs, die du
+überwachst, und nur die. Falls deine DPA-Prüfung Details braucht:
+Das ist der eine Datenfluss, den du dir ansehen musst.
+Besucherdaten verlassen Fastmon nie; nur die Seiten-URLs, die du
+selbst hinzufügst.
+
+## Seiten
+
+Eine **Synthetic-Seite** ist eine URL unter der Domain deiner Site,
+die gemessen wird. Drei Wege, wie eine Seite entsteht:
+
+| Quelle       | Wie                                                                       | Wird angerechnet auf |
+| ------------ | ------------------------------------------------------------------------- | ------------------ |
+| **Manuell**  | Du fügst die URL selbst hinzu                                             | Limit für manuelle Seiten |
+| **Auto**     | „Auto-Befüllung" wählt deine Top-URLs nach RUM-Traffic (letzte 28 Tage, max. 5 neue Seiten pro Klick) | Auto-Seiten-Limit |
+| **One-Shot** | Ein einzelner Ad-hoc-Test ohne wiederkehrenden Zeitplan                    | Nichts             |
+
+Die Limits gelten pro Organisation (über alle ihre Sites), mit
+getrennten Budgets für manuelle und Auto-Seiten:
+
+| Plan       | Manuelle Seiten | Auto-Seiten |
+| ---------- | --------------- | ----------- |
+| Beta       | 5               | 5           |
+| Starter    | 2               | 3           |
+| Pro        | 5               | 10          |
+| Partner    | 10              | 20          |
+| Enterprise | 25              | 50          |
+
+Am Limit schlägt das Hinzufügen mit einer klaren Fehlermeldung
+fehl; lösche eine Seite, um Platz zu schaffen. One-Shots sind
+bewusst unbegrenzt; damit beantwortest du „wie schneidet diese
+Seite gerade ab?", ohne Budget auszugeben. Ein One-Shot lässt sich
+später in eine überwachte Seite umwandeln.
+
+## Zeitpläne und Einstellungen pro Seite
+
+Jede Seite hat drei Schalter im Einstellungsdialog:
+
+- **Wiederkehrende Lighthouse-Messung**: eine volle
+  Lighthouse-Messung alle 24 Stunden. Ausschalten pausiert nur;
+  die Seite bleibt und lässt sich weiter manuell anstoßen.
+- **Wiederkehrende TTFB-Messung**: ein leichtgewichtiger
+  Server-Response-Check etwa alle 5 Minuten, unabhängig vom
+  Lighthouse-Zeitplan.
+- **Cache umgehen** (standardmäßig an): umgeht bei jedem Lauf den
+  CDN- und Browser-Cache der gemessenen Seite. Du misst also den
+  ungünstigsten Fall, den ungecachten Load. Ausschalten misst
+  stattdessen den gecachten Pfad.
+
+Zusätzlich zu den Zeitplänen stößt **Synthetischen Test senden**
+jederzeit einen sofortigen Lauf an.
+
+## Was ein Lauf liefert
+
+Jeder Lauf misst **Desktop und Mobile** in einem Durchgang.
+
+- **Lighthouse-Report**: Kategorie-Scores (Performance,
+  Accessibility, Best Practices, SEO), die Labormetriken (LCP, FCP,
+  CLS, TBT, Speed Index, TTFB), Optimierungspotenziale sortiert
+  nach geschätzter Ersparnis, Request-Waterfall, Third-Party- und
+  Ressourcen-Breakdown sowie ein Lab-Screenshot pro Gerät. Das rohe
+  Lighthouse-JSON ist einen Klick entfernt.
+- **Labor vs. Feld**: Labor-LCP/FCP/CLS/TTFB gegen dein RUM-p75
+  derselben URL, jeweils mit Urteil: deckungsgleich, Feld
+  langsamer oder Feld schneller. Feld-INP wird ohne Laborzwilling
+  gezeigt (Lighthouse kann INP nicht messen; Labor-TBT ist der
+  nächste Näherungswert). Urteile brauchen mindestens 50
+  Feld-Samples im Zeitfenster; darunter werden sie als
+  „unzureichende Daten" markiert, statt in die Irre zu führen.
+- **Experience Score vs. Labor-Score**: dein
+  [Experience Score](/de/web-vitals/experience-score) aus dem Feld
+  neben dem Labor-Gesamtscore. Gleicher Vorbehalt: Die beiden
+  messen Unterschiedliches; Abweichung ist Signal, kein Fehler.
+- **TTFB-Diagnose**: die dedizierten TTFB-Läufe zerlegen die
+  Server-Antwortzeit in Phasen (DNS, TCP, SSL, Server, Transfer)
+  und vergleichen mit dem Feld-TTFB, inklusive Urteil, ob das
+  Problem beim Server oder bei Netz/Geografie liegt.
+- **Trends**: Laborpunkte (einer pro Lauf) über der regulären
+  Feld-p75-Linie, dazu die 5-Minuten-TTFB-Serie, in einem
+  wählbaren Zeitfenster.
+
+## AI-Zusammenfassungen
+
+Auf den Lighthouse-Daten sitzen zwei AI-Funktionen, beide an die
+AI-Einstellung der Organisation gekoppelt:
+
+- **Ein-Klick-Zusammenfassung**: macht aus einem Lighthouse-Report
+  eine kurze Zusammenfassung, auf Englisch oder Deutsch. Einmal
+  erzeugt, gespeichert, wiederverwendet; die Erzeugung ist auf 30
+  pro Organisation und Stunde begrenzt (gespeicherte
+  Zusammenfassungen lesen kostet nichts).
+- **Zu diesem Test fragen**: öffnet den Fastmon-AI-Assistenten
+  mit dem Lauf im Kontext, für Rückfragen zu einzelnen Audits.
+
+## API
+
+Alles oben gibt es auch programmatisch unter
+`/v1/sites/{site_id}/synthetic/…`: Seiten-CRUD, manuelle Läufe,
+Ergebnisse, Zeitreihen, Labor-vs.-Feld, Screenshots und die
+AI-Zusammenfassungen. Siehe die
+[Synthetic-Endpunktreferenz](/en/api/synthetic/listSyntheticPages)
+(nur auf Englisch).
+
+## Weiterlesen
+
+- [Experience Score](/de/web-vitals/experience-score): der
+  Feld-Gesamtwert, mit dem Laborläufe verglichen werden.
+- [Web Vitals im Überblick](/de/web-vitals): was LCP, INP und CLS
+  eigentlich messen.
+- [Analytics](/de/analytics): die Feld-Seite derselben Geschichte.

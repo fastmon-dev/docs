@@ -5,7 +5,7 @@ description: "Privacy-first real-user monitoring and Core Web Vitals, hosted in 
 
 Fastmon measures how your site actually feels for real visitors:
 Core Web Vitals, errors, and performance, straight from the
-browser. Out of that come dashboards your team can actually use.
+browser. Out of that come dashboards your team can use.
 
 The docs are organized by what you're trying to do. Jump in.
 
@@ -14,8 +14,8 @@ The docs are organized by what you're trying to do. Jump in.
 Get Fastmon running on a site in under five minutes.
 
 <Cards>
-  <Card title="Implement Fastmon" href="/en/install" description="One script tag in your <head>. Works on any site, static HTML through Next.js, WordPress, or a tag manager. Five minutes." />
-  <Card title="Verify the implementation" href="/en/install/verify" description="Confirm the beacon is collecting data, and what to check when it isn't." />
+  <Card title="Implement Fastmon" href="/en/install" description="One script tag in your <head>. Works on any site, from static HTML to Next.js, WordPress, or a tag manager. Five minutes." />
+  <Card title="Verify the implementation" href="/en/install/verify" description="Confirm the tracker is collecting data, and see what to check when it isn't." />
 </Cards>
 
 ## Understand the model
@@ -31,7 +31,7 @@ moving parts before touching anything.
 
 ## Read about a metric
 
-You're staring at a Web-Vitals number and want to know what it
+You're staring at a Web Vitals number and want to know what it
 means, or how to make it go away.
 
 <Cards>
@@ -41,6 +41,16 @@ means, or how to make it go away.
   <Card title="Experience Score" href="/en/web-vitals/experience-score" description="A single 0–10 number combining LCP, INP, CLS, FCP, TTFB, page-load time, and error rate." />
 </Cards>
 
+## Explore your data
+
+You're past setup and want to dig into what the tracker is
+collecting, or get a lab baseline next to it.
+
+<Cards>
+  <Card title="Analytics" href="/en/analytics" description="Traffic, sessions, errors, and per-segment Experience Scores. Beta, open to all members." />
+  <Card title="Synthetic Monitoring" href="/en/synthetic" description="Scheduled Lighthouse and TTFB lab tests, side by side with your field data. Beta." />
+</Cards>
+
 ## Build something
 
 You want to integrate Fastmon with your CI/CD, your alerting, your
@@ -48,7 +58,7 @@ existing dashboards.
 
 <Cards>
   <Card title="Compare releases" href="/en/guides/compare-releases" description="Tag deploys from CI/CD and answer 'did this deploy regress LCP?' in one query." />
-  <Card title="Notification rules" href="/en/guides/notification-rules" description="Alert when a metric crosses a threshold or regresses against a release." />
+  <Card title="Notification rules" href="/en/guides/notification-rules" description="Alert when a metric crosses a threshold or worsens against the previous window." />
   <Card title="API reference" href="/en/api" description="Authentication, errors, pagination, and all resource endpoints." />
 </Cards>
 
