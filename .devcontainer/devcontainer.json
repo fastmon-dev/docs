@@ -37,7 +37,7 @@
   // forces shell invocation regardless of how the devcontainer client
   // dispatches initializeCommand.
   "initializeCommand": ["sh", "-c", "mkdir -p \"$HOME/.claude-fastmon-docs\" && touch \"$HOME/.claude-fastmon-docs.json\""],
-  "postCreateCommand": "sudo chown node:node node_modules /home/node/.claude && npm ci",
+  "postCreateCommand": "sudo chown node:node /workspaces/docs/node_modules /home/node/.claude && npm ci",
   "remoteUser": "node",
   "containerEnv": {
     "GIT_CONFIG_COUNT": "4",
@@ -53,5 +53,5 @@
     "GIT_CONFIG_KEY_3": "commit.gpgsign",
     "GIT_CONFIG_VALUE_3": "true"
   },
-  "runArgs": ["--init", "--add-host=host.docker.internal:host-gateway"]
+  "runArgs": ["--init", "--add-host=host.docker.internal:host-gateway", "--name=fastmon-docs"]
 }
