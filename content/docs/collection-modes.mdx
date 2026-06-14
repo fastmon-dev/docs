@@ -17,14 +17,14 @@ Three modes: `anonymous`, `consent`, `full`. The default is
 | Default behavior              | Anonymous                          | Anonymous before opt-in, full after (toggled by your CMP)     | Full                                    |
 | Storage on the visitor's device | None                             | None before opt-in; `_fm_consent` cookie + `sessionStorage._s` after | `sessionStorage._s` only            |
 | Web Vitals                    | Yes                                | Yes                                                           | Yes                                     |
-| Errors                        | Type + count only                  | Type + count before opt-in; message + frames after            | Type + count + message + frames         |
+| Errors                        | Type, count, frame hosts + your own first-party script paths & line/col; no message | Same before opt-in; full frame detail + message after | Type + count + message + full frame detail |
 | Cross-page `session_id`       | No (stripped)                      | No before opt-in, yes after                                   | Yes                                     |
 | Referrer (bucketed source + medium) | Yes                          | Yes                                                           | Yes                                     |
 | Raw referrer URL persisted    | Never                              | Never                                                         | Never                                   |
 | LCP image URL, LoAF script paths, third-party domain map | Stripped | Stripped before opt-in; kept after                   | Kept                                    |
 | Edge-derived `stitch` (bounded ≤24h, per-site) | Yes      | Yes                                                           | Yes                                     |
-| GDPR consent banner needed for our beacon | No (storage-free, no PII)      | No before opt-in; required for the opt-in path itself | Depends on jurisdiction                 |
-| When to pick it               | Everyone, unless you have a specific reason | You want Web Vitals from page 1 but session linkage only after CMP consent | You're under a regulator that explicitly permits richer collection, or you're internal-only |
+| Consent banner needed for our beacon | No (storage-free, no PII)      | No before opt-in; required for the opt-in path itself | Depends on your setup                   |
+| When to pick it               | Everyone, unless you have a specific reason | You want Web Vitals from page 1 but session linkage only after CMP consent | You've decided session linkage is fine without an opt-in, or you're internal-only |
 
 ## `anonymous`: the default
 
@@ -35,7 +35,7 @@ a visitor across pages or sites.
 
 **Pick this if:**
 
-- you run a public website in the EU and want the simplest GDPR
+- you run a public website in the EU and want the simplest privacy
   posture. `anonymous` doesn't need a cookie banner *for our
   beacon*: it sets no cookies and stores no IPs. Other tools on
   the page may still need one, but that's not on us.
@@ -92,10 +92,9 @@ URL, no LoAF detail, no third-party domain map, error type +
 count only (no message, no frames). Web Vitals still flow.
 Consent unlocks **linkability**, not new categories of data.
 
-The `_fm_consent` cookie qualifies as strictly necessary under
-TDDDG §25(2) Nr. 2 / ePrivacy 5(3): without persisting the
-decision, the opt-in would not survive page navigation, and the
-consent mechanism would become meaningless.
+The `_fm_consent` cookie does one thing — remember the consent
+decision so it survives a page navigation. That's the only reason
+it exists, and opt-out deletes it.
 
 **Pick this if:**
 
@@ -119,9 +118,12 @@ consent mechanism would become meaningless.
   (origin + path) for INP attribution.
 - **Third-party domain map** so dashboard breakdowns show which
   vendor scripts contributed to load.
-- **Error messages and stack frames** (in addition to the always-on
-  type + count). Still run through the PII scrubber before
-  transmission.
+- **Error messages and full stack-frame detail.** Without consent
+  the wire already carries the error type, count, every frame's
+  host, and the path + line/column of frames in your own
+  first-party external scripts. `full` adds the error **message**
+  and the path/line/column of inline and third-party frames. The
+  message still runs through the PII scrubber before transmission.
 
 Everything else (Web Vitals, errors-by-type, browser / OS /
 device / viewport, connection type, RTT and downlink estimates,
@@ -129,22 +131,38 @@ campaign attribution as UTM + click-ID label) is identical to
 `anonymous`. The privacy floor is also unchanged: no IP storage,
 no raw User-Agent, no static device-hint reads, no fingerprints.
 
-What `full` gives up is the GDPR-legitimate-interest argument that
-`anonymous` rests on: a stable cross-page identifier turns
-pageviews into a session, which is personal data under most
-EU readings.
+What `full` gives up is the lean posture `anonymous` keeps: a
+stable cross-page identifier links pageviews into a real session —
+a bigger privacy step to take without asking the visitor first.
 
 **Pick this if:**
 
 - you're internal-only (intranet, employee app), where the
   visitor base and consent context look different,
-- you're in a jurisdiction that explicitly permits session-level
-  linkage without a separate basis,
+- you've decided session linkage is fine without an opt-in step,
 - you've signed a DPA that covers it explicitly.
 
 If you're not sure, skip `full`. And if what you actually want is
-the opt-in gate, that's `consent`, not `full`. Regulators aren't
-going to thank you for linking sessions you didn't have to.
+the opt-in gate, that's `consent`, not `full`. There's no upside to
+linking sessions you didn't have to.
+
+## Two finer levers, independent of the mode
+
+Beyond the mode, each site has two opt-out switches that cut
+identifiers without changing data categories:
+
+- **`store_stitch`** (default on) — off makes the stored row
+  genuinely anonymous: the edge-derived `stitch` is dropped in
+  *every* mode, at the cost of unique-visitor and session metrics.
+- **`store_session`** (default on) — off makes the served bundle
+  skip `sessionStorage` entirely and drops `sid`, so a `full` /
+  post-opt-in `consent` site keeps full content telemetry but no
+  cross-pageview session id.
+
+See [Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely)
+for the reasoning and [Sites](/en/concepts/sites) for where to set
+them. A third switch, `enforce_domain_match`, hardens ingest rather
+than privacy — see [Sites → Allowed origins](/en/concepts/sites#allowed-origins).
 
 ## Changing the mode
 

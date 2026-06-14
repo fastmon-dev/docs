@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Change: Drop legal claims and statute citations from the privacy/collection-modes pages (EN + DE)
+
+The customer-facing docs now state the facts (storage-free, no cookies, no IP stored, EU-only, no banner needed, `stitch` minimised and switchable off) without arguing the law behind them. Removed every statute reference (TDDDG §25, ePrivacy Art. 5(3), GDPR Art. 6(1)(f)/Art. 4(1)) and legal-conclusion framing (legitimate-interest justification, "strictly necessary", Schrems II, "regulator permits", "GDPR posture"). The detailed legal reasoning lives in the internal `data_collection.md` and the DPA, not on the public page.
+
+### Change: Document the per-site privacy levers and the error-frame fixability rule (EN + DE)
+
+Carried over from backend `data_collection.md` (commit `57a51d6`, "error-frame paths + per-site stitch/session/domain controls").
+
+- **Three new per-site settings documented** across `concepts/sites`, `privacy`, and `collection-modes` (both languages):
+  - `store_stitch` (default `true`) — opt-out drops the edge-derived `stitch` in *every* mode, leaving a fully anonymous row at the cost of unique-visitor and session metrics.
+  - `store_session` (default `true`) — opt-out makes the served `full`/`consent` bundle skip `sessionStorage` entirely and drops `sid`; full content telemetry, no cross-pageview session id.
+  - `enforce_domain_match` (default `false`) — opt-in ingest guard that drops beacons whose reported page-URL host isn't `domain` or a subdomain (label-bounded); documented in `concepts/sites` next to `allowed_origins`.
+- **Error-frame fixability rule corrected.** The without-consent wire no longer carries "type + count only": it now also ships every stack-frame's host plus the path + line/column of frames in the customer's own first-party external scripts (the location identifies the bug, not the visitor). Inline and third-party frame detail and the error message stay consent-only. Updated the Errors row in the collection-modes table, the `full` error bullet, the `privacy` "what we collect" entry, and the `beacon` observe table + `errs` field notes.
+
 ### Add: Feature pages for Analytics and Synthetic Monitoring (EN + DE)
 
 - New top-level pages `analytics` and `synthetic` in a new "Features" sidebar section, plus landing-page cards in both languages. Both marked Beta (open to all org members), matching the backend/frontend release state.

@@ -27,6 +27,11 @@ You don't pick the bundle in the `<script>` tag; the server
 resolves it from the site's mode and ships the right build. A mode
 change rolls the script cache automatically.
 
+If the site sets `store_session = false`, the `full` and `consent`
+bundles are served parametrised to skip `sessionStorage` entirely —
+no `_s` is ever written, in any mode. See
+[Sites → Privacy levers](/en/concepts/sites#privacy-levers).
+
 ## Why it matters
 
 The beacon is the boundary between Fastmon and the visitor.
@@ -43,7 +48,7 @@ privacy review.
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, paint entries, long animation frames, layout shifts.       |
 | `Navigation Timing`        | TTFB, redirect count, navigation type (`navigate`, `reload`, `back_forward`).  |
 | `Resource Timing`          | Per-resource size, duration, and category. Aggregated to per-domain rollups.   |
-| `error` event              | Type and count always; message + frames only under consent / `full`, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
+| `error` event              | Type, count, and stack-frame hosts always; the path + line/column of your own first-party script frames without consent too. Message and the detail of inline / third-party frames only under consent / `full`, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
 | Document & Window          | Page URL (sanitized per collection mode), referrer, viewport size class.       |
@@ -171,9 +176,12 @@ Key abbreviations:
 - `t1`…`t36`: numeric timing slots (TTFB, FCP, LCP, INP, CLS,
   cache hit rate, resource breakdowns, LoAF aggregates, …).
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr`
-  frames). `m` and `fr` are consent-only; even then they run
-  through a scrubber that masks URLs, emails, IDs, and quoted
-  strings.
+  frames). `t` and `n` ship in every mode, and so does each frame's
+  host — plus the path and line/column for frames in your own
+  first-party external scripts. The message `m`, and the
+  path/line/column of inline and third-party frames, are
+  consent-only; even then `m` runs through a scrubber that masks
+  URLs, emails, IDs, and quoted strings.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 

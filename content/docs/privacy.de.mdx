@@ -32,16 +32,16 @@ Diese Regeln gelten unabhängig davon, in welchem
 
 `anonymous` ist **strikt speicherfrei**: keine Cookies, kein
 `localStorage`, kein `sessionStorage`, kein IndexedDB, keine Cache
-API. Daher braucht der Modus unter TDDDG §25 / ePrivacy
-Art. 5(3) keinen Cookie-Banner.
+API. Daher braucht der Modus keinen Cookie-Banner: es liegt nichts
+auf dem Gerät, wofür man Consent einholen müsste.
 
 `consent` ist **vor Opt-In** ebenfalls speicherfrei: auf dem Wire
 byte-identisch zu `anonymous`. Bei Opt-In setzt der Tracker ein
 `_fm_consent`-Cookie, das die Consent-Entscheidung persistiert, und
 schreibt eine Session-ID in den `sessionStorage` (`_s`). Das Cookie
-qualifiziert sich nach TDDDG §25(2) Nr. 2 als unbedingt erforderlich:
-ohne Persistierung würde das Opt-In den nächsten Seitenwechsel
-nicht überleben. Opt-Out löscht beides sofort.
+macht genau eine Sache — sich die Consent-Entscheidung merken, damit
+sie den nächsten Seitenwechsel übersteht. Opt-Out löscht beides
+sofort.
 
 `full` behält die Session-ID im `sessionStorage` ab dem ersten
 Pageview. Keine Cookies. Speicher auf dem Gerät ist genau ein
@@ -62,11 +62,18 @@ Seite auszurechnen:
 - **Navigation-Timing**: Nav-Typ, TTFB, Pageload-Timing.
 - **Resource-Timing**: pro Kategorie aggregierte Byte-Größen und
   Counts (Script, CSS, Image, Font, Sonstige).
-- **Fehler**: Typ, Count und (mit Consent) Message und Frames.
-  Alle Messages laufen vor dem Versand durch einen immer aktiven
-  Scrubber, der URLs, E-Mail-Adressen, numerische IDs und Strings
-  in Anführungszeichen durch `*` maskiert, auch bei explizitem
-  Consent. Ein `Bearer eyJhbG…`-Token, der sich in eine Exception
+- **Fehler**: Typ und Count in jedem Modus, dazu der Script-Host
+  jedes Stack-Frames. Für Frames in deinen *eigenen*
+  First-Party-External-Scripts behält der Wire auch ohne Consent
+  Script-Pfad und Zeile/Spalte — genug, um einen Bug in Code zu
+  lokalisieren, den du selbst fixen kannst, und für jeden
+  betroffenen Besucher identisch: das identifiziert den Fehler,
+  nicht die Person. Inline- und Third-Party-Frames bleiben ohne
+  Consent host-only. Die Fehler-**Message** ist consent-only
+  (`full` / `consent` nach Opt-In) und läuft auch dann durch einen
+  immer aktiven Scrubber, der URLs, E-Mail-Adressen, numerische IDs
+  und Strings in Anführungszeichen vor dem Versand durch `*`
+  maskiert. Ein `Bearer eyJhbG…`-Token, der sich in eine Exception
   schleicht, erreicht uns nicht.
 - **Umgebung**: Browser-Familie, OS-Familie, Device-Klasse
   (`mobile`/`tablet`/`desktop`), Viewport-Klasse, effektiver
@@ -76,9 +83,8 @@ Seite auszurechnen:
   Geräte- oder OS-Zustand. `navigator.deviceMemory`,
   `navigator.hardwareConcurrency`, das `saveData`-Flag,
   `prefers-color-scheme` und `prefers-reduced-motion` lesen wir
-  nicht mehr: nach der breiten EDPB-Leitlinie 2/2023 fallen die
-  unter „Zugriff auf gespeicherte Informationen" gem. TDDDG §25(1),
-  und wir haben sie ausgemustert, statt sie hinter ein Consent-Gate zu stellen.
+  gar nicht — das sind Geräte-Konfigurationssignale, die wir für
+  Performance nicht brauchen, also haben wir sie gestrichen.
 - **Geo**: nur Land (zweistelliges ISO). Wird am Edge aus der IP
   abgeleitet und als Request-Header weitergereicht; die IP selbst
   erreicht die Anwendung nie.
@@ -143,12 +149,48 @@ Eigenschaften:
   `stitch`-Werte. Die „keine Cross-Site-Identifier"-Zeile in der
   Tabelle oben gilt unverändert.
 
-`stitch` wird in jedem Modus (auch `anonymous`) gespeichert, auf
-Grundlage von DSGVO Art. 6 Abs. 1 lit. f. IP und User-Agent
-werden am Edge unter derselben Rechtsgrundlage verarbeitet, die
-auch den Ländercode produziert; das Backend sieht nur den Output
-des HMAC. Die explizite, consent-gedeckte `sid` (die tab-gebundene
+Zusammen lassen diese Eigenschaften kaum etwas übrig, womit sich
+arbeiten ließe: die Inputs werden am Edge zerstört, das Salt ist
+binnen eines Tages weg, und nichts verknüpft über Sites hinweg. Und
+wenn du lieber gar keinen
+Besucher-Identifier speicherst, verwirft `store_stitch = false`
+(siehe unten) ihn in jedem Modus — für eine vollständig anonyme
+Zeile.
+
+Die explizite, consent-gedeckte `sid` (die tab-gebundene
 Session-ID in `full` / `consent` nach Opt-In) bleibt unverändert.
+
+### Identifier ganz abschalten
+
+Zwei Schalter pro Site lassen dich noch sparsamer fahren, als der
+Modus allein vorgibt. Beide stehen per Default auf *an* (die oben
+beschriebene Position); umstellen kannst du sie in den
+Site-Einstellungen.
+
+- **`store_stitch` (Default an).** Aus erzwingt `stitch` beim
+  Insert in *jedem* Modus auf leer und lässt eine Zeile ganz ohne
+  Besucher-Identifier zurück — vollständig anonym. Der Trade-off
+  ist Analytics, nicht Legalität: ohne `stitch` gibt es für die Site
+  keine Unique-Visitor-Zahlen und keine Session-Metriken
+  (Bounce-Rate, Seiten pro Session, Verweildauer). Alle
+  Per-Pageview-Signale (Web Vitals, Fehler, Third-Party,
+  Attribution) bleiben unberührt. Das ist der Schalter für Sites
+  aus dem öffentlichen Sektor, dem Gesundheits- oder Finanzbereich,
+  die lieber das Visitor-Stitching verlieren, als irgendeinen
+  Identifier zu speichern.
+- **`store_session` (Default an).** Aus sagt dem ausgelieferten
+  Bundle, `sessionStorage` gar nicht erst anzufassen — der
+  Storage-Schritt auf dem Gerät entfällt, er wird nicht bloß
+  serverseitig verworfen — und der Collector erzwingt `sid` als
+  Absicherung auf leer. Die Site behält die volle
+  Content-Telemetrie (volle URLs, Fehler-Messages und -Frames unter
+  Consent), läuft aber ohne jede seitenübergreifende Session-ID.
+  Nützlich, wenn du reichhaltiges Debugging auf Opt-In-Traffic
+  willst, aber keine Session-Rekonstruktion.
+
+Die beiden sind unabhängig: schalte einen aus, beide oder keinen.
+Im `anonymous`-Modus fehlt `sid` ohnehin, also greift
+`store_session` nur unter `full` / `consent` nach Opt-In.
 
 ### Site-Metadaten vs. Besucherdaten
 
@@ -158,11 +200,11 @@ nach Script / Image / Font, die Origin des LCP-Bilds. Diese Werte
 sind über alle Besucher derselben Seite identisch. Sie sagen dir,
 welches deiner CDNs langsam ist; sie identifizieren niemanden.
 
-Unter DSGVO Art. 4(1) liegen sie damit auf Feldebene außerhalb der
-Personendaten-Grenze. Wir behandeln sie trotzdem sorgfältig
-(Script-URLs und LCP-Image-URLs werden bei der Erfassung auf
-Origin + Pathname reduziert), aber sie sind nicht das, worauf der
-Consent-/Verknüpfbarkeits-Gate zielt.
+Das macht sie zu Site-Konfiguration, nicht zu Besucherdaten. Wir
+behandeln sie trotzdem sorgfältig — Script-URLs und LCP-Image-URLs
+werden bei der Erfassung auf Origin + Pathname reduziert —, aber sie
+sind nicht das, worum es bei den Consent- und Verknüpfbarkeits-Reglern
+geht.
 
 ## Collection Mode und was sich ändert
 
@@ -202,7 +244,7 @@ Delta:
 | Cross-Site-Identity-Graph        | Nein    | Oft, via SDK oder Pixel-Netz     |
 | Session-Replay / DOM-Dump        | Nein    | Häufig als Opt-In                |
 | Datenpfad ausschließlich EU      | Ja      | Selten                           |
-| Schrems-II-Exposition            | Keine   | Ja (US-Transfermechanismen)      |
+| Daten verlassen die EU           | Nein    | Oft (US-Transfermechanismen)     |
 
 ## Deine Verantwortung
 
@@ -237,11 +279,11 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
   IP-Speicherung, speicherfrei auf dem Gerät des Besuchers. Andere
   Tools auf der Seite vielleicht trotzdem, aber das liegt nicht an
   uns.
-- **Schrems II ist für unsere Pipeline kein Thema.** Daten verlassen
-  die EU schlicht nicht.
-- **Deinem Datenschutzbeauftragten (DSB) kannst du eine Ein-Seiter-Antwort geben**: Link auf
+- **Deine Daten verlassen die EU nie.** Es gibt gar keinen
+  US-Transfer, über den man nachdenken müsste.
+- **Deinem Team kannst du eine Ein-Seiter-Antwort geben**: Link auf
   diese Seite plus unseren AVV, fertig.
-- **Striktes Consent-Regime?** Nutze den
+- **Explizites Opt-In vor jeder Session-Verknüpfung?** Nutze den
   [Collection Mode](/de/collection-modes) `consent`.
 
 ## Nächste Schritte

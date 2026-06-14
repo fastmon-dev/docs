@@ -47,6 +47,9 @@ site-group concept on purpose; tags cover it.
 | `collector_hash`      | string                                | Per-site hash used in the ingest URL (`/c/{collector_hash}`).                    |
 | `collection_mode`     | enum                                  | `anonymous`, `consent`, or `full`. See [Collection modes](/en/collection-modes). |
 | `data_retention_days` | int                                   | Default `90`. After expiry, rows are dropped at the storage layer.               |
+| `store_stitch`        | bool                                  | Default `true`. When `false`, the edge-derived `stitch` is dropped in every mode — a genuinely anonymous row, at the cost of visitor and session metrics. See [Privacy](/en/privacy#turning-identifiers-off-entirely). |
+| `store_session`       | bool                                  | Default `true`. When `false`, the served bundle skips `sessionStorage` and `sid` is dropped — full content telemetry, no cross-pageview session id. |
+| `enforce_domain_match`| bool                                  | Default `false`. When `true`, drops beacons whose reported page-URL host isn't `domain` or a subdomain of it (see below).             |
 | `source_version`      | string                                | Pins a beacon template version (`v1` is current).                                |
 | `tags`                | list of strings (max 10)              | Free-form labels for dashboard and analytics filtering.                          |
 | `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
@@ -97,6 +100,47 @@ this list is the first thing to check.
 
 Add staging and preview hostnames here. Wildcards aren't supported;
 list each origin explicitly.
+
+### Enforcing the page domain
+
+`allowed_origins` checks the HTTP `Origin` header — but `sendBeacon`
+and keepalive POSTs frequently omit `Origin`, so a beacon replayed
+from a foreign page that knows your `collector_hash` can slip past
+an origin allow-list. `enforce_domain_match` (opt-in, default off)
+closes that gap from the other side: when enabled, the collector
+drops any beacon whose *reported page-URL host* is neither the
+site's `domain` nor a subdomain of it. The match is label-bounded
+(`shop.example.com` matches `example.com`; `notexample.com` does
+not), and a beacon with an empty or unparseable host is dropped
+while enforcing.
+
+It's off by default because multi-domain and vanity-domain
+deployments would lose legitimate traffic. Turn it on for a
+single-domain site that wants ingest locked to its own pages.
+
+## Privacy levers
+
+Two per-site switches control which identifiers reach storage,
+without changing what categories of data the beacon collects:
+
+- **`store_stitch`** (default `true`). Off drops the edge-derived
+  `stitch` identifier at insert time across *every* collection
+  mode, leaving a row with no visitor identifier at all — fully
+  anonymous. The cost is
+  analytics: no unique-visitor counts and no session metrics
+  (bounce rate, pages per session, dwell time) for that site.
+  Per-pageview signals (Web Vitals, errors, third-party,
+  attribution) are unaffected.
+- **`store_session`** (default `true`). Off tells the served bundle
+  to never touch `sessionStorage`, and the collector drops `sid` as
+  a backstop. A `full` or post-opt-in `consent` site then keeps
+  full content telemetry (full URLs, error messages and frames) but
+  runs without any cross-pageview session id. (`anonymous` has no
+  `sid` regardless, so this only bites under `full` / `consent`.)
+
+The two are independent — disable either, both, or neither. See
+[Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely)
+for the full reasoning.
 
 ## Common scenarios
 

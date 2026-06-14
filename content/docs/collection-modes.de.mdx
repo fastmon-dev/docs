@@ -18,14 +18,14 @@ und für fast alle ist das genau richtig.
 | Default-Verhalten                | Anonym                             | Vor Opt-In anonym, danach full (vom CMP gesteuert)              | Full                                    |
 | Storage auf dem Besucher-Gerät   | Keiner                             | Keiner vor Opt-In; `_fm_consent`-Cookie + `sessionStorage._s` danach | Nur `sessionStorage._s`             |
 | Web Vitals                       | Ja                                 | Ja                                                              | Ja                                      |
-| Fehler                           | Nur Typ + Count                    | Typ + Count vor Opt-In; Message + Frames danach                 | Typ + Count + Message + Frames          |
+| Fehler                           | Typ, Count, Frame-Hosts + eigene First-Party-Script-Pfade & Zeile/Spalte; keine Message | Vor Opt-In genauso; danach volles Frame-Detail + Message | Typ + Count + Message + volles Frame-Detail |
 | Seitenübergreifende `session_id` | Nein (entfernt)                    | Vor Opt-In nein, danach ja                                      | Ja                                      |
 | Referrer (gebucketete Source + Medium) | Ja                          | Ja                                                              | Ja                                      |
 | Rohe Referrer-URL persistiert    | Nie                                | Nie                                                             | Nie                                     |
 | LCP-Image-URL, LoAF-Script-Pfade, Third-Party-Domain-Map | Entfernt   | Vor Opt-In entfernt; danach erhalten                          | Erhalten                                |
 | Am Edge abgeleiteter `stitch` (gedeckelt ≤24 h, pro Site) | Ja      | Ja                                                              | Ja                                      |
-| Consent-Banner für unseren Beacon nötig | Nein (speicherfrei, keine PII) | Nein vor Opt-In; der Opt-In-Pfad selbst braucht ihn    | Hängt von der Jurisdiktion ab          |
-| Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1, Sessions aber erst nach CMP-Consent verknüpfen | Du fällst unter eine Regulierung, die das explizit erlaubt, oder du misst nur intern |
+| Consent-Banner für unseren Beacon nötig | Nein (speicherfrei, keine PII) | Nein vor Opt-In; der Opt-In-Pfad selbst braucht ihn    | Hängt von deinem Setup ab               |
+| Wann wählen                      | Alle, außer du hast einen konkreten Grund dagegen | Du willst Web Vitals ab Seite 1, Sessions aber erst nach CMP-Consent verknüpfen | Du hast entschieden, dass Session-Verknüpfung ohne Opt-In okay ist, oder du misst nur intern |
 
 ## `anonymous`: der Default
 
@@ -37,7 +37,7 @@ wiederzuerkennen.
 **Passt für dich, wenn:**
 
 - du eine öffentliche Website in der EU betreibst und die
-  einfachste DSGVO-Position willst. `anonymous` braucht *für
+  einfachste Datenschutz-Position willst. `anonymous` braucht *für
   unseren Beacon* keinen Cookie-Banner, weil keine Cookies gesetzt
   und keine IPs gespeichert werden. Andere Tools auf der Seite
   können trotzdem einen Banner verlangen, das liegt aber nicht
@@ -97,10 +97,9 @@ Count (keine Message, keine Frames). Web Vitals fließen weiter.
 Consent schaltet **Verknüpfbarkeit** frei, keine neuen
 Datenkategorien.
 
-Das `_fm_consent`-Cookie gilt nach TDDDG §25(2) Nr. 2 /
-ePrivacy 5(3) als unbedingt erforderlich: ohne
-Persistierung würde das Opt-In den nächsten Seitenwechsel nicht
-überleben und der Consent-Mechanismus selbst wäre sinnlos.
+Das `_fm_consent`-Cookie macht genau eine Sache — sich die
+Consent-Entscheidung merken, damit sie den nächsten Seitenwechsel
+übersteht. Mehr ist es nicht, und Opt-Out löscht es.
 
 **Passt für dich, wenn:**
 
@@ -125,9 +124,13 @@ Persistierung würde das Opt-In den nächsten Seitenwechsel nicht
   (Origin + Pfad) für die INP-Attribution.
 - **Third-Party-Domain-Map**, damit Dashboard-Breakdowns zeigen,
   welche Vendor-Skripte zur Ladezeit beigetragen haben.
-- **Fehlermessages und Stack-Frames** (zusätzlich zu dem immer
-  aktiven Typ + Count). Laufen vor dem Versand weiterhin durch
-  den PII-Scrubber.
+- **Fehlermessages und volles Stack-Frame-Detail.** Ohne Consent
+  trägt der Wire bereits Fehlertyp, Count, den Host jedes Frames
+  und Pfad + Zeile/Spalte der Frames in deinen eigenen
+  First-Party-External-Scripts. `full` ergänzt die
+  Fehler-**Message** sowie Pfad/Zeile/Spalte von Inline- und
+  Third-Party-Frames. Die Message läuft weiterhin vor dem Versand
+  durch den PII-Scrubber.
 
 Alles andere (Web Vitals, Fehler-nach-Typ, Browser / OS / Device
 / Viewport, Connection-Typ, RTT- und Downlink-Schätzungen,
@@ -136,24 +139,45 @@ Kampagnen-Attribution als UTM + Click-ID-Label) ist identisch zu
 IP-Speicherung, kein roher User-Agent, keine Reads statischer
 Device-Hints, keine Fingerprints.
 
-Was `full` aufgibt, ist das DSGVO-Argument des berechtigten
-Interesses, auf dem `anonymous` ruht: ein stabiler
-seitenübergreifender Identifier macht aus Pageviews eine Session,
-und das gilt nach den meisten EU-Lesarten als personenbezogenes
-Datum.
+Was `full` aufgibt, ist die schlanke Position, die `anonymous`
+hält: ein stabiler seitenübergreifender Identifier verknüpft
+Pageviews zu einer echten Session — ein größerer Schritt beim
+Datenschutz, den du ohne Nachfrage beim Besucher gehst.
 
 **Passt für dich, wenn:**
 
 - du rein intern misst (Intranet, Employee-App), wo Besucherkreis
   und Consent-Kontext anders aussehen,
-- du in einer Jurisdiktion sitzt, in der Session-Verknüpfung ohne
-  separate Rechtsgrundlage erlaubt ist,
+- du entschieden hast, dass Session-Verknüpfung ohne Opt-In-Schritt
+  okay ist,
 - du einen AVV unterschrieben hast, der das explizit abdeckt.
 
 Im Zweifel: lass `full` weg. Und wenn du eigentlich das
-Opt-In-Gate willst, ist `consent` dein Modus, nicht `full`.
-Aufsichtsbehörden belohnen niemanden dafür, Sessions zu
-verknüpfen, die er nicht hätte verknüpfen müssen.
+Opt-In-Gate willst, ist `consent` dein Modus, nicht `full`. Es gibt
+keinen Vorteil darin, Sessions zu verknüpfen, die du nicht hättest
+verknüpfen müssen.
+
+## Zwei feinere Schalter, unabhängig vom Mode
+
+Über den Mode hinaus hat jede Site zwei Opt-out-Schalter, die
+Identifier kappen, ohne die Datenkategorien zu ändern:
+
+- **`store_stitch`** (Default an) — aus macht die gespeicherte
+  Zeile echt anonym: der am Edge abgeleitete `stitch` wird in
+  *jedem* Modus verworfen, auf Kosten von Unique-Visitor- und
+  Session-Metriken.
+- **`store_session`** (Default an) — aus lässt das ausgelieferte
+  Bundle `sessionStorage` komplett auslassen und verwirft `sid`,
+  sodass eine `full`- oder `consent`-Site nach Opt-In die volle
+  Content-Telemetrie behält, aber ohne seitenübergreifende
+  Session-ID.
+
+Begründung unter
+[Privacy → Identifier ganz abschalten](/de/privacy#identifier-ganz-abschalten),
+und wo du sie setzt unter [Sites](/de/concepts/sites). Ein dritter
+Schalter, `enforce_domain_match`, härtet den Ingest statt der
+Privacy — siehe
+[Sites → Allowed Origins](/de/concepts/sites#allowed-origins).
 
 ## Mode ändern
 

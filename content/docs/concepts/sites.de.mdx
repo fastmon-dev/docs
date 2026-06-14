@@ -49,6 +49,9 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 | `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
 | `collection_mode`     | enum                                  | `anonymous`, `consent` oder `full`. Siehe [Collection Modes](/de/collection-modes). |
 | `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
+| `store_stitch`        | bool                                  | Default `true`. Bei `false` wird der am Edge abgeleitete `stitch` in jedem Modus verworfen — eine echt anonyme Zeile, auf Kosten von Visitor- und Session-Metriken. Siehe [Privacy](/de/privacy#identifier-ganz-abschalten). |
+| `store_session`       | bool                                  | Default `true`. Bei `false` lässt das ausgelieferte Bundle `sessionStorage` aus und `sid` wird verworfen — volle Content-Telemetrie, keine seitenübergreifende Session-ID. |
+| `enforce_domain_match`| bool                                  | Default `false`. Bei `true` werden Beacons verworfen, deren gemeldeter Seiten-URL-Host nicht `domain` oder eine Subdomain davon ist (siehe unten). |
 | `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
 | `tags`                | Liste von Strings (max 10)            | Freie Labels für Dashboard- und Analytics-Filter.                                 |
 | `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
@@ -99,6 +102,50 @@ mysteriöse Weise, prüfe zuerst diese Liste.
 
 Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
 unterstützt; jeden Origin explizit listen.
+
+### Page-Domain erzwingen
+
+`allowed_origins` prüft den HTTP-`Origin`-Header — aber
+`sendBeacon` und Keepalive-POSTs lassen `Origin` oft weg, sodass
+ein von einer fremden Seite mit bekanntem `collector_hash`
+abgespielter Beacon an einer Origin-Allow-List vorbeirutschen kann.
+`enforce_domain_match` (Opt-In, Default aus) schließt die Lücke von
+der anderen Seite: aktiviert verwirft der Collector jeden Beacon,
+dessen *gemeldeter Seiten-URL-Host* weder die `domain` der Site
+noch eine Subdomain davon ist. Der Match ist label-gebunden
+(`shop.example.com` matcht `example.com`, `notexample.com` nicht),
+und ein Beacon mit leerem oder nicht parsbarem Host wird beim
+Erzwingen verworfen.
+
+Default aus, weil Multi-Domain- und Vanity-Domain-Setups sonst
+legitimen Traffic verlieren. Für eine Single-Domain-Site, die den
+Ingest auf die eigenen Seiten festnageln will, schalt es an.
+
+## Privacy-Schalter
+
+Zwei Schalter pro Site steuern, welche Identifier in den Storage
+gelangen, ohne zu ändern, welche Datenkategorien der Beacon
+sammelt:
+
+- **`store_stitch`** (Default `true`). Aus verwirft den am Edge
+  abgeleiteten `stitch`-Identifier beim Insert in *jedem* Collection
+  Mode und lässt eine Zeile ganz ohne Besucher-Identifier zurück —
+  vollständig anonym. Der
+  Preis ist Analytics: keine Unique-Visitor-Zahlen und keine
+  Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer)
+  für die Site. Per-Pageview-Signale (Web Vitals, Fehler,
+  Third-Party, Attribution) bleiben unberührt.
+- **`store_session`** (Default `true`). Aus sagt dem ausgelieferten
+  Bundle, `sessionStorage` nie anzufassen, und der Collector
+  verwirft `sid` als Absicherung. Eine `full`- oder `consent`-Site
+  nach Opt-In behält dann die volle Content-Telemetrie (volle URLs,
+  Fehler-Messages und -Frames), läuft aber ohne seitenübergreifende
+  Session-ID. (`anonymous` hat ohnehin keine `sid`, also greift das
+  nur unter `full` / `consent`.)
+
+Die beiden sind unabhängig — schalte einen aus, beide oder keinen.
+Die vollständige Begründung steht unter
+[Privacy → Identifier ganz abschalten](/de/privacy#identifier-ganz-abschalten).
 
 ## Häufige Szenarien
 

@@ -28,6 +28,12 @@ Du wählst das Bundle nicht im `<script>`-Tag; der Server löst es
 aus dem Site-Mode auf und liefert den passenden Build aus. Ein
 Mode-Wechsel rollt den Script-Cache automatisch.
 
+Steht bei der Site `store_session = false`, werden das `full`- und
+das `consent`-Bundle so parametrisiert ausgeliefert, dass sie
+`sessionStorage` komplett auslassen — `_s` wird nie geschrieben, in
+keinem Modus. Siehe
+[Sites → Privacy-Schalter](/de/concepts/sites#privacy-schalter).
+
 ## Warum das zählt
 
 Der Beacon ist die Grenze zwischen Fastmon und deinem Besucher.
@@ -44,7 +50,7 @@ jedem Datenschutz-Review verteidigbar.
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, Paint-Einträge, Long Animation Frames, Layout Shifts.      |
 | `Navigation Timing`        | TTFB, Redirect-Count, Navigation-Typ (`navigate`, `reload`, `back_forward`).   |
 | `Resource Timing`          | Pro Resource: Größe, Dauer, Kategorie. Pro Domain aggregiert.                  |
-| `error`-Event              | Typ und Anzahl immer; Message + Frames nur mit Consent / `full`, und dort erst nach einem immer aktiven PII-Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert. |
+| `error`-Event              | Typ, Anzahl und Stack-Frame-Hosts immer; Pfad + Zeile/Spalte deiner eigenen First-Party-Script-Frames auch ohne Consent. Message sowie das Detail von Inline-/Third-Party-Frames nur mit Consent / `full`, und dort erst nach einem immer aktiven PII-Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert. |
 | `unhandledrejection`       | Selbe Form wie `error`.                                                        |
 | Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
 | Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
@@ -173,9 +179,12 @@ Schlüssel-Abkürzungen:
 - `t1`…`t36`: numerische Timing-Slots (TTFB, FCP, LCP, INP, CLS,
   Cache-Hit-Rate, Resource-Breakdowns, LoAF-Aggregate, …).
 - `errs`: Error-Einträge (`t` Typ, `n` Count, `m` Message, `fr`
-  Frames). `m` und `fr` sind consent-only; auch dann laufen sie
-  durch einen Scrubber, der URLs, E-Mails, IDs und Strings in
-  Anführungszeichen maskiert.
+  Frames). `t` und `n` gehen in jedem Modus raus, ebenso der Host
+  jedes Frames — dazu Pfad und Zeile/Spalte der Frames in deinen
+  eigenen First-Party-External-Scripts. Die Message `m` sowie
+  Pfad/Zeile/Spalte von Inline- und Third-Party-Frames sind
+  consent-only; auch dann läuft `m` durch einen Scrubber, der URLs,
+  E-Mails, IDs und Strings in Anführungszeichen maskiert.
 - `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
 
