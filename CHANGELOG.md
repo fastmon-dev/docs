@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Change: Dependency updates + fumadocs-openapi 10 → 11 migration
+
+- **Routine bumps:** `fumadocs-core`/`fumadocs-ui` 16.9.3 → 16.10.2, `fumadocs-mdx` 15.0.11 → 15.0.12, `next` (+ `eslint-config-next`) 16.2.7 → 16.2.9, `@tailwindcss/postcss` 4.3.0 → 4.3.1, `prettier` 3.8.3 → 3.8.4.
+- **fumadocs-openapi 10.10.3 → 11.0.3 (major, forced by the 16.10 bump).** fumadocs-core 16.10 dropped the `renderTranslation` export that `fumadocs-openapi` 10 imports, so the core/ui bump is only buildable on openapi 11. The v11 API redesign required code changes:
+  - `createAPIPage(openapi, …)` → `createOpenAPIPage(…)`. v11 renders the operation UI as a client component, so the page factory and its render callbacks now live in `api-page.client.tsx` (`"use client"`); `api-page.tsx` is a thin server wrapper that resolves the bundled document (`openapi.getSchema`) and passes it in as the serializable `payload` prop (v11 no longer bakes the server instance into the factory).
+  - `defineClientConfig` removed; its `storageKeyPrefix` folded into the page options.
+  - OpenAPI i18n keys re-mapped in `lib/i18n.ts` (short keys like `send`/`query` → English-source-plus-context keys like `"Send(playground)"`); the v10 schema-constraint labels (`schemaMatch`, `schemaMultipleOf`, …) no longer exist and fall back to fumadocs' built-in copy.
+  - `mdx.tsx` registers the same wrapper under both `APIPage` and `OpenAPIPage` (v11 emits `OpenAPIPage ?? APIPage` in generated MDX).
+  - Tracked `content/docs/api/synthetic/*.mdx` regenerated into the v11 MDX layout format (format-only; operations and titles unchanged, no backend content drift).
+- **`eslint` held at 9.39.4.** ESLint 10 currently breaks under `eslint-config-next@16.2.9` — its bundled plugins (`eslint-plugin-import`/`react`/`jsx-a11y`) still cap their peer range at `^9`, and a lint run crashes with `scopeManager.addGlobals is not a function`. Tracked upstream in vercel/next.js [#91710](https://github.com/vercel/next.js/pull/91710) (open, switches to `eslint-plugin-import-x`). Revisit once a v10-capable `eslint-config-next` ships; note ESLint 9.x EOL is 2026-08-06.
+
 ### Change: Drop legal claims and statute citations from the privacy/collection-modes pages (EN + DE)
 
 The customer-facing docs now state the facts (storage-free, no cookies, no IP stored, EU-only, no banner needed, `stitch` minimised and switchable off) without arguing the law behind them. Removed every statute reference (TDDDG §25, ePrivacy Art. 5(3), GDPR Art. 6(1)(f)/Art. 4(1)) and legal-conclusion framing (legitimate-interest justification, "strictly necessary", Schrems II, "regulator permits", "GDPR posture"). The detailed legal reasoning lives in the internal `data_collection.md` and the DPA, not on the public page.

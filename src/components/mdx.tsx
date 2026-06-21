@@ -5,7 +5,10 @@ import { APIPage } from "@/components/api-page";
 export function getMDXComponents(components?: MDXComponents) {
   return {
     ...defaultMdxComponents,
+    // fumadocs-openapi 11 emits `OpenAPIPage ?? APIPage` in generated MDX;
+    // register both names (same server wrapper) so either resolves.
     APIPage,
+    OpenAPIPage: APIPage,
     ...components,
   } satisfies MDXComponents;
 }
