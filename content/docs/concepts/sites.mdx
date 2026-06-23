@@ -14,9 +14,10 @@ the [collection mode](/en/collection-modes), retention, allowed
 origins, the data in the dashboard. New property to monitor =
 new site.
 
-If you want one dashboard view across several properties, use
-**tags** (below) and aggregate at query time. There's no
-site-group concept on purpose; tags cover it.
+To organize related properties, attach **tags** (below). A
+cross-site analytics scope that reports on every site carrying a
+tag together is planned; today tags are labels for grouping, not an
+analytics filter.
 
 ## When you'd touch it
 
@@ -30,7 +31,7 @@ site-group concept on purpose; tags cover it.
   for compliance, some want longer.
 - **Pausing without deleting.** Toggle `is_active = false` to keep
   history but stop ingesting new data.
-- **Tagging for cross-site reporting.** Add tags like `env:production`
+- **Tagging to organize sites.** Add tags like `env:production`
   or `team:growth`.
 
 ## What's on a site
@@ -49,9 +50,10 @@ site-group concept on purpose; tags cover it.
 | `data_retention_days` | int                                   | Default `90`. After expiry, rows are dropped at the storage layer.               |
 | `store_stitch`        | bool                                  | Default `true`. When `false`, the edge-derived `stitch` is dropped in every mode — a genuinely anonymous row, at the cost of visitor and session metrics. See [Privacy](/en/privacy#turning-identifiers-off-entirely). |
 | `store_session`       | bool                                  | Default `true`. When `false`, the served bundle skips `sessionStorage` and `sid` is dropped — full content telemetry, no cross-pageview session id. |
+| `preferred_identity`  | enum                                  | Default `stitch`. Which identity the dashboard counts visitors by (`stitch` or `session`). A reporting default, separate from `store_stitch` / `store_session`, clamped to what the site actually collects. See [Visitors and sessions](/en/concepts/sessions). |
 | `enforce_domain_match`| bool                                  | Default `false`. When `true`, drops beacons whose reported page-URL host isn't `domain` or a subdomain of it (see below).             |
 | `source_version`      | string                                | Pins a beacon template version (`v1` is current).                                |
-| `tags`                | list of strings (max 10)              | Free-form labels for dashboard and analytics filtering.                          |
+| `tags`                | list of strings (max 10)              | Free-form labels for organizing sites. Cross-site analytics-by-tag is planned, not yet live. |
 | `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
 
 ## The two hashes
@@ -71,10 +73,11 @@ pipeline. You only ever copy `source_hash` by hand;
 
 ## Tags
 
-Tags are short labels you attach to a site. The dashboard and
-analytics API let you filter by tag, so they're how you build a
-"production sites" or "marketing sites" view across multiple
-properties.
+Tags are short labels you attach to a site to group related
+properties (a "production sites" or "marketing sites" grouping).
+The sidebar's per-site tag filter was removed; a proper cross-site
+analytics scope that reports on every site carrying a tag together
+is planned. For now, tags are labels and don't filter analytics.
 
 Conventions that work well:
 

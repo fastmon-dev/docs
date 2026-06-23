@@ -51,6 +51,8 @@ privacy review.
 | `error` event              | Type, count, and stack-frame hosts always; the path + line/column of your own first-party script frames without consent too. Message and the detail of inline / third-party frames only under consent / `full`, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
+| `fetch` / `XMLHttpRequest` | Per-endpoint Fetch/XHR aggregates: call counts, durations, duration buckets, and a status-error distribution, templated per endpoint (method + host + path, no query strings). Server-controlled per site (`fetch_xhr_enabled`, default on). |
+| `Server-Timing`            | The `Server-Timing` metrics your own backend reports (name and duration), first-party by construction.                  |
 | Document & Window          | Page URL (sanitized per collection mode), referrer, viewport size class.       |
 
 Geo data (the country) is **not** read in the browser. The
@@ -148,8 +150,8 @@ Key abbreviations:
   `full` and in `consent` post-opt-in.
 - `pvid`: per-pageview id. New on every pageview, not persisted.
 - `ver`: monotonic version of this pageview's payload.
-- `lifecycle`: one of `init`, `loaded`, `error_update`, `softnav`,
-  `hidden`, `frozen`, `terminated`.
+- `lifecycle`: one of `init`, `loaded`, `error_update`,
+  `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
 - `cst`: client-sent-at timestamp, visitor wall-clock at flush.
   Used server-side to detect clock skew against receive time.
@@ -184,6 +186,11 @@ Key abbreviations:
   URLs, emails, IDs, and quoted strings.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
+- Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates
+  (call counts, durations, duration buckets, status-error counts)
+  and the page's `Server-Timing` metrics. Both are templated and
+  normalized server-side (the wire is forgeable), so paths carry no
+  query strings or raw IDs.
 
 ## Cache and rollouts
 

@@ -67,8 +67,14 @@ The part that takes a bit of thought. A rule has three pieces:
 - A **scope**: a single site, or a site **tag** to cover a group
   of sites with one rule (the rule evaluates each site in the tag
   separately).
-- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, pageviews, …).
-- An **aggregation** (p50, p75, p95, count, avg, …).
+- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, pageviews,
+  visitors, …).
+- An **aggregation** (p50, p75, p95, count, avg, …). The `visitors`
+  and `requests` metrics are counts, so they only take `count`.
+- For the **visitors** metric, an optional **identity** picks which
+  identifier backs the count: `stitch` (the default, edge-derived,
+  works in every mode) or `session` (consent-gated). It applies only
+  to `visitors`.
 - An optional **filter** (mobile only, a specific URL pattern, a
   country list, …).
 

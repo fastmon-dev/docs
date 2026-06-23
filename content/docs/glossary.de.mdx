@@ -83,17 +83,24 @@ Mitglieder, Notification Rules, API-Tokens. Siehe
 **Site**: Eine überwachte Property. Hat eigene Beacon-Hashes und
 Einstellungen. Siehe [Sites](/de/concepts/sites).
 
-**Session**: 30-Minuten-Fenster von Pageviews desselben Browsers.
-Anonym per Konstruktion. Siehe
-[Sessions](/de/concepts/sessions).
+**Visitor**: Ein eindeutiger Besucher, gezählt entlang einer
+Identitätsachse: `stitch` (am Edge abgeleitet, in jedem Modus
+vorhanden, der Standard) oder `session` (consent-gated). Anonym per
+Konstruktion. Siehe [Besucher und Sessions](/de/concepts/sessions).
+
+**Session**: 30-Minuten-Fenster von Pageviews desselben Browsers,
+gruppiert über `session_id`. Eine der beiden Besucher-Identitäten,
+und consent-gated. Siehe
+[Besucher und Sessions](/de/concepts/sessions).
 
 **Release**: Versionierter Marker auf einer Site. Wird von
 Analytics über `compare_to_release_id` für Vorher/Nachher genutzt.
 Siehe [Releases](/de/concepts/releases).
 
-**Tag**: Freies Label auf einer Site (max. 10) für
-Dashboard-Filter. Konventionen: `env:production`, `team:growth`
-etc.
+**Tag**: Freies Label auf einer Site (max. 10) zum Organisieren von
+Sites. Ein Cross-Site-Analytics-Scope per Tag ist geplant; Tags
+filtern Analytics noch nicht. Konventionen: `env:production`,
+`team:growth` etc.
 
 **Member**: User in einer Organisation mit Rolle
 (`owner` / `member`).

@@ -15,9 +15,10 @@ Was der Beacon tut, hängt komplett an der Site: das Script, der
 Origins, die Daten im Dashboard. Neue Property monitoren = neue
 Site anlegen.
 
-Willst du einen Dashboard-View über mehrere Properties, nimm
-**Tags** (siehe unten) und aggregier zur Query-Zeit. Ein
-Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
+Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe
+unten). Ein Cross-Site-Analytics-Scope, der alle Sites mit einem Tag
+gemeinsam auswertet, ist geplant; heute sind Tags Labels zum
+Gruppieren, kein Analytics-Filter.
 
 ## Wann du sie anfasst
 
@@ -32,7 +33,7 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
   kürzer für Compliance, manche länger.
 - **Ohne Löschen pausieren.** `is_active = false` behält Historie,
   stoppt neuen Ingest.
-- **Cross-Site-Reporting taggen.** Tags wie `env:production` oder
+- **Zum Organisieren taggen.** Tags wie `env:production` oder
   `team:growth`.
 
 ## Was eine Site hat
@@ -51,9 +52,10 @@ Site-Group-Konzept gibt es bewusst nicht; Tags reichen.
 | `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
 | `store_stitch`        | bool                                  | Default `true`. Bei `false` wird der am Edge abgeleitete `stitch` in jedem Modus verworfen — eine echt anonyme Zeile, auf Kosten von Visitor- und Session-Metriken. Siehe [Privacy](/de/privacy#identifier-ganz-abschalten). |
 | `store_session`       | bool                                  | Default `true`. Bei `false` lässt das ausgelieferte Bundle `sessionStorage` aus und `sid` wird verworfen — volle Content-Telemetrie, keine seitenübergreifende Session-ID. |
+| `preferred_identity`  | enum                                  | Default `stitch`. Wonach das Dashboard Besucher zählt (`stitch` oder `session`). Ein Reporting-Default, getrennt von `store_stitch` / `store_session`, begrenzt auf das, was die Site tatsächlich erfasst. Siehe [Besucher und Sessions](/de/concepts/sessions). |
 | `enforce_domain_match`| bool                                  | Default `false`. Bei `true` werden Beacons verworfen, deren gemeldeter Seiten-URL-Host nicht `domain` oder eine Subdomain davon ist (siehe unten). |
 | `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
-| `tags`                | Liste von Strings (max 10)            | Freie Labels für Dashboard- und Analytics-Filter.                                 |
+| `tags`                | Liste von Strings (max 10)            | Freie Labels zum Organisieren von Sites. Cross-Site-Analytics per Tag ist geplant, noch nicht live. |
 | `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
 
 ## Die zwei Hashes
@@ -74,9 +76,12 @@ automatisch mit.
 
 ## Tags
 
-Tags sind kurze Labels, die du an eine Site klebst. Dashboard und
-Analytics-API filtern danach; so baust du „Production-Sites"- oder
-„Marketing-Sites"-Views über mehrere Properties.
+Tags sind kurze Labels, die du an eine Site klebst, um verwandte
+Properties zu gruppieren (eine „Production-Sites"- oder
+„Marketing-Sites"-Gruppierung). Der Tag-Filter pro Site in der
+Sidebar wurde entfernt; ein echter Cross-Site-Analytics-Scope, der
+alle Sites mit einem Tag gemeinsam auswertet, ist geplant. Vorerst
+sind Tags Labels und filtern Analytics nicht.
 
 Konventionen, die gut funktionieren:
 

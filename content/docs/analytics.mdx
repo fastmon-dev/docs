@@ -1,6 +1,6 @@
 ---
 title: Analytics
-description: Traffic, sessions, errors, and the Experience Score. The field-data dashboards on top of your beacons.
+description: Traffic, visitors, errors, and the Experience Score. The field-data dashboards on top of your beacons.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -8,7 +8,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Analytics is the exploration layer on top of everything your
 beacons collect: who's on the site right now, where traffic comes
 from, which pages get viewed, which errors fire, and how whole
-sessions unfold. It complements the
+visits unfold. It complements the
 [Web Vitals dashboard](/en/web-vitals): same data, different
 question. Web Vitals asks "how fast is the site?"; Analytics asks
 "what's happening on it?"
@@ -42,6 +42,33 @@ Visitor counts are anonymous by construction; see
 [Privacy](/en/privacy) for what a "visitor" can and cannot mean
 here.
 
+## Filtering
+
+A filter bar sits next to the time picker on the dashboard, the
+overview, and every metric detail page. Type a dimension and value
+(for example `country = DE`) and press Enter to add a filter chip;
+the value field autocompletes with the real values for the current
+time range and shows how many pageviews each one has. The dimension
+picker lists the most-used dimensions first (Page, Country, Device),
+then the rest: browser, OS, connection, viewport, referrer source
+and medium, UTM fields, click-ID label, domain, navigation type, and
+protocol.
+
+Filters live in the URL, so they survive a reload, are shareable,
+and carry across navigation between views. Multiple chips combine
+with AND; a comma inside one value means "any of". Click a chip to
+edit it; its X removes it. The "Filter" button carries a badge with
+the active count.
+
+## Navigating with the command palette
+
+Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to
+open a searchable command menu that drives the whole app: jump to
+any page, switch organization or site, change the time range and
+granularity, and add, remove, or clear filters. Start typing to
+search everything at once, or drill into a category with `Enter` or
+`→`; `←` or `Backspace` steps back and `Esc` closes.
+
 ## Error Analytics
 
 The Errors view tracks JavaScript errors across the site:
@@ -51,7 +78,7 @@ The Errors view tracks JavaScript errors across the site:
 - **Error types**: errors grouped by fingerprint (type + message
   + stack shape), ranked by count.
 - **Detail drill-down**: for one fingerprint: total count,
-  sessions affected, first/last seen, a time series, breakdowns by
+  visitors affected, first/last seen, a time series, breakdowns by
   URL, browser, device, OS, and country, and sample pageviews with
   stack frames.
 
@@ -61,18 +88,32 @@ tracker sends error **type and count only**. Messages and stack
 frames arrive in `full` mode, or in `consent` mode after the
 visitor opts in.
 
-## Sessions
+## Visitors
 
-The sessions explorer lists browsing sessions (start and end
-time, duration, page count, device info, average LCP/FCP, error
-count) with filters for page count, duration, errors, and LCP
-range, and a per-session detail view showing every pageview in order, each
-with its Web Vitals and errors.
+The Visitors explorer lists distinct visitors (start and end time,
+duration, page count, device info, average LCP/FCP, error count)
+with filters, and a per-visitor detail view showing every pageview
+in order, each with its Web Vitals and errors.
 
-Sessions require a cross-page `session_id`, which the tracker only
-carries in `full` mode or in `consent` mode after opt-in. On an
-`anonymous`-mode site the explorer stays empty by design. See
-[Sessions](/en/concepts/sessions) for how a session is defined.
+A visitor is counted along an identity axis: `stitch` (the default,
+present in every mode) or `session` (the cross-page `session_id`,
+which the tracker only carries in `full` mode or in `consent` mode
+after opt-in). The site's `preferred_identity` sets the default.
+Unlike the old sessions view, the explorer is **not** empty on an
+`anonymous`-mode site: it counts `stitch` visitors there. The
+per-visitor replay, however, needs the `session` identity, so it
+stays unavailable without consent. See
+[Visitors and sessions](/en/concepts/sessions) for the full model.
+
+## Fetch/XHR and Server-Timing
+
+Beyond page navigations, the dashboard surfaces in-page request
+telemetry: a Fetch/XHR view with an aggregate waterfall
+(per-endpoint start offsets, duration histograms and percentiles,
+and a status-error distribution), plus a per-beacon detail, and a
+Server-Timing view that breaks out the `Server-Timing` metrics your
+backend reports. Both are driven by fields the tracker adds to each
+beacon (see [the beacon](/en/concepts/beacon)).
 
 ## Experience Score
 
@@ -88,16 +129,16 @@ Every panel maps to a query endpoint under
 `/v1/organizations/{org_id}/analytics/…`: a flexible
 [query endpoint](/en/api/analytics/queryAnalytics) for time series
 and breakdowns, plus dedicated endpoints for histograms, error
-types and details, sessions, resource and third-party breakdowns,
-LoAF, and the Experience Score. See the
+types and details, visitors, Fetch/XHR, Server-Timing, resource and
+third-party breakdowns, LoAF, and the Experience Score. See the
 [Analytics endpoint reference](/en/api/analytics/queryAnalytics).
 
 ## What's next
 
 - [Collection modes](/en/collection-modes): what the tracker
-  collects per mode, and why sessions or stack traces may be
-  missing.
-- [Sessions](/en/concepts/sessions): how pageviews become a
-  session.
+  collects per mode, and why the session identity or stack traces
+  may be missing.
+- [Visitors and sessions](/en/concepts/sessions): how pageviews
+  become visitors and sessions.
 - [Synthetic Monitoring](/en/synthetic): the lab-data complement
   to these field dashboards.

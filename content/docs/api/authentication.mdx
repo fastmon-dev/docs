@@ -40,7 +40,9 @@ curl https://api.fastmon.eu/v1/sites \
 
 ## What a token can do
 
-- **Per-user.** Each user has at most one active token at a time.
+- **Per-user.** A token carries the identity of the user who
+  generated it. Regenerating from the dashboard replaces it (the
+  previous value stops working immediately).
 - **Same scope as the user.** A token from a `member` does what a
   `member` can; a token from an `owner` does what an `owner` can.
 - **Org-spanning.** If the user is in multiple organizations, the
@@ -50,8 +52,6 @@ curl https://api.fastmon.eu/v1/sites \
 
 - **You can't manage another user's token.** Even an `owner` can
   only regenerate their own.
-- **Multi-token / service-account tokens** are on the roadmap,
-  gated behind enterprise plans.
 
 ## Related
 

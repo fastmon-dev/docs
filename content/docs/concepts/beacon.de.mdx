@@ -53,6 +53,8 @@ jedem Datenschutz-Review verteidigbar.
 | `error`-Event              | Typ, Anzahl und Stack-Frame-Hosts immer; Pfad + Zeile/Spalte deiner eigenen First-Party-Script-Frames auch ohne Consent. Message sowie das Detail von Inline-/Third-Party-Frames nur mit Consent / `full`, und dort erst nach einem immer aktiven PII-Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert. |
 | `unhandledrejection`       | Selbe Form wie `error`.                                                        |
 | Page Visibility API        | Time-to-Hidden, gesamte sichtbare Zeit.                                        |
+| `fetch` / `XMLHttpRequest` | Aggregierte Fetch/XHR-Werte je Endpunkt: Aufrufzahlen, Dauern, Dauer-Buckets und eine Statusfehler-Verteilung, je Endpunkt templated (Methode + Host + Pfad, ohne Query-Strings). Server-gesteuert pro Site (`fetch_xhr_enabled`, Default an). |
+| `Server-Timing`            | Die `Server-Timing`-Metriken, die dein eigenes Backend meldet (Name und Dauer), per Konstruktion First-Party.            |
 | Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
 
 Geo-Daten (das Land) werden im Browser **nicht** gelesen. Der
@@ -152,7 +154,7 @@ Schlüssel-Abkürzungen:
 - `pvid`: Per-Pageview-ID. Pro Pageview neu, nicht persistiert.
 - `ver`: monoton steigende Version dieses Pageview-Payloads.
 - `lifecycle`: einer von `init`, `loaded`, `error_update`,
-  `softnav`, `hidden`, `frozen`, `terminated`.
+  `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
 - `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
   Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
@@ -187,6 +189,11 @@ Schlüssel-Abkürzungen:
   E-Mails, IDs und Strings in Anführungszeichen maskiert.
 - `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
+- Fetch/XHR und `Server-Timing`: aggregierte Fetch/XHR-Werte je
+  Endpunkt (Aufrufzahlen, Dauern, Dauer-Buckets, Statusfehler) und
+  die `Server-Timing`-Metriken der Seite. Beide sind templated und
+  werden serverseitig normalisiert (die Leitung ist fälschbar), also
+  tragen Pfade keine Query-Strings oder rohen IDs.
 
 ## Cache und Rollouts
 

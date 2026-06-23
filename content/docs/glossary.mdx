@@ -81,16 +81,23 @@ notification rules, API tokens. See
 **Site**: A monitored property. Has its own beacon hashes and
 settings. See [Sites](/en/concepts/sites).
 
+**Visitor**: A distinct visitor, counted along an identity axis:
+`stitch` (edge-derived, present in every mode, the default) or
+`session` (consent-gated). Anonymous by construction. See
+[Visitors and sessions](/en/concepts/sessions).
+
 **Session**: A 30-minute window of page-views from the same
-browser. Anonymous by construction. See
-[Sessions](/en/concepts/sessions).
+browser, grouped by `session_id`. One of the two visitor
+identities, and consent-gated. See
+[Visitors and sessions](/en/concepts/sessions).
 
 **Release**: Versioned marker on a site. Used by analytics
 `compare_to_release_id` for before/after comparisons. See
 [Releases](/en/concepts/releases).
 
-**Tag**: Free-form label on a site (max 10) for dashboard
-filtering. Conventions: `env:production`, `team:growth`, etc.
+**Tag**: Free-form label on a site (max 10) for organizing sites.
+Cross-site analytics scoping by tag is planned; tags don't filter
+analytics yet. Conventions: `env:production`, `team:growth`, etc.
 
 **Member**: User attached to an organization with a role
 (`owner` / `member`).

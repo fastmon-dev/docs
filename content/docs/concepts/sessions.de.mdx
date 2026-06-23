@@ -1,111 +1,146 @@
 ---
-title: Sessions
-description: Wie Fastmon Pageviews desselben Browsers gruppiert, ohne den Besucher zu identifizieren.
+title: Besucher und Sessions
+description: Wie Fastmon Besucher zählt, ohne sie zu identifizieren, und was eine Session zusätzlich liefert.
 ---
 
-Eine **Session** ist ein kurzes Fenster mit Pageviews desselben
-Browsers auf derselben Site. Damit kann das Dashboard Sachen
-beantworten wie „wie viele Seiten pro Besuch?" oder „an welcher
-Stelle im Besuch kam der Fehler?", ohne dass wir den Besucher
-identifizieren müssen.
+Fastmon zählt **Besucher**, keine Personen. Ein Besucher ist eine
+Zählung entlang einer **Identitätsachse**, und davon gibt es zwei:
 
-Anonym sind Sessions schon vom Aufbau her. Fastmon setzt nie einen
-persistenten Identifier; die Session-Grenze rechnen wir aus dem
-Beacon-Stream, nicht aus einem Cookie.
+- **`stitch`** (der Standard): ein am Edge abgeleiteter Identifier,
+  der in **jedem** Collection Mode vorhanden ist, auch in
+  `anonymous`. Er ist von begrenzter Lebensdauer und forward-secret
+  (siehe [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier)),
+  also zählt das Dashboard damit eindeutige Besucher ohne Cookie und
+  ohne gespeicherte personenbezogene Daten.
+- **`session`**: die clientseitig vergebene `session_id` (`sid` auf
+  der Leitung), nur in `full` vorhanden oder in `consent` nach dem
+  Opt-In. Sie gruppiert einen kurzen Schub Pageviews desselben
+  Browsers und ist die Grundlage für den Besuchsverlauf je Besucher.
 
-## Warum das zählt
+Wonach das Dashboard standardmäßig zählt, legt die Site-Einstellung
+**`preferred_identity`** fest (Standard `stitch`). Das ist eine
+Reporting-Entscheidung, getrennt davon, was die Site erfasst: Erfasst
+eine Site die gewählte Identität nicht, fällt die Zählung auf das
+zurück, was sie erfasst, und auf nichts, wenn sie keine von beiden
+erfasst.
 
-Manche Fragen kannst du nur auf Session-Ebene beantworten:
+## Warum zwei Identitäten
+
+`stitch` beantwortet „wie viele eindeutige Besucher?" in jedem Modus,
+auch in `anonymous`, weil er am Edge berechnet wird und nie ein Cookie
+oder eine Einwilligung braucht. `session` beantwortet die Fragen, die
+eine Besuchsgrenze brauchen:
 
 - „Wie viele Besuche haben eine Web-Vitals-Schwelle gerissen?" (ein
   Mehr-Seiten-Besuch hat vielleicht eine schlechte Seite und mehrere
   gute).
 - „Kam der Fehler auf der Checkout-Stufe nach einem langsamen
-  Pageload?" (die Antwort steht in den vorherigen Pageviews
-  derselben Session).
-- „Wie verteilen sich die Seiten pro Besuch je Entry-Pfad?" (ein
-  einzelner Pageview kann das nicht beantworten).
+  Pageload?" (die Antwort steht in den früheren Pageviews desselben
+  Besuchs).
+- „Wie verteilen sich die Seiten pro Besuch je Entry-Pfad?"
 
-Dafür gibt's den **Sessions**-View im Dashboard. Die meisten
-anderen Views arbeiten auf Pageview-Ebene und kommen ohne Sessions
-aus.
+Die erste Frage funktioniert auf jeder Site. Der Rest braucht
+`session` und füllt sich erst, wenn eine Site `sid` erfasst (`full`
+oder `consent` nach Opt-In).
 
 ## Was eine Session ausmacht
 
 Eine Session enthält Pageviews, die **alles** Folgende teilen:
 
 - dieselbe `site_id`,
-- dieselbe `session_id` (`sid` auf der Leitung), clientseitig
-  pro Session vergeben und nur gesendet, wenn der
-  [Collection Mode](/de/collection-modes) das erlaubt (`full`,
-  oder `consent` nach Opt-In),
+- dieselbe `session_id` (`sid` auf der Leitung), clientseitig pro
+  Session vergeben und nur gesendet, wenn der
+  [Collection Mode](/de/collection-modes) das erlaubt (`full`, oder
+  `consent` nach Opt-In),
 - eine Lücke von **weniger als 30 Minuten** zwischen
   aufeinanderfolgenden Pageviews.
 
-In `anonymous` (und in `consent` vor dem Opt-In) wird die `sid`
-vor dem Senden entfernt; diese Pageviews bilden also gar keine
-Session und tauchen nur in Pageview-Views auf.
+In `anonymous` (und in `consent` vor dem Opt-In) wird die `sid` vor
+dem Senden entfernt; diese Pageviews tragen also keine Session. Als
+Besucher zählen sie über `stitch` trotzdem.
 
 Die Session endet, wenn:
 
 - 30 Minuten ohne neuen Pageview vergehen, oder
 - das Datum in der lokalen Zeit des Besuchers wechselt, oder
-- der Besucher den Browser-Prozess schließt (das beobachten wir nur
-  über die Lücken-Regel).
+- der Browser-Prozess schließt (das beobachten wir nur über die
+  Lücken-Regel).
 
 Ein Pageview nach der Grenze startet eine neue Session.
 
-## Was auf einer Session steht
+## Was auf einem Besucher steht
 
-| Feld             | Typ                  | Hinweise                                                |
-| ---------------- | -------------------- | ------------------------------------------------------- |
-| `id`             | string               | Anonym, zeitlich begrenzt. Nicht stabil über Sessions.  |
-| `site_id`        | UUID v7              | Die zugehörige Site.                                    |
-| `started_at`     | timestamp            | `pst` des ersten Pageviews.                             |
-| `ended_at`       | timestamp            | `pst` des letzten Pageviews oder Zeitpunkt des Schließens. |
-| `page_view_count`| int                  | Anzahl Pageviews in der Session.                        |
-| `entry_url`      | string               | Pathname des ersten Pageviews.                          |
-| `country`        | ISO 3166-1 alpha-2   | Aus der IP des ersten Pageviews abgeleitet.             |
-| `device_type`    | enum                 | `mobile`, `tablet` oder `desktop`.                      |
-| `browser`        | string               | Nur Familie.                                            |
+Der Besucher-View listet eine Zeile pro Besucher, gruppiert nach der
+aufgelösten Identität:
 
-Was fehlt: keine Besucher-ID, kein Fingerprint, keine IP. Die Session-ID
-selbst ist kurzlebig und nicht dafür gedacht, außerhalb des
-Analytics-Fensters verwendet zu werden.
+| Feld           | Typ                 | Hinweise                                                       |
+| -------------- | ------------------- | -------------------------------------------------------------- |
+| `id`           | string              | Der `stitch`-Hex oder die `session_id`, je nach `identity`.    |
+| `identity`     | enum                | `stitch` oder `session`: wonach diese Zeile gruppiert.         |
+| `started_at`   | timestamp           | Start des ersten Pageviews.                                    |
+| `ended_at`     | timestamp           | Ende des letzten Pageviews.                                    |
+| `duration_ms`  | number              | Spanne vom ersten bis zum letzten Pageview, in Millisekunden.  |
+| `page_count`   | int                 | Anzahl Pageviews.                                              |
+| `country`      | ISO 3166-1 alpha-2  | Am Edge aus der IP abgeleitet.                                 |
+| `browser`      | string              | Nur Familie.                                                   |
+| `device_type`  | enum                | `mobile`, `tablet` oder `desktop`.                             |
+| `os`           | string              | Betriebssystem-Familie.                                        |
+| `avg_lcp`      | number              | Durchschnittlicher LCP über die Seiten des Besuchers.          |
+| `avg_fcp`      | number              | Durchschnittlicher FCP über die Seiten des Besuchers.          |
+| `total_errors` | int                 | Fehler insgesamt über die Seiten des Besuchers.                |
 
-## Sessions abfragen
+Was fehlt: keine Besucher-ID, kein Fingerprint, keine IP. Keiner der
+beiden Identifier ist dafür gedacht, außerhalb des Analytics-Fensters
+verwendet zu werden: `stitch` rotiert auf seinem Salt-Zeitplan (siehe
+Privacy), und `session_id` ist kurzlebig.
+
+## Besucher abfragen
 
 Die Analytics-API bietet zwei Endpunkte:
 
-- `POST /analytics/sessions`: paginierte Liste in einem Zeitraum,
-  mit Filtern. Cursor-paginiert für hohe Volumina.
-- `POST /analytics/sessions/detail`: Pageviews und Timing einer
-  einzelnen Session.
+- `POST /analytics/visitors`: paginierte Liste der Besucher in einem
+  Zeitraum, gruppiert nach der aufgelösten `identity`, mit Filtern.
+  Cursor-paginiert für hohe Volumina.
+- `POST /analytics/visitors/detail`: der vollständige Pageview-Pfad
+  eines Besuchers (das „Replay"). Weil das den Weg eines einzelnen
+  Besuchers herausgreift, ist es **consent-gated auf
+  `identity=session`**: ein explizites `stitch` wird mit `422`
+  abgelehnt, und auf einer Site, die nur `stitch` erfasst, gibt es
+  kein Replay.
 
-Request-Shapes: [Analytics-API](/en/api/analytics/queryAnalytics).
+Übergib `identity` explizit, um den Site-Standard zu überschreiben,
+oder lass es null, um `preferred_identity` zu nutzen. Request-Shapes:
+[Analytics-API](/en/api/analytics/listAnalyticsVisitors).
 
 ## Häufige Überraschungen
 
+- **Anonyme Sites zählen trotzdem Besucher.** Das alte „der Explorer
+  bleibt ohne Einwilligung leer" gilt nicht mehr: `stitch` liefert
+  eindeutige Besucherzahlen in jedem Modus. Was `anonymous` (und
+  `consent` vor dem Opt-In) fehlt, ist die *session*-Identität, also
+  bleiben das Replay je Besucher und die session-only-Views dort
+  leer.
 - **Eine „Session" in Fastmon ist kürzer als bei manchen anderen
   Tools.** Wer ein 1- oder 2-Jahre-Cookie setzt, klebt jeden
-  Wiederbesuch an die alte Session. Wir haben das Cookie nicht,
-  und damit ist die 30-Minuten-Lücke die harte Grenze.
-- **Ein Besucher an zwei Tagen = zwei Sessions.** Mit Absicht.
-  Alles andere würde voraussetzen, dass wir wissen, wer derselbe
-  Besucher ist, und das wissen wir nicht.
-- **Kein „Users"-Konzept.** Über der Session gibt es nichts.
-  Wir speichern nicht, wer jemand ist, und damit eben auch nicht,
-  ob das dieselbe Person ist wie gestern.
-- **Bot-Traffic erzeugt trotzdem Sessions.** Offensichtliche Bots
-  filtert der Collector, aber ein zielgerichteter Headless-Browser
-  sieht aus wie ein echter Besucher. Falls dich das stört: nach
-  `device_type` filtern und Notification Rules mit
-  Plausibilitäts-Schwellen anlegen.
+  Wiederbesuch an die alte Session. Wir haben das Cookie nicht, und
+  damit ist die 30-Minuten-Lücke die harte Grenze.
+- **Derselbe Besucher an zwei Tagen ergibt zwei Sessions** und kann
+  auch zwei `stitch`-Besucher sein: der `stitch`-Wert rotiert auf dem
+  Salt-Zeitplan (siehe Privacy), ist also auch keine
+  Langzeit-Identität.
+- **Kein „Users"-Konzept.** Über dem Besucher gibt es nichts. Wir
+  speichern nicht, wer jemand ist, und damit eben auch nicht, ob das
+  dieselbe Person ist wie letzten Monat.
+- **Bot-Traffic zählt trotzdem.** Offensichtliche Bots filtert der
+  Collector, aber ein zielgerichteter Headless-Browser sieht aus wie
+  ein echter Besucher. Nach `device_type` filtern und Notification
+  Rules mit Plausibilitäts-Schwellen anlegen.
 
 ## Verwandt
 
 - [Collection Modes](/de/collection-modes): was der Beacon pro
-  Pageview erfasst, woraus Sessions gebaut werden.
-- [Privacy: was wir nicht sammeln](/de/privacy): warum Sessions
-  anonym sind.
-- [Analytics-API](/en/api/analytics/queryAnalytics): Sessions programmatisch.
+  Pageview erfasst und welche Identitäten jeder Modus erzeugt.
+- [Privacy](/de/privacy): wie der `stitch`-Identifier abgeleitet wird
+  und warum aus ihm keine umkehrbaren personenbezogenen Daten werden.
+- [Analytics-API](/en/api/analytics/listAnalyticsVisitors): Besucher
+  programmatisch abfragen.

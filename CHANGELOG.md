@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Change: Sync docs with backend `visitors` rename + frontend filter bar / command palette (EN + DE)
+
+Code-verified against backend `2026.6.45` and frontend `2026.6.11`. Scope was P0 (contradictions) + P1 (new features); OAuth app-login held back (see below).
+
+- **`sessions` metric → `visitors` + identity (P0).** The backend replaced the `sessions` analytics metric with `visitors` counted along an identity axis: `stitch` (edge-derived, present in every mode including `anonymous`, the default) or `session` (consent-gated `session_id`). The reporting default is the site's new `preferred_identity` (default `stitch`), clamped to what the site collects.
+  - `concepts/sessions.mdx` retitled to "Visitors and sessions" and reframed around the visitor/identity model (slug kept to preserve inbound links + nav). Field table rebuilt against `VisitorSummaryItem` (`id`, `identity`, `started_at`, `ended_at`, `duration_ms`, `page_count`, `country`, `browser`, `device_type`, `os`, `avg_lcp`, `avg_fcp`, `total_errors`). Per-visitor replay is documented as consent-gated to `identity=session` (explicit `stitch` → `422`).
+  - `analytics.mdx`: "Sessions" section → "Visitors"; "sessions affected" → "visitors affected"; corrected the now-false "explorer stays empty by design" claim for `anonymous` sites (they count `stitch` visitors). `install/verify.mdx`, `privacy.mdx`, and `glossary.mdx` had their vocabulary aligned; glossary gains a **Visitor** entry.
+  - `guides/notification-rules.mdx`: added the `visitors` metric (count-only) and the optional per-rule `identity`.
+  - `concepts/sites.mdx`: added the `preferred_identity` field.
+  - The per-endpoint `api/analytics/*` pages pick this up automatically (prod OpenAPI now serves `/analytics/visitors{,/detail}`; the `sessions` endpoints are gone).
+- **Tag filtering claim corrected (P0).** The frontend removed the sidebar per-site tag filter (it never affected analytics). `concepts/sites.mdx` + `glossary.mdx` now describe tags as labels for organizing sites, with a cross-site analytics-by-tag scope noted as planned, not live.
+- **Auth: removed the false single-token / roadmap claim (P0).** `api/authentication.mdx` no longer asserts "at most one active token at a time" or "multi-token on the enterprise roadmap." OAuth app-login + per-user `app_tokens` are **not** documented yet: those endpoints aren't in the production OpenAPI spec and the flow still carries a "remove before production" wildcard `redirect_uri`. Revisit once it ships.
+- **New features documented (P1).** The ad-hoc filter bar and the `Cmd`/`Ctrl`+`K` command palette (`analytics.mdx`), and the Fetch/XHR + `Server-Timing` telemetry surface (`analytics.mdx` + `concepts/beacon.mdx`, including the `fetch_xhr_update` lifecycle and the `fetch_xhr_enabled` per-site toggle).
+- **DE copy-edit.** Fixed four German grammar slips in the synced pages: `concepts/sessions.de.mdx` (the non-word "heraussingelt" → "herausgreift"; a number-agreement slip and a copula mismatch in the "common surprises" and "related" lists) and `concepts/sites.de.mdx` (the Denglisch "geclamped" → "begrenzt").
+
 ### Change: Dependency updates + fumadocs-openapi 10 → 11 migration
 
 - **Routine bumps:** `fumadocs-core`/`fumadocs-ui` 16.9.3 → 16.10.2, `fumadocs-mdx` 15.0.11 → 15.0.12, `next` (+ `eslint-config-next`) 16.2.7 → 16.2.9, `@tailwindcss/postcss` 4.3.0 → 4.3.1, `prettier` 3.8.3 → 3.8.4.

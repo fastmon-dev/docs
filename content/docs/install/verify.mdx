@@ -28,9 +28,11 @@ Open the site in the Fastmon dashboard. After about a minute
 (beacons are batched into ClickHouse), the **Traffic** section will
 show:
 
-- non-zero **page views** (sessions stay at zero in the default
-  `anonymous` mode; that's expected. See
-  [Sessions](/en/concepts/sessions)),
+- non-zero **page views** and **unique visitors** (the visitor
+  count comes from the edge-derived `stitch` and works in every
+  mode; only the *session* identity stays at zero in the default
+  `anonymous` mode, which is expected. See
+  [Visitors and sessions](/en/concepts/sessions)),
 - a **Web Vitals** snapshot for at least the page you opened.
 
 If the only traffic you see is your own visit so far, that's

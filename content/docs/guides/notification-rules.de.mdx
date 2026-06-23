@@ -67,8 +67,14 @@ Bausteinen:
 - Einen **Scope**: eine einzelne Site oder ein Site-**Tag**, um
   eine Gruppe von Sites mit einer Rule abzudecken (die Rule wertet
   jede Site im Tag einzeln aus).
-- Eine **Metrik** (LCP, INP, CLS, FCP, TTFB, Fehlerrate, Pageviews, …).
-- Eine **Aggregation** (p50, p75, p95, count, avg, …).
+- Eine **Metrik** (LCP, INP, CLS, FCP, TTFB, Fehlerrate, Pageviews,
+  Visitors, …).
+- Eine **Aggregation** (p50, p75, p95, count, avg, …). Die Metriken
+  `visitors` und `requests` sind Zählungen und nehmen nur `count`.
+- Für die Metrik **visitors** optional eine **identity**, die
+  festlegt, welcher Identifier die Zählung trägt: `stitch` (Standard,
+  am Edge abgeleitet, in jedem Modus) oder `session` (consent-gated).
+  Gilt nur für `visitors`.
 - Optional **Filter** (nur Mobile, ein bestimmtes URL-Pattern, eine
   Länderliste, …).
 
