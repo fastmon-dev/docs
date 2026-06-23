@@ -3,12 +3,16 @@
 FROM node:26-bookworm-slim@sha256:e89172f5e6154ba212269866bf3fbadbca8eb7901e10c0eccf08f2147bfae505
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends sudo git ca-certificates openssh-client gnupg fish make \
+  && apt-get install -y --no-install-recommends sudo git ca-certificates openssh-client gnupg fish make vim \
   && rm -rf /var/lib/apt/lists/* \
-  && chsh -s /usr/bin/fish node \
-  && echo 'node ALL=(root) NOPASSWD: /usr/bin/chown node\:node /workspaces/docs/node_modules /home/node/.claude' > /etc/sudoers.d/node \
-  && chmod 0440 /etc/sudoers.d/node \
-  && visudo -c -f /etc/sudoers.d/node \
+  # Rename the image's stock `node` user/group (uid/gid 1000) to `dev` so the
+  # whole monorepo shares one dev-user name (matches backend) — Einheitlichkeit.
+  # -m moves /home/node → /home/dev; -s sets fish as the login shell.
+  && usermod -l dev -d /home/dev -m -s /usr/bin/fish node \
+  && groupmod -n dev node \
+  && echo 'dev ALL=(root) NOPASSWD: /usr/bin/chown dev\:dev /workspaces/docs /workspaces/docs/node_modules /home/dev/.claude' > /etc/sudoers.d/dev \
+  && chmod 0440 /etc/sudoers.d/dev \
+  && visudo -c -f /etc/sudoers.d/dev \
   && npm install -g @anthropic-ai/claude-code
 
 # SSH config: container-local (not mounted from host) so we explicitly limit
@@ -22,7 +26,16 @@ RUN apt-get update \
 # key after first contact still fails. known_hosts lives on the image's
 # writable layer (not bind-mounted) so ssh-keygen-style atomic rewrites don't
 # trip on cross-device link() errors.
-RUN install -d -m 0700 -o node -g node /home/node/.ssh \
- && printf 'Host github.com\n    HostName github.com\n    User git\n    IdentityFile /home/node/.ssh/id_fastmon_docs\n    IdentitiesOnly yes\n    StrictHostKeyChecking accept-new\n' > /home/node/.ssh/config \
- && chmod 0600 /home/node/.ssh/config \
- && chown node:node /home/node/.ssh/config
+RUN install -d -m 0700 -o dev -g dev /home/dev/.ssh \
+ && printf 'Host github.com\n    HostName github.com\n    User git\n    IdentityFile /home/dev/.ssh/id_fastmon_docs\n    IdentitiesOnly yes\n    StrictHostKeyChecking accept-new\n' > /home/dev/.ssh/config \
+ && chmod 0600 /home/dev/.ssh/config \
+ && chown dev:dev /home/dev/.ssh/config
+
+# The workspace lives on a named volume (see devcontainer.json workspaceMount),
+# not a virtiofs bind mount — this avoids the OrbStack rename-atomicity race that
+# makes Zed's git panel flash "all files changed" and risks empty-tree commits.
+# A fresh named volume inherits ownership from the image directory it mounts
+# over, so create that directory dev-owned here; otherwise the empty volume
+# mounts as root and the postCreateCommand bootstrap clone (run as dev) can't
+# write to it.
+RUN mkdir -p /workspaces/docs && chown dev:dev /workspaces/docs
