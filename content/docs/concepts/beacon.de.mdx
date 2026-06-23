@@ -1,38 +1,26 @@
 ---
 title: Der RUM-Beacon
-description: Die kleine JavaScript-Datei, die Fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie sendet und was sie nie tut.
+description: Die JavaScript-Datei, die fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie senden und nicht tun.
 ---
 
-Der **Beacon** ist die JavaScript-Datei, die Fastmon unter
-`https://fastmon.site/s/{source_hash}.js` ausliefert. Mehr
-Client-Code haben wir nicht, und mehr laden deine Besucher auch
-nicht von uns.
+Der **Beacon** ist die JavaScript-Datei, die fastmon unter `https://fastmon.site/s/{source_hash}.js` ausliefert. 
+Das ist alles, mehr braucht es nicht und gibt es auch nicht.
 
-Diese Seite ist die technische Referenz. Fürs Setup geht's zur
-[Implementierung](/de/install), für die Datenschutzposition zu
-[Privacy: was wir nicht sammeln](/de/privacy).
+Diese Seite ist die technische Referenz. Für das Einrichten geht's zur [Implementierung](/de/install), für Privacy Fragen zu [Privacy: was wir nicht sammeln](/de/privacy).
 
 ## Drei Bundles, eine URL
 
-Hinter demselben `<script>`-Tag liefert der Server pro Site einen
-anderen Build aus, abhängig vom
-[Collection Mode](/de/collection-modes):
+Hinter demselben `<script>`-Tag liefert der Server pro Site einen anderen Build aus, abhängig vom [Collection Mode](/de/collection-modes):
 
-| Mode | Bundle | Speicherfreier Default |
-|---|---|:---:|
-| `anonymous` | `anonymous.js` | Ja; keine Cookies, kein `sessionStorage` |
-| `consent` | `consent.js` | Ja, bis `__fastmon_consent(true)`: danach `_fm_consent`-Cookie + `sessionStorage._s` |
-| `full` | `full.js` | `sessionStorage._s` ab dem ersten Pageview, kein Cookie |
+| Mode |  Speicherfreier Default |
+|---|:---:|
+| `anonymous` | Ja; keine Cookies, kein `sessionStorage` |
+| `consent` | Ja, bis `__fastmon_consent(true)`: danach `_fm_consent`-Cookie + `sessionStorage._s` |
+| `full`  | `sessionStorage._s` ab dem ersten Pageview, kein Cookie |
 
-Du wählst das Bundle nicht im `<script>`-Tag; der Server löst es
-aus dem Site-Mode auf und liefert den passenden Build aus. Ein
-Mode-Wechsel rollt den Script-Cache automatisch.
+Du wählst das Bundle nicht im `<script>`-Tag; der Server löst es aus dem Site-Mode auf und liefert den passenden Build aus. Ein Mode-Wechsel rollt den Script-Cache automatisch.
 
-Steht bei der Site `store_session = false`, werden das `full`- und
-das `consent`-Bundle so parametrisiert ausgeliefert, dass sie
-`sessionStorage` komplett auslassen — `_s` wird nie geschrieben, in
-keinem Modus. Siehe
-[Sites → Privacy-Schalter](/de/concepts/sites#privacy-schalter).
+Steht bei der Site `store_session = false`, werden das `full`- und das `consent`-Bundle so parametrisiert ausgeliefert, dass sie `sessionStorage` komplett auslassen — `_s` wird nie geschrieben, in keinem Modus. Siehe [Sites → Privacy-Schalter](/de/concepts/sites#privacy-schalter).
 
 ## Warum das zählt
 
@@ -57,33 +45,17 @@ jedem Datenschutz-Review verteidigbar.
 | `Server-Timing`            | Die `Server-Timing`-Metriken, die dein eigenes Backend meldet (Name und Dauer), per Konstruktion First-Party.            |
 | Document & Window          | Seiten-URL (je nach Collection Mode bereinigt), Referrer, Viewport-Größenklasse. |
 
-Geo-Daten (das Land) werden im Browser **nicht** gelesen. Der
-Edge leitet sie aus der Request-IP ab und reicht einen Ländercode
-als `FM-Country`-Header weiter; die IP selbst erreicht die
-Anwendung nie. Genauso für die in Buckets eingeteilte Browser-/OS-/Geräte-
-Familie, die als `FM-Browser` / `FM-Browser-Version` / `FM-OS` /
-`FM-Device` weitergereicht wird. Zusätzlich berechnet der Edge
-einen Einweg-`FM-Stitch`-Header
-(`HMAC-SHA256(rotierendes-24h-Salt, IP | UA | collector_hash)` auf
-128 Bit gekürzt), den das Backend für begrenzte
-Cross-Pageview-Joins in allen Modi nutzt. Rechtlicher Rahmen unter
-[Privacy → Der am Edge abgeleitete `stitch`-Identifier](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
-Der Beacon selbst fragt nie nach Geolokation.
+Geo-Daten (das Land) werden im Browser **nicht** gelesen. Der Edge leitet sie aus der Request-IP ab und reicht einen Ländercode als Header weiter; die IP selbst verlässt den Edge nie. Genauso für die in Buckets eingeteilte Browser-/OS-/Geräte-Familie, die als `FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device` weitergereicht wird. Zusätzlich berechnet der Edge einen Einweg-`FM-Stitch`-Header (`HMAC-SHA256(rotierendes-24h-Salt, IP | UA | collector_hash)` auf 128 Bit gekürzt), den das Backend für begrenzte Cross-Pageview-Joins in allen Modi nutzt. Rechtlicher Rahmen unter [Privacy → Der am Edge abgeleitete `stitch`-Identifier](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+
 
 ## Was der Beacon nicht tut
 
-- `localStorage` / `IndexedDB` / `Cache Storage` lesen oder
-  schreiben, in keinem Modus.
-- Cookies in `anonymous` oder `full` setzen. In `consent` setzt er
-  nach Opt-In genau eins (`_fm_consent`) und löscht es bei
-  Opt-Out.
+- `localStorage` / `IndexedDB` / `Cache Storage` lesen oder schreiben, in keinem Modus.
+- Cookies in `anonymous` oder `full` setzen. In `consent` setzt er nach Opt-In genau eins (`_fm_consent`) und löscht es bei Opt-Out.
 - URL-Query-Parameter oder Hash-Fragmente lesen.
-- DOM-Inhalt anfassen (kein Scroll-Replay, kein Session-Replay,
-  keine Formularerfassung).
+- DOM-Inhalt anfassen (kein Scroll-Replay, kein Session-Replay, keine Formularerfassung).
 - Mediengeräte, Sensoren oder Geolokation des Besuchers anfragen.
-- Einen seitenübergreifenden Identifier in `anonymous` oder
-  `consent` vor Opt-In minten. Die Per-Pageview-ID `pvid` gibt es
-  in jedem Modus und stirbt mit dem Pageview.
+- Einen seitenübergreifenden Identifier in `anonymous` oder `consent` vor Opt-In minten. Die Per-Pageview-ID `pvid` gibt es in jedem Modus und stirbt mit dem Pageview.
 
 ## Lebenszyklus eines Pageviews
 
