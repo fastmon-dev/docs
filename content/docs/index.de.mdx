@@ -1,38 +1,34 @@
 ---
-title: Willkommen bei Fastmon
-description: "Datenschutzfreundliches Real-User-Monitoring und Core Web Vitals, gehostet in der EU."
+title: Willkommen bei fastmon
+description: "Real User Monitoring aus der EU. Für Teams, die wissen wollen, was ihre Kunden wirklich erleben."
 ---
 
 Fastmon misst, wie sich deine Website für echte Besucher anfühlt:
 Core Web Vitals, Fehler und Performance, direkt aus dem Browser.
 Daraus werden Dashboards, mit denen dein Team arbeiten kann.
 
-Die Doku ist nach Aufgaben sortiert.
-
 ## Loslegen
 
-Fastmon in unter fünf Minuten auf einer Site live haben.
+Fastmon in unter fünf Minuten auf einer Site einrichten.
 
 <Cards>
-  <Card title="Fastmon implementieren" href="/de/install" description="Ein Script-Tag im <head>. Funktioniert auf jeder Site: statisches HTML, Next.js, WordPress oder über den Tag-Manager. Fünf Minuten." />
-  <Card title="Implementierung prüfen" href="/de/install/verify" description="Bestätigen, dass der Tracker Daten erfasst, und was zu prüfen ist, wenn nicht." />
+  <Card title="Fastmon implementieren" href="/de/install" description="Ein Script-Tag im <head>. Funktioniert auf jeder Site: statisches HTML, Next.js, WordPress, Shopware oder über den Tag-Manager. Fünf Minuten." />
+  <Card title="Implementierung prüfen" href="/de/install/verify" description="Prüfen ob Daten erfasst werden und was zu tun ist wenn nicht." />
 </Cards>
 
-## Modell verstehen
+## fastmon verstehen
 
-Du bist neu bei RUM oder bei Fastmon und willst erst mal verstehen,
-was die einzelnen Teile tun, bevor du sie anfasst.
+Du bist neu bei RUM oder bei fastmon und willst erst mal verstehen, bevor du fastmon einrichtest.
 
 <Cards>
   <Card title="Konzepte" href="/de/concepts" description="Organisationen, Sites, Sessions, Releases: die kleine Menge an Ressourcen, aus denen das Produkt besteht." />
-  <Card title="Privacy: Was wir nicht sammeln" href="/de/privacy" description="Keine Cookies, keine IPs gespeichert, kein Fingerprinting. Nützlich für ein Legal-Review." />
-  <Card title="Collection Modes" href="/de/collection-modes" description="anonymous, consent, full: was der Tracker tut und welchen Modus du wählst." />
+  <Card title="Privacy: Was wir nicht sammeln" href="/de/privacy" description="Keine Cookies, keine IPs, kein Fingerprinting" />
+  <Card title="Collection Modes" href="/de/collection-modes" description="anonymous, consent oder full: was der Tracker tut und welchen Modus du brauchst" />
 </Cards>
 
 ## Metrik nachschlagen
 
-Du starrst auf eine Web-Vitals-Zahl und willst wissen, was die
-bedeutet, oder wie du sie wegbekommst.
+Du starrst auf eine Web-Vitals-Zahl und willst wissen, was die bedeutet, oder wie du sie wegbekommst.
 
 <Cards>
   <Card title="Web-Vitals-Übersicht" href="/de/web-vitals" description="LCP, INP, CLS, FCP, TTFB: Definitionen, Schwellen, wo du anfängst." />
@@ -43,18 +39,16 @@ bedeutet, oder wie du sie wegbekommst.
 
 ## Daten erkunden
 
-Das Setup läuft, und du willst sehen, was der Tracker sammelt,
-oder eine Labor-Baseline danebenlegen.
+Das Setup läuft, und du willst sehen, was der Tracker sammelt.
 
 <Cards>
-  <Card title="Analytics" href="/de/analytics" description="Traffic, Sessions, Fehler und Experience Scores pro Segment. Beta, offen für alle Mitglieder." />
-  <Card title="Synthetic Monitoring" href="/de/synthetic" description="Geplante Lighthouse- und TTFB-Labortests, direkt neben deinen Felddaten. Beta." />
+  <Card title="Analytics" href="/de/analytics" description="Traffic, Sessions, Fehler und Experience Scores" />
+  <Card title="Synthetic Monitoring" href="/de/synthetic" description="Geplante Lighthouse- und TTFB-Labortests, direkt neben deinen RUM Daten. Beta." />
 </Cards>
 
-## Etwas bauen
+## Volles Potenzial ausschöpfen
 
-Du willst Fastmon mit deiner CI/CD, deinem Alerting oder
-existierenden Dashboards integrieren.
+Du willst fastmon mit deiner CI/CD verbinden, Alerting nutzen oder in existierenden Dashboards integrieren.
 
 <Cards>
   <Card title="Releases vergleichen" href="/de/guides/compare-releases" description="Deploys aus CI/CD taggen und „hat dieser Deploy LCP verschlechtert?“ in einer Query beantworten." />
@@ -64,13 +58,7 @@ existierenden Dashboards integrieren.
 
 ## Fastmon in Kürze
 
-- **Datenschutzfreundlich, ohne Sternchen.** Keine Cookies, keine
-  IPs auf der Platte, kein Cross-Site-Tracking. Alles läuft in der
-  EU. Details in [Privacy](/de/privacy).
-- **Skaliert mit, ohne dass du etwas merkst.** Beacons gehen gebündelt
-  in einen Analytics-Store. Gebaut für echten Production-Traffic,
-  ohne dass du etwas tunen musst.
-- **Standardisierte Web Vitals, keine eigenen Hausnummern.** LCP,
-  INP, CLS, FCP, TTFB plus Navigation-, Resource- und Long-Task-Timing,
-  alles über dieselben Browser-APIs wie Chromes `web-vitals`-Library.
-  Vergleichbar mit allem, was du sonst zu CWV liest.
+- **Finde heraus, wie es bei deinen Besuchern ist** Nur mit fastmon kannst monitoren, wie deine Seite bei deinen Besuchern läuf.
+- **Datenschutzfreundlich, ohne Sternchen.** Keine Cookies, keine gespeicherten IPs, kein Cross-Site-Tracking. Alles läuft in der EU. Details in [Privacy](/de/privacy).
+- **Skaliert mit, ohne dass du etwas merkst.** Beacons gehen gebündelt in einen Analytics-Store. Gebaut für echten Production-Traffic, ohne dass du etwas tunen musst.
+- **Standardisierte Web Vitals, keine eigenen Hausnummern.** LCP, INP, CLS, FCP, TTFB plus Navigation-, Resource- und Long-Task-Timing, alles über dieselben Browser-APIs wie Chromes `web-vitals`-Library. Vergleichbar mit allem, was du sonst zu CWV liest.
