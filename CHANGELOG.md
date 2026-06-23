@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fix: Override `@babel/core` to clear OSV advisory GHSA-4x5r-pxfx-6jf8
+
+- `@babel/core` 7.29.0 → 7.29.7 via `overrides` (CVSS 3.2, low; dev-only transitive dep through `eslint-config-next` → `eslint-plugin-react-hooks`). Babel only compiles our own source at build time, so it isn't reachable, but the override keeps the OSV-Scanner CI job green and resolves rather than suppresses. `npm audit` reports 0 vulnerabilities.
+
 ### Change: Sync docs with backend `visitors` rename + frontend filter bar / command palette (EN + DE)
 
 Code-verified against backend `2026.6.45` and frontend `2026.6.11`. Scope was P0 (contradictions) + P1 (new features); OAuth app-login held back (see below).

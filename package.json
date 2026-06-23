@@ -41,6 +41,7 @@
     "typescript": "^6.0.3"
   },
   "overrides": {
+    "@babel/core": "^7.29.6",
     "esbuild": "^0.28.1",
     "postcss": "^8.5.15"
   }
