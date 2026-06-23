@@ -1,14 +1,11 @@
 ---
-title: Implement Fastmon
-description: Drop the Fastmon beacon into your site with a single script tag.
+title: Implement fastmon
+description: Drop the fastmon beacon into your site with a single script tag.
 ---
 
-Fastmon is a hosted service. There's nothing to install on your
-servers; you add a single `<script>` tag to your site and point it
-at your Fastmon site. About five minutes of work.
+Fastmon is a hosted service. There's nothing to install on your servers; you add a single `<script>` tag to your site and point it at your fastmon site. About five minutes of work.
 
-A single tag in `<head>` works on any site you control: static
-HTML, Next.js, WordPress, Hugo, or via a tag manager.
+A single tag in `<head>` works on any site you control: static HTML, Next.js, WordPress, Hugo, or via a tag manager.
 
 <Cards>
   <Card title="HTML" href="/en/install/html" description="Any website you control. Works on static sites, Hugo, Jekyll, plain HTML, and any framework via its head/script primitive." />
@@ -16,31 +13,24 @@ HTML, Next.js, WordPress, Hugo, or via a tag manager.
 
 ## After you've added the tag
 
-- [Verify it's working](/en/install/verify): a five-second check
-  in DevTools and the dashboard.
-- [Pick a collection mode](/en/collection-modes); `anonymous` fits
-  almost everyone.
+- [Verify it's working](/en/install/verify): a five-second check in DevTools and the dashboard.
+- [Pick a collection mode](/en/collection-modes); `anonymous` fits almost everyone.
 - [Read what we don't collect](/en/privacy), handy when legal asks.
 
 ## What every setup has in common
 
-The script you embed is the same byte-for-byte file, no matter how
-you load it:
+The script you embed is the same byte-for-byte file, no matter how you load it:
 
 ```html
 <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
-`{source_hash}` is the per-site hash Fastmon generates when you
-create the site. Copy it from the site's settings page.
+`{source_hash}` is the per-site hash fastmon generates when you create the site. Copy it from the site's settings page.
 
 The tracker:
 
 - registers `PerformanceObserver` for Web Vitals,
 - buffers events in memory, and
-- POSTs batched payloads to `/c/{collector_hash}` over the
-  page view's lifecycle: on load, on `pagehide`,
-  `visibilitychange → hidden`, and periodic flushes.
+- POSTs batched payloads to `/c/{collector_hash}` over the page view's lifecycle: on load, on `pagehide`, `visibilitychange → hidden`, and periodic flushes.
 
-It doesn't set cookies, store IPs, or fingerprint the visitor;
-see [Privacy](/en/privacy) for the full statement.
+It doesn't set cookies, store IPs, or fingerprint the visitor; see [Privacy](/en/privacy) for the full statement.

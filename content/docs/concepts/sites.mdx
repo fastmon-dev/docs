@@ -3,36 +3,22 @@ title: Sites
 description: A site is one property you monitor. Each site has its own beacon hashes and settings.
 ---
 
-A **site** is the unit of monitoring in Fastmon. In practice that
-maps to a property: usually one origin, one app, or one brand.
-Beacon URL, settings, dashboard filters: all per site.
+A **site** is the unit of monitoring in fastmon. In practice that maps to a property: usually one origin, one app, or one brand. Beacon URL, settings, dashboard filters: all per site.
 
 ## Why it matters
 
-Everything beacon-related lives on the site: the script you embed,
-the [collection mode](/en/collection-modes), retention, allowed
-origins, the data in the dashboard. New property to monitor =
-new site.
+Everything beacon-related lives on the site: the script you embed, the [collection mode](/en/collection-modes), retention, allowed origins, the data in the dashboard. New property to monitor = new site.
 
-To organize related properties, attach **tags** (below). A
-cross-site analytics scope that reports on every site carrying a
-tag together is planned; today tags are labels for grouping, not an
-analytics filter.
+To organize related properties, attach **tags** (below). A cross-site analytics scope that reports on every site carrying a tag together is planned; today tags are labels for grouping, not an analytics filter.
 
 ## When you'd touch it
 
 - **Adding a new property.** Create a site, copy the snippet, embed.
-- **Changing what the beacon collects.** Edit the site's collection
-  mode.
-- **Adding a staging or preview environment.** Add the staging origin
-  to **allowed origins**, or create a separate site for staging if
-  you want isolated data.
-- **Cutting retention.** Default is 90 days. Some sites want shorter
-  for compliance, some want longer.
-- **Pausing without deleting.** Toggle `is_active = false` to keep
-  history but stop ingesting new data.
-- **Tagging to organize sites.** Add tags like `env:production`
-  or `team:growth`.
+- **Changing what the beacon collects.** Edit the site's collection mode.
+- **Adding a staging or preview environment.** Add the staging origin to **allowed origins**, or create a separate site for staging if you want isolated data.
+- **Cutting retention.** Default is 90 days. Some sites want shorter for compliance, some want longer.
+- **Pausing without deleting.** Toggle `is_active = false` to keep history but stop ingesting new data.
+- **Tagging to organize sites.** Add tags like `env:production` or `team:growth`.
 
 ## What's on a site
 
@@ -58,26 +44,16 @@ analytics filter.
 
 ## The two hashes
 
-Each site has two hashes. They look similar but do two different
-jobs.
+Each site has two hashes. They look similar but do two different jobs.
 
-- **`source_hash`** sits in the **script URL** and tells us which
-  site's beacon config to ship to the browser.
-- **`collector_hash`** sits in the **ingest URL** and tells us
-  which site an incoming beacon belongs to.
+- **`source_hash`** sits in the **script URL** and tells us which site's beacon config to ship to the browser.
+- **`collector_hash`** sits in the **ingest URL** and tells us which site an incoming beacon belongs to.
 
-They're separate so the script template can change (for a beacon
-upgrade or a collection-mode swap) without affecting the data
-pipeline. You only ever copy `source_hash` by hand;
-`collector_hash` is baked into the script and rides along.
+They're separate so the script template can change (for a beacon upgrade or a collection-mode swap) without affecting the data pipeline. You only ever copy `source_hash` by hand; `collector_hash` is baked into the script and rides along.
 
 ## Tags
 
-Tags are short labels you attach to a site to group related
-properties (a "production sites" or "marketing sites" grouping).
-The sidebar's per-site tag filter was removed; a proper cross-site
-analytics scope that reports on every site carrying a tag together
-is planned. For now, tags are labels and don't filter analytics.
+Tags are short labels you attach to a site to group related properties (a "production sites" or "marketing sites" grouping). The sidebar's per-site tag filter was removed; a proper cross-site analytics scope that reports on every site carrying a tag together is planned. For now, tags are labels and don't filter analytics.
 
 Conventions that work well:
 
@@ -90,60 +66,26 @@ Max 10 tags per site.
 
 ## Allowed origins
 
-`allowed_origins` is an opt-in allow-list. When it's set, the
-collector only accepts beacons whose `Origin` header matches one
-of its entries; the site's `domain` is **not** implicitly
-included, so list it too. When the list is empty (the default),
-the collector doesn't check the origin at all.
+`allowed_origins` is an opt-in allow-list. When it's set, the collector only accepts beacons whose `Origin` header matches one of its entries; the site's `domain` is **not** implicitly included, so list it too. When the list is empty (the default), the collector doesn't check the origin at all.
 
-A beacon from a non-listed origin is **silently dropped**: the
-collector still answers `204` so nothing breaks in the browser,
-but no data lands. If a domain's data is mysteriously missing,
-this list is the first thing to check.
+A beacon from a non-listed origin is **silently dropped**: the collector still answers `204` so nothing breaks in the browser, but no data lands. If a domain's data is mysteriously missing, this list is the first thing to check.
 
-Add staging and preview hostnames here. Wildcards aren't supported;
-list each origin explicitly.
+Add staging and preview hostnames here. Wildcards aren't supported; list each origin explicitly.
 
 ### Enforcing the page domain
 
-`allowed_origins` checks the HTTP `Origin` header — but `sendBeacon`
-and keepalive POSTs frequently omit `Origin`, so a beacon replayed
-from a foreign page that knows your `collector_hash` can slip past
-an origin allow-list. `enforce_domain_match` (opt-in, default off)
-closes that gap from the other side: when enabled, the collector
-drops any beacon whose *reported page-URL host* is neither the
-site's `domain` nor a subdomain of it. The match is label-bounded
-(`shop.example.com` matches `example.com`; `notexample.com` does
-not), and a beacon with an empty or unparseable host is dropped
-while enforcing.
+`allowed_origins` checks the HTTP `Origin` header — but `sendBeacon` and keepalive POSTs frequently omit `Origin`, so a beacon replayed from a foreign page that knows your `collector_hash` can slip past an origin allow-list. `enforce_domain_match` (opt-in, default off) closes that gap from the other side: when enabled, the collector drops any beacon whose *reported page-URL host* is neither the site's `domain` nor a subdomain of it. The match is label-bounded (`shop.example.com` matches `example.com`; `notexample.com` does not), and a beacon with an empty or unparseable host is dropped while enforcing.
 
-It's off by default because multi-domain and vanity-domain
-deployments would lose legitimate traffic. Turn it on for a
-single-domain site that wants ingest locked to its own pages.
+It's off by default because multi-domain and vanity-domain deployments would lose legitimate traffic. Turn it on for a single-domain site that wants ingest locked to its own pages.
 
 ## Privacy levers
 
-Two per-site switches control which identifiers reach storage,
-without changing what categories of data the beacon collects:
+Two per-site switches control which identifiers reach storage, without changing what categories of data the beacon collects:
 
-- **`store_stitch`** (default `true`). Off drops the edge-derived
-  `stitch` identifier at insert time across *every* collection
-  mode, leaving a row with no visitor identifier at all — fully
-  anonymous. The cost is
-  analytics: no unique-visitor counts and no session metrics
-  (bounce rate, pages per session, dwell time) for that site.
-  Per-pageview signals (Web Vitals, errors, third-party,
-  attribution) are unaffected.
-- **`store_session`** (default `true`). Off tells the served bundle
-  to never touch `sessionStorage`, and the collector drops `sid` as
-  a backstop. A `full` or post-opt-in `consent` site then keeps
-  full content telemetry (full URLs, error messages and frames) but
-  runs without any cross-pageview session id. (`anonymous` has no
-  `sid` regardless, so this only bites under `full` / `consent`.)
+- **`store_stitch`** (default `true`). Off drops the edge-derived `stitch` identifier at insert time across *every* collection mode, leaving a row with no visitor identifier at all — fully anonymous. The cost is analytics: no unique-visitor counts and no session metrics (bounce rate, pages per session, dwell time) for that site. Per-pageview signals (Web Vitals, errors, third-party, attribution) are unaffected.
+- **`store_session`** (default `true`). Off tells the served bundle to never touch `sessionStorage`, and the collector drops `sid` as a backstop. A `full` or post-opt-in `consent` site then keeps full content telemetry (full URLs, error messages and frames) but runs without any cross-pageview session id. (`anonymous` has no `sid` regardless, so this only bites under `full` / `consent`.)
 
-The two are independent — disable either, both, or neither. See
-[Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely)
-for the full reasoning.
+The two are independent — disable either, both, or neither. See [Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely) for the full reasoning.
 
 ## Common scenarios
 
@@ -151,41 +93,29 @@ for the full reasoning.
 
 Two shapes that work:
 
-- **One site, several origins** (`acme.com`, `staging.acme.com`,
-  and each preview origin you care about; no wildcards). All data
-  lands in one bucket; filter by `domain` in the dashboard.
-  Cheaper, less clean.
-- **Three sites** with their own retention and tags. Cleaner
-  data, more setup.
+- **One site, several origins** (`acme.com`, `staging.acme.com`, and each preview origin you care about; no wildcards). All data lands in one bucket; filter by `domain` in the dashboard. Cheaper, less clean.
+- **Three sites** with their own retention and tags. Cleaner data, more setup.
 
 Most teams end up on the second one after a few weeks.
 
 ### A new sub-site, same brand
 
-New site. Don't reuse the script tag from another property; the
-`source_hash` is per site, and the data has to be attributable.
+New site. Don't reuse the script tag from another property; the `source_hash` is per site, and the data has to be attributable.
 
 ### Moving to a new domain
 
-Create a new site for the new domain, run both during the cutover,
-and mark the old one inactive once traffic's moved over.
+Create a new site for the new domain, run both during the cutover, and mark the old one inactive once traffic's moved over.
 
 ## Common surprises
 
-- **Sites can't move between organizations.** Ping support if you
-  really need it.
-- **`is_active = false` keeps the history.** It just stops new
-  writes. Use it for pauses, not for cutting retention.
-- **Renaming a site doesn't change its hashes.** Already-embedded
-  scripts keep working.
-- **Deleting a site deletes its beacon data.** With a
-  confirmation step. No undo.
+- **Sites can't move between organizations.** Ping support if you really need it.
+- **`is_active = false` keeps the history.** It just stops new writes. Use it for pauses, not for cutting retention.
+- **Renaming a site doesn't change its hashes.** Already-embedded scripts keep working.
+- **Deleting a site deletes its beacon data.** With a confirmation step. No undo.
 
 ## Related
 
-- [Collection modes](/en/collection-modes): what the beacon does,
-  per site.
+- [Collection modes](/en/collection-modes): what the beacon does, per site.
 - [The RUM Beacon](/en/concepts/beacon): what the beacon collects.
-- [Releases](/en/concepts/releases): versioned markers attached to
-  a site.
+- [Releases](/en/concepts/releases): versioned markers attached to a site.
 - [API: Sites endpoints](/en/api): programmatic site CRUD.

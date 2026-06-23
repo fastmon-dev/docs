@@ -5,44 +5,28 @@ description: Lighthouse and TTFB lab tests on your pages, side by side with real
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Synthetic Monitoring measures your pages in a lab (scheduled
-Lighthouse runs plus lightweight TTFB checks) and shows the
-results next to your real-user (RUM) field data. The point isn't
-the lab number by itself; it's spotting where lab and field
-disagree, and knowing which one to trust.
+Synthetic Monitoring measures your pages in a lab (scheduled Lighthouse runs plus lightweight TTFB checks) and shows the results next to your real-user (RUM) field data. The point isn't the lab number by itself; it's spotting where lab and field disagree, and knowing which one to trust.
 
 <Callout type="warn" title="Beta">
-  Synthetic Monitoring is in beta. Any member of the organization
-  can use it, but response shapes and UI may still change.
+  Synthetic Monitoring is in beta. Any member of the organization can use it, but response shapes and UI may still change.
 </Callout>
 
 ## Lab vs. field, in one sentence each
 
-- **Lab (synthetic):** one simulated device, one location, ideal
-  conditions, repeatable. Great for catching regressions and
-  debugging, but blind to what real visitors experience.
-- **Field (RUM):** every real visitor, real networks, real devices,
-  aggregated at p75. The truth, but noisy and slower to move.
+- **Lab (synthetic):** one simulated device, one location, ideal conditions, repeatable. Great for catching regressions and debugging, but blind to what real visitors experience.
+- **Field (RUM):** every real visitor, real networks, real devices, aggregated at p75. The truth, but noisy and slower to move.
 
-Fastmon shows both on the same charts so neither gets mistaken
-for the other.
+Fastmon shows both on the same charts so neither gets mistaken for the other.
 
 ## Turning it on
 
-Synthetic Monitoring is **off by default** and is enabled per
-organization: **Organization Settings → Synthetic Monitoring →
-External measurements**. Only the organization owner can flip it.
+Synthetic Monitoring is **off by default** and is enabled per organization: **Organization Settings → Synthetic Monitoring → External measurements**. Only the organization owner can flip it.
 
-It's opt-in because the measurements run on an external provider
-(Commerce-Score) that acts as a sub-processor: the URLs you
-monitor, and only those, are sent there. If your DPA review needs
-the details, that's the one data flow to look at. Visitor data never leaves
-Fastmon; only the page URLs you explicitly add do.
+It's opt-in because the measurements run on an external provider (Commerce-Score) that acts as a sub-processor: the URLs you monitor, and only those, are sent there. If your DPA review needs the details, that's the one data flow to look at. Visitor data never leaves fastmon; only the page URLs you explicitly add do.
 
 ## Pages
 
-A **synthetic page** is one URL under your site's domain that gets
-measured. Three ways a page comes to exist:
+A **synthetic page** is one URL under your site's domain that gets measured. Three ways a page comes to exist:
 
 | Source       | How                                                                      | Counts against     |
 | ------------ | ------------------------------------------------------------------------ | ------------------ |
@@ -50,8 +34,7 @@ measured. Three ways a page comes to exist:
 | **Auto**     | "Auto-fill" picks your top URLs by RUM traffic (trailing 28 days, up to 5 new pages per click) | Auto page quota |
 | **One-shot** | A single ad-hoc test, no recurring schedule                              | Nothing            |
 
-Quotas are per organization (across all its sites), with separate
-budgets for manual and auto pages:
+Quotas are per organization (across all its sites), with separate budgets for manual and auto pages:
 
 | Plan       | Manual pages | Auto pages |
 | ---------- | ------------ | ---------- |
@@ -61,82 +44,41 @@ budgets for manual and auto pages:
 | Partner    | 10           | 20         |
 | Enterprise | 25           | 50         |
 
-At the cap, adding a page fails with a clear error; delete a page
-to make room. One-shots are deliberately unlimited; use them to
-answer "how does this page score right now?" without spending
-budget. A one-shot can be promoted to a monitored page later.
+At the cap, adding a page fails with a clear error; delete a page to make room. One-shots are deliberately unlimited; use them to answer "how does this page score right now?" without spending budget. A one-shot can be promoted to a monitored page later.
 
 ## Schedules and per-page settings
 
 Every page has three switches, in the page's settings dialog:
 
-- **Recurring Lighthouse run**: a full Lighthouse measurement
-  every 24 hours. Turn it off to pause; the page stays and can
-  still be run on demand.
-- **Recurring TTFB run**: a lightweight server-response check
-  roughly every 5 minutes, independent of the Lighthouse
-  schedule.
-- **Bypass cache** (default on): busts the measured page's CDN
-  and browser cache on each run, so you measure the worst-case,
-  uncached load. Turn it off to measure the cached path instead.
+- **Recurring Lighthouse run**: a full Lighthouse measurement every 24 hours. Turn it off to pause; the page stays and can still be run on demand.
+- **Recurring TTFB run**: a lightweight server-response check roughly every 5 minutes, independent of the Lighthouse schedule.
+- **Bypass cache** (default on): busts the measured page's CDN and browser cache on each run, so you measure the worst-case, uncached load. Turn it off to measure the cached path instead.
 
-On top of the schedules, **Send synthetic test** triggers an
-immediate run for any page.
+On top of the schedules, **Send synthetic test** triggers an immediate run for any page.
 
 ## What a run gives you
 
 Every run measures **desktop and mobile** in one go.
 
-- **Lighthouse report**: category scores (Performance,
-  Accessibility, Best Practices, SEO), the lab metrics (LCP, FCP,
-  CLS, TBT, Speed Index, TTFB), opportunities sorted by estimated
-  savings, request waterfall, third-party and resource breakdowns,
-  and a lab screenshot per device. The raw Lighthouse JSON is one
-  click away if you want everything.
-- **Lab vs. field**: lab LCP/FCP/CLS/TTFB against your RUM p75
-  for the same URL, each with a verdict: aligned, field slower, or
-  field faster. Field INP is shown without a lab twin (Lighthouse
-  can't measure INP; lab TBT is the closest proxy). Verdicts need
-  at least 50 field samples in the window; below that they're
-  marked insufficient rather than misleading.
-- **Experience Score vs. lab score**: your field
-  [Experience Score](/en/web-vitals/experience-score) next to the
-  lab composite score, same caveat: they measure different things;
-  disagreement is signal, not error.
-- **TTFB diagnosis**: the dedicated TTFB runs break server
-  response into phases (DNS, TCP, SSL, server, transfer) and
-  compare against field TTFB, with a verdict on whether you're
-  server-bound or network/geo-bound.
-- **Trends**: lab points (one per run) overlaid on the regular
-  field p75 line, plus the 5-minute TTFB series, over a selectable
-  window.
+- **Lighthouse report**: category scores (Performance, Accessibility, Best Practices, SEO), the lab metrics (LCP, FCP, CLS, TBT, Speed Index, TTFB), opportunities sorted by estimated savings, request waterfall, third-party and resource breakdowns, and a lab screenshot per device. The raw Lighthouse JSON is one click away if you want everything.
+- **Lab vs. field**: lab LCP/FCP/CLS/TTFB against your RUM p75 for the same URL, each with a verdict: aligned, field slower, or field faster. Field INP is shown without a lab twin (Lighthouse can't measure INP; lab TBT is the closest proxy). Verdicts need at least 50 field samples in the window; below that they're marked insufficient rather than misleading.
+- **Experience Score vs. lab score**: your field [Experience Score](/en/web-vitals/experience-score) next to the lab composite score, same caveat: they measure different things; disagreement is signal, not error.
+- **TTFB diagnosis**: the dedicated TTFB runs break server response into phases (DNS, TCP, SSL, server, transfer) and compare against field TTFB, with a verdict on whether you're server-bound or network/geo-bound.
+- **Trends**: lab points (one per run) overlaid on the regular field p75 line, plus the 5-minute TTFB series, over a selectable window.
 
 ## AI summaries
 
-Two AI features sit on top of the Lighthouse data, both gated by
-the organization's AI setting:
+Two AI features sit on top of the Lighthouse data, both gated by the organization's AI setting:
 
-- **One-click summary**: turns a Lighthouse report into a short
-  written summary, in English or German. Generated once, stored,
-  and reused; generation is rate-limited to 30 per organization
-  per hour (reading a stored summary is free).
-- **Ask about this test**: opens the Fastmon AI assistant
-  with the run in context, so you can ask follow-up questions
-  about specific audits.
+- **One-click summary**: turns a Lighthouse report into a short written summary, in English or German. Generated once, stored, and reused; generation is rate-limited to 30 per organization per hour (reading a stored summary is free).
+- **Ask about this test**: opens the fastmon AI assistant with the run in context, so you can ask follow-up questions about specific audits.
 
 ## API
 
-Everything above is available programmatically under
-`/v1/sites/{site_id}/synthetic/…`: pages CRUD, on-demand runs,
-results, timeseries, lab-vs-field, screenshots, and the AI
-summaries. See the
-[Synthetic endpoint reference](/en/api/synthetic/listSyntheticPages).
+Everything above is available programmatically under `/v1/sites/{site_id}/synthetic/…`: pages CRUD, on-demand runs, results, timeseries, lab-vs-field, screenshots, and the AI summaries. See the [Synthetic endpoint reference](/en/api/synthetic/listSyntheticPages).
 
 ## What's next
 
-- [Experience Score](/en/web-vitals/experience-score): the field
-  composite that lab runs are compared against.
-- [Web Vitals overview](/en/web-vitals): what LCP, INP, CLS
-  actually measure.
-- [Analytics](/en/analytics): the field-data side of the same
-  story.
+- [Experience Score](/en/web-vitals/experience-score): the field composite that lab runs are compared against.
+- [Web Vitals overview](/en/web-vitals): what LCP, INP, CLS actually measure.
+- [Analytics](/en/analytics): the field-data side of the same story.

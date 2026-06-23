@@ -1,38 +1,32 @@
 ---
-title: Welcome to Fastmon
-description: "Privacy-first real-user monitoring and Core Web Vitals, hosted in the EU."
+title: Welcome to fastmon
+description: "Real User Monitoring from the EU. For teams that want to know what their customers actually experience."
 ---
 
-Fastmon measures how your site actually feels for real visitors:
-Core Web Vitals, errors, and performance, straight from the
-browser. Out of that come dashboards your team can use.
-
-The docs are organized by what you're trying to do. Jump in.
+Fastmon measures how your site actually feels for real visitors: Core Web Vitals, errors, and performance, straight from the browser. Out of that come dashboards your team can use.
 
 ## Get started
 
-Get Fastmon running on a site in under five minutes.
+Get fastmon running on a site in under five minutes.
 
 <Cards>
-  <Card title="Implement Fastmon" href="/en/install" description="One script tag in your <head>. Works on any site, from static HTML to Next.js, WordPress, or a tag manager. Five minutes." />
-  <Card title="Verify the implementation" href="/en/install/verify" description="Confirm the tracker is collecting data, and see what to check when it isn't." />
+  <Card title="Implement fastmon" href="/en/install" description="One script tag in your <head>. Works on any site: static HTML, Next.js, WordPress, Shopware, or a tag manager. Five minutes." />
+  <Card title="Verify the implementation" href="/en/install/verify" description="Check that data is coming in, and what to do when it isn't." />
 </Cards>
 
-## Understand the model
+## Understand fastmon
 
-You're new to RUM or to Fastmon, and you want a quick tour of the
-moving parts before touching anything.
+You're new to RUM or to fastmon and want to get your bearings before you set anything up.
 
 <Cards>
   <Card title="Concepts" href="/en/concepts" description="Organizations, sites, sessions, releases: the small set of resources that make up the product." />
-  <Card title="Privacy: what we don't collect" href="/en/privacy" description="No cookies, no IPs stored, no fingerprinting. Useful for a legal review." />
-  <Card title="Collection modes" href="/en/collection-modes" description="anonymous, consent, full: what the beacon does, and which one to pick." />
+  <Card title="Privacy: what we don't collect" href="/en/privacy" description="No cookies, no IPs stored, no fingerprinting." />
+  <Card title="Collection modes" href="/en/collection-modes" description="anonymous, consent, or full: what the tracker does, and which one you need." />
 </Cards>
 
-## Read about a metric
+## Look up a metric
 
-You're staring at a Web Vitals number and want to know what it
-means, or how to make it go away.
+You're staring at a Web Vitals number and want to know what it means, or how to make it go away.
 
 <Cards>
   <Card title="Web Vitals overview" href="/en/web-vitals" description="LCP, INP, CLS, FCP, TTFB: definitions, thresholds, and where to start." />
@@ -43,18 +37,16 @@ means, or how to make it go away.
 
 ## Explore your data
 
-You're past setup and want to dig into what the tracker is
-collecting, or get a lab baseline next to it.
+Setup is done and you want to see what the tracker is collecting.
 
 <Cards>
-  <Card title="Analytics" href="/en/analytics" description="Traffic, sessions, errors, and per-segment Experience Scores. Beta, open to all members." />
-  <Card title="Synthetic Monitoring" href="/en/synthetic" description="Scheduled Lighthouse and TTFB lab tests, side by side with your field data. Beta." />
+  <Card title="Analytics" href="/en/analytics" description="Traffic, sessions, errors, and per-segment Experience Scores." />
+  <Card title="Synthetic Monitoring" href="/en/synthetic" description="Scheduled Lighthouse and TTFB lab tests, side by side with your RUM data. Beta." />
 </Cards>
 
-## Build something
+## Get the most out of fastmon
 
-You want to integrate Fastmon with your CI/CD, your alerting, your
-existing dashboards.
+You want to connect fastmon to your CI/CD, use alerting, or feed your existing dashboards.
 
 <Cards>
   <Card title="Compare releases" href="/en/guides/compare-releases" description="Tag deploys from CI/CD and answer 'did this deploy regress LCP?' in one query." />
@@ -62,15 +54,9 @@ existing dashboards.
   <Card title="API reference" href="/en/api" description="Authentication, errors, pagination, and all resource endpoints." />
 </Cards>
 
-## What Fastmon is, briefly
+## Fastmon in brief
 
-- **Privacy-first, no asterisks.** No third-party cookies, no IPs
-  on disk, no cross-site tracking. EU infrastructure end-to-end.
-  Details on [Privacy](/en/privacy).
-- **Scales without you noticing.** Beacons go into a columnar
-  analytics store via batched inserts. Built to handle real
-  production traffic without you having to tune anything.
-- **Standard Web Vitals, no homegrown numbers.** LCP, INP, CLS,
-  FCP, TTFB plus navigation, resource, and long-task timing, all
-  through the same browser APIs as Chrome's `web-vitals` library.
-  Comparable with anything else you read about CWV.
+- **See how your site really performs for real visitors.** Fastmon shows you how your pages behave for actual users in the field, not just in the lab.
+- **Privacy-first, no asterisks.** No third-party cookies, no IPs on disk, no cross-site tracking. EU infrastructure end-to-end. Details on [Privacy](/en/privacy).
+- **Scales without you noticing.** Beacons go into a columnar analytics store via batched inserts. Built to handle real production traffic without you having to tune anything.
+- **Standard Web Vitals, no homegrown numbers.** LCP, INP, CLS, FCP, TTFB plus navigation, resource, and long-task timing, all through the same browser APIs as Chrome's `web-vitals` library. Comparable with anything else you read about CWV.

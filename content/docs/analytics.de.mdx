@@ -5,148 +5,65 @@ description: Traffic, Besucher, Fehler und der Experience Score. Die Felddaten-D
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Analytics ist die Erkundungsebene über allem, was dein Tracker
-sammelt: Wer ist gerade auf der Site, woher kommt der Traffic,
-welche Seiten werden aufgerufen, welche Fehler treten auf, und wie
-verlaufen ganze Besuche. Es ergänzt das
-[Web-Vitals-Dashboard](/de/web-vitals): gleiche Daten, andere
-Frage. Web Vitals fragt „wie schnell ist die Site?", Analytics
-fragt „was passiert auf ihr?".
+Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist gerade auf der Site, woher kommt der Traffic, welche Seiten werden aufgerufen, welche Fehler treten auf, und wie verlaufen ganze Besuche. Es ergänzt das [Web-Vitals-Dashboard](/de/web-vitals): gleiche Daten, andere Frage. Web Vitals fragt „wie schnell ist die Site?", Analytics fragt „was passiert auf ihr?".
 
 <Callout type="warn" title="Beta">
-  Analytics ist Beta und für jedes Mitglied der Organisation
-  offen. Layout und Metriken können sich noch ändern.
+  Analytics ist Beta und für jedes Mitglied der Organisation offen. Layout und Metriken können sich noch ändern.
 </Callout>
 
 ## Das Dashboard
 
 Die Analytics-Hauptansicht einer Site zeigt:
 
-- **Aktuelle Besucher**: eindeutige Besucher der letzten 5
-  Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten
-  Viertelstunde.
-- **Drei zentrale Kennzahlen**: Unique Visitors, Pageviews und
-  Views per Visit, jeweils mit Sparkline und Veränderung zur
-  Vorperiode.
-- **Trend-Chart**: die Kennzahlen über den gewählten Zeitraum,
-  optional mit Vorperioden-Overlay.
-- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und
-  Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs.
-  UTM-Quelle, Länderlisten, Browser vs. Betriebssystem, …).
-- **Kampagnen & Attribution**: UTM-Abdeckung und Listen nach
-  Source/Medium/Kampagne, inklusive Click-ID-Labels der
-  Werbeplattformen.
-- **Tech-Panel**: Bfcache-Trefferquote, Top-Third-Party-Kategorien
-  und ob Fehler aus First- oder Third-Party-Code stammen.
+- **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde.
+- **Drei zentrale Kennzahlen**: Unique Visitors, Pageviews und Views per Visit, jeweils mit Sparkline und Veränderung zur Vorperiode.
+- **Trend-Chart**: die Kennzahlen über den gewählten Zeitraum, optional mit Vorperioden-Overlay.
+- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem, …).
+- **Kampagnen & Attribution**: UTM-Abdeckung und Listen nach Source/Medium/Kampagne, inklusive Click-ID-Labels der Werbeplattformen.
+- **Tech-Panel**: Bfcache-Trefferquote, Top-Third-Party-Kategorien und ob Fehler aus First- oder Third-Party-Code stammen.
 
-Besucherzahlen sind anonym per Konstruktion; was ein „Besucher"
-hier bedeuten kann und was nicht, steht unter
-[Privacy](/de/privacy).
+Besucherzahlen sind anonym per Konstruktion; was ein „Besucher" hier bedeuten kann und was nicht, steht unter [Privacy](/de/privacy).
 
 ## Filtern
 
-Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem
-Dashboard, der Übersicht und jeder Metrik-Detailseite. Tipp eine
-Dimension und einen Wert (zum Beispiel `country = DE`) und drück
-Enter, um einen Filter-Chip hinzuzufügen; das Wertefeld
-vervollständigt mit den echten Werten des aktuellen Zeitraums und
-zeigt, wie viele Pageviews je Wert anfallen. Die Dimensionsauswahl
-listet die meistgenutzten zuerst (Seite, Land, Gerät), dann den
-Rest: Browser, Betriebssystem, Verbindung, Viewport, Referrer-Quelle
-und -Medium, UTM-Felder, Click-ID-Label, Domain, Navigationstyp und
-Protokoll.
+Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem Dashboard, der Übersicht und jeder Metrik-Detailseite. Tipp eine Dimension und einen Wert (zum Beispiel `country = DE`) und drück Enter, um einen Filter-Chip hinzuzufügen; das Wertefeld vervollständigt mit den echten Werten des aktuellen Zeitraums und zeigt, wie viele Pageviews je Wert anfallen. Die Dimensionsauswahl listet die meistgenutzten zuerst (Seite, Land, Gerät), dann den Rest: Browser, Betriebssystem, Verbindung, Viewport, Referrer-Quelle und -Medium, UTM-Felder, Click-ID-Label, Domain, Navigationstyp und Protokoll.
 
-Filter leben in der URL, überstehen also ein Neuladen, sind teilbar
-und wandern beim Wechsel zwischen Views mit. Mehrere Chips werden mit
-UND verknüpft; ein Komma in einem Wert bedeutet „eines von". Klick
-einen Chip zum Bearbeiten, das X entfernt ihn. Der „Filter"-Button
-trägt ein Badge mit der Anzahl aktiver Filter.
+Filter leben in der URL, überstehen also ein Neuladen, sind teilbar und wandern beim Wechsel zwischen Views mit. Mehrere Chips werden mit UND verknüpft; ein Komma in einem Wert bedeutet „eines von". Klick einen Chip zum Bearbeiten, das X entfernt ihn. Der „Filter"-Button trägt ein Badge mit der Anzahl aktiver Filter.
 
 ## Navigieren mit dem Befehlsmenü
 
-Drück `Cmd`/`Ctrl`+`K` (oder den Befehls-Button oben), um ein
-durchsuchbares Befehlsmenü zu öffnen, das die ganze App steuert:
-zu jeder Seite springen, Organisation oder Site wechseln, Zeitraum
-und Auflösung ändern sowie Filter hinzufügen, entfernen oder löschen.
-Tipp einfach los, um alles auf einmal zu durchsuchen, oder geh mit
-`Enter` oder `→` in eine Kategorie; `←` oder `Backspace` geht zurück,
-`Esc` schließt.
+Drück `Cmd`/`Ctrl`+`K` (oder den Befehls-Button oben), um ein durchsuchbares Befehlsmenü zu öffnen, das die ganze App steuert: zu jeder Seite springen, Organisation oder Site wechseln, Zeitraum und Auflösung ändern sowie Filter hinzufügen, entfernen oder löschen. Tipp einfach los, um alles auf einmal zu durchsuchen, oder geh mit `Enter` oder `→` in eine Kategorie; `←` oder `Backspace` geht zurück, `Esc` schließt.
 
 ## Fehler-Analytics
 
 Die Fehleransicht verfolgt JavaScript-Fehler über die ganze Site:
 
-- **Fehlerrate über Zeit**: der Anteil der Pageviews mit
-  mindestens einem Fehler.
-- **Fehlertypen**: Fehler gruppiert nach Fingerprint (Typ +
-  Meldung + Stack-Form), sortiert nach Häufigkeit.
-- **Detailansicht**: pro Fingerprint: Gesamtzahl, betroffene
-  Besucher, erstes/letztes Auftreten, eine Zeitreihe, Breakdowns
-  nach URL, Browser, Gerät, Betriebssystem und Land sowie
-  Beispiel-Pageviews mit Stack-Frames.
+- **Fehlerrate über Zeit**: der Anteil der Pageviews mit mindestens einem Fehler.
+- **Fehlertypen**: Fehler gruppiert nach Fingerprint (Typ + Meldung + Stack-Form), sortiert nach Häufigkeit.
+- **Detailansicht**: pro Fingerprint: Gesamtzahl, betroffene Besucher, erstes/letztes Auftreten, eine Zeitreihe, Breakdowns nach URL, Browser, Gerät, Betriebssystem und Land sowie Beispiel-Pageviews mit Stack-Frames.
 
-Wie viel Detail du siehst, hängt vom
-[Collection Mode](/de/collection-modes) der Site ab: Im
-`anonymous`-Modus sendet der Tracker nur **Fehlertyp und Anzahl**.
-Meldungen und Stack-Frames kommen im `full`-Modus, oder im
-`consent`-Modus, nachdem der Besucher zugestimmt hat.
+Wie viel Detail du siehst, hängt vom [Collection Mode](/de/collection-modes) der Site ab: Im `anonymous`-Modus sendet der Tracker nur **Fehlertyp und Anzahl**. Meldungen und Stack-Frames kommen im `full`-Modus, oder im `consent`-Modus, nachdem der Besucher zugestimmt hat.
 
 ## Besucher
 
-Der Besucher-Explorer listet eindeutige Besucher (Start- und
-Endzeit, Dauer, Seitenanzahl, Geräteinfo, durchschnittliches
-LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro
-Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web
-Vitals und Fehlern.
+Der Besucher-Explorer listet eindeutige Besucher (Start- und Endzeit, Dauer, Seitenanzahl, Geräteinfo, durchschnittliches LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web Vitals und Fehlern.
 
-Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch`
-(Standard, in jedem Modus vorhanden) oder `session` (die
-seitenübergreifende `session_id`, die der Tracker nur im
-`full`-Modus oder im `consent`-Modus nach dem Opt-In trägt). Die
-`preferred_identity` der Site legt den Standard fest. Anders als der
-alte Sessions-View bleibt der Explorer auf einer Site im
-`anonymous`-Modus **nicht** leer: dort zählt er `stitch`-Besucher.
-Das Replay je Besucher braucht allerdings die `session`-Identität und
-bleibt ohne Einwilligung nicht verfügbar. Das ganze Modell steht
-unter [Besucher und Sessions](/de/concepts/sessions).
+Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (Standard, in jedem Modus vorhanden) oder `session` (die seitenübergreifende `session_id`, die der Tracker nur im `full`-Modus oder im `consent`-Modus nach dem Opt-In trägt). Die `preferred_identity` der Site legt den Standard fest. Anders als der alte Sessions-View bleibt der Explorer auf einer Site im `anonymous`-Modus **nicht** leer: dort zählt er `stitch`-Besucher. Das Replay je Besucher braucht allerdings die `session`-Identität und bleibt ohne Einwilligung nicht verfügbar. Das ganze Modell steht unter [Besucher und Sessions](/de/concepts/sessions).
 
 ## Fetch/XHR und Server-Timing
 
-Über Seitennavigationen hinaus zeigt das Dashboard auch
-In-Page-Request-Telemetrie: einen Fetch/XHR-View mit aggregiertem
-Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und
--Perzentile sowie eine Statusfehler-Verteilung), dazu ein
-Per-Beacon-Detail, und einen Server-Timing-View, der die
-`Server-Timing`-Metriken deines Backends aufschlüsselt. Beide
-speisen sich aus Feldern, die der Tracker jedem Beacon hinzufügt
-(siehe [der Beacon](/de/concepts/beacon)).
+Über Seitennavigationen hinaus zeigt das Dashboard auch In-Page-Request-Telemetrie: einen Fetch/XHR-View mit aggregiertem Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile sowie eine Statusfehler-Verteilung), dazu ein Per-Beacon-Detail, und einen Server-Timing-View, der die `Server-Timing`-Metriken deines Backends aufschlüsselt. Beide speisen sich aus Feldern, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
 
 ## Experience Score
 
-Das [Experience-Score](/de/web-vitals/experience-score)-Panel
-schlüsselt den Score nach Segment auf (alle Besucher, Desktop,
-Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert
-und den Metriken dahinter. Praktisch für den Klassiker: Die
-Gesamtnote sieht gut aus, aber Mobile über 3G fällt durch.
+Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter. Praktisch für den Klassiker: Die Gesamtnote sieht gut aus, aber Mobile über 3G fällt durch.
 
 ## API
 
-Jedes Panel entspricht einem Query-Endpunkt unter
-`/v1/organizations/{org_id}/analytics/…`: ein flexibler
-[Query-Endpunkt](/en/api/analytics/queryAnalytics) für Zeitreihen
-und Breakdowns, dazu dedizierte Endpunkte für Histogramme,
-Fehlertypen und -details, Besucher, Fetch/XHR, Server-Timing,
-Ressourcen- und Third-Party-Breakdowns, LoAF und den Experience
-Score. Siehe die
-[Analytics-Endpunktreferenz](/en/api/analytics/queryAnalytics)
-(nur auf Englisch).
+Jedes Panel entspricht einem Query-Endpunkt unter `/v1/organizations/{org_id}/analytics/…`: ein flexibler [Query-Endpunkt](/en/api/analytics/queryAnalytics) für Zeitreihen und Breakdowns, dazu dedizierte Endpunkte für Histogramme, Fehlertypen und -details, Besucher, Fetch/XHR, Server-Timing, Ressourcen- und Third-Party-Breakdowns, LoAF und den Experience Score. Siehe die [Analytics-Endpunktreferenz](/en/api/analytics/queryAnalytics) (nur auf Englisch).
 
 ## Weiterlesen
 
-- [Collection Modes](/de/collection-modes): was der Tracker pro
-  Modus sammelt, und warum die Session-Identität oder Stack-Traces
-  fehlen können.
-- [Besucher und Sessions](/de/concepts/sessions): wie aus Pageviews
-  Besucher und Sessions werden.
-- [Synthetic Monitoring](/de/synthetic): das Labor-Gegenstück zu
-  diesen Feld-Dashboards.
+- [Collection Modes](/de/collection-modes): was der Tracker pro Modus sammelt, und warum die Session-Identität oder Stack-Traces fehlen können.
+- [Besucher und Sessions](/de/concepts/sessions): wie aus Pageviews Besucher und Sessions werden.
+- [Synthetic Monitoring](/de/synthetic): das Labor-Gegenstück zu diesen Feld-Dashboards.

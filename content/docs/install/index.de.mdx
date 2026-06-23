@@ -1,15 +1,11 @@
 ---
 title: Fastmon implementieren
-description: Den Fastmon-Beacon mit einem Script-Tag in deine Site einbauen.
+description: Den fastmon-Beacon mit einem Script-Tag in deine Site einbauen.
 ---
 
-Fastmon ist ein gehosteter Service. Auf deinen Servern installierst
-du nichts; du baust ein `<script>`-Tag in deine Site ein, das auf
-deine Fastmon-Site zeigt. Etwa fünf Minuten Arbeit.
+Fastmon ist ein gehosteter Service. Auf deinen Servern installierst du nichts; du baust ein `<script>`-Tag in deine Site ein, das auf deine fastmon-Site zeigt. Etwa fünf Minuten Arbeit.
 
-Ein einzelnes Tag im `<head>` läuft auf jeder Site, die du
-kontrollierst: egal ob statisches HTML, Next.js, WordPress, Hugo
-oder über einen Tag-Manager.
+Ein einzelnes Tag im `<head>` läuft auf jeder Site, die du kontrollierst: egal ob statisches HTML, Next.js, WordPress, Hugo oder über einen Tag-Manager.
 
 <Cards>
   <Card title="HTML" href="/de/install/html" description="Jede Website, die du kontrollierst. Läuft mit statischen Sites, Hugo, Jekyll, plain HTML und jedem Framework über dessen Head/Script-Primitive." />
@@ -17,33 +13,24 @@ oder über einen Tag-Manager.
 
 ## Nachdem das Tag drin ist
 
-- [Implementierung verifizieren](/de/install/verify):
-  Fünf-Sekunden-Check in DevTools und Dashboard.
-- [Collection Mode wählen](/de/collection-modes); `anonymous`
-  passt für fast alle.
-- [Was wir nicht sammeln](/de/privacy), nützlich, wenn Legal
-  fragt.
+- [Implementierung verifizieren](/de/install/verify): Fünf-Sekunden-Check in DevTools und Dashboard.
+- [Collection Mode wählen](/de/collection-modes); `anonymous` passt für fast alle.
+- [Was wir nicht sammeln](/de/privacy), nützlich, wenn Legal fragt.
 
 ## Was alle Setups gemeinsam haben
 
-Das Script, das du einbettest, ist bis aufs Byte derselbe Inhalt,
-egal wie du es lädst:
+Das Script, das du einbettest, ist bis aufs Byte derselbe Inhalt, egal wie du es lädst:
 
 ```html
 <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 ```
 
-`{source_hash}` ist der Per-Site-Hash, den Fastmon beim Anlegen der
-Site erzeugt hat. Aus den Site-Einstellungen kopieren.
+`{source_hash}` ist der Per-Site-Hash, den fastmon beim Anlegen der Site erzeugt hat. Aus den Site-Einstellungen kopieren.
 
 Der Tracker:
 
 - registriert `PerformanceObserver` für Web Vitals,
 - puffert Events im Speicher und
-- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt
-  über den Lebenszyklus des Pageviews: beim Laden, bei
-  `pagehide`, `visibilitychange → hidden` und in periodischen
-  Flushes.
+- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt über den Lebenszyklus des Pageviews: beim Laden, bei `pagehide`, `visibilitychange → hidden` und in periodischen Flushes.
 
-Er setzt keine Cookies, speichert keine IPs und macht kein Fingerprinting.
-Volles Statement in [Privacy](/de/privacy).
+Er setzt keine Cookies, speichert keine IPs und macht kein Fingerprinting. Volles Statement in [Privacy](/de/privacy).

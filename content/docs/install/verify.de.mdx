@@ -1,113 +1,64 @@
 ---
 title: Implementierung verifizieren
-description: "Bestätigen, dass Fastmon Daten erfasst, und was zu prüfen ist, wenn nicht."
+description: "Bestätigen, dass fastmon Daten erfasst, und was zu prüfen ist, wenn nicht."
 ---
 
-Sobald das Script auf der Seite liegt, kannst du mit zwei Checks
-prüfen, ob alles sauber läuft. Wenn beide passen, ist hier
-Schluss.
+Sobald das Script auf der Seite liegt, kannst du mit zwei Checks prüfen, ob alles sauber läuft. Wenn beide passen, ist hier Schluss.
 
 ## Der Fünf-Sekunden-Check
 
-Öffne die Site in einem frischen Tab, öffne die DevTools (`⌥⌘I` / `F12`)
-und wechsle zu **Network**. Nach `c/` filtern.
+Öffne die Site in einem frischen Tab, öffne die DevTools (`⌥⌘I` / `F12`) und wechsle zu **Network**. Nach `c/` filtern.
 
-Wechsle jetzt zu einem anderen Tab und dann zurück. Du solltest einen
-oder mehrere `POST`-Requests sehen (der Tracker schickt über den
-Lebenszyklus eines Pageviews mehrere Beacons; mehr als einer ist
-normal):
+Wechsle jetzt zu einem anderen Tab und dann zurück. Du solltest einen oder mehrere `POST`-Requests sehen (der Tracker schickt über den Lebenszyklus eines Pageviews mehrere Beacons; mehr als einer ist normal):
 
 ```
 POST https://fastmon.site/c/{collector_hash}     204
 ```
 
-Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's:
-deine Implementierung läuft.
+Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's: deine Implementierung läuft.
 
 ## Der Dashboard-Check
 
-Site im Fastmon-Dashboard öffnen. Nach ungefähr einer Minute (Beacons
-werden in Batches in ClickHouse geschrieben) zeigt der Bereich
-**Traffic**:
+Site im fastmon-Dashboard öffnen. Nach ungefähr einer Minute (Beacons werden in Batches in ClickHouse geschrieben) zeigt der Bereich **Traffic**:
 
-- **Page Views** und **Unique Visitors** &gt; 0 (die
-  Besucherzahl kommt vom am Edge abgeleiteten `stitch` und
-  funktioniert in jedem Modus; nur die *session*-Identität bleibt
-  im Default-Modus `anonymous` bei null, das ist so gewollt, siehe
-  [Besucher und Sessions](/de/concepts/sessions)),
-- ein **Web Vitals**-Snapshot zumindest für die Seite, die du geladen hast.
+- **Page Views** und **Unique Visitors** &gt; 0 (die Besucherzahl kommt vom am Edge abgeleiteten `stitch` und funktioniert in jedem Modus; nur die *session*-Identität bleibt im Default-Modus `anonymous` bei null, das ist so gewollt, siehe [Besucher und Sessions](/de/concepts/sessions)),
+- ein **Web-Vitals-Snapshot** zumindest für die Seite, die du geladen hast.
 
-Wenn da erstmal nur dein eigener Besuch steht: alles gut. Echter
-Traffic baut sich auf, sobald Besucher die Seite öffnen.
+Wenn da erstmal nur dein eigener Besuch steht: alles gut. Echter Traffic baut sich auf, sobald Besucher die Seite öffnen.
 
 ## Troubleshooting
 
 ### Kein Request an `/c/` sichtbar
 
-**Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
-filtern. Du solltest einen Request an
-`https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen.
-Ein `404` heißt, der `source_hash` passt zu keiner Site: entweder
-vertippt oder die Site wurde gelöscht.
+**Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/` filtern. Du solltest einen Request an `https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen. Ein `404` heißt, der `source_hash` passt zu keiner Site: entweder vertippt oder die Site wurde gelöscht.
 
-**Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
-der Production-Seite „View Source". Das Tag muss tatsächlich im
-ausgelieferten HTML stehen. Manche CMS filtern unbekannte Tags
-aus Page-Buildern raus; dann brauchst du ein
-Header-Injection-Plugin oder den `<head>`-Slot des Themes.
+**Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf der Production-Seite „View Source". Das Tag muss tatsächlich im ausgelieferten HTML stehen. Manche CMS filtern unbekannte Tags aus Page-Buildern raus; dann brauchst du ein Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 
-**Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen
-und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Wenn ja,
-`https://fastmon.site` zu `script-src` und `connect-src` hinzufügen.
+**Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Wenn ja, `https://fastmon.site` zu `script-src` und `connect-src` hinzufügen.
 
-**Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei
-`pagehide` / `visibilitychange`. Wenn noch nichts aufgetaucht ist,
-einmal Tab wechseln (oder Seite schließen und neu öffnen); das
-triggert sofort einen Flush.
+**Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei `pagehide` / `visibilitychange`. Wenn noch nichts aufgetaucht ist, einmal Tab wechseln (oder Seite schließen und neu öffnen); das triggert sofort einen Flush.
 
 ### Beacon liefert `204`, aber im Dashboard taucht nichts auf
 
-`204` ist die normale Erfolgsantwort, kommt aber auch, wenn der
-Beacon still verworfen wird. Häufigster Grund: die Site hat
-**Allowed origins** gesetzt, und der Origin, von dem du lädst,
-steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin
-hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache
-wird automatisch invalidiert. Andere stille Drops: Site auf inaktiv
-gesetzt, unbekannter `collector_hash`.
+`204` ist die normale Erfolgsantwort, kommt aber auch, wenn der Beacon still verworfen wird. Häufigster Grund: die Site hat **Allowed origins** gesetzt, und der Origin, von dem du lädst, steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache wird automatisch invalidiert. Andere stille Drops: Site auf inaktiv gesetzt, unbekannter `collector_hash`.
 
 ### Request an `/c/` liefert `429`
 
-Du bist ins Per-IP-Rate-Limit gelaufen. Mit echtem Traffic passiert
-das so gut wie nie; meistens steckt ein synthetischer Lasttest
-oder eine kaputte Reload-Schleife dahinter. Eine Minute warten,
-dann ist das Limit zurückgesetzt.
+Du bist ins Per-IP-Rate-Limit gelaufen. Mit echtem Traffic passiert das so gut wie nie; meistens steckt ein synthetischer Lasttest oder eine kaputte Reload-Schleife dahinter. Eine Minute warten, dann ist das Limit zurückgesetzt.
 
 ### Beacon geht durch, aber im Dashboard ist nichts
 
-Beacons werden in Batches in ClickHouse geschrieben; ungefähr eine
-Minute Verzögerung zwischen erfolgreichem `204` und der Zeile im
-Dashboard ist normal. Kurz warten und neu laden.
+Beacons werden in Batches in ClickHouse geschrieben; ungefähr eine Minute Verzögerung zwischen erfolgreichem `204` und der Zeile im Dashboard ist normal. Kurz warten und neu laden.
 
-Wenn dann immer noch nichts da ist: prüfe, ob du die richtige Site
-und den richtigen Zeitraum offen hast. Der Default sind die letzten
-24 h, das reicht für frische Daten.
+Wenn dann immer noch nichts da ist: prüfe, ob du die richtige Site und den richtigen Zeitraum offen hast. Der Default sind die letzten 24 h, das reicht für frische Daten.
 
-Bekommst du `204` zurück, und das Dashboard ist nach ein paar
-Minuten immer noch leer, ist die Ingestion vermutlich pausiert.
-Site-Einstellungen öffnen und schauen, ob **Active** an ist. Inaktive
-Sites nehmen Beacons an, schreiben sie aber nicht in die
-Analytics-Tabellen.
+Bekommst du `204` zurück, und das Dashboard ist nach ein paar Minuten immer noch leer, ist die Ingestion vermutlich pausiert. Site-Einstellungen öffnen und schauen, ob **Active** an ist. Inaktive Sites nehmen Beacons an, schreiben sie aber nicht in die Analytics-Tabellen.
 
 ### Immer noch nichts
 
-Hol dir den `X-Request-ID`-Header aus einer fehlerhaften Response
-(DevTools → Network → Request anklicken → **Headers**) und schick
-ihn an den Support. Mit der Request-ID finden wir das passende
-Server-Log in Sekunden.
+Hol dir den `X-Request-ID`-Header aus einer fehlerhaften Response (DevTools → Network → Request anklicken → **Headers**) und schick ihn an den Support. Mit der Request-ID finden wir das passende Server-Log in Sekunden.
 
 ## Nächste Schritte
 
-- Einen [Collection Mode](/de/collection-modes) wählen, falls
-  `anonymous` nicht passt.
-- Erstes [Release taggen](/de/guides/compare-releases) und Deploys
-  vergleichen.
+- Einen [Collection Mode](/de/collection-modes) wählen, falls `anonymous` nicht passt.
+- Erstes [Release taggen](/de/guides/compare-releases) und Deploys vergleichen.

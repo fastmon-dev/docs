@@ -1,162 +1,96 @@
 ---
 title: Glossary
-description: Terms used across Fastmon, the dashboard, and this documentation.
+description: Terms used across fastmon, the dashboard, and this documentation.
 ---
 
 Compact definitions. For depth, follow the link on each term.
 
 ## Web Vitals
 
-**LCP**: *Largest Contentful Paint.* Time until the largest
-visible element renders. The load metric. Good ≤ 2,500 ms at p75.
-See [LCP](/en/web-vitals/lcp).
+**LCP**: *Largest Contentful Paint.* Time until the largest visible element renders. The load metric. Good ≤ 2,500 ms at p75. See [LCP](/en/web-vitals/lcp).
 
-**INP**: *Interaction to Next Paint.* Worst-case latency between
-interaction and the next paint. The responsiveness metric. Good
-≤ 200 ms at p75. Replaced FID in March 2024. See
-[INP](/en/web-vitals/inp).
+**INP**: *Interaction to Next Paint.* Worst-case latency between interaction and the next paint. The responsiveness metric. Good ≤ 200 ms at p75. Replaced FID in March 2024. See [INP](/en/web-vitals/inp).
 
-**CLS**: *Cumulative Layout Shift.* Sum of unexpected layout
-shifts. Unitless. The visual-stability metric. Good ≤ 0.1 at p75.
-See [CLS](/en/web-vitals/cls).
+**CLS**: *Cumulative Layout Shift.* Sum of unexpected layout shifts. Unitless. The visual-stability metric. Good ≤ 0.1 at p75. See [CLS](/en/web-vitals/cls).
 
-**FCP**: *First Contentful Paint.* Time until the first text or
-image renders. Diagnostic; explains slow LCP. See
-[FCP](/en/web-vitals/fcp).
+**FCP**: *First Contentful Paint.* Time until the first text or image renders. Diagnostic; explains slow LCP. See [FCP](/en/web-vitals/fcp).
 
-**TTFB**: *Time to First Byte.* Time until the first response byte
-arrives. Diagnostic; the floor for FCP and LCP. See
-[TTFB](/en/web-vitals/ttfb).
+**TTFB**: *Time to First Byte.* Time until the first response byte arrives. Diagnostic; the floor for FCP and LCP. See [TTFB](/en/web-vitals/ttfb).
 
-**Experience Score**: Composite score from 0.0 to 10.0, weighted
-across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate.
-Mapped to letter grades A+ through F. See
-[Experience Score](/en/web-vitals/experience-score).
+**Experience Score**: Composite score from 0.0 to 10.0, weighted across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate. Mapped to letter grades A+ through F. See [Experience Score](/en/web-vitals/experience-score).
 
-**Core Web Vitals**: Google's three-metric set: LCP, INP, CLS.
-The metrics that affect search ranking.
+**Core Web Vitals**: Google's three-metric set: LCP, INP, CLS. The metrics that affect search ranking.
 
 ## Beacon and ingestion
 
-**Beacon**: A single batched payload the tracker POSTs to
-`/c/{collector_hash}`. Also shorthand for the script at
-`/s/{source_hash}.js` that produces them. See
-[The RUM Beacon](/en/concepts/beacon).
+**Beacon**: A single batched payload the tracker POSTs to `/c/{collector_hash}`. Also shorthand for the script at `/s/{source_hash}.js` that produces them. See [The RUM Beacon](/en/concepts/beacon).
 
-**Tracker**: The running JavaScript agent the beacon script starts
-in the visitor's browser. It registers the observers, buffers
-values, strips URLs, and sends the beacons.
+**Tracker**: The running JavaScript agent the beacon script starts in the visitor's browser. It registers the observers, buffers values, strips URLs, and sends the beacons.
 
-**Collector**: The server endpoint at `/c/{collector_hash}` that
-receives beacons, validates them, and writes them to the analytics
-store.
+**Collector**: The server endpoint at `/c/{collector_hash}` that receives beacons, validates them, and writes them to the analytics store.
 
-**`source_hash`**: Per-site hash in the script URL. Stable across
-beacon upgrades.
+**`source_hash`**: Per-site hash in the script URL. Stable across beacon upgrades.
 
-**`collector_hash`**: Per-site hash in the ingest URL. Distinct
-from `source_hash` so the script template can change without
-invalidating data.
+**`collector_hash`**: Per-site hash in the ingest URL. Distinct from `source_hash` so the script template can change without invalidating data.
 
-**Collection mode**: Per-site setting: `anonymous`, `consent`,
-`full`. See [Collection modes](/en/collection-modes).
+**Collection mode**: Per-site setting: `anonymous`, `consent`, `full`. See [Collection modes](/en/collection-modes).
 
-**Page-view ID (`pvid`)**: Per-page-view identifier the tracker
-generates client-side. Not persisted.
+**Page-view ID (`pvid`)**: Per-page-view identifier the tracker generates client-side. Not persisted.
 
-**`pst` / `cst`**: Page-started timestamp / client-sent-at
-timestamp. Both visitor wall-clock, in milliseconds since epoch.
-The interval `cst - pst` is the reliable clock-skew-free measure
-of how long the page-view took before flushing.
+**`pst` / `cst`**: Page-started timestamp / client-sent-at timestamp. Both visitor wall-clock, in milliseconds since epoch. The interval `cst - pst` is the reliable clock-skew-free measure of how long the page-view took before flushing.
 
 ## Resources and accounts
 
-**Organization**: Top-level account container. Owns sites, members,
-notification rules, API tokens. See
-[Organizations](/en/concepts/organizations).
+**Organization**: Top-level account container. Owns sites, members, notification rules, API tokens. See [Organizations](/en/concepts/organizations).
 
-**Plan**: Organization tier: `beta`, `starter`, `pro`, `partner`,
-`enterprise`. Gates features and quotas.
+**Plan**: Organization tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Gates features and quotas.
 
-**Site**: A monitored property. Has its own beacon hashes and
-settings. See [Sites](/en/concepts/sites).
+**Site**: A monitored property. Has its own beacon hashes and settings. See [Sites](/en/concepts/sites).
 
-**Visitor**: A distinct visitor, counted along an identity axis:
-`stitch` (edge-derived, present in every mode, the default) or
-`session` (consent-gated). Anonymous by construction. See
-[Visitors and sessions](/en/concepts/sessions).
+**Visitor**: A distinct visitor, counted along an identity axis: `stitch` (edge-derived, present in every mode, the default) or `session` (consent-gated). Anonymous by construction. See [Visitors and sessions](/en/concepts/sessions).
 
-**Session**: A 30-minute window of page-views from the same
-browser, grouped by `session_id`. One of the two visitor
-identities, and consent-gated. See
-[Visitors and sessions](/en/concepts/sessions).
+**Session**: A 30-minute window of page-views from the same browser, grouped by `session_id`. One of the two visitor identities, and consent-gated. See [Visitors and sessions](/en/concepts/sessions).
 
-**Release**: Versioned marker on a site. Used by analytics
-`compare_to_release_id` for before/after comparisons. See
-[Releases](/en/concepts/releases).
+**Release**: Versioned marker on a site. Used by analytics `compare_to_release_id` for before/after comparisons. See [Releases](/en/concepts/releases).
 
-**Tag**: Free-form label on a site (max 10) for organizing sites.
-Cross-site analytics scoping by tag is planned; tags don't filter
-analytics yet. Conventions: `env:production`, `team:growth`, etc.
+**Tag**: Free-form label on a site (max 10) for organizing sites. Cross-site analytics scoping by tag is planned; tags don't filter analytics yet. Conventions: `env:production`, `team:growth`, etc.
 
-**Member**: User attached to an organization with a role
-(`owner` / `member`).
+**Member**: User attached to an organization with a role (`owner` / `member`).
 
 **Invite**: Pending membership awaiting acceptance.
 
-**API token**: `fm_…`-prefixed bearer token for programmatic
-access. Hashed server-side; lost tokens are unrecoverable.
+**API token**: `fm_…`-prefixed bearer token for programmatic access. Hashed server-side; lost tokens are unrecoverable.
 
 ## Storage and infrastructure
 
-**Configuration DB**: Relational store for users, organizations,
-sites, settings.
+**Configuration DB**: Relational store for users, organizations, sites, settings.
 
-**Analytics store**: Columnar store for beacon events and
-aggregated metrics.
+**Analytics store**: Columnar store for beacon events and aggregated metrics.
 
-**Session store**: In-memory store for sessions, rate limits,
-short-lived caches.
+**Session store**: In-memory store for sessions, rate limits, short-lived caches.
 
-**Partner client**: A sub-organization a `partner`-plan org
-operates on behalf of someone else.
+**Partner client**: A sub-organization a `partner`-plan org operates on behalf of someone else.
 
 ## API
 
-**Envelope**: Wrapper around the response body. Single resource =
-raw; list = `data` + `meta`; error = `error`. See
-[API overview](/en/api).
+**Envelope**: Wrapper around the response body. Single resource = raw; list = `data` + `meta`; error = `error`. See [API overview](/en/api).
 
-**Cursor pagination**: High-volume endpoints return
-`meta.next_cursor`; client sends it back as `?cursor=…`. See
-[Pagination](/en/api/pagination).
+**Cursor pagination**: High-volume endpoints return `meta.next_cursor`; client sends it back as `?cursor=…`. See [Pagination](/en/api/pagination).
 
-**Offset pagination**: Default scheme. `?limit` and `?offset`,
-response includes `meta.total` and `meta.has_more`.
+**Offset pagination**: Default scheme. `?limit` and `?offset`, response includes `meta.total` and `meta.has_more`.
 
-**`X-Request-ID`**: Header on every response. Mirrored into
-`error.request_id` on failure. Always include when reporting
-issues.
+**`X-Request-ID`**: Header on every response. Mirrored into `error.request_id` on failure. Always include when reporting issues.
 
 **UUID v7**: Time-sortable UUID format used for all resource IDs.
 
 ## Other
 
-**RUM**: *Real User Monitoring.* Measuring performance from real
-visitor browsers, as opposed to synthetic tests in a lab.
+**RUM**: *Real User Monitoring.* Measuring performance from real visitor browsers, as opposed to synthetic tests in a lab.
 
-**LoAF**: *Long Animation Frame.* Browser API exposing frames
-that took longer than 50 ms; usually the root cause of bad INP.
+**LoAF**: *Long Animation Frame.* Browser API exposing frames that took longer than 50 ms; usually the root cause of bad INP.
 
-**Third-party**: A request to a domain different from the site's
-own. Fastmon groups these by domain and category for impact
-analysis. See `/analytics/third-party`.
+**Third-party**: A request to a domain different from the site's own. Fastmon groups these by domain and category for impact analysis. See `/analytics/third-party`.
 
-**`window.__fastmon_consent(true|false)`**: The function your CMP
-calls to grant or revoke consent in `consent` mode. See
-[Collection modes](/en/collection-modes#consent-let-the-page-choose-controlled-by-your-cmp).
+**`window.__fastmon_consent(true|false)`**: The function your CMP calls to grant or revoke consent in `consent` mode. See [Collection modes](/en/collection-modes#consent-let-the-page-choose-controlled-by-your-cmp).
 
-**`__FASTMON_SAMPLE_RATE`**: Window variable (0–1) the tracker
-reads at page load to decide whether this page-view sends beacons.
-Set it to `0` before the script tag to suppress sending entirely
-on that page-view.
+**`__FASTMON_SAMPLE_RATE`**: Window variable (0–1) the tracker reads at page load to decide whether this page-view sends beacons. Set it to `0` before the script tag to suppress sending entirely on that page-view.

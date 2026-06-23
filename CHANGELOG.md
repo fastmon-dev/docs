@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Change: House-style sweep — lowercase `fastmon` brand + de-wrapped prose (EN + DE)
+
+Two mechanical, content-preserving passes over every hand-authored doc; the generated `api/**` operation pages (those carrying `_openapi:` frontmatter, emitted by `scripts/generate-api-docs.mjs`) were left untouched. No facts, links, code, or frontmatter keys changed.
+
+- **Brand, terminology, and hyphenation.** The brand is now written lowercase `fastmon` everywhere except where grammar forces a capital — start of a sentence, heading, or title → `Fastmon` (this covers comparison-table headers and frontmatter `description` values too). Standalone English product terms lost their internal hyphens (`Real-User-Monitoring` → `Real User Monitoring`, `Web-Vitals` → `Web Vitals`), while German compounds keep their connecting hyphen (`Web-Vitals-Übersicht`, `RUM-Daten`). The `tracker` (installed client script) vs `beacon` (delivered JS / wire payload) distinction was preserved, not blanket-replaced. The landing pages (`index.mdx` / `index.de.mdx`) additionally picked up the benefit-oriented voice, shorter card descriptions, and the `Shopware` platform mention; `concepts/beacon.de.mdx` had grammar slips fixed. Brand-casing edge cases (mid-sentence after a capitalized lead word, mid-heading, German compounds like `fastmon-Tracker`) were verified by hand after the automated pass.
+- **Prose de-wrapped.** Manual ~55-character hard line breaks in prose and list items were removed — one paragraph (or bullet) is now a single line, matching the convention already used in `index.de.mdx` / `concepts/beacon.de.mdx`. Prettier does not govern MDX prose (`proseWrap` is unset → `preserve`; the `format` script covers `src/`/`scripts/` only), so wrapping is purely an authoring convention. The transform was verified content-preserving per file by two invariants: an identical whitespace-split token sequence before/after, and byte-identical fenced-code regions (64 files changed, 0 invariant failures).
+
 ### Fix: Override `@babel/core` to clear OSV advisory GHSA-4x5r-pxfx-6jf8
 
 - `@babel/core` 7.29.0 → 7.29.7 via `overrides` (CVSS 3.2, low; dev-only transitive dep through `eslint-config-next` → `eslint-plugin-react-hooks`). Babel only compiles our own source at build time, so it isn't reachable, but the override keeps the OSV-Scanner CI job green and resolves rather than suppresses. `npm audit` reports 0 vulnerabilities.

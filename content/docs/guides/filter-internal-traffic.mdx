@@ -3,14 +3,9 @@ title: Filter internal traffic
 description: Keep office, staff, and synthetic traffic out of your real-user metrics.
 ---
 
-Internal traffic (your team's own visits, office IPs, automated
-checks) skews every metric. Office machines on warm caches and
-fast networks look great; mobile visitors in a tunnel look bad;
-average those two together and the number means nothing.
+Internal traffic (your team's own visits, office IPs, automated checks) skews every metric. Office machines on warm caches and fast networks look great; mobile visitors in a tunnel look bad; average those two together and the number means nothing.
 
-There's no "ignore my IP" toggle, on purpose; we don't store IPs
-(see [Privacy](/en/privacy)). The right move depends on what you
-want to exclude.
+There's no "ignore my IP" toggle, on purpose; we don't store IPs (see [Privacy](/en/privacy)). The right move depends on what you want to exclude.
 
 ## Pick the option that fits
 
@@ -25,24 +20,17 @@ want to exclude.
 
 The cleanest answer for staging, preview, and dev environments.
 
-1. Create a second site in Fastmon called e.g. `acme-marketing-staging`.
+1. Create a second site in fastmon called e.g. `acme-marketing-staging`.
 2. Use **its** `source_hash` in your staging deploy.
-3. Either ignore the staging site in dashboards, or use it
-   intentionally; staging metrics are useful for catching
-   regressions before production.
+3. Either ignore the staging site in dashboards, or use it intentionally; staging metrics are useful for catching regressions before production.
 
-Costs you nothing: no client-side logic, no flags, no risk of
-leaking production data into staging or the other way around.
+Costs you nothing: no client-side logic, no flags, no risk of leaking production data into staging or the other way around.
 
 ## Option 2: Skip the beacon for internal sessions
 
-Useful for office traffic where the visitor has access to the site's
-backend or admin UI, and you can mark them as internal there.
+Useful for office traffic where the visitor has access to the site's backend or admin UI, and you can mark them as internal there.
 
-The simplest approach: don't render the beacon `<script>` tag at all
-when the request comes from an internal session. Server-side render
-based on whatever "is internal" signal you already have: a session
-cookie, a JWT claim, an admin login.
+The simplest approach: don't render the beacon `<script>` tag at all when the request comes from an internal session. Server-side render based on whatever "is internal" signal you already have: a session cookie, a JWT claim, an admin login.
 
 ```html
 {% if not request.session.is_staff %}
@@ -50,8 +38,7 @@ cookie, a JWT claim, an admin login.
 {% endif %}
 ```
 
-A client-only variant works too: gate the script-tag injection on a
-cookie set once when your team hits a `/staff` route:
+A client-only variant works too: gate the script-tag injection on a cookie set once when your team hits a `/staff` route:
 
 ```html
 <script>
@@ -66,21 +53,16 @@ cookie set once when your team hits a `/staff` route:
 
 ## Option 3: Pause a site entirely
 
-For a maintenance window, an investigation, or a non-production
-environment that's permanently noisy:
+For a maintenance window, an investigation, or a non-production environment that's permanently noisy:
 
-1. In Fastmon, open the site, go to **Settings**.
+1. In fastmon, open the site, go to **Settings**.
 2. Toggle **Active** off.
 
-Beacons keep arriving but aren't written to analytics tables. Toggle
-back on when you want data again. History from when the site was
-active stays intact.
+Beacons keep arriving but aren't written to analytics tables. Toggle back on when you want data again. History from when the site was active stays intact.
 
 ## Option 4: Skip the beacon for synthetic monitors
 
-For Pingdom, UptimeRobot, your own E2E suite, etc., the cleanest move
-is to not load the script at all. Most monitors set a recognizable
-`User-Agent`; gate the script tag on the server side:
+For Pingdom, UptimeRobot, your own E2E suite, etc., the cleanest move is to not load the script at all. Most monitors set a recognizable `User-Agent`; gate the script tag on the server side:
 
 ```html
 {% if request.user_agent.is_synthetic %}
@@ -90,38 +72,22 @@ is to not load the script at all. Most monitors set a recognizable
 {% endif %}
 ```
 
-If your stack doesn't have an easy "is bot" check, gate the script
-tag on a small UA test in your template; same idea.
+If your stack doesn't have an easy "is bot" check, gate the script tag on a small UA test in your template; same idea.
 
 ## Verifying the filter
 
-Open your site as an internal visitor. Check DevTools → Network →
-filter `c/`. You should see **no** request to
-`https://fastmon.site/c/...`. If you do, the script tag is still
-being rendered: double-check the gate condition on the server (or
-the cookie test in the inline snippet).
+Open your site as an internal visitor. Check DevTools → Network → filter `c/`. You should see **no** request to `https://fastmon.site/c/...`. If you do, the script tag is still being rendered: double-check the gate condition on the server (or the cookie test in the inline snippet).
 
-In Fastmon, after the cutover, traffic from your office's country
-should drop noticeably (country is the only geo dimension we
-store). If it doesn't, the filter isn't catching those visits.
+In fastmon, after the cutover, traffic from your office's country should drop noticeably (country is the only geo dimension we store). If it doesn't, the filter isn't catching those visits.
 
 ## Common surprises
 
-- **You can't filter after the fact.** We don't store IPs (see
-  [Privacy](/en/privacy)), so once a beacon's in, we can't tell
-  whether it came from your office. Filtering has to happen at
-  the source.
-- **The gate runs per page.** Make sure the script tag is omitted
-  on every page you want excluded, not just the first one.
-- **Country-level filters don't help.** Your office sits in the
-  same country as most of your real visitors. What works:
-  filtering at the source, where the real context (user, cookie,
-  UA) is still there.
+- **You can't filter after the fact.** We don't store IPs (see [Privacy](/en/privacy)), so once a beacon's in, we can't tell whether it came from your office. Filtering has to happen at the source.
+- **The gate runs per page.** Make sure the script tag is omitted on every page you want excluded, not just the first one.
+- **Country-level filters don't help.** Your office sits in the same country as most of your real visitors. What works: filtering at the source, where the real context (user, cookie, UA) is still there.
 
 ## Related
 
 - [Sites](/en/concepts/sites): separate sites for environments.
-- [Collection modes](/en/collection-modes): runtime beacon
-  control.
-- [Privacy: what we don't collect](/en/privacy): why there's no
-  server-side IP filter.
+- [Collection modes](/en/collection-modes): runtime beacon control.
+- [Privacy: what we don't collect](/en/privacy): why there's no server-side IP filter.

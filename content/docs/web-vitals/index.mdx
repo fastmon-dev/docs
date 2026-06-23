@@ -1,22 +1,15 @@
 ---
 title: Web Vitals
-description: The five performance metrics Fastmon tracks, what they measure, and how to read them.
+description: The five performance metrics fastmon tracks, what they measure, and how to read them.
 ---
 
-**Web Vitals** are a set of standardized performance metrics that
-turn "how does this page feel?" into actual numbers. Google
-publishes the definitions and thresholds, browsers expose the
-APIs, and our beacon collects them straight from your real
-visitors.
+**Web Vitals** are a set of standardized performance metrics that turn "how does this page feel?" into actual numbers. Google publishes the definitions and thresholds, browsers expose the APIs, and our beacon collects them straight from your real visitors.
 
-This page is the overview. Each metric has its own page with
-thresholds, debug tips, and how to query it in Fastmon.
+This page is the overview. Each metric has its own page with thresholds, debug tips, and how to query it in fastmon.
 
 ## The five metrics
 
-Fastmon tracks the three Core Web Vitals (the ones Google uses
-for ranking) plus two diagnostic metrics that help when something
-regresses.
+Fastmon tracks the three Core Web Vitals (the ones Google uses for ranking) plus two diagnostic metrics that help when something regresses.
 
 | Metric                                          | What it measures                                       | Good (p75) |
 | ----------------------------------------------- | ------------------------------------------------------ | ---------- |
@@ -26,56 +19,33 @@ regresses.
 | [FCP](/en/web-vitals/fcp), First Contentful Paint    | Time until the first text or image appears.            | ≤ 1,800 ms |
 | [TTFB](/en/web-vitals/ttfb), Time to First Byte      | Time until the first response byte arrives.            | ≤ 800 ms   |
 
-The first three (LCP, INP, CLS) are what Google's ranking signal
-counts. The other two (FCP, TTFB) are diagnostic, useful when you
-need to find out *why* LCP is slow.
+The first three (LCP, INP, CLS) are what Google's ranking signal counts. The other two (FCP, TTFB) are diagnostic, useful when you need to find out *why* LCP is slow.
 
 ## How to read a percentile
 
-By convention, Web Vitals are reported at the **75th percentile**.
-That means: across all the page-views in the time window, 75% of
-visitors had a better value than p75 and 25% had a worse one.
+By convention, Web Vitals are reported at the **75th percentile**. That means: across all the page-views in the time window, 75% of visitors had a better value than p75 and 25% had a worse one.
 
-If your LCP at p75 is 2,400 ms, that's the value the
-*worst quarter of your traffic* is actually living with. p50 is
-"what most people see": comfortable, but not a useful target if
-you care about visitors on slow networks or older devices.
+If your LCP at p75 is 2,400 ms, that's the value the *worst quarter of your traffic* is actually living with. p50 is "what most people see": comfortable, but not a useful target if you care about visitors on slow networks or older devices.
 
-## How Fastmon collects them
+## How fastmon collects them
 
-The tracker uses the same browser APIs the
-[`web-vitals`](https://github.com/GoogleChrome/web-vitals) library is
-built on:
+The tracker uses the same browser APIs the [`web-vitals`](https://github.com/GoogleChrome/web-vitals) library is built on:
 
-- `PerformanceObserver` for `largest-contentful-paint`,
-  `layout-shift`, `paint`, and `event` entries.
+- `PerformanceObserver` for `largest-contentful-paint`, `layout-shift`, `paint`, and `event` entries.
 - `Navigation Timing` for TTFB.
 - The browser's own attribution data for INP.
 
-Each metric is finalized at a different moment, usually when the
-page becomes hidden, or when the user interacts. The tracker
-batches values and sends them in a handful of beacons over the
-page-view's lifecycle. Details under
-[The RUM Beacon](/en/concepts/beacon).
+Each metric is finalized at a different moment, usually when the page becomes hidden, or when the user interacts. The tracker batches values and sends them in a handful of beacons over the page-view's lifecycle. Details under [The RUM Beacon](/en/concepts/beacon).
 
 ## Where they show up in the product
 
-- **Performance dashboard**: p50/p75/p95 for every metric, sliceable
-  by URL, device, country, and release.
-- **Experience Score**: a composite that combines LCP, INP, CLS,
-  FCP, TTFB, error rate, and page load time into a single 0–10
-  number. See
-  [Experience Score](/en/web-vitals/experience-score).
-- **Notification rules**: alert when a metric crosses a threshold or
-  worsens against the previous window.
-- **Analytics API**: query any metric programmatically. See the
-  [Analytics endpoints](/en/api/analytics/queryAnalytics).
+- **Performance dashboard**: p50/p75/p95 for every metric, sliceable by URL, device, country, and release.
+- **Experience Score**: a composite that combines LCP, INP, CLS, FCP, TTFB, error rate, and page load time into a single 0–10 number. See [Experience Score](/en/web-vitals/experience-score).
+- **Notification rules**: alert when a metric crosses a threshold or worsens against the previous window.
+- **Analytics API**: query any metric programmatically. See the [Analytics endpoints](/en/api/analytics/queryAnalytics).
 
 ## What's next
 
-- Start with [LCP](/en/web-vitals/lcp), usually the first metric to
-  optimize.
-- Then [INP](/en/web-vitals/inp), which often regresses when you fix
-  LCP by adding JavaScript.
-- For a single number to track over time, see
-  [Experience Score](/en/web-vitals/experience-score).
+- Start with [LCP](/en/web-vitals/lcp), usually the first metric to optimize.
+- Then [INP](/en/web-vitals/inp), which often regresses when you fix LCP by adding JavaScript.
+- For a single number to track over time, see [Experience Score](/en/web-vitals/experience-score).

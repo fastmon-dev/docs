@@ -3,15 +3,9 @@ title: Experience Score
 description: "A single 0–10 number that combines Core Web Vitals, page load time, and error rate: the headline metric for tracking UX over time."
 ---
 
-**Experience Score** is a composite metric. It condenses LCP,
-INP, CLS, FCP, TTFB, page load time, and error rate into a single
-0–10 number with a letter grade. Practically: this is the number
-you put on a dashboard, in a status report, or on a slide when you're
-explaining performance to people who don't care about the
-engineering detail.
+**Experience Score** is a composite metric. It condenses LCP, INP, CLS, FCP, TTFB, page load time, and error rate into a single 0–10 number with a letter grade. Practically: this is the number you put on a dashboard, in a status report, or on a slide when you're explaining performance to people who don't care about the engineering detail.
 
-Thresholds follow Google's "good" / "poor" boundaries for the Web
-Vitals; we compute the score from your real-user data.
+Thresholds follow Google's "good" / "poor" boundaries for the Web Vitals; we compute the score from your real-user data.
 
 ## What's a good score?
 
@@ -26,15 +20,11 @@ Scores round to one decimal. Letter grades:
 | ≥ 5.0    | D     |
 | < 5.0    | F     |
 
-A score of 10 means every metric was at or below its "good"
-threshold for the bulk of your traffic. A score of 5 means metrics
-are sitting around the "poor" boundary on average. Below that,
-several metrics are well into the red.
+A score of 10 means every metric was at or below its "good" threshold for the bulk of your traffic. A score of 5 means metrics are sitting around the "poor" boundary on average. Below that, several metrics are well into the red.
 
 ## How the score is computed
 
-Each metric is mapped to a 0–10 sub-score by linear interpolation
-against its good / poor thresholds:
+Each metric is mapped to a 0–10 sub-score by linear interpolation against its good / poor thresholds:
 
 - value ≤ **good** → 10
 - value at **poor** → 5
@@ -50,71 +40,40 @@ against its good / poor thresholds:
 | CLS            | ≤ 0.1      | > 0.25     | 10 %   |
 | TTFB           | ≤ 800 ms   | > 1,800 ms | 10 %   |
 
-The weighted sum of sub-scores is the Experience Score. If a
-metric is missing for a segment (e.g. INP when no one interacted),
-its weight is redistributed proportionally across the metrics that
-do have values.
+The weighted sum of sub-scores is the Experience Score. If a metric is missing for a segment (e.g. INP when no one interacted), its weight is redistributed proportionally across the metrics that do have values.
 
 ## When the score is computed
 
-Per page-view, when the page is hidden. That's the same trigger that
-finalizes the underlying metrics. Aggregate scores you see in the
-dashboard are averages over your selected time range.
+Per page-view, when the page is hidden. That's the same trigger that finalizes the underlying metrics. Aggregate scores you see in the dashboard are averages over your selected time range.
 
-## How to see the Experience Score in Fastmon
+## How to see the Experience Score in fastmon
 
-The headline number lives on the **Performance** dashboard. Below it
-you'll see the breakdown (which sub-score is dragging the total
-down) and a trend chart over the selected window.
+The headline number lives on the **Performance** dashboard. Below it you'll see the breakdown (which sub-score is dragging the total down) and a trend chart over the selected window.
 
 Useful slices:
 
 - **By URL**: group by URL. Find which pages dominate the average.
-- **By release**: `compare_to_release_id`. The single best signal
-  for "did this deploy regress UX?"
-- **By country / device**: group by `country` or `device_type`.
-  Regional or device-class regressions are usually invisible in the
-  global score.
+- **By release**: `compare_to_release_id`. The single best signal for "did this deploy regress UX?"
+- **By country / device**: group by `country` or `device_type`. Regional or device-class regressions are usually invisible in the global score.
 
 ## How to improve a low score
 
 The composite is only as healthy as its weakest part:
 
 1. Open the breakdown and identify the **worst sub-score**.
-2. Read the linked metric page ([LCP](/en/web-vitals/lcp),
-   [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls),
-   [FCP](/en/web-vitals/fcp), [TTFB](/en/web-vitals/ttfb)) and
-   apply the highest-leverage fix listed there.
-3. Recheck after a release. Use `compare_to_release_id` for a clean
-   before/after.
+2. Read the linked metric page ([LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp), [TTFB](/en/web-vitals/ttfb)) and apply the highest-leverage fix listed there.
+3. Recheck after a release. Use `compare_to_release_id` for a clean before/after.
 
-Don't try to optimize everything at once. The improvements often
-trade against each other: fixing LCP by adding more JavaScript can
-regress INP, and reserving space for ads to fix CLS can push LCP
-later.
+Don't try to optimize everything at once. The improvements often trade against each other: fixing LCP by adding more JavaScript can regress INP, and reserving space for ads to fix CLS can push LCP later.
 
 ## Common surprises
 
-- **The score can drop without any single metric crossing a
-  threshold.** A small regression in two metrics can move the
-  composite by half a point while each metric still says "Good."
-- **A single deploy can create a permanent score gap.** Once a
-  regression ships, every subsequent page-view contributes the worse
-  number to the average. Catching it on the day of the deploy
-  matters.
-- **Pages with low interaction count have inflated scores.** If
-  visitors never interact, INP is excluded; the score then reflects
-  only LCP and CLS, which are usually easier.
-- **Internal vs external traffic skews the composite.** Office
-  traffic on warm caches and fast laptops scores great; real visitors
-  on mobile in a tunnel score worse. Filter internal traffic out at
-  the source to keep the number honest; see
-  [Filter internal traffic](/en/guides/filter-internal-traffic).
+- **The score can drop without any single metric crossing a threshold.** A small regression in two metrics can move the composite by half a point while each metric still says "Good."
+- **A single deploy can create a permanent score gap.** Once a regression ships, every subsequent page-view contributes the worse number to the average. Catching it on the day of the deploy matters.
+- **Pages with low interaction count have inflated scores.** If visitors never interact, INP is excluded; the score then reflects only LCP and CLS, which are usually easier.
+- **Internal vs external traffic skews the composite.** Office traffic on warm caches and fast laptops scores great; real visitors on mobile in a tunnel score worse. Filter internal traffic out at the source to keep the number honest; see [Filter internal traffic](/en/guides/filter-internal-traffic).
 
 ## What's next
 
-- [LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp),
-  [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp),
-  [TTFB](/en/web-vitals/ttfb): the contributing metrics.
-- [Web Vitals overview](/en/web-vitals): the full set including
-  diagnostic metrics.
+- [LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp), [TTFB](/en/web-vitals/ttfb): the contributing metrics.
+- [Web Vitals overview](/en/web-vitals): the full set including diagnostic metrics.

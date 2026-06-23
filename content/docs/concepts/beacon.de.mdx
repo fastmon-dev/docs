@@ -1,12 +1,11 @@
 ---
 title: Der RUM-Beacon
-description: Die JavaScript-Datei, die fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie senden und nicht tun.
+description: Die JavaScript-Datei, die fastmon an deine Besucher ausliefert. Was sie beobachtet, wann sie sendet und was sie nie tut.
 ---
 
-Der **Beacon** ist die JavaScript-Datei, die fastmon unter `https://fastmon.site/s/{source_hash}.js` ausliefert. 
-Das ist alles, mehr braucht es nicht und gibt es auch nicht.
+Der **Beacon** ist die JavaScript-Datei, die fastmon unter `https://fastmon.site/s/{source_hash}.js` ausliefert. Das ist alles, mehr braucht es nicht und gibt es auch nicht.
 
-Diese Seite ist die technische Referenz. Für das Einrichten geht's zur [Implementierung](/de/install), für Privacy Fragen zu [Privacy: was wir nicht sammeln](/de/privacy).
+Diese Seite ist die technische Referenz. Für das Einrichten geht's zur [Implementierung](/de/install), für Privacy-Fragen zu [Privacy: was wir nicht sammeln](/de/privacy).
 
 ## Drei Bundles, eine URL
 
@@ -24,12 +23,7 @@ Steht bei der Site `store_session = false`, werden das `full`- und das `consent`
 
 ## Warum das zählt
 
-Der Beacon ist die Grenze zwischen Fastmon und deinem Besucher.
-Was hier läuft (was gemessen wird, wann geflusht wird, welche
-Identifier erzeugt werden) sieht der Browser, und es kann sich
-jeder anschauen, der ins Script reinguckt. Daher halten wir die
-Oberfläche klein: klein heißt auditierbar, schnell geladen und in
-jedem Datenschutz-Review verteidigbar.
+Der Beacon ist die Grenze zwischen fastmon und deinem Besucher. Was hier läuft (was gemessen wird, wann geflusht wird, welche Identifier erzeugt werden) sieht der Browser, und es kann sich jeder anschauen, der ins Script reinguckt. Daher halten wir die Oberfläche klein: klein heißt auditierbar, schnell geladen und in jedem Datenschutz-Review verteidigbar.
 
 ## Was der Beacon beobachtet
 
@@ -71,22 +65,11 @@ Seite lädt
       (Lifecycle markiert jede Emission)
 ```
 
-Beim Flush versuchen wir zuerst `navigator.sendBeacon()`, damit der
-Request auch beim Unload sicher rauskommt. Fehlt das, fallen wir auf
-`fetch` mit `keepalive: true` zurück. Schlägt *beides* fehl (alte
-Browser, sehr aggressives Extension-Blocking), greift ein
-GET-Pixel-Fallback an `/c/{collector_hash}.gif?…`, der eine sichere
-Teilmenge der Felder in den Query-String serialisiert. Sensible
-Inhalte (`sid`, Referrer, Fehler, die großen Third-Party- /
-Resource-Breakdown- / LoAF-JSON-Blobs) sind vom Pixel-Fallback
-per Namen ausgeschlossen; sie wandern nie über eine
-Access-Log-Oberfläche.
+Beim Flush versuchen wir zuerst `navigator.sendBeacon()`, damit der Request auch beim Unload sicher rauskommt. Fehlt das, fallen wir auf `fetch` mit `keepalive: true` zurück. Schlägt *beides* fehl (alte Browser, sehr aggressives Extension-Blocking), greift ein GET-Pixel-Fallback an `/c/{collector_hash}.gif?…`, der eine sichere Teilmenge der Felder in den Query-String serialisiert. Sensible Inhalte (`sid`, Referrer, Fehler, die großen Third-Party- / Resource-Breakdown- / LoAF-JSON-Blobs) sind vom Pixel-Fallback per Namen ausgeschlossen; sie wandern nie über eine Access-Log-Oberfläche.
 
 ## Der Wire-Payload
 
-Der Payload ist JSON mit absichtlich kurzen Keys, um den Body klein
-zu halten. Der Body ist auf 8 KiB begrenzt. Alle Felder sind
-optional; ein typischer Envelope sieht so aus:
+Der Payload ist JSON mit absichtlich kurzen Keys, um den Body klein zu halten. Der Body ist auf 8 KiB begrenzt. Alle Felder sind optional; ein typischer Envelope sieht so aus:
 
 ```json
 {
@@ -115,72 +98,34 @@ optional; ein typischer Envelope sieht so aus:
 }
 ```
 
-In der Praxis musst du das nicht lesen; Dashboard und
-[Analytics-API](/en/api/analytics/queryAnalytics) packen das für dich aus.
-Steht hier zum Nachschlagen.
+In der Praxis musst du das nicht lesen; Dashboard und [Analytics-API](/en/api/analytics/queryAnalytics) packen das für dich aus. Steht hier zum Nachschlagen.
 
 Schlüssel-Abkürzungen:
 
-- `sid`: Session-ID. Liegt im `sessionStorage._s`. Nur in `full`
-  und in `consent` nach Opt-In.
+- `sid`: Session-ID. Liegt im `sessionStorage._s`. Nur in `full` und in `consent` nach Opt-In.
 - `pvid`: Per-Pageview-ID. Pro Pageview neu, nicht persistiert.
 - `ver`: monoton steigende Version dieses Pageview-Payloads.
-- `lifecycle`: einer von `init`, `loaded`, `error_update`,
-  `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
+- `lifecycle`: einer von `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
-- `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
-  Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
-- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf
-  Origin + Pathname vorbereinigt (Query und Hash entfernt). `r`
-  wird serverseitig in gebucketete Source + Medium klassifiziert
-  und der rohe Wert vor jedem Logging-Pfad verworfen. Er
-  persistiert nie, in keinem Modus.
-- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`,
-  `utm_content`, `click_id_param`: Kampagnen-Attribution aus
-  `window.location.search`. Jeweils auf 64 Zeichen begrenzt.
-  `click_id_param` ist nur das Plattform-*Label* (`"gclid"` /
-  `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen.
-  In jedem Modus auf der Leitung.
-- `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major,
-  Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die
-  ersten vier kommen aus `FM-*`-Edge-Headern; `vc` und `c` aus dem
-  Browser. `rtt` / `dl` gesellen sich als Echtzeit-RTT- und
-  Downlink-Schätzungen dazu.
-- `pre`, `ad`, `vd`: Prerender-Flag (Speculation Rules API),
-  Activation-Delta (ms, nur bei prerendered Pages) und
-  Visibility-Dirty (war der Tab während des Pageviews im
-  Hintergrund).
-- `t1`…`t36`: numerische Timing-Slots (TTFB, FCP, LCP, INP, CLS,
-  Cache-Hit-Rate, Resource-Breakdowns, LoAF-Aggregate, …).
-- `errs`: Error-Einträge (`t` Typ, `n` Count, `m` Message, `fr`
-  Frames). `t` und `n` gehen in jedem Modus raus, ebenso der Host
-  jedes Frames — dazu Pfad und Zeile/Spalte der Frames in deinen
-  eigenen First-Party-External-Scripts. Die Message `m` sowie
-  Pfad/Zeile/Spalte von Inline- und Third-Party-Frames sind
-  consent-only; auch dann läuft `m` durch einen Scrubber, der URLs,
-  E-Mails, IDs und Strings in Anführungszeichen maskiert.
+- `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt. Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
+- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf Origin + Pathname vorbereinigt (Query und Hash entfernt). `r` wird serverseitig in gebucketete Source + Medium klassifiziert und der rohe Wert vor jedem Logging-Pfad verworfen. Er persistiert nie, in keinem Modus.
+- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `click_id_param`: Kampagnen-Attribution aus `window.location.search`. Jeweils auf 64 Zeichen begrenzt. `click_id_param` ist nur das Plattform-*Label* (`"gclid"` / `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen. In jedem Modus auf der Leitung.
+- `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major, Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die ersten vier kommen aus `FM-*`-Edge-Headern; `vc` und `c` aus dem Browser. `rtt` / `dl` gesellen sich als Echtzeit-RTT- und Downlink-Schätzungen dazu.
+- `pre`, `ad`, `vd`: Prerender-Flag (Speculation Rules API), Activation-Delta (ms, nur bei prerendered Pages) und Visibility-Dirty (war der Tab während des Pageviews im Hintergrund).
+- `t1`…`t36`: numerische Timing-Slots (TTFB, FCP, LCP, INP, CLS, Cache-Hit-Rate, Resource-Breakdowns, LoAF-Aggregate, …).
+- `errs`: Error-Einträge (`t` Typ, `n` Count, `m` Message, `fr` Frames). `t` und `n` gehen in jedem Modus raus, ebenso der Host jedes Frames — dazu Pfad und Zeile/Spalte der Frames in deinen eigenen First-Party-External-Scripts. Die Message `m` sowie Pfad/Zeile/Spalte von Inline- und Third-Party-Frames sind consent-only; auch dann läuft `m` durch einen Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert.
 - `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
-- Fetch/XHR und `Server-Timing`: aggregierte Fetch/XHR-Werte je
-  Endpunkt (Aufrufzahlen, Dauern, Dauer-Buckets, Statusfehler) und
-  die `Server-Timing`-Metriken der Seite. Beide sind templated und
-  werden serverseitig normalisiert (die Leitung ist fälschbar), also
-  tragen Pfade keine Query-Strings oder rohen IDs.
+- Fetch/XHR und `Server-Timing`: aggregierte Fetch/XHR-Werte je Endpunkt (Aufrufzahlen, Dauern, Dauer-Buckets, Statusfehler) und die `Server-Timing`-Metriken der Seite. Beide sind templated und werden serverseitig normalisiert (die Leitung ist fälschbar), also tragen Pfade keine Query-Strings oder rohen IDs.
 
 ## Cache und Rollouts
 
-Das Script wird mit starkem Cache und `ETag` ausgeliefert. Zwei
-Dinge invalidieren den Cache automatisch:
+Das Script wird mit starkem Cache und `ETag` ausgeliefert. Zwei Dinge invalidieren den Cache automatisch:
 
-- **Collection-Mode-Wechsel.** Schaltest du eine Site von
-  `anonymous` auf `consent` (oder umgekehrt), liefert das eine neue
-  Template-Version aus.
-- **Beacon-Upgrade.** Fastmon liefert Beacon-Versionen
-  (`source_version`); ein Wechsel der gepinnten Version rollt den
-  Cache.
+- **Collection-Mode-Wechsel.** Schaltest du eine Site von `anonymous` auf `consent` (oder umgekehrt), liefert das eine neue Template-Version aus.
+- **Beacon-Upgrade.** Fastmon liefert Beacon-Versionen (`source_version`); ein Wechsel der gepinnten Version rollt den Cache.
 
-Du musst dafür nicht redeployen. Beim nächsten Cache-Check holt
-der Browser sich die neue Version automatisch.
+Du musst dafür nicht redeployen. Beim nächsten Cache-Check holt der Browser sich die neue Version automatisch.
 
 ## Kunden-JS-API
 
@@ -193,12 +138,7 @@ Zwei Integrationspunkte, beide namensstabil über Bundle-Versionen:
 window.__FASTMON_SAMPLE_RATE = 0.1;
 ```
 
-Wird beim Tracker-Reset einmal pro Pageview gelesen. Die
-Entscheidung gilt pro Pageview, nicht pro Beacon: ein gesampelter
-Pageview emittiert alle seine Lifecycle-Beacons, ein ungesampelter
-keinen. Erlaubter Bereich `[0, 1]`; Werte außerhalb werden
-ohne Hinweis begrenzt. Setz das vor dem Script-Tag, wenn auch der
-allererste Beacon respektiert werden soll.
+Wird beim Tracker-Reset einmal pro Pageview gelesen. Die Entscheidung gilt pro Pageview, nicht pro Beacon: ein gesampelter Pageview emittiert alle seine Lifecycle-Beacons, ein ungesampelter keinen. Erlaubter Bereich `[0, 1]`; Werte außerhalb werden ohne Hinweis begrenzt. Setz das vor dem Script-Tag, wenn auch der allererste Beacon respektiert werden soll.
 
 ### Consent-Toggle (nur `consent`-Bundle)
 
@@ -207,72 +147,35 @@ window.__fastmon_consent(true);   // Besucher hat Opt-In gegeben
 window.__fastmon_consent(false);  // Besucher hat abgelehnt / widerrufen
 ```
 
-`true` setzt das `_fm_consent`-Cookie und schaltet die volle
-Wire-Form frei; `false` löscht das Cookie *und* räumt die
-Session-ID im Speicher ab. Idempotent. Den Wire-Effekt findest du
-unter [Collection Modes](/de/collection-modes).
+`true` setzt das `_fm_consent`-Cookie und schaltet die volle Wire-Form frei; `false` löscht das Cookie *und* räumt die Session-ID im Speicher ab. Idempotent. Den Wire-Effekt findest du unter [Collection Modes](/de/collection-modes).
 
 ## Collection Modes
 
-Die Runtime des Beacons hängt am
-[Collection Mode](/de/collection-modes) der Site:
+Die Runtime des Beacons hängt am [Collection Mode](/de/collection-modes) der Site:
 
-- `anonymous`: beobachtet und sendet ohne expliziten
-  Besucher-Identifier (kein `sid`, keine LCP-Image-URL, keine
-  LoAF-Script-Pfade, keine Third-Party-Domain-Map, bei Fehlern
-  nur Typ + Count). Der am Edge abgeleitete `stitch`-Header liegt
-  in allen Modi vor; siehe
-  [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
-- `consent`: auf dem Wire byte-identisch zu `anonymous`, bis der
-  CMP des Kunden `window.__fastmon_consent(true)` aufruft. Nach
-  Opt-In byte-identisch zu `full`. Intern liest der Tracker das
-  `_fm_consent`-Cookie und signalisiert dem Collector den
-  aufgelösten Modus per `?p=1`-Query-Parameter (das Cookie ist die
-  Wahrheit; der Query-Parameter ist nur der Hinweis für die
-  serverseitige Auflösung).
+- `anonymous`: beobachtet und sendet ohne expliziten Besucher-Identifier (kein `sid`, keine LCP-Image-URL, keine LoAF-Script-Pfade, keine Third-Party-Domain-Map, bei Fehlern nur Typ + Count). Der am Edge abgeleitete `stitch`-Header liegt in allen Modi vor; siehe [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+- `consent`: auf dem Wire byte-identisch zu `anonymous`, bis der CMP des Kunden `window.__fastmon_consent(true)` aufruft. Nach Opt-In byte-identisch zu `full`. Intern liest der Tracker das `_fm_consent`-Cookie und signalisiert dem Collector den aufgelösten Modus per `?p=1`-Query-Parameter (das Cookie ist die Wahrheit; der Query-Parameter ist nur der Hinweis für die serverseitige Auflösung).
 - `full`: behält alle erfassten Felder.
 
-In jedem Mode gelten die Datenschutz-Garantien aus
-[Privacy](/de/privacy).
+In jedem Mode gelten die Datenschutz-Garantien aus [Privacy](/de/privacy).
 
 ## Rate-Limiting
 
-Der Collector rate-limitet pro `(collector_hash, Client-IP)`. Die
-IP wird am Edge nur für diesen Bucket gelesen; die Anwendung
-bekommt einen vorbereiteten Bucket-Key zu sehen, nicht die rohe IP,
-und die IP landet nicht auf der Platte. Das ist eine Schutzmaßnahme:
-eine kaputte Seite oder ein synthetischer Lasttest soll den Ingest
-für andere Tenants nicht zumüllen. Mit echtem Traffic läufst du da
-praktisch nie rein.
+Der Collector rate-limitet pro `(collector_hash, Client-IP)`. Die IP wird am Edge nur für diesen Bucket gelesen; die Anwendung bekommt einen vorbereiteten Bucket-Key zu sehen, nicht die rohe IP, und die IP landet nicht auf der Platte. Das ist eine Schutzmaßnahme: eine kaputte Seite oder ein synthetischer Lasttest soll den Ingest für andere Tenants nicht zumüllen. Mit echtem Traffic läufst du da praktisch nie rein.
 
-Wird ein Beacon rate-limitet, kommt eine `429` zurück. Der Browser
-wirft den Buffer weg und macht weiter; sonst passiert nichts.
+Wird ein Beacon rate-limitet, kommt eine `429` zurück. Der Browser wirft den Buffer weg und macht weiter; sonst passiert nichts.
 
-Payloads über 8 KiB werden mit `413` abgelehnt. Liegt `cst` mehr
-als 5 Minuten neben der Server-Uhr, fällt der Server auf seine
-eigene Empfangszeit zurück, statt abzulehnen; der Beacon wird
-trotzdem akzeptiert.
+Payloads über 8 KiB werden mit `413` abgelehnt. Liegt `cst` mehr als 5 Minuten neben der Server-Uhr, fällt der Server auf seine eigene Empfangszeit zurück, statt abzulehnen; der Beacon wird trotzdem akzeptiert.
 
 ## Was du wissen solltest
 
-- **SPA-Route-Wechsel starten einen neuen Pageview.** Das Script
-  bleibt geladen, aber Soft-Navs (gepatchtes `history.pushState`
-  und `popstate`) generieren einen neuen `pvid`, setzen die
-  Web-Vitals-Observer zurück und flushen einen `softnav`-Beacon
-  für den vorherigen Pageview. Ein Tab kann also viele Pageviews
-  emittieren.
-- **Mehrere Flushes pro Pageview.** Geflusht wird bei den Lifecycle-
-  Triggern `init`, `loaded`, `error_update`, `softnav`, `hidden`,
-  `frozen`, `terminated`: nicht nur beim Tab-Wechsel. Pro Besuch
-  siehst du in der Regel mehrere `POST /c/`.
-- **`sendBeacon` taucht in DevTools nicht unter „Fetch/XHR" auf.**
-  Network-Tab nach `c/` filtern (oder „All" benutzen); sendBeacon-
-  Requests landen unter „Other".
+- **SPA-Route-Wechsel starten einen neuen Pageview.** Das Script bleibt geladen, aber Soft-Navs (gepatchtes `history.pushState` und `popstate`) generieren einen neuen `pvid`, setzen die Web-Vitals-Observer zurück und flushen einen `softnav`-Beacon für den vorherigen Pageview. Ein Tab kann also viele Pageviews emittieren.
+- **Mehrere Flushes pro Pageview.** Geflusht wird bei den Lifecycle- Triggern `init`, `loaded`, `error_update`, `softnav`, `hidden`, `frozen`, `terminated`: nicht nur beim Tab-Wechsel. Pro Besuch siehst du in der Regel mehrere `POST /c/`.
+- **`sendBeacon` taucht in DevTools nicht unter „Fetch/XHR" auf.** Network-Tab nach `c/` filtern (oder „All" benutzen); sendBeacon- Requests landen unter „Other".
 
 ## Verwandt
 
 - [Implementierung](/de/install): wie du den Beacon einbettest.
 - [Collection Modes](/de/collection-modes): Runtime-Verhalten.
-- [Privacy: was wir nicht sammeln](/de/privacy): was wir
-  garantieren.
+- [Privacy: was wir nicht sammeln](/de/privacy): was wir garantieren.
 - [Architektur](/de/architecture): was nach dem POST passiert.

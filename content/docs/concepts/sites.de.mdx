@@ -3,38 +3,22 @@ title: Sites
 description: Eine Site ist eine Property, die du monitorst. Jede Site hat eigene Beacon-Hashes und Einstellungen.
 ---
 
-Eine **Site** ist die Monitoring-Einheit in Fastmon. Praktisch
-entspricht das einer Property: meistens einem Origin, einer App
-oder einer Brand. Beacon-URL, Einstellungen, Dashboard-Filter: alles
-pro Site.
+Eine **Site** ist die Monitoring-Einheit in fastmon. Praktisch entspricht das einer Property: meistens einem Origin, einer App oder einer Brand. Beacon-URL, Einstellungen, Dashboard-Filter: alles pro Site.
 
 ## Warum das zählt
 
-Was der Beacon tut, hängt komplett an der Site: das Script, der
-[Collection Mode](/de/collection-modes), die Retention, die Allowed
-Origins, die Daten im Dashboard. Neue Property monitoren = neue
-Site anlegen.
+Was der Beacon tut, hängt komplett an der Site: das Script, der [Collection Mode](/de/collection-modes), die Retention, die Allowed Origins, die Daten im Dashboard. Neue Property monitoren = neue Site anlegen.
 
-Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe
-unten). Ein Cross-Site-Analytics-Scope, der alle Sites mit einem Tag
-gemeinsam auswertet, ist geplant; heute sind Tags Labels zum
-Gruppieren, kein Analytics-Filter.
+Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe unten). Ein Cross-Site-Analytics-Scope, der alle Sites mit einem Tag gemeinsam auswertet, ist geplant; heute sind Tags Labels zum Gruppieren, kein Analytics-Filter.
 
 ## Wann du sie anfasst
 
-- **Neue Property hinzufügen.** Site anlegen, Snippet kopieren,
-  einbetten.
-- **Beacon-Erfassung anpassen.** Collection Mode der Site
-  bearbeiten.
-- **Staging oder Preview hinzufügen.** Staging-Origin in **Allowed
-  Origins** eintragen, oder eine separate Site für Staging anlegen,
-  wenn du isolierte Daten willst.
-- **Retention reduzieren.** Default 90 Tage. Manche Sites wollen
-  kürzer für Compliance, manche länger.
-- **Ohne Löschen pausieren.** `is_active = false` behält Historie,
-  stoppt neuen Ingest.
-- **Zum Organisieren taggen.** Tags wie `env:production` oder
-  `team:growth`.
+- **Neue Property hinzufügen.** Site anlegen, Snippet kopieren, einbetten.
+- **Beacon-Erfassung anpassen.** Collection Mode der Site bearbeiten.
+- **Staging oder Preview hinzufügen.** Staging-Origin in **Allowed Origins** eintragen, oder eine separate Site für Staging anlegen, wenn du isolierte Daten willst.
+- **Retention reduzieren.** Default 90 Tage. Manche Sites wollen kürzer für Compliance, manche länger.
+- **Ohne Löschen pausieren.** `is_active = false` behält Historie, stoppt neuen Ingest.
+- **Zum Organisieren taggen.** Tags wie `env:production` oder `team:growth`.
 
 ## Was eine Site hat
 
@@ -60,28 +44,16 @@ Gruppieren, kein Analytics-Filter.
 
 ## Die zwei Hashes
 
-Jede Site hat zwei Hashes. Sehen ähnlich aus, machen aber zwei
-unterschiedliche Sachen.
+Jede Site hat zwei Hashes. Sehen ähnlich aus, machen aber zwei unterschiedliche Sachen.
 
-- **`source_hash`** steht in der **Script-URL** und sagt, welche
-  Beacon-Konfiguration an den Browser geliefert wird.
-- **`collector_hash`** steht in der **Ingest-URL** und sagt, zu
-  welcher Site eingehende Beacons gehören.
+- **`source_hash`** steht in der **Script-URL** und sagt, welche Beacon-Konfiguration an den Browser geliefert wird.
+- **`collector_hash`** steht in der **Ingest-URL** und sagt, zu welcher Site eingehende Beacons gehören.
 
-Getrennt sind sie, damit sich das Script-Template ändern kann (etwa
-beim Beacon-Upgrade oder Collection-Mode-Wechsel), ohne dass die
-Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den
-`source_hash`; der `collector_hash` ist im Script drin und kommt
-automatisch mit.
+Getrennt sind sie, damit sich das Script-Template ändern kann (etwa beim Beacon-Upgrade oder Collection-Mode-Wechsel), ohne dass die Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den `source_hash`; der `collector_hash` ist im Script drin und kommt automatisch mit.
 
 ## Tags
 
-Tags sind kurze Labels, die du an eine Site klebst, um verwandte
-Properties zu gruppieren (eine „Production-Sites"- oder
-„Marketing-Sites"-Gruppierung). Der Tag-Filter pro Site in der
-Sidebar wurde entfernt; ein echter Cross-Site-Analytics-Scope, der
-alle Sites mit einem Tag gemeinsam auswertet, ist geplant. Vorerst
-sind Tags Labels und filtern Analytics nicht.
+Tags sind kurze Labels, die du an eine Site klebst, um verwandte Properties zu gruppieren (eine „Production-Sites"- oder „Marketing-Sites"-Gruppierung). Der Tag-Filter pro Site in der Sidebar wurde entfernt; ein echter Cross-Site-Analytics-Scope, der alle Sites mit einem Tag gemeinsam auswertet, ist geplant. Vorerst sind Tags Labels und filtern Analytics nicht.
 
 Konventionen, die gut funktionieren:
 
@@ -94,63 +66,26 @@ Max 10 Tags pro Site.
 
 ## Allowed Origins
 
-`allowed_origins` ist eine Opt-In-Allow-List. Sobald sie gesetzt
-ist, akzeptiert der Collector nur Beacons, deren `Origin`-Header
-einem Eintrag entspricht; die `domain` der Site ist dabei **nicht**
-automatisch enthalten, also trag sie mit ein. Ist die Liste leer
-(der Default), prüft der Collector den Origin gar nicht.
+`allowed_origins` ist eine Opt-In-Allow-List. Sobald sie gesetzt ist, akzeptiert der Collector nur Beacons, deren `Origin`-Header einem Eintrag entspricht; die `domain` der Site ist dabei **nicht** automatisch enthalten, also trag sie mit ein. Ist die Liste leer (der Default), prüft der Collector den Origin gar nicht.
 
-Beacons von nicht gelisteten Origins werden **still verworfen**:
-Der Collector antwortet trotzdem mit `204`, damit im Browser nichts
-bricht; es landen nur keine Daten. Fehlen Daten einer Domain auf
-mysteriöse Weise, prüfe zuerst diese Liste.
+Beacons von nicht gelisteten Origins werden **still verworfen**: Der Collector antwortet trotzdem mit `204`, damit im Browser nichts bricht; es landen nur keine Daten. Fehlen Daten einer Domain auf mysteriöse Weise, prüfe zuerst diese Liste.
 
-Staging- und Preview-Hostnames hier eintragen. Wildcards nicht
-unterstützt; jeden Origin explizit listen.
+Staging- und Preview-Hostnames hier eintragen. Wildcards nicht unterstützt; jeden Origin explizit listen.
 
 ### Page-Domain erzwingen
 
-`allowed_origins` prüft den HTTP-`Origin`-Header — aber
-`sendBeacon` und Keepalive-POSTs lassen `Origin` oft weg, sodass
-ein von einer fremden Seite mit bekanntem `collector_hash`
-abgespielter Beacon an einer Origin-Allow-List vorbeirutschen kann.
-`enforce_domain_match` (Opt-In, Default aus) schließt die Lücke von
-der anderen Seite: aktiviert verwirft der Collector jeden Beacon,
-dessen *gemeldeter Seiten-URL-Host* weder die `domain` der Site
-noch eine Subdomain davon ist. Der Match ist label-gebunden
-(`shop.example.com` matcht `example.com`, `notexample.com` nicht),
-und ein Beacon mit leerem oder nicht parsbarem Host wird beim
-Erzwingen verworfen.
+`allowed_origins` prüft den HTTP-`Origin`-Header — aber `sendBeacon` und Keepalive-POSTs lassen `Origin` oft weg, sodass ein von einer fremden Seite mit bekanntem `collector_hash` abgespielter Beacon an einer Origin-Allow-List vorbeirutschen kann. `enforce_domain_match` (Opt-In, Default aus) schließt die Lücke von der anderen Seite: aktiviert verwirft der Collector jeden Beacon, dessen *gemeldeter Seiten-URL-Host* weder die `domain` der Site noch eine Subdomain davon ist. Der Match ist label-gebunden (`shop.example.com` matcht `example.com`, `notexample.com` nicht), und ein Beacon mit leerem oder nicht parsbarem Host wird beim Erzwingen verworfen.
 
-Default aus, weil Multi-Domain- und Vanity-Domain-Setups sonst
-legitimen Traffic verlieren. Für eine Single-Domain-Site, die den
-Ingest auf die eigenen Seiten festnageln will, schalt es an.
+Default aus, weil Multi-Domain- und Vanity-Domain-Setups sonst legitimen Traffic verlieren. Für eine Single-Domain-Site, die den Ingest auf die eigenen Seiten festnageln will, schalt es an.
 
 ## Privacy-Schalter
 
-Zwei Schalter pro Site steuern, welche Identifier in den Storage
-gelangen, ohne zu ändern, welche Datenkategorien der Beacon
-sammelt:
+Zwei Schalter pro Site steuern, welche Identifier in den Storage gelangen, ohne zu ändern, welche Datenkategorien der Beacon sammelt:
 
-- **`store_stitch`** (Default `true`). Aus verwirft den am Edge
-  abgeleiteten `stitch`-Identifier beim Insert in *jedem* Collection
-  Mode und lässt eine Zeile ganz ohne Besucher-Identifier zurück —
-  vollständig anonym. Der
-  Preis ist Analytics: keine Unique-Visitor-Zahlen und keine
-  Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer)
-  für die Site. Per-Pageview-Signale (Web Vitals, Fehler,
-  Third-Party, Attribution) bleiben unberührt.
-- **`store_session`** (Default `true`). Aus sagt dem ausgelieferten
-  Bundle, `sessionStorage` nie anzufassen, und der Collector
-  verwirft `sid` als Absicherung. Eine `full`- oder `consent`-Site
-  nach Opt-In behält dann die volle Content-Telemetrie (volle URLs,
-  Fehler-Messages und -Frames), läuft aber ohne seitenübergreifende
-  Session-ID. (`anonymous` hat ohnehin keine `sid`, also greift das
-  nur unter `full` / `consent`.)
+- **`store_stitch`** (Default `true`). Aus verwirft den am Edge abgeleiteten `stitch`-Identifier beim Insert in *jedem* Collection Mode und lässt eine Zeile ganz ohne Besucher-Identifier zurück — vollständig anonym. Der Preis ist Analytics: keine Unique-Visitor-Zahlen und keine Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer) für die Site. Per-Pageview-Signale (Web Vitals, Fehler, Third-Party, Attribution) bleiben unberührt.
+- **`store_session`** (Default `true`). Aus sagt dem ausgelieferten Bundle, `sessionStorage` nie anzufassen, und der Collector verwirft `sid` als Absicherung. Eine `full`- oder `consent`-Site nach Opt-In behält dann die volle Content-Telemetrie (volle URLs, Fehler-Messages und -Frames), läuft aber ohne seitenübergreifende Session-ID. (`anonymous` hat ohnehin keine `sid`, also greift das nur unter `full` / `consent`.)
 
-Die beiden sind unabhängig — schalte einen aus, beide oder keinen.
-Die vollständige Begründung steht unter
-[Privacy → Identifier ganz abschalten](/de/privacy#identifier-ganz-abschalten).
+Die beiden sind unabhängig — schalte einen aus, beide oder keinen. Die vollständige Begründung steht unter [Privacy → Identifier ganz abschalten](/de/privacy#identifier-ganz-abschalten).
 
 ## Häufige Szenarien
 
@@ -158,44 +93,29 @@ Die vollständige Begründung steht unter
 
 Zwei Wege, beide tragen:
 
-- **Eine Site, mehrere Origins** (`acme.com`, `staging.acme.com`
-  und jeder Preview-Origin, der dich interessiert; keine
-  Wildcards). Alle Daten in einem Topf, im Dashboard nach `domain`
-  filtern. Billiger, dafür weniger sauber.
-- **Drei Sites** mit eigener Retention und eigenen Tags. Saubere
-  Daten, etwas mehr Setup.
+- **Eine Site, mehrere Origins** (`acme.com`, `staging.acme.com` und jeder Preview-Origin, der dich interessiert; keine Wildcards). Alle Daten in einem Topf, im Dashboard nach `domain` filtern. Billiger, dafür weniger sauber.
+- **Drei Sites** mit eigener Retention und eigenen Tags. Saubere Daten, etwas mehr Setup.
 
-Die meisten Teams landen nach ein paar Wochen bei der zweiten
-Variante.
+Die meisten Teams landen nach ein paar Wochen bei der zweiten Variante.
 
 ### Neue Sub-Site, gleiche Brand
 
-Neue Site anlegen. Bloß nicht das Script-Tag einer anderen Property
-wiederverwenden; der `source_hash` gehört zur Site, sonst sind
-die Daten am Ende nicht mehr zuordenbar.
+Neue Site anlegen. Bloß nicht das Script-Tag einer anderen Property wiederverwenden; der `source_hash` gehört zur Site, sonst sind die Daten am Ende nicht mehr zuordenbar.
 
 ### Auf eine neue Domain umziehen
 
-Neue Site für die neue Domain anlegen. Beide während des Cutovers
-laufen lassen. Sobald kein Traffic mehr aufschlägt, die alte auf
-inactive setzen.
+Neue Site für die neue Domain anlegen. Beide während des Cutovers laufen lassen. Sobald kein Traffic mehr aufschlägt, die alte auf inactive setzen.
 
 ## Häufige Überraschungen
 
-- **Sites lassen sich nicht zwischen Organisationen umziehen.**
-  Falls doch nötig: Support melden.
-- **`is_active = false` behält die Historie.** Es stoppt nur neue
-  Schreibvorgänge; gut für Pausen, nicht zum Retention-Kürzen.
-- **Site umbenennen ändert die Hashes nicht.** Schon eingebettete
-  Scripts laufen einfach weiter.
-- **Site löschen löscht auch die Beacon-Daten.** Mit Bestätigung.
-  Kein Undo.
+- **Sites lassen sich nicht zwischen Organisationen umziehen.** Falls doch nötig: Support melden.
+- **`is_active = false` behält die Historie.** Es stoppt nur neue Schreibvorgänge; gut für Pausen, nicht zum Retention-Kürzen.
+- **Site umbenennen ändert die Hashes nicht.** Schon eingebettete Scripts laufen einfach weiter.
+- **Site löschen löscht auch die Beacon-Daten.** Mit Bestätigung. Kein Undo.
 
 ## Verwandt
 
-- [Collection Modes](/de/collection-modes): was der Beacon pro
-  Site tut.
+- [Collection Modes](/de/collection-modes): was der Beacon pro Site tut.
 - [Der RUM-Beacon](/de/concepts/beacon): was der Beacon erfasst.
-- [Releases](/de/concepts/releases): versionierte Marker auf einer
-  Site.
+- [Releases](/de/concepts/releases): versionierte Marker auf einer Site.
 - [API: Sites-Endpunkte](/de/api): programmatisches Site-CRUD.

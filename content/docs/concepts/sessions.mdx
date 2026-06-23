@@ -1,58 +1,34 @@
 ---
 title: Visitors and sessions
-description: How Fastmon counts visitors without identifying them, and what a session adds on top.
+description: How fastmon counts visitors without identifying them, and what a session adds on top.
 ---
 
-Fastmon counts **visitors**, not people. A visitor is a count along
-an **identity axis**, and there are two:
+Fastmon counts **visitors**, not people. A visitor is a count along an **identity axis**, and there are two:
 
-- **`stitch`** (the default): an edge-derived identifier present in
-  **every** collection mode, including `anonymous`. It is
-  bounded-lifetime and forward-secret (see
-  [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it
-  lets the dashboard count unique visitors without a cookie or any
-  stored personal data.
-- **`session`**: the client-minted `session_id` (`sid` on the wire),
-  present only in `full` mode, or in `consent` mode after opt-in. It
-  groups a short burst of page-views from the same browser and is
-  what powers the per-visitor replay.
+- **`stitch`** (the default): an edge-derived identifier present in **every** collection mode, including `anonymous`. It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or any stored personal data.
+- **`session`**: the client-minted `session_id` (`sid` on the wire), present only in `full` mode, or in `consent` mode after opt-in. It groups a short burst of page-views from the same browser and is what powers the per-visitor replay.
 
-Which one the dashboard counts by default is the site's
-**`preferred_identity`** setting (default `stitch`). That's a
-reporting choice, kept separate from what the site collects: if a
-site doesn't collect the chosen identity, the count falls back to
-whatever it does collect, and to nothing if it collects neither.
+Which one the dashboard counts by default is the site's **`preferred_identity`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
 
 ## Why two identities
 
-`stitch` answers "how many distinct visitors?" in every mode, even
-`anonymous`, because it's computed at the edge and never needs a
-cookie or consent. `session` answers the questions that need a visit
-boundary:
+`stitch` answers "how many distinct visitors?" in every mode, even `anonymous`, because it's computed at the edge and never needs a cookie or consent. `session` answers the questions that need a visit boundary:
 
-- "How many visits crossed a Web-Vitals threshold?" (a multi-page
-  visit might have one bad page and several good ones).
-- "Did the error on the checkout step come after a slow page load?"
-  (the answer is in the earlier page-views of the same visit).
+- "How many visits crossed a Web Vitals threshold?" (a multi-page visit might have one bad page and several good ones).
+- "Did the error on the checkout step come after a slow page load?" (the answer is in the earlier page-views of the same visit).
 - "What's the distribution of pages per visit on each entry path?"
 
-The first question works on any site. The rest need `session`, so
-they only fill in once a site collects `sid` (`full`, or `consent`
-after opt-in).
+The first question works on any site. The rest need `session`, so they only fill in once a site collects `sid` (`full`, or `consent` after opt-in).
 
 ## What counts as one session
 
 A session contains the page-views that share **all** of these:
 
 - the same `site_id`,
-- the same `session_id` (`sid` on the wire), minted client-side per
-  session and only sent when the [collection mode](/en/collection-modes)
-  permits (`full`, or `consent` after opt-in),
+- the same `session_id` (`sid` on the wire), minted client-side per session and only sent when the [collection mode](/en/collection-modes) permits (`full`, or `consent` after opt-in),
 - a gap of **less than 30 minutes** between consecutive page-views.
 
-In `anonymous` (and in `consent` before opt-in) the `sid` is
-stripped before send, so those page-views carry no session. They
-still count as visitors under `stitch`.
+In `anonymous` (and in `consent` before opt-in) the `sid` is stripped before send, so those page-views carry no session. They still count as visitors under `stitch`.
 
 The session ends when:
 
@@ -64,8 +40,7 @@ A new page-view after the boundary starts a new session.
 
 ## What's on a visitor
 
-The Visitors view lists one row per visitor, grouped by the resolved
-identity:
+The Visitors view lists one row per visitor, grouped by the resolved identity:
 
 | Field          | Type                | Notes                                                          |
 | -------------- | ------------------- | -------------------------------------------------------------- |
@@ -83,56 +58,27 @@ identity:
 | `avg_fcp`      | number              | Average FCP across the visitor's pages.                        |
 | `total_errors` | int                 | Total errors across the visitor's pages.                       |
 
-Note what's absent: no user ID, no fingerprint, no IP. Neither
-identifier is meant to be used outside the analytics window:
-`stitch` rotates on its salt schedule (see Privacy), and
-`session_id` is short-lived.
+Note what's absent: no user ID, no fingerprint, no IP. Neither identifier is meant to be used outside the analytics window: `stitch` rotates on its salt schedule (see Privacy), and `session_id` is short-lived.
 
 ## Querying visitors
 
 The Analytics API exposes two endpoints:
 
-- `POST /analytics/visitors`: paginated list of visitors in a time
-  range, grouped by the resolved `identity`, with filters.
-  Cursor-paginated for high volumes.
-- `POST /analytics/visitors/detail`: the full page-view path for one
-  visitor (the "replay"). Because this singles out one visitor's
-  journey, it is **consent-gated to `identity=session`**: an
-  explicit `stitch` request is rejected with `422`, and on a site
-  that only collects `stitch` the replay is unavailable.
+- `POST /analytics/visitors`: paginated list of visitors in a time range, grouped by the resolved `identity`, with filters. Cursor-paginated for high volumes.
+- `POST /analytics/visitors/detail`: the full page-view path for one visitor (the "replay"). Because this singles out one visitor's journey, it is **consent-gated to `identity=session`**: an explicit `stitch` request is rejected with `422`, and on a site that only collects `stitch` the replay is unavailable.
 
-Pass `identity` explicitly to override the site default, or leave it
-null to use `preferred_identity`. See
-[Analytics API](/en/api/analytics/listAnalyticsVisitors) for the
-request shapes.
+Pass `identity` explicitly to override the site default, or leave it null to use `preferred_identity`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
 
 ## Common surprises
 
-- **Anonymous sites still count visitors.** The old "the explorer
-  stays empty without consent" no longer holds: `stitch` gives
-  unique-visitor counts in every mode. What `anonymous` (and
-  pre-opt-in `consent`) lacks is the *session* identity, so the
-  per-visitor replay and the session-only views stay empty there.
-- **A session in Fastmon is shorter than in some other tools.**
-  Tools that set a 1- or 2-year cookie glue any return visit onto
-  the previous session. We don't have that cookie, so a 30-minute
-  gap is the hard boundary.
-- **One visitor across two days is two sessions**, and may also be
-  two `stitch` visitors: the `stitch` value rotates on the salt
-  schedule (see Privacy), so it is not a long-term identity either.
-- **No "users" concept.** There's nothing above the visitor. We
-  don't store who someone is, and that includes "is this the same
-  person who showed up last month?"
-- **Bot traffic still counts.** The collector filters the obvious
-  bots, but a deliberate headless browser looks like a real visitor.
-  Filter by `device_type` and set notification rules with sanity
-  bounds.
+- **Anonymous sites still count visitors.** The old "the explorer stays empty without consent" no longer holds: `stitch` gives unique-visitor counts in every mode. What `anonymous` (and pre-opt-in `consent`) lacks is the *session* identity, so the per-visitor replay and the session-only views stay empty there.
+- **A session in fastmon is shorter than in some other tools.** Tools that set a 1- or 2-year cookie glue any return visit onto the previous session. We don't have that cookie, so a 30-minute gap is the hard boundary.
+- **One visitor across two days is two sessions**, and may also be two `stitch` visitors: the `stitch` value rotates on the salt schedule (see Privacy), so it is not a long-term identity either.
+- **No "users" concept.** There's nothing above the visitor. We don't store who someone is, and that includes "is this the same person who showed up last month?"
+- **Bot traffic still counts.** The collector filters the obvious bots, but a deliberate headless browser looks like a real visitor. Filter by `device_type` and set notification rules with sanity bounds.
 
 ## Related
 
-- [Collection modes](/en/collection-modes): what the beacon collects
-  per page-view, and which identities each mode produces.
-- [Privacy](/en/privacy): how the `stitch` identifier is derived and
-  why it isn't personal data you can reverse.
-- [Analytics API](/en/api/analytics/listAnalyticsVisitors): querying
-  visitors programmatically.
+- [Collection modes](/en/collection-modes): what the beacon collects per page-view, and which identities each mode produces.
+- [Privacy](/en/privacy): how the `stitch` identifier is derived and why it isn't personal data you can reverse.
+- [Analytics API](/en/api/analytics/listAnalyticsVisitors): querying visitors programmatically.

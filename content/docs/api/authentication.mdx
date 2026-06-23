@@ -5,21 +5,15 @@ description: API requests authenticate with an fm_… Bearer token.
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Every `/v1/` endpoint requires authentication. The public API uses
-a single scheme: a Bearer token.
+Every `/v1/` endpoint requires authentication. The public API uses a single scheme: a Bearer token.
 
 <Callout type="info">
-  The dashboard SPA uses session cookies, but they're only valid
-  for the dashboard's own origin. Programmatic clients — CI jobs,
-  scripts, backend services — must use a Bearer token.
+  The dashboard SPA uses session cookies, but they're only valid for the dashboard's own origin. Programmatic clients — CI jobs, scripts, backend services — must use a Bearer token.
 </Callout>
 
 ## Bearer token
 
-Generate a token in the dashboard under **Account → API token**.
-It looks like `fm_<long-random-suffix>` and is shown **once**.
-Store it in your secret manager immediately; there is no recovery
-flow.
+Generate a token in the dashboard under **Account → API token**. It looks like `fm_<long-random-suffix>` and is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
 
 Send it on every request:
 
@@ -33,28 +27,20 @@ curl https://api.fastmon.eu/v1/sites \
 ```
 
 <Callout type="warn">
-  Lost tokens are unrecoverable. Server-side they're hashed; only
-  the `fm_` prefix is queryable. To rotate, regenerate from the
-  dashboard — the previous token stops working immediately.
+  Lost tokens are unrecoverable. Server-side they're hashed; only the `fm_` prefix is queryable. To rotate, regenerate from the dashboard — the previous token stops working immediately.
 </Callout>
 
 ## What a token can do
 
-- **Per-user.** A token carries the identity of the user who
-  generated it. Regenerating from the dashboard replaces it (the
-  previous value stops working immediately).
-- **Same scope as the user.** A token from a `member` does what a
-  `member` can; a token from an `owner` does what an `owner` can.
-- **Org-spanning.** If the user is in multiple organizations, the
-  token works against all of them.
+- **Per-user.** A token carries the identity of the user who generated it. Regenerating from the dashboard replaces it (the previous value stops working immediately).
+- **Same scope as the user.** A token from a `member` does what a `member` can; a token from an `owner` does what an `owner` can.
+- **Org-spanning.** If the user is in multiple organizations, the token works against all of them.
 
 ## Common surprises
 
-- **You can't manage another user's token.** Even an `owner` can
-  only regenerate their own.
+- **You can't manage another user's token.** Even an `owner` can only regenerate their own.
 
 ## Related
 
 - [API overview](/en/api) — base URL and conventions.
-- [Errors](/en/api/errors) — `401 unauthorized` and `403 forbidden`
-  responses.
+- [Errors](/en/api/errors) — `401 unauthorized` and `403 forbidden` responses.

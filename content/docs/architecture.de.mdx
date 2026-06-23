@@ -3,11 +3,7 @@ title: Architektur
 description: Wie aus einem Beacon ein Dashboard wird. Datenfluss, Stores und was jeder davon tut.
 ---
 
-Fastmon besteht aus zwei Services (einem API-Backend und einem
-Single-Page-Dashboard) und drei Datenstores. Diese Form zu kennen
-hilft, wenn eine Metrik fehlt, wenn du langsame Ingestion
-debuggst oder wenn Compliance fragt, wie das Ding
-funktioniert.
+Fastmon besteht aus zwei Services (einem API-Backend und einem Single-Page-Dashboard) und drei Datenstores. Diese Form zu kennen hilft, wenn eine Metrik fehlt, wenn du langsame Ingestion debuggst oder wenn Compliance fragt, wie das Ding funktioniert.
 
 ## High-Level-Diagramm
 
@@ -34,17 +30,10 @@ funktioniert.
                   Analytics-Queries
 ```
 
-Zwei Stellen in der Pipeline sind wichtig, wenn du das Verhalten
-verstehen willst:
+Zwei Stellen in der Pipeline sind wichtig, wenn du das Verhalten verstehen willst:
 
-- **Browser → Collector.** Einige wenige gebündelte `POST`s pro
-  Pageview, verteilt über dessen Lebenszyklus (Laden, `pagehide` /
-  `visibilitychange`, periodischer Flush). Siehe
-  [Der RUM-Beacon](/de/concepts/beacon).
-- **Collector → Analytics-Store.** Beacons landen in einem
-  Per-Prozess-Buffer und flushen alle paar Sekunden via gebündeltem
-  Insert. Daher braucht dein erster Besucher ~30 s, bis er im
-  Dashboard auftaucht.
+- **Browser → Collector.** Einige wenige gebündelte `POST`s pro Pageview, verteilt über dessen Lebenszyklus (Laden, `pagehide` / `visibilitychange`, periodischer Flush). Siehe [Der RUM-Beacon](/de/concepts/beacon).
+- **Collector → Analytics-Store.** Beacons landen in einem Per-Prozess-Buffer und flushen alle paar Sekunden via gebündeltem Insert. Daher braucht dein erster Besucher ~30 s, bis er im Dashboard auftaucht.
 
 ## Komponenten
 
@@ -58,8 +47,7 @@ verstehen willst:
 | Analytics-Store   | Beacon-Events, aggregierte Metriken, Error-Logs.                             |
 | Session-Store     | Sessions, Rate-Limits, kurzlebige Caches.                                    |
 
-Backend und Frontend liegen in unabhängigen Repos und deployen
-unabhängig.
+Backend und Frontend liegen in unabhängigen Repos und deployen unabhängig.
 
 ## Storage-Schichten
 
@@ -69,8 +57,7 @@ unabhängig.
 | Analytics-Store   | Beacon-Events, Aggregate, Error-Logs                  | Columnar, Queries pro Org gescopt.        |
 | Session-Store     | Sessions, Rate-Limits, kurzlebige Caches              | In-Memory-Store unter EU-Jurisdiktion.    |
 
-Alle drei werden in der EU betrieben mit versionierten,
-idempotenten Migrations beim Deploy.
+Alle drei werden in der EU betrieben mit versionierten, idempotenten Migrations beim Deploy.
 
 ## Routing-Layout
 
@@ -81,10 +68,7 @@ idempotenten Migrations beim Deploy.
 | `/v1/...`                     | Authentifizierte REST-API.                                     | Cookie oder Token |
 | `/openapi.json`                   | OpenAPI-Dokument der v1-API.                                   | Public        |
 
-Die beiden öffentlichen Roots stehen bewusst nicht unter
-`/v1`: kurze URLs halten den Beacon-Payload klein, und die
-Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv
-gecached; API-Responses typischerweise nicht).
+Die beiden öffentlichen Roots stehen bewusst nicht unter `/v1`: kurze URLs halten den Beacon-Payload klein, und die Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv gecached; API-Responses typischerweise nicht).
 
 ## Was wo liegt, kurz
 
@@ -100,52 +84,25 @@ gecached; API-Responses typischerweise nicht).
 
 ### Warum 30-Sekunden-Buffer beim Ingest?
 
-Weil Inserts pro Zeile in dieser Größenordnung jede Analytics-DB
-killen würden. Batching in einen Per-Prozess-Buffer, der alle paar
-Sekunden flusht, ist Standard; der Analytics-Store batcht die
-Inserts auf seiner Seite noch einmal. Der Preis in Summe: ~30 s
-Verzögerung, bis ein Beacon in den Queries auftaucht.
+Weil Inserts pro Zeile in dieser Größenordnung jede Analytics-DB killen würden. Batching in einen Per-Prozess-Buffer, der alle paar Sekunden flusht, ist Standard; der Analytics-Store batcht die Inserts auf seiner Seite noch einmal. Der Preis in Summe: ~30 s Verzögerung, bis ein Beacon in den Queries auftaucht.
 
 ### Warum `source_hash` und `collector_hash` getrennt?
 
-Damit das Script-Template (und sein Cache) sich ändern kann, ohne
-dass die Daten-Pipeline darunter leidet. Ein Beacon-Upgrade heißt
-einfach: neues Template ausrollen; die Collector-Endpunkte bleiben
-gültig. Mehr dazu unter
-[Der RUM-Beacon: Cache und Rollouts](/de/concepts/beacon#cache-und-rollouts).
+Damit das Script-Template (und sein Cache) sich ändern kann, ohne dass die Daten-Pipeline darunter leidet. Ein Beacon-Upgrade heißt einfach: neues Template ausrollen; die Collector-Endpunkte bleiben gültig. Mehr dazu unter [Der RUM-Beacon: Cache und Rollouts](/de/concepts/beacon#cache-und-rollouts).
 
 ### Warum ein Columnar-Analytics-Store?
 
-Analytics-Queries lesen wenige Spalten (eine Metrik, ein paar
-Dimensionen) über viele Zeilen. Spaltenweise Speicherung liest
-nur diese Spalten von der Platte statt jeder Zeile, und
-Timing-Daten komprimieren in dieser Form sehr gut. Vektorisierte
-Aggregation pro Spalte macht Perzentile und Group-Bys nochmal
-deutlich schneller. Auf Postgres ginge das auch, wäre nur
-spürbar langsamer und teurer pro Query.
+Analytics-Queries lesen wenige Spalten (eine Metrik, ein paar Dimensionen) über viele Zeilen. Spaltenweise Speicherung liest nur diese Spalten von der Platte statt jeder Zeile, und Timing-Daten komprimieren in dieser Form sehr gut. Vektorisierte Aggregation pro Spalte macht Perzentile und Group-Bys nochmal deutlich schneller. Auf Postgres ginge das auch, wäre nur spürbar langsamer und teurer pro Query.
 
 ### Wie aktuell sind die Daten: live vs. aggregiert
 
-Analytics-Queries entscheiden je nach Zeitbereich, woher sie lesen.
-Alles innerhalb der letzten **6 Stunden** geht direkt auf den
-Roh-Beacon-Stream, also frisch bis auf die ~30 s Ingest-Verzögerung
-von oben. Längere Bereiche (24 h, 7 d, 30 d, custom) lesen aus
-stündlich vor-aggregierten Tabellen, die das Backend einmal pro
-Stunde neu aufbaut. Gleiche Zahlen, Antwort unter 100 ms, und die
-Scan-Kosten wachsen nicht mit, wenn die Aufbewahrungsdauer steigt.
+Analytics-Queries entscheiden je nach Zeitbereich, woher sie lesen. Alles innerhalb der letzten **6 Stunden** geht direkt auf den Roh-Beacon-Stream, also frisch bis auf die ~30 s Ingest-Verzögerung von oben. Längere Bereiche (24 h, 7 d, 30 d, custom) lesen aus stündlich vor-aggregierten Tabellen, die das Backend einmal pro Stunde neu aufbaut. Gleiche Zahlen, Antwort unter 100 ms, und die Scan-Kosten wachsen nicht mit, wenn die Aufbewahrungsdauer steigt.
 
-Für Dashboard und API ändert sich nichts; du merkst nur, dass die
-Queries schnell sind. Die einzige sichtbare Folge: Die zuletzt
-abgeschlossene Stunde braucht bis zu eine Stunde, bis sie in der
-aggregierten Sicht auftaucht. Das 6-h-Live-Fenster deckt diese
-Lücke ab, also stimmen die Live-Dashboards trotzdem.
+Für Dashboard und API ändert sich nichts; du merkst nur, dass die Queries schnell sind. Die einzige sichtbare Folge: Die zuletzt abgeschlossene Stunde braucht bis zu eine Stunde, bis sie in der aggregierten Sicht auftaucht. Das 6-h-Live-Fenster deckt diese Lücke ab, also stimmen die Live-Dashboards trotzdem.
 
 ### Warum ein eigener Session-Store?
 
-Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich
-auf jedem Request, aber keine Langzeit-Durability. In der
-Config-DB hätten sie nichts zu suchen; sie auszulagern hält den
-Auth-Pfad schnell und sauber getrennt.
+Sessions und Rate-Limit-Counter brauchen Reads im Millisekunden-Bereich auf jedem Request, aber keine Langzeit-Durability. In der Config-DB hätten sie nichts zu suchen; sie auszulagern hält den Auth-Pfad schnell und sauber getrennt.
 
 ## Verwandt
 

@@ -3,12 +3,9 @@ title: Errors
 description: Error envelope, status codes, and what each common code means.
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout'; import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
-Every error from the Fastmon API uses the same envelope. The HTTP
-status code tells you the shape; the `code` inside tells you the
-cause.
+Every error from the fastmon API uses the same envelope. The HTTP status code tells you the shape; the `code` inside tells you the cause.
 
 ## Envelope
 
@@ -33,9 +30,7 @@ cause.
 | `details`     | optional | Code-specific. Validation errors put the offending `field` here.       |
 
 <Callout type="info">
-  Switch on `code` in client code; render `message` to humans. The
-  `code` is part of our public contract — `message` may be reworded
-  for clarity at any time.
+  Switch on `code` in client code; render `message` to humans. The `code` is part of our public contract — `message` may be reworded for clarity at any time.
 </Callout>
 
 ## Status codes
@@ -176,26 +171,19 @@ The full list, grouped by category.
 ## Reporting an error
 
 <Callout type="warn">
-  Always include the `request_id` when you contact support. It lets us
-  pull the matching server log in seconds. Without it, debugging
-  starts from "describe what time it happened roughly," which is much
-  slower.
+  Always include the `request_id` when you contact support. It lets us pull the matching server log in seconds. Without it, debugging starts from "describe what time it happened roughly," which is much slower.
 </Callout>
 
 The request ID is on:
 
 - the `X-Request-ID` response header,
 - `error.request_id` in the JSON body,
-- the response of every successful request too — for chain
-  correlation.
+- the response of every successful request too — for chain correlation.
 
 ## Common surprises
 
-- **`404` is intentionally ambiguous.** "I can't see this resource"
-  and "this resource doesn't exist" both return `404`. We don't want
-  to leak existence to unauthorized clients.
-- **Validation errors stop at the first failure.** A payload with
-  two bad fields reports one. Fix and resend to see the next.
+- **`404` is intentionally ambiguous.** "I can't see this resource" and "this resource doesn't exist" both return `404`. We don't want to leak existence to unauthorized clients.
+- **Validation errors stop at the first failure.** A payload with two bad fields reports one. Fix and resend to see the next.
 
 ## Related
 

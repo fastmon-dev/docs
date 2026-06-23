@@ -5,140 +5,66 @@ description: Traffic, visitors, errors, and the Experience Score. The field-data
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Analytics is the exploration layer on top of everything your
-beacons collect: who's on the site right now, where traffic comes
-from, which pages get viewed, which errors fire, and how whole
-visits unfold. It complements the
-[Web Vitals dashboard](/en/web-vitals): same data, different
-question. Web Vitals asks "how fast is the site?"; Analytics asks
-"what's happening on it?"
+Analytics is the exploration layer on top of everything your beacons collect: who's on the site right now, where traffic comes from, which pages get viewed, which errors fire, and how whole visits unfold. It complements the [Web Vitals dashboard](/en/web-vitals): same data, different question. Web Vitals asks "how fast is the site?"; Analytics asks "what's happening on it?"
 
 <Callout type="warn" title="Beta">
-  Analytics is in beta and open to every member of the
-  organization. Layout and metrics may still change.
+  Analytics is in beta and open to every member of the organization. Layout and metrics may still change.
 </Callout>
 
 ## The dashboard
 
 The main Analytics view for a site shows:
 
-- **Current visitors**: unique visitors in the last 5 minutes,
-  expandable to a per-minute chart of the last 15.
-- **Three headline metrics**: Unique Visitors, Pageviews, and
-  Views per Visit, each with a sparkline and the change against
-  the previous period.
-- **Trend chart**: the headline metrics over the selected range,
-  with an optional previous-period overlay.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and
-  Devices, each with sub-tabs for drilling down (channel vs. UTM
-  source, country lists, browser vs. OS, …).
-- **Campaigns & attribution**: UTM coverage and
-  source/medium/campaign lists, including ad-platform click-ID
-  labels.
-- **Tech panel**: back/forward-cache hit rate, top third-party
-  categories, and whether errors originate first- or third-party.
+- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15.
+- **Three headline metrics**: Unique Visitors, Pageviews, and Views per Visit, each with a sparkline and the change against the previous period.
+- **Trend chart**: the headline metrics over the selected range, with an optional previous-period overlay.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, …).
+- **Campaigns & attribution**: UTM coverage and source/medium/campaign lists, including ad-platform click-ID labels.
+- **Tech panel**: back/forward-cache hit rate, top third-party categories, and whether errors originate first- or third-party.
 
-Visitor counts are anonymous by construction; see
-[Privacy](/en/privacy) for what a "visitor" can and cannot mean
-here.
+Visitor counts are anonymous by construction; see [Privacy](/en/privacy) for what a "visitor" can and cannot mean here.
 
 ## Filtering
 
-A filter bar sits next to the time picker on the dashboard, the
-overview, and every metric detail page. Type a dimension and value
-(for example `country = DE`) and press Enter to add a filter chip;
-the value field autocompletes with the real values for the current
-time range and shows how many pageviews each one has. The dimension
-picker lists the most-used dimensions first (Page, Country, Device),
-then the rest: browser, OS, connection, viewport, referrer source
-and medium, UTM fields, click-ID label, domain, navigation type, and
-protocol.
+A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, and protocol.
 
-Filters live in the URL, so they survive a reload, are shareable,
-and carry across navigation between views. Multiple chips combine
-with AND; a comma inside one value means "any of". Click a chip to
-edit it; its X removes it. The "Filter" button carries a badge with
-the active count.
+Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
 
 ## Navigating with the command palette
 
-Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to
-open a searchable command menu that drives the whole app: jump to
-any page, switch organization or site, change the time range and
-granularity, and add, remove, or clear filters. Start typing to
-search everything at once, or drill into a category with `Enter` or
-`→`; `←` or `Backspace` steps back and `Esc` closes.
+Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to open a searchable command menu that drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add, remove, or clear filters. Start typing to search everything at once, or drill into a category with `Enter` or `→`; `←` or `Backspace` steps back and `Esc` closes.
 
 ## Error Analytics
 
 The Errors view tracks JavaScript errors across the site:
 
-- **Error rate over time**: the share of pageviews with at least
-  one error.
+- **Error rate over time**: the share of pageviews with at least one error.
 - **Error types**: errors grouped by fingerprint (type + message
   + stack shape), ranked by count.
-- **Detail drill-down**: for one fingerprint: total count,
-  visitors affected, first/last seen, a time series, breakdowns by
-  URL, browser, device, OS, and country, and sample pageviews with
-  stack frames.
+- **Detail drill-down**: for one fingerprint: total count, visitors affected, first/last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames.
 
-How much detail you see depends on the site's
-[collection mode](/en/collection-modes): in `anonymous` mode the
-tracker sends error **type and count only**. Messages and stack
-frames arrive in `full` mode, or in `consent` mode after the
-visitor opts in.
+How much detail you see depends on the site's [collection mode](/en/collection-modes): in `anonymous` mode the tracker sends error **type and count only**. Messages and stack frames arrive in `full` mode, or in `consent` mode after the visitor opts in.
 
 ## Visitors
 
-The Visitors explorer lists distinct visitors (start and end time,
-duration, page count, device info, average LCP/FCP, error count)
-with filters, and a per-visitor detail view showing every pageview
-in order, each with its Web Vitals and errors.
+The Visitors explorer lists distinct visitors (start and end time, duration, page count, device info, average LCP/FCP, error count) with filters, and a per-visitor detail view showing every pageview in order, each with its Web Vitals and errors.
 
-A visitor is counted along an identity axis: `stitch` (the default,
-present in every mode) or `session` (the cross-page `session_id`,
-which the tracker only carries in `full` mode or in `consent` mode
-after opt-in). The site's `preferred_identity` sets the default.
-Unlike the old sessions view, the explorer is **not** empty on an
-`anonymous`-mode site: it counts `stitch` visitors there. The
-per-visitor replay, however, needs the `session` identity, so it
-stays unavailable without consent. See
-[Visitors and sessions](/en/concepts/sessions) for the full model.
+A visitor is counted along an identity axis: `stitch` (the default, present in every mode) or `session` (the cross-page `session_id`, which the tracker only carries in `full` mode or in `consent` mode after opt-in). The site's `preferred_identity` sets the default. Unlike the old sessions view, the explorer is **not** empty on an `anonymous`-mode site: it counts `stitch` visitors there. The per-visitor replay, however, needs the `session` identity, so it stays unavailable without consent. See [Visitors and sessions](/en/concepts/sessions) for the full model.
 
 ## Fetch/XHR and Server-Timing
 
-Beyond page navigations, the dashboard surfaces in-page request
-telemetry: a Fetch/XHR view with an aggregate waterfall
-(per-endpoint start offsets, duration histograms and percentiles,
-and a status-error distribution), plus a per-beacon detail, and a
-Server-Timing view that breaks out the `Server-Timing` metrics your
-backend reports. Both are driven by fields the tracker adds to each
-beacon (see [the beacon](/en/concepts/beacon)).
+Beyond page navigations, the dashboard surfaces in-page request telemetry: a Fetch/XHR view with an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, and a status-error distribution), plus a per-beacon detail, and a Server-Timing view that breaks out the `Server-Timing` metrics your backend reports. Both are driven by fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
 
 ## Experience Score
 
-The [Experience Score](/en/web-vitals/experience-score) panel
-breaks the score down by segment (all visitors, desktop, mobile,
-and slow connections), each with its grade, numeric score, and the
-per-metric values behind it. Useful for the classic case where the
-overall grade looks fine but mobile-on-3G is failing.
+The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it. Useful for the classic case where the overall grade looks fine but mobile-on-3G is failing.
 
 ## API
 
-Every panel maps to a query endpoint under
-`/v1/organizations/{org_id}/analytics/…`: a flexible
-[query endpoint](/en/api/analytics/queryAnalytics) for time series
-and breakdowns, plus dedicated endpoints for histograms, error
-types and details, visitors, Fetch/XHR, Server-Timing, resource and
-third-party breakdowns, LoAF, and the Experience Score. See the
-[Analytics endpoint reference](/en/api/analytics/queryAnalytics).
+Every panel maps to a query endpoint under `/v1/organizations/{org_id}/analytics/…`: a flexible [query endpoint](/en/api/analytics/queryAnalytics) for time series and breakdowns, plus dedicated endpoints for histograms, error types and details, visitors, Fetch/XHR, Server-Timing, resource and third-party breakdowns, LoAF, and the Experience Score. See the [Analytics endpoint reference](/en/api/analytics/queryAnalytics).
 
 ## What's next
 
-- [Collection modes](/en/collection-modes): what the tracker
-  collects per mode, and why the session identity or stack traces
-  may be missing.
-- [Visitors and sessions](/en/concepts/sessions): how pageviews
-  become visitors and sessions.
-- [Synthetic Monitoring](/en/synthetic): the lab-data complement
-  to these field dashboards.
+- [Collection modes](/en/collection-modes): what the tracker collects per mode, and why the session identity or stack traces may be missing.
+- [Visitors and sessions](/en/concepts/sessions): how pageviews become visitors and sessions.
+- [Synthetic Monitoring](/en/synthetic): the lab-data complement to these field dashboards.
