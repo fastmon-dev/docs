@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Add: Site-wide "work in progress" banner (EN + DE)
+
+A persistent amber notice rendered above every page (home, docs, API) flagging that the docs are still being written and may be incomplete or inaccurate. Added in `src/app/[lang]/layout.tsx` via the fumadocs `Banner` (`variant="normal"` restyled to amber through `tailwind-merge`, so it works in light and dark mode); copy is locale-aware (`en`/`de`). Intentionally not dismissible (no `id`) so the accuracy caveat stays visible.
+
 ### Change: House-style sweep — lowercase `fastmon` brand + de-wrapped prose (EN + DE)
 
 Two mechanical, content-preserving passes over every hand-authored doc; the generated `api/**` operation pages (those carrying `_openapi:` frontmatter, emitted by `scripts/generate-api-docs.mjs`) were left untouched. No facts, links, code, or frontmatter keys changed.
