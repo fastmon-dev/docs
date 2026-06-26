@@ -55,7 +55,7 @@ Der zentrale Teil. Eine Rule besteht aus drei Bausteinen:
 ### Wann du misst
 
 - Ein **Zeitfenster**: 1 h, 6 h, 24 h, 7 Tage oder 30 Tage. Kürzere Fenster fangen schneller, sind aber lauter.
-- Eine Cadence stellst du nicht ein. Fastmon leitet den Auswertungstakt aus dem Fenster ab (ein Fünftel des Fensters, begrenzt auf 1 bis 15 Minuten): Eine 1-h-Rule wird also etwa alle 12 Minuten geprüft, eine 24-h-Rule alle 15.
+- Einen Takt stellst du nicht ein. Fastmon leitet den Auswertungstakt aus dem Fenster ab (ein Fünftel des Fensters, begrenzt auf 1 bis 15 Minuten): Eine 1-h-Rule wird also etwa alle 12 Minuten geprüft, eine 24-h-Rule alle 15.
 
 ### Was eine Verletzung ist
 
@@ -99,7 +99,7 @@ Ziel: Alarm, wenn LCP bei p75 auf der Production-Site mehr als 20 % schlechter i
 | Re-notify after  | 24 Stunden                                |
 | Delivery         | `team-perf@example.com`                   |
 
-Auf einer traffic-schwachen Site beißt der Day-over-Day-Vergleich: Eine einzige langsame Nachtphase kann ein 24-h-p75 allein um 20 % verschieben. Bei dünnem Traffic erst das Fenster auf 7 Tage verbreitern, dann über die Schwelle nachdenken.
+Auf einer traffic-schwachen Site wird der Day-over-Day-Vergleich zum Problem: Eine einzige langsame Nachtphase kann ein 24-h-p75 allein um 20 % verschieben. Bei dünnem Traffic erst das Fenster auf 7 Tage verbreitern, dann über die Schwelle nachdenken.
 
 ## Häufige Stolperfallen
 

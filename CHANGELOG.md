@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### Add: "Server-Timing headers" guide (EN + DE)
+
+New `guides/server-timing.mdx` + `.de.mdx`, wired into the guides nav (`guides/meta.json` / `meta.de.json`) and the guides index cards, with a cross-link plus a "new feature, dashboards still being tuned" note added to the Fetch/XHR + Server-Timing section of `analytics.mdx` / `analytics.de.mdx`. The guide documents how fastmon reads the **document-response** `Server-Timing` header off the navigation entry (`name` / `dur` / `desc`) and how it normalizes it server-side (the wire is forgeable, so the tracker's filtering is re-applied):
+
+- **Form rules and trust model.** Key/desc charset + length, `0 ≤ dur ≤ 10,000,000 ms`, `tideways.layer.` prefix strip, numeric-`desc` → `dur`, the infrastructure/trace denylist, and the UUID/hex-blob ID guard.
+- **Three-tier model.** Promoted scalars (always) / Tier-2 catalog (uncapped) / ≤ 8 Tier-3 customs, with the 24-key dur-map and 8-key desc-map caps.
+- **Precedence chain.** `fm-*` first-party › your site's mapping › built-in vendor alias (`cf…`) › built-in generic alias — corrected from an earlier draft that collapsed vendor and generic into one rank; the phase tables are now stated to be in precedence order, left to right.
+- **The seven backend phases** (five first-with-`dur`, `cache`/`external` summed) with their recognized aliases; the two-layer cache status (`cdn` / `origin`, CloudFront bare flags, the status enum + Fastly collapse); and the `pageType` promotion.
+- **Emit examples** for Flask, Express, and Symfony.
+
+Authored against the backend `_normalize_server_timing` implementation.
+
+### Fix: German copy-edit — translation-calques + brand-casing across hand-authored DE pages
+
+Surgical, meaning-level fixes (not spelling) across the German docs; code, links, anchors, and frontmatter left untouched, house terms preserved (`fastmon`, beacon, Pageview, "die Leitung ist fälschbar").
+
+- **web-vitals.** `ttfb.de` "schneiden RTT" → "senken die RTT" (mistranslated *cut*) and "Höchste Leverage." → "Der größte Hebel."; "Tracke das 75. Perzentil" → "Beobachte…" (`cls`/`fcp`/`inp`/`ttfb`); "scort/scoren" → "schneidet/schneiden … ab" (`cls`/`experience-score`); `lcp.de` "so reportet Google" → "so weist Google es aus"; `index.de` "reportest du" → "betrachtest du".
+- **guides.** `filter-internal-traffic.de` "verzieht" → "verzerrt" (*skew*), "Beste Mechanik" → "Bester Weg" (*mechanism*), "gate … anhand des UA" → "steuere … über den UA"; `compare-releases.de` "Beacons ingestet" → "empfängt"; `notification-rules.de` "Cadence" → "Takt" and "beißt der Vergleich" → "wird … zum Problem".
+- **concepts / install / architecture.** "monitorst/monitoren" → "überwachst/überwachen" (`concepts/index`, `concepts/sites`); "vor Opt-In minten" → "… vergeben" (`concepts/beacon`); "gescopt" → "begrenzt" (`architecture`); "macht kein Fingerprinting" → "betreibt…" and "Volles Statement" → "Ausführlich dazu" (`install/index`); "stille Drops" → "stille Verwerfungen" (`install/verify`).
+- **Brand casing reconciled.** Restored sentence-initial `Fastmon` where an automated pass had over-lowercased it — per the documented rule (lowercase `fastmon` except at the start of a sentence, heading, or title) — in `web-vitals/index.de`, `architecture.de`, `synthetic.de`, `glossary.de`, `concepts/beacon.de`, and applied the same rule to the new Server-Timing guide (EN + DE).
+
 ### Add: Site-wide "work in progress" banner (EN + DE)
 
 A persistent amber notice rendered above every page (home, docs, API) flagging that the docs are still being written and may be incomplete or inaccurate. Added in `src/app/[lang]/layout.tsx` via the fumadocs `Banner` (`variant="normal"` restyled to amber through `tailwind-merge`, so it works in light and dark mode); copy is locale-aware (`en`/`de`). Intentionally not dismissible (no `id`) so the accuracy caveat stays visible.

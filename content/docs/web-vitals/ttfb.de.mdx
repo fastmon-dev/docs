@@ -9,7 +9,7 @@ TTFB ist **kein** Core Web Vital. Eine diagnostische Metrik, aber die wichtigste
 
 ## Was ist ein guter TTFB?
 
-TTFB wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
+TTFB wird in Millisekunden gemessen. Beobachte das **75. Perzentil**.
 
 | TTFB bei p75    | Rating              |
 | --------------- | ------------------- |
@@ -45,8 +45,8 @@ Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
 
 ## Schlechten TTFB verbessern
 
-1. **HTML am Edge cachen.** Eine statische oder nahezu statische Seite sollte aus einem CDN-Cache kommen, nicht von deinem Origin. Höchste Leverage.
-2. **Näher an deine Besucher rücken.** Multi-Region-Origins oder ein gut verteilter Edge-Layer schneiden RTT für alle außerhalb deiner Hauptregion.
+1. **HTML am Edge cachen.** Eine statische oder nahezu statische Seite sollte aus einem CDN-Cache kommen, nicht von deinem Origin. Der größte Hebel.
+2. **Näher an deine Besucher rücken.** Multi-Region-Origins oder ein gut verteilter Edge-Layer senken die RTT für alle außerhalb deiner Hauptregion.
 3. **Server-Response profilen.** APM, Server-Logs oder ein Server-Timing-Header, um den Engpass zu finden. Üblicherweise: eine langsame DB-Query, ein synchroner Third-Party-Call, oder SSR-React-Hydration, die zu viele Daten durchläuft.
 4. **Redirect-Ketten reduzieren.** Jeder Redirect ist ein voller Roundtrip. `http://` → `https://` → `www.` → Final-URL sind drei Roundtrips, bevor der Browser überhaupt das HTML hat.
 5. **HTTP/2 oder HTTP/3 nutzen.** Die meisten modernen Stacks tun das schon, aber prüfen; ältere Origins handeln noch HTTP/1.1 aus.

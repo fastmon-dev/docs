@@ -61,7 +61,7 @@ Nützliche Slices:
 Der Composite ist nur so gesund wie sein schwächster Bestandteil:
 
 1. Den Breakdown öffnen und den **schlechtesten Sub-Score** identifizieren.
-2. Die zugehörige Metrik-Seite lesen ([LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb)) und den Fix mit der höchsten Leverage anwenden.
+2. Die zugehörige Metrik-Seite lesen ([LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb)) und den Fix mit dem größten Hebel anwenden.
 3. Nach dem Release nachprüfen. `compare_to_release_id` für ein sauberes Vorher/Nachher.
 
 Nicht versuchen, alles gleichzeitig zu optimieren. Die Verbesserungen beißen sich oft: LCP-Fix mit mehr JS kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach hinten schieben.
@@ -71,7 +71,7 @@ Nicht versuchen, alles gleichzeitig zu optimieren. Die Verbesserungen beißen si
 - **Der Score kann fallen, ohne dass eine einzelne Metrik eine Schwelle reißt.** Eine kleine Regression in zwei Metriken kann den Composite um einen halben Punkt bewegen, während jede Metrik einzeln noch „Gut" sagt.
 - **Ein einzelner Deploy kann eine permanente Score-Lücke erzeugen.** Sobald eine Regression live ist, trägt jeder folgende Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des Deploys zu erwischen, zählt.
 - **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.** Wenn Besucher nie interagieren, fällt INP weg; der Score reflektiert dann nur LCP und CLS, was meist leichter ist.
-- **Interner vs. externer Traffic verzerrt den Composite.** Office-Traffic auf warmen Caches und schnellen Laptops scort super; echte Besucher auf Mobile in einem Tunnel scoren schlechter. Internen Traffic an der Quelle ausfiltern, damit die Zahl ehrlich bleibt; siehe [Internen Traffic filtern](/de/guides/filter-internal-traffic).
+- **Interner vs. externer Traffic verzerrt den Composite.** Office-Traffic auf warmen Caches und schnellen Laptops schneidet super ab; echte Besucher auf Mobile in einem Tunnel schneiden schlechter ab. Internen Traffic an der Quelle ausfiltern, damit die Zahl ehrlich bleibt; siehe [Internen Traffic filtern](/de/guides/filter-internal-traffic).
 
 ## Nächste Schritte
 

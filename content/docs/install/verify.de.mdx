@@ -40,7 +40,7 @@ Wenn da erstmal nur dein eigener Besuch steht: alles gut. Echter Traffic baut si
 
 ### Beacon liefert `204`, aber im Dashboard taucht nichts auf
 
-`204` ist die normale Erfolgsantwort, kommt aber auch, wenn der Beacon still verworfen wird. Häufigster Grund: die Site hat **Allowed origins** gesetzt, und der Origin, von dem du lädst, steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache wird automatisch invalidiert. Andere stille Drops: Site auf inaktiv gesetzt, unbekannter `collector_hash`.
+`204` ist die normale Erfolgsantwort, kommt aber auch, wenn der Beacon still verworfen wird. Häufigster Grund: die Site hat **Allowed origins** gesetzt, und der Origin, von dem du lädst, steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache wird automatisch invalidiert. Andere stille Verwerfungen: Site auf inaktiv gesetzt, unbekannter `collector_hash`.
 
 ### Request an `/c/` liefert `429`
 

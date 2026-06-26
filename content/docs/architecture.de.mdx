@@ -54,7 +54,7 @@ Backend und Frontend liegen in unabhängigen Repos und deployen unabhängig.
 | Store             | Inhalt                                                | Hinweise                                  |
 | ----------------- | ----------------------------------------------------- | ----------------------------------------- |
 | Config-DB         | User, Orgs, Sites, Einstellungen, Billing             | Single Primary, asynchroner Zugriff.      |
-| Analytics-Store   | Beacon-Events, Aggregate, Error-Logs                  | Columnar, Queries pro Org gescopt.        |
+| Analytics-Store   | Beacon-Events, Aggregate, Error-Logs                  | Columnar, Queries pro Org begrenzt.       |
 | Session-Store     | Sessions, Rate-Limits, kurzlebige Caches              | In-Memory-Store unter EU-Jurisdiktion.    |
 
 Alle drei werden in der EU betrieben mit versionierten, idempotenten Migrations beim Deploy.

@@ -54,6 +54,8 @@ Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (Standard, i
 
 Über Seitennavigationen hinaus zeigt das Dashboard auch In-Page-Request-Telemetrie: einen Fetch/XHR-View mit aggregiertem Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile sowie eine Statusfehler-Verteilung), dazu ein Per-Beacon-Detail, und einen Server-Timing-View, der die `Server-Timing`-Metriken deines Backends aufschlüsselt. Beide speisen sich aus Feldern, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
 
+Der Server-Timing-View ist neu: Der Beacon liest den Header bereits bei jedem Pageview, und die Dashboards darüber werden noch optimiert. Wie du den Header sendest und wie fastmon ihn in Backend-Phasen, Cache-Status und Custom-Keys zerlegt, steht unter [Server-Timing-Header](/de/guides/server-timing).
+
 ## Experience Score
 
 Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter. Praktisch für den Klassiker: Die Gesamtnote sieht gut aus, aber Mobile über 3G fällt durch.

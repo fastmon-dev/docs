@@ -3,13 +3,13 @@ title: Internen Traffic filtern
 description: Office-, Staff- und synthetischen Traffic aus deinen Real-User-Metriken raushalten.
 ---
 
-Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte Checks) verzieht dir jede Metrik. Office-Maschinen mit warmem Cache und schnellem Netz sehen super aus; Mobile-Besucher im Tunnel sehen mies aus; und der Durchschnitt von beidem sagt am Ende nichts mehr.
+Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte Checks) verzerrt dir jede Metrik. Office-Maschinen mit warmem Cache und schnellem Netz sehen super aus; Mobile-Besucher im Tunnel sehen mies aus; und der Durchschnitt von beidem sagt am Ende nichts mehr.
 
 Einen „meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir speichern keine IPs, siehe [Privacy](/de/privacy). Was du ausschließen willst, entscheidet, welcher Weg passt.
 
 ## Wähle die passende Option
 
-| Du willst ausschließen…             | Beste Mechanik                                    |
+| Du willst ausschließen…             | Bester Weg                                        |
 | ----------------------------------- | ------------------------------------------------- |
 | Dev/Staging-Umgebung                | Separate Site (oder `allowed_origins`-Disziplin)  |
 | Office-Traffic deines Teams         | Beacon-Script bei internen Sessions weglassen     |
@@ -62,7 +62,7 @@ Beacons kommen weiter an, werden aber nicht in Analytics-Tabellen geschrieben. W
 
 ## Option 4: Beacon für synthetische Monitore weglassen
 
-Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar nicht erst laden. Die meisten Monitore setzen einen erkennbaren `User-Agent`; Tag serverseitig ausschließen:
+Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar nicht erst laden. Die meisten Monitore setzen einen erkennbaren `User-Agent`; Script-Tag serverseitig weglassen:
 
 ```html
 {% if request.user_agent.is_synthetic %}
@@ -72,7 +72,7 @@ Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar nicht erst lad
 {% endif %}
 ```
 
-Wenn dein Stack keinen einfachen „ist Bot"-Check hat, gate das Script-Tag direkt im Template anhand des UA; gleiches Prinzip.
+Wenn dein Stack keinen einfachen „ist Bot"-Check hat, steuere das Script-Tag direkt im Template über den UA; gleiches Prinzip.
 
 ## Filter verifizieren
 

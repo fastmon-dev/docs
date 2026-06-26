@@ -9,7 +9,7 @@ CLS gehört zu den [Core Web Vitals](/de/web-vitals) und zählt fürs Suchrankin
 
 ## Was ist ein guter CLS?
 
-CLS ist einheitenlos, eine Summe von Layout-Shift-Scores. Tracke das **75. Perzentil**.
+CLS ist einheitenlos, eine Summe von Layout-Shift-Scores. Beobachte das **75. Perzentil**.
 
 | CLS bei p75     | Rating              |
 | --------------- | ------------------- |
@@ -68,7 +68,7 @@ Tieferer Walkthrough: [Optimize CLS](https://web.dev/articles/optimize-cls) auf 
 
 ## Häufige Überraschungen
 
-- **CLS bestraft denselben Shift auf jeder Seite.** Ein site-weiter Font-Swap oder ein dauernder Banner-Einblender heißt: jeder Pageview scort schlecht, nicht nur der erste.
+- **CLS bestraft denselben Shift auf jeder Seite.** Ein site-weiter Font-Swap oder ein dauernder Banner-Einblender heißt: jeder Pageview schneidet schlecht ab, nicht nur der erste.
 - **Score 0 heißt nicht „perfekt".** Es heißt nur „kein Shift hat den sichtbaren Viewport berührt." Ein winziger Shift below the fold bewegt CLS kein Stück, der Besucher merkt ihn aber trotzdem.
 - **Animationen können zählen.** CSS-Transitions auf `width`, `height`, `top`, `left`, `margin` schieben den Inhalt drumrum weg und zählen mit. Lieber `transform` nehmen.
 - **Ein CLS-Fix ändert selten die Ladezeit.** Platz reservieren ist meistens reines HTML/CSS; du kannst eine deutliche Verbesserung ausliefern, ohne ein einziges JS-Byte anzufassen.

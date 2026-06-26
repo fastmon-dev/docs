@@ -55,6 +55,8 @@ A visitor is counted along an identity axis: `stitch` (the default, present in e
 
 Beyond page navigations, the dashboard surfaces in-page request telemetry: a Fetch/XHR view with an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, and a status-error distribution), plus a per-beacon detail, and a Server-Timing view that breaks out the `Server-Timing` metrics your backend reports. Both are driven by fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
 
+The Server-Timing view is new: the beacon already reads the header on every pageview, and the dashboards on top of it are still being tuned. To emit the header and learn how fastmon splits it into backend phases, cache status, and custom keys, see [Server-Timing headers](/en/guides/server-timing).
+
 ## Experience Score
 
 The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it. Useful for the classic case where the overall grade looks fine but mobile-on-3G is failing.
