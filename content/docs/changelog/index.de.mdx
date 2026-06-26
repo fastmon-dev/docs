@@ -17,6 +17,18 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Fehlerrate zählt geblockte Tracker und Seiten-Teardown nicht mehr mit">
+
+Third-Party-Tracker, die von einem Ad-Blocker oder Tracking-Schutz geblockt werden (Bing UET, Meta Pixel, Google Tag Manager und Ähnliche), zählen nicht mehr als Fehler, ebenso wenig Requests, die der Browser abbricht, wenn ein Besucher die Seite verlässt. Sie werden markiert und behalten, nicht verworfen, sodass deine Fehlerrate echte, behebbare Probleme abbildet. Ein reales Dashboard fiel von rund 60 % Fehlerrate, die fast vollständig von einem geblockten `bat.bing.com` verursacht war.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="tracker" title="Tracker zählt Seiten-Teardown nicht mehr als Fehler">
+
+Wenn ein Besucher die Seite verlässt oder den Tab schließt, bricht der Browser laufende Requests ab und kann ausgeführte Skripte unterbrechen. Der Tracker erkennt den Teardown jetzt (über `pagehide` und `visibilitychange`) und zählt solche Netzwerkfehler als Abbrüche statt als Fehler; außerdem verwirft er die während des Teardowns geworfenen JavaScript-Ausnahmen. So bläht beides die Fehleranzahl nicht mehr auf.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-25" type="new" area="platform" title="Passwortloser Login mit Passkeys">
 
 Melde dich mit einem Geräte-Passkey in einem einzigen Schritt an, ganz ohne Passwort und ohne separaten 2FA-Code. Passkeys verwaltest du unter Konto → Sicherheit (hinzufügen, benennen, umbenennen, entfernen). Sensible Aktionen (API-Key neu generieren, 2FA umschalten, E-Mail ändern, App verbinden, Konto löschen) erfordern jetzt eine erneute Authentifizierung („Step-up") mit deinem stärksten hinterlegten Faktor: einem Passkey oder TOTP.

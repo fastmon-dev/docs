@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Error rate no longer counts ad-blocked trackers or page-teardown noise">
+
+Third-party trackers blocked by an ad-blocker or tracking protection (Bing UET, Meta Pixel, Google Tag Manager, and similar) no longer count as errors, and neither do requests the browser cancels when a visitor leaves the page. They are tagged and kept, not dropped, so your error rate reflects real, fixable problems. One real dashboard fell from a ~60% error rate that was driven almost entirely by a blocked `bat.bing.com`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="tracker" title="Tracker stops reporting page-teardown failures as errors">
+
+When a visitor navigates away or closes the tab, the browser cancels in-flight requests and can interrupt running scripts. The tracker now detects teardown (via `pagehide` and `visibilitychange`) and counts those network failures as aborts rather than errors, and drops the JavaScript exceptions thrown during teardown, so neither inflates your error count.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-25" type="new" area="platform" title="Passwordless login with passkeys">
 
 Sign in with a device passkey in one step, with no password and no separate 2FA code. Manage passkeys under Account → Security (add, name, rename, remove). Sensitive actions (regenerating your API key, toggling 2FA, changing your email, connecting an app, deleting your account) now ask for fresh re-authentication ("step-up") with your strongest enrolled factor, a passkey or TOTP.
