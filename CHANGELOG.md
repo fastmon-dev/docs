@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fix: API reference is uniformly build-generated (no committed `synthetic/` drift)
+
+`synthetic/` was the only auto-generated API folder still tracked in git; the rest are gitignored and re-emitted by `npm run generate:api` on every build. A stale `getSyntheticScreenshot.mdx` therefore lingered after the endpoint left the OpenAPI schema and broke `next build` whenever it ran without regenerating first. `synthetic/` and the newly published `org-trackers/` are now gitignored like the other generated folders, and `synthetic/` was untracked. The reference regenerates from the production document (now `2026.6.58`) on every build, so nothing API-generated needs committing.
+
 ### Change: Changelog sidebar shows months only, with scrollspy
 
 The changelog section's sidebar now lists just the month anchors (the redundant "Changelog" page entry and the "jump to" separator were dropped), and a scrollspy highlights the month currently in view by toggling fumadocs' `data-active` on those links, so it tracks scrolling instead of leaving the page link permanently active. The feed copy was also refined: the shared detail-page/Explorer view is now explicit in the "what's driving it" entry, a third-party product name was removed from the time-range entry, and em-dashes were swept from the entries added since (consistent, non-"AI-tell" punctuation). Feed content extended through frontend `2026.6.41` and backend `2026.6.57`.
