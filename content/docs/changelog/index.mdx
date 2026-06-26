@@ -12,6 +12,36 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metric detail pages redesigned around one “Over time” panel">
+
+Each metric detail page (LCP, INP, CLS, TBT, Page Weight, and the load-timing pages) now leads with a single **“Over time” panel** that you switch between the percentile trend, the value distribution, or both side by side. The distribution buckets and the Good/Poor zones are clickable: they open the Explorer scoped to that value range, carrying over your current time range. Short windows (2 hours or less) now chart by the minute instead of by the hour, so a one-hour view is no longer nearly empty.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="“What’s driving it” breakdown on the detail pages">
+
+Every metric detail page now has a breakdown table you can switch across dimensions (Page, Country, Device, Browser with or without version, Connection, and CDN/Origin cache), with a TTFB column for context and a Most viewed / Worst / Best toggle. Expanding a row reveals the same over-time panel scoped to that value, plus a grid of the other dimensions where you can filter to or exclude a value in place, or open it in the Explorer. This expandable view is the same on the metric detail pages and in the Explorer: a grouped Explorer result row opens the exact same panel and grid.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="Desktop / Mobile quick filter">
+
+An **All / Desktop / Mobile** quick filter now sits next to the time picker on the metric detail pages, the Dashboard, and Analytics, applying the same device filter as the filter bar. The toolbar (percentile · time range · device · filters · refresh) is now identical across these views.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Clearer Explorer filters, breadcrumb drill-down, and pinned share links">
+
+The Explorer’s two filter rows are now labelled **Query filters** (applied on the server) and **Result filters** (applied in your browser), on a single line. The Good/Needs-improvement/Poor status colour is always on for value metrics, and count metrics (such as requests by URL) now expand to the breakdown grid and a trend instead of an empty distribution. Drilling in from a metric extends the breadcrumb with where you came from (for example “Core Web Vitals › LCP › Explorer”), and a back arrow returns you to the exact spot, including the row you had expanded. Shareable links now pin the current time range to absolute timestamps, so a shared link always opens the same window. The standalone **Pages** view has been retired in favour of **Analytics**, which now sits higher in the sidebar.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="fixed" area="dashboard" title="Large data volumes and mobile layout">
+
+Transfer-size and page-weight values now scale up to **GB and TB** instead of capping at MB (a ~1 TB total no longer reads as “1069213.0 MB”), and large third-party call counts show in compact form (for example “1.1M”) with the full number on hover. On small screens, the expanded breakdown grid no longer overflows off-screen, its row actions are always visible on touch, and the time picker no longer runs off the left edge.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Error rate no longer counts ad-blocked trackers or page-teardown noise">
 
 Third-party trackers blocked by an ad-blocker or tracking protection (Bing UET, Meta Pixel, Google Tag Manager, and similar) no longer count as errors, and neither do requests the browser cancels when a visitor leaves the page. They are tagged and kept, not dropped, so your error rate reflects real, fixable problems. One real dashboard fell from a ~60% error rate that was driven almost entirely by a blocked `bat.bing.com`.
@@ -98,7 +128,7 @@ Median and percentile values for web vitals in long-range analytics are computed
 
 <ChangelogEntry date="2026-06-21" type="changed" area="dashboard" title="Rebuilt time-range picker">
 
-A Grafana-style picker leads with an absolute range that also accepts relative input (`now-6h`, or shorthand like `4h` / `30d`); relative ranges stay live against "now", with a "Now" pin and an `r` keyboard shortcut to refresh. Metric thresholds can now be typed in natural units, e.g. `lcp >= 2.5s` or `total_byte_weight < 512kb`.
+The picker now leads with an absolute range that also accepts relative input (`now-6h`, or shorthand like `4h` / `30d`); relative ranges stay live against "now", with a "Now" pin and an `r` keyboard shortcut to refresh. Metric thresholds can now be typed in natural units, e.g. `lcp >= 2.5s` or `total_byte_weight < 512kb`.
 
 </ChangelogEntry>
 

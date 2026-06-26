@@ -166,6 +166,34 @@ export function Changelog({ children, labels }: { children: ReactNode; labels?: 
     return AREA_ORDER.filter((a) => counts.has(a)).map((a) => ({ area: a, count: counts.get(a)! }));
   }, [entries]);
 
+  // Scrollspy: as the feed scrolls, mark the sidebar link for the month in
+  // view as active. Fumadocs styles sidebar links via `data-active`, so we
+  // toggle that attribute on the month links it rendered from meta.json (a
+  // plain pathname match never activates them, since it ignores the #hash).
+  useEffect(() => {
+    const ids = [...new Set(entries.map((e) => monthKey(e.props.date)))];
+    const links = ids.map((id) => ({
+      id,
+      els: [...document.querySelectorAll(`a[href$="/changelog#${id}"]`)],
+    }));
+    if (!links.some((l) => l.els.length)) return;
+    const onScroll = () => {
+      // Default to the newest month so something is highlighted at the top;
+      // the in-view month wins as soon as its heading reaches the top.
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 96) current = id;
+      }
+      for (const { id, els } of links) {
+        for (const el of els) el.setAttribute("data-active", String(id === current));
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [entries, active]);
+
   const visible = active === "all" ? entries : entries.filter((e) => e.props.area === active);
 
   const chip = (key: ChangelogArea | "all", label: string, count: number) => (

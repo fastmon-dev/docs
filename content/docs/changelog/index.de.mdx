@@ -17,6 +17,36 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metrik-Detailseiten neu gestaltet rund um ein „Über die Zeit“-Panel">
+
+Jede Metrik-Detailseite (LCP, INP, CLS, TBT, Seitengewicht und die Ladezeit-Seiten) beginnt jetzt mit einem einzigen **„Über die Zeit“-Panel**, das du zwischen dem Perzentil-Verlauf, der Werteverteilung oder beidem nebeneinander umschaltest. Die Verteilungs-Buckets und die Gut/Schlecht-Zonen sind klickbar: Sie öffnen den Explorer eingegrenzt auf diesen Wertebereich und übernehmen deinen aktuellen Zeitraum. Kurze Zeitfenster (2 Stunden oder weniger) werden jetzt minutengenau statt stündlich dargestellt, sodass eine Ein-Stunden-Ansicht nicht mehr fast leer ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="„Woran es liegt“-Aufschlüsselung auf den Detailseiten">
+
+Jede Metrik-Detailseite hat jetzt eine Aufschlüsselungs-Tabelle, die du über mehrere Dimensionen umschalten kannst (Seite, Land, Gerät, Browser mit oder ohne Version, Verbindung sowie CDN-/Origin-Cache), mit einer TTFB-Spalte zur Einordnung und einem Umschalter Meistgesehen / Schlechteste / Beste. Klappst du eine Zeile auf, erscheint dasselbe „Über die Zeit“-Panel, eingegrenzt auf diesen Wert, plus ein Raster der übrigen Dimensionen, in dem du direkt auf einen Wert filtern, ihn ausschließen oder im Explorer öffnen kannst. Diese aufklappbare Ansicht ist auf den Detailseiten und im Explorer dieselbe: Eine gruppierte Ergebniszeile im Explorer öffnet genau dasselbe Panel und Raster.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="Schnellfilter Desktop / Mobil">
+
+Ein Schnellfilter **Alle / Desktop / Mobil** sitzt jetzt neben der Zeitauswahl auf den Metrik-Detailseiten, dem Dashboard und in Analytics und setzt denselben Gerätefilter wie die Filterleiste. Die Toolbar (Perzentil · Zeitraum · Gerät · Filter · Aktualisieren) ist über diese Ansichten hinweg jetzt identisch.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Klarere Explorer-Filter, Breadcrumb-Drill-down und fixierte Share-Links">
+
+Die zwei Filterzeilen des Explorers heißen jetzt **Query-Filter** (serverseitig angewandt) und **Ergebnis-Filter** (im Browser angewandt) und stehen auf einer Zeile. Die Statusfarbe Gut/Verbesserungswürdig/Schlecht ist bei Wert-Metriken dauerhaft an, und Anzahl-Metriken (etwa Requests pro URL) klappen jetzt in das Aufschlüsselungs-Raster und einen Verlauf auf statt in eine leere Verteilung. Steigst du von einer Metrik aus ein, erweitert sich der Breadcrumb um die Herkunft (zum Beispiel „Core Web Vitals › LCP › Explorer“), und ein Zurück-Pfeil bringt dich genau dorthin zurück, inklusive der Zeile, die du aufgeklappt hattest. Teilbare Links fixieren jetzt den aktuellen Zeitraum auf absolute Zeitstempel, sodass ein geteilter Link immer dasselbe Zeitfenster öffnet. Die eigenständige **Seiten**-Ansicht wurde zugunsten von **Analytics** abgelöst, das jetzt weiter oben in der Seitenleiste steht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="fixed" area="dashboard" title="Große Datenmengen und Mobil-Layout">
+
+Übertragungsgrößen und Seitengewicht skalieren jetzt bis **GB und TB**, statt bei MB zu deckeln (ein Gesamtwert von ~1 TB liest sich nicht mehr als „1069213.0 MB“), und große Aufrufzahlen von Drittanbietern werden kompakt angezeigt (zum Beispiel „1,1 Mio.“) mit der vollen Zahl beim Überfahren. Auf kleinen Bildschirmen läuft das aufgeklappte Aufschlüsselungs-Raster nicht mehr aus dem Bild, seine Zeilenaktionen sind auf Touch-Geräten immer sichtbar, und die Zeitauswahl ragt nicht mehr über den linken Rand hinaus.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Fehlerrate zählt geblockte Tracker und Seiten-Teardown nicht mehr mit">
 
 Third-Party-Tracker, die von einem Ad-Blocker oder Tracking-Schutz geblockt werden (Bing UET, Meta Pixel, Google Tag Manager und Ähnliche), zählen nicht mehr als Fehler, ebenso wenig Requests, die der Browser abbricht, wenn ein Besucher die Seite verlässt. Sie werden markiert und behalten, nicht verworfen, sodass deine Fehlerrate echte, behebbare Probleme abbildet. Ein reales Dashboard fiel von rund 60 % Fehlerrate, die fast vollständig von einem geblockten `bat.bing.com` verursacht war.
@@ -103,7 +133,7 @@ Median- und Perzentilwerte für Web Vitals in der Langzeitauswertung werden gena
 
 <ChangelogEntry date="2026-06-21" type="changed" area="dashboard" title="Überarbeitete Zeitraum-Auswahl">
 
-Eine Auswahl im Grafana-Stil beginnt mit einem absoluten Bereich, der auch relative Eingaben akzeptiert (`now-6h` oder Kurzformen wie `4h` / `30d`); relative Bereiche bleiben gegenüber „now" live, mit einer „Now"-Schaltfläche und dem Tastenkürzel `r` zum Aktualisieren. Metrik-Schwellen lassen sich jetzt in natürlichen Einheiten eingeben, z. B. `lcp >= 2.5s` oder `total_byte_weight < 512kb`.
+Die überarbeitete Auswahl beginnt mit einem absoluten Bereich, der auch relative Eingaben akzeptiert (`now-6h` oder Kurzformen wie `4h` / `30d`); relative Bereiche bleiben gegenüber „now" live, mit einer „Now"-Schaltfläche und dem Tastenkürzel `r` zum Aktualisieren. Metrik-Schwellen lassen sich jetzt in natürlichen Einheiten eingeben, z. B. `lcp >= 2.5s` oder `total_byte_weight < 512kb`.
 
 </ChangelogEntry>
 

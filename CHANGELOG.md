@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Change: Changelog sidebar shows months only, with scrollspy
+
+The changelog section's sidebar now lists just the month anchors (the redundant "Changelog" page entry and the "jump to" separator were dropped), and a scrollspy highlights the month currently in view by toggling fumadocs' `data-active` on those links, so it tracks scrolling instead of leaving the page link permanently active. The feed copy was also refined: the shared detail-page/Explorer view is now explicit in the "what's driving it" entry, a third-party product name was removed from the time-range entry, and em-dashes were swept from the entries added since (consistent, non-"AI-tell" punctuation). Feed content extended through frontend `2026.6.41` and backend `2026.6.57`.
+
 ### Add: Product changelog section (EN + DE) with area filter, month navigation, and a draft script
 
 A new top-level **Changelog** section at `/changelog`, alongside Docs and API, documenting user-facing product changes derived from the backend, frontend, and tracker repos. It is a hoisted section like the API reference: a third section-switcher tab plus its own route group (`src/app/[lang]/changelog/`), with the page tree split so the changelog is lifted out of the Docs sidebar (`getChangelogTree` in `src/lib/source.ts`, generalizing the existing API split via `isSectionNode`/`isHoistedSection`).
