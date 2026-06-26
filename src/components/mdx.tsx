@@ -1,6 +1,7 @@
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import { APIPage } from "@/components/api-page";
+import { Changelog, ChangelogEntry } from "@/components/changelog";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -9,6 +10,9 @@ export function getMDXComponents(components?: MDXComponents) {
     // register both names (same server wrapper) so either resolves.
     APIPage,
     OpenAPIPage: APIPage,
+    // Changelog feed (dated entries + area filter).
+    Changelog,
+    ChangelogEntry,
     ...components,
   } satisfies MDXComponents;
 }

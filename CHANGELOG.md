@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Add: Product changelog section (EN + DE) with area filter, month navigation, and a draft script
+
+A new top-level **Changelog** section at `/changelog`, alongside Docs and API, documenting user-facing product changes derived from the backend, frontend, and tracker repos. It is a hoisted section like the API reference: a third section-switcher tab plus its own route group (`src/app/[lang]/changelog/`), with the page tree split so the changelog is lifted out of the Docs sidebar (`getChangelogTree` in `src/lib/source.ts`, generalizing the existing API split via `isSectionNode`/`isHoistedSection`).
+
+- **Feed.** Entries are a dated, reverse-chronological feed authored with a client `<Changelog>` / `<ChangelogEntry>` component (`src/components/changelog.tsx`), registered in `mdx.tsx`. Each entry carries a type badge (New / Changed / Fixed / Removed) and an area badge; month headings (`June 2026`, `Mai 2026`) are grouped automatically from the entry dates. An area filter (Dashboard / API / Tracker / Platform) is synced to the URL hash, so `/changelog#tracker` opens the feed filtered to the tracker. Fully bilingual; the DE page passes translated chrome via a `labels` object.
+- **Sidebar.** Since a single-page feed has no tree, the section sidebar is filled with "jump to month" anchor links (`content/docs/changelog/meta.{json,de.json}`); the dropdown stays consistent with Docs/API.
+- **Editorial model.** Dashboard / API / platform changes are curated (the changes worth knowing about, not every internal tweak); the **tracker** is documented in full, because it runs in visitors' browsers and any change can affect what is measured.
+- **Draft tooling.** `scripts/draft-changelog.mjs` (`npm run draft:changelog`, `make draft-changelog`) scaffolds draft entries from the backend/frontend `CHANGELOG.md` (versions newer than the last-covered, tracked in `scripts/changelog-sources.json`), every tracker commit (exhaustive), and an OpenAPI endpoint diff (structural signature, so prose-only spec edits do not show as changed). It only drafts; the user-facing rewrite and bilingual translation stay manual.
+- Backfilled May + June 2026 entries (EN + DE), em-dash-free copy, and renamed the German section tab "Doku" to "Dokumentation".
+
 ### Fix: "Copy markdown" returned English on German pages
 
 The per-page copy-markdown button (and "view as markdown") served the default-language source regardless of the page's locale: the content URL (`getPageMarkdownUrl`) was built from the locale-independent slug, and the `llms.mdx/docs/[[...slug]]` route resolved `source.getPage(slug)` with no locale, so fumadocs fell back to English. The URL now carries the page locale (`/llms.mdx/docs/<lang>/<slug>/content.md`), the route resolves `source.getPage(slug, lang)`, and `generateStaticParams` emits one content route per (language, page) so both EN and DE are statically exported. Verified against the build output — `…/de/…/content.md` now holds the German source.

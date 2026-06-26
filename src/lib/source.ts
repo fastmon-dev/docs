@@ -34,12 +34,13 @@ export function getPageMarkdownUrl(page: (typeof source)["$inferPage"]) {
   };
 }
 
-// Split the single page-tree into a Docs view (everything except the API
-// section) and an API view (only the API section, hoisted to root). This lets
-// the (home) and (api) layouts show only their own section in the sidebar
-// while the section switcher tab moves the user between them.
-// A node "belongs to" the API section if it's the API folder itself, the
-// `---API---` separator that precedes it, or any nested item under /api.
+// Split the single page-tree into separate views: a Docs view (everything
+// except the hoisted sections), an API view (only the API section), and a
+// Changelog view (only the changelog section), each hoisted to root. This lets
+// the (home), (api), and (changelog) layouts show only their own section in
+// the sidebar while the section switcher tab moves the user between them.
+// A node "belongs to" a section if it's that section's folder, the
+// `---Title---` separator that precedes it, or any nested item under its slug.
 function nodeName(node: any): string {
   const n = node?.name;
   if (typeof n === "string") return n;
@@ -47,23 +48,49 @@ function nodeName(node: any): string {
   return String(n?.props?.children ?? "");
 }
 
-function isApiNode(node: any): boolean {
+// `slug` is the trailing URL segment (e.g. "api", "changelog"); `names` are the
+// case-insensitive separator/folder titles across locales (e.g. "api").
+function isSectionNode(node: any, slug: string, names: string[]): boolean {
   if (!node) return false;
   if (node.type === "folder") {
-    if (node.root === true) return true;
-    if (String(node.index?.url ?? node.url ?? "").endsWith("/api")) return true;
+    if (node.root === true && String(node.index?.url ?? "").endsWith(`/${slug}`)) return true;
+    if (String(node.index?.url ?? node.url ?? "").endsWith(`/${slug}`)) return true;
   }
-  if (node.type === "page" && String(node.url ?? "").endsWith("/api")) return true;
+  if (node.type === "page" && String(node.url ?? "").endsWith(`/${slug}`)) return true;
   // Match by display name (covers separator + folder title in EN/DE).
-  if (nodeName(node).toLowerCase() === "api") return true;
-  return false;
+  return names.includes(nodeName(node).toLowerCase());
+}
+
+function isApiNode(node: any): boolean {
+  return isSectionNode(node, "api", ["api"]);
+}
+
+function isChangelogNode(node: any): boolean {
+  return isSectionNode(node, "changelog", ["changelog"]);
+}
+
+// Top-level sections that are hoisted into their own route + sidebar tab and
+// must therefore be hidden from the main Docs tree.
+function isHoistedSection(node: any): boolean {
+  return isApiNode(node) || isChangelogNode(node);
 }
 
 export function getDocsTree(lang: string) {
   const tree = (source.pageTree as Record<string, any>)[lang];
   return {
     ...tree,
-    children: tree.children.filter((c: any) => !isApiNode(c)),
+    children: tree.children.filter((c: any) => !isHoistedSection(c)),
+  };
+}
+
+export function getChangelogTree(lang: string) {
+  const tree = (source.pageTree as Record<string, any>)[lang];
+  const folder = tree.children.find((c: any) => c?.type === "folder" && isChangelogNode(c));
+  if (!folder) return tree;
+  return {
+    ...tree,
+    name: folder.name,
+    children: folder.children,
   };
 }
 

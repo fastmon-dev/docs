@@ -1,0 +1,225 @@
+---
+title: Changelog
+description: What's new in fastmon, covering the dashboard, the API, the platform, and the tracker. Newest first.
+full: true
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The latest from fastmon, across the dashboard, API, platform, and tracker. You can filter the feed by area.
+
+We cover the changes you should know about, not every internal tweak. The exception is the **tracker** (the script you embed on your site): we document it in full, because it runs in your visitors' browsers, where even a small change can affect what your pages measure.
+
+<Changelog>
+
+<ChangelogEntry date="2026-06-25" type="new" area="platform" title="Passwordless login with passkeys">
+
+Sign in with a device passkey in one step, with no password and no separate 2FA code. Manage passkeys under Account → Security (add, name, rename, remove). Sensitive actions (regenerating your API key, toggling 2FA, changing your email, connecting an app, deleting your account) now ask for fresh re-authentication ("step-up") with your strongest enrolled factor, a passkey or TOTP.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="new" area="dashboard" title="Cache-hit visibility">
+
+New CDN Cache and Origin Cache (`HIT`/`MISS`) columns and a cache-status filter in the beacon explorer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="fixed" area="platform" title="AI “Ask” error drill-down">
+
+The AI Ask error drill-down returns its summary and time-series correctly instead of erroring on every call.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Cross-domain trackers">
+
+Run a single tracker across several domains of the same codebase (for example `shop.de` and `shop.fr`); beacons are routed to the correct per-domain site automatically, so per-site analytics and access control are preserved. Create, edit, rotate hashes, and delete them on the organization's Sites page, with a "detected domains" list that suggests unregistered hosts to add as sites.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Partner self-service">
+
+Organizations flagged as partners can provision and manage client organizations: create a client (optionally emailing an owner invite), list managed clients, view aggregated beacon usage, and detach a client. Organization → Team also lists partners that can manage your org and lets owners revoke that access.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="changed" area="dashboard" title="Collector modes">
+
+The binary fastmon / first-party collector toggle is now three modes, each shown with a first-party / third-party badge: Default (fastmon's collector), Custom (a URL you control), and Relative (a same-origin `/c/<hash>` endpoint). (API: a new `collector_mode` field on sites and trackers.)
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="fixed" area="platform" title="Deleting a site no longer fails on child rows">
+
+`DELETE /sites/{id}` no longer errors when the site has releases, weekly summaries, or feedback.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="platform" title="IDN and trailing-dot domains no longer lose traffic">
+
+Internationalized hostnames (e.g. `münchen.de`) and trailing-dot FQDNs were rejected or dropped at ingest; hostnames are now canonicalized consistently at registration and ingest.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Per-domain breakdown on multi-domain setups">
+
+Beacons now record the host the tracker actually reported instead of the configured site domain, so the per-domain breakdown is correct again. Historical rows keep their old value.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Resource-load errors group separately">
+
+In anonymous mode, distinct broken first-party resources on the same host no longer collapse into a single error (applies to new beacons).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="new" area="api" title="More beacon fields and columns">
+
+New `browser_version` field on the visitors list, and five new projectable columns on `/analytics/beacons` (`version`, `tracker_version`, `site_id`, `lifecycle`, `delivery_method`). See the [API reference](/en/api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="changed" area="api" title="More accurate web-vitals percentiles">
+
+Median and percentile values for web vitals in long-range analytics are computed more accurately, correcting a systematic underestimate of the median.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="changed" area="dashboard" title="Rebuilt time-range picker">
+
+A Grafana-style picker leads with an absolute range that also accepts relative input (`now-6h`, or shorthand like `4h` / `30d`); relative ranges stay live against "now", with a "Now" pin and an `r` keyboard shortcut to refresh. Metric thresholds can now be typed in natural units, e.g. `lcp >= 2.5s` or `total_byte_weight < 512kb`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="fixed" area="dashboard" title="Visitors-list filter crash">
+
+Filtering the visitors list by device type, browser, country, or OS no longer errors.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="dashboard" title="“Sessions” is now “Visitors”, along an identity axis">
+
+The `sessions` metric is replaced by `visitors` everywhere: charts, the metric picker, and alert rules. A visitor is counted by identity: `stitch` (edge-derived, consent-free, the default) or `session` (consent-gated). The explorer gained a Stitch/Session switch with a per-row identity badge, and each site has a new default-visitor-identity setting. See [Visitors and sessions](/en/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="new" area="platform" title="Connected apps (OAuth)">
+
+fastmon can authorize first-party app integrations: an in-app consent screen, and a "Connected apps" tab in account settings where you can review and disconnect authorized apps.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="platform" title="Brand lowercased to “fastmon”">
+
+The brand is now written lowercase across the app, authentication, emails, and SEO metadata.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="fixed" area="platform" title="Invited users land in their organization">
+
+Accepting an invite no longer drops you into a second empty organization, including Google/GitHub sign-up.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="changed" area="tracker" title="Full stack-frame paths kept for de-minification">
+
+The tracker keeps the complete minified stack-frame path so JavaScript errors de-minify to the correct source location.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="fixed" area="tracker" title="Fetch/XHR calls flushed mid-pageview">
+
+The tracker now reports every fetch/XHR call during a pageview, not just slow outliers, so the Fetch/XHR view is complete.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="new" area="dashboard" title="Value distributions and shareable deep links">
+
+Core Web Vitals and performance/network detail pages show the metric's distribution with Good / Needs-improvement / Poor zones and p50/p75/p90 markers; each page row expands to its own distribution. Share buttons reopen the exact page or row, and the per-page error breakdown plus multi-value and exclude (`≠`) filters arrived alongside.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="tracker" title="Soft navigations marked as nav_type=softnav">
+
+The tracker marks client-side route changes as `nav_type=softnav`, so single-page-app navigations are distinguished from full page loads in analytics.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="dashboard" title="Fetch/XHR (AJAX) monitoring">
+
+A dedicated page under Network analyzes your app's fetch/XHR calls: p75/p95 tail latency, a blocking-call filter, aborts counted apart from errors, response size, a per-call backend-phase mini-waterfall, and a first-party / third-party scope toggle. Capture is controlled per site by a "Store subrequests" toggle. See [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-15" type="new" area="dashboard" title="Device-type breakdown, auto theme, richer beacon detail">
+
+A device-type tab (desktop / mobile / tablet), an "Auto" theme that follows your OS preference, and a far richer per-beacon detail panel (server-timing phases, cache status, called endpoints, attribution).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="new" area="dashboard" title="Command palette (⌘K)">
+
+One searchable menu drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add or clear filters. The filter control also moved to the header, next to the time picker, with an active-filter count badge.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="removed" area="dashboard" title="Per-site tag filter in the sidebar">
+
+The sidebar tag filter only narrowed the site list and never affected analytics, so it was removed; tags are planned to return as a real cross-site analytics scope. See [Sites](/en/concepts/sites).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-28" type="changed" area="platform" title="API tokens are now “API keys”">
+
+The personal access token is now called an **API key** consistently across the API, the SDK examples, and account settings. Same credential and behavior; only the name changed, to match the backend. See [Authentication](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-27" type="fixed" area="dashboard" title="URL drill-down dropped rows on full-collection sites">
+
+On sites in full collection mode, the per-URL drill-down silently dropped some rows; it now returns the complete breakdown.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-26" type="new" area="dashboard" title="Minute-level granularity">
+
+Analytics queries over short windows can now bucket by the minute (in addition to hour/day), so very recent traffic and incidents show up at the right resolution.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="platform" title="Raw IP, User-Agent, and referrer no longer reach the backend">
+
+A privacy-focused edge cutover: the edge derives everything fastmon needs (country, device, referrer source) and the backend never receives the raw IP address, User-Agent string, or full referrer URL. Less personal data is stored, by design. See [Privacy](/en/privacy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="platform" title="Stitch: a consent-free cross-pageview identifier">
+
+A new edge-derived, bounded-lifetime identifier (`stitch`) links pageviews from the same visitor without cookies or consent. It later became the default visitor identity. See [Visitors and sessions](/en/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="dashboard" title="Campaign attribution (UTM + click IDs)">
+
+Traffic now carries `utm_*` parameters and ad-platform click IDs, so you can break analytics down by campaign source, medium, and campaign (Plausible-aligned).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="dashboard" title="Referrer reclassified into source and medium">
+
+Instead of a raw referrer URL, referrers are bucketed into a normalized **source** and **medium** (Snowplow-style), so the referrer breakdown is clean and groupable.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="removed" area="tracker" title="Five low-value fields retired from the beacon">
+
+The tracker no longer collects `device_memory`, `hw_concurrency`, `save_data`, `prefers_dark`, or `prefers_reduced_motion`: a data-minimization pass that shrinks the payload and the data stored about each visitor.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="tracker" title="Tracker slimmed down">
+
+The tracker no longer reads `document.referrer`, `matchMedia`, or User-Agent buckets (the edge derives those now), making the embedded script smaller and the data it sends leaner.
+
+</ChangelogEntry>
+
+</Changelog>

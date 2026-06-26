@@ -9,6 +9,7 @@
     "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
     "postinstall": "fumadocs-mdx",
     "generate:api": "node scripts/generate-api-docs.mjs",
+    "draft:changelog": "node scripts/draft-changelog.mjs",
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" \"scripts/**/*.{mjs,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"scripts/**/*.{mjs,ts}\""

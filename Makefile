@@ -1,4 +1,4 @@
-.PHONY: help dev build start test lint typecheck format format-check generate-api
+.PHONY: help dev build start test lint typecheck format format-check generate-api draft-changelog
 
 .DEFAULT: help
 
@@ -12,6 +12,7 @@ help:
 	@echo "make format       – Format code with Prettier"
 	@echo "make format-check – Check formatting without changes"
 	@echo "make generate-api – Regenerate the API reference from the production OpenAPI document"
+	@echo "make draft-changelog – Draft changelog entries from backend/frontend/tracker + OpenAPI diff"
 
 dev:
 	npm run dev -- -H 0.0.0.0
@@ -38,3 +39,6 @@ format-check:
 
 generate-api:
 	npm run generate:api
+
+draft-changelog:
+	npm run draft:changelog
