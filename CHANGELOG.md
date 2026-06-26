@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Fix: "Copy markdown" returned English on German pages
+
+The per-page copy-markdown button (and "view as markdown") served the default-language source regardless of the page's locale: the content URL (`getPageMarkdownUrl`) was built from the locale-independent slug, and the `llms.mdx/docs/[[...slug]]` route resolved `source.getPage(slug)` with no locale, so fumadocs fell back to English. The URL now carries the page locale (`/llms.mdx/docs/<lang>/<slug>/content.md`), the route resolves `source.getPage(slug, lang)`, and `generateStaticParams` emits one content route per (language, page) so both EN and DE are statically exported. Verified against the build output — `…/de/…/content.md` now holds the German source.
+
+### Add: Detect browser language on the bare `/`
+
+The root entry point (`src/app/page.tsx`) now picks `de` or `en` from `navigator.languages` and replaces into the matching docs root, falling back to `en` (plus a `<noscript>` meta-refresh + language links). Only `/` is auto-routed; any explicit `/en/…` or `/de/…` path is left untouched. Done client-side because production is a static export with no server to read `Accept-Language`; the supported-language list is kept inline to avoid pulling the i18n-UI module into the client bundle.
+
+### Change: Quieter work-in-progress banner
+
+The site-wide WIP notice dropped its filled-amber styling and 🚧 emoji for a neutral, theme-token bar (`bg-fd-secondary`, `text-fd-foreground`, thin `border-fd-border`, smaller text) that stays legible in light and dark without dominating the page.
+
 ### Add: "Server-Timing headers" guide (EN + DE)
 
 New `guides/server-timing.mdx` + `.de.mdx`, wired into the guides nav (`guides/meta.json` / `meta.de.json`) and the guides index cards, with a cross-link plus a "new feature, dashboards still being tuned" note added to the Fetch/XHR + Server-Timing section of `analytics.mdx` / `analytics.de.mdx`. The guide documents how fastmon reads the **document-response** `Server-Timing` header off the navigation entry (`name` / `dur` / `desc`) and how it normalizes it server-side (the wire is forgeable, so the tracker's filtering is re-applied):

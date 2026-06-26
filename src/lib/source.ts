@@ -22,7 +22,11 @@ export function getPageImage(page: (typeof source)["$inferPage"]) {
 }
 
 export function getPageMarkdownUrl(page: (typeof source)["$inferPage"]) {
-  const segments = [...page.slugs, "content.md"];
+  // Encode the page's locale in the URL so the content route can resolve the
+  // right-language source. Without it, the route falls back to the default
+  // language and the "copy markdown" button always returns English.
+  const locale = (page as { locale?: string }).locale ?? i18n.defaultLanguage;
+  const segments = [locale, ...page.slugs, "content.md"];
 
   return {
     segments,

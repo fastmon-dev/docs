@@ -7,8 +7,8 @@ export function generateStaticParams() {
 }
 
 const wipNotice: Record<Locale, string> = {
-  en: "🚧 These docs are a work in progress — some pages may still be incomplete or contain inaccuracies.",
-  de: "🚧 Diese Dokumentation entsteht gerade — einzelne Seiten können noch unvollständig oder stellenweise ungenau sein.",
+  en: "These docs are a work in progress — some pages may still be incomplete or contain inaccuracies.",
+  de: "Diese Dokumentation entsteht gerade — einzelne Seiten können noch unvollständig oder stellenweise ungenau sein.",
 };
 
 export default async function LangLayout({ children, params }: LayoutProps<"/[lang]">) {
@@ -18,7 +18,7 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
     <Provider locale={lang}>
       <Banner
         variant="normal"
-        className="border-b border-amber-300/70 bg-amber-100 text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/60 dark:text-amber-100"
+        className="h-auto border-b border-fd-border bg-fd-secondary py-2 text-sm font-normal text-fd-foreground"
       >
         {notice}
       </Banner>
