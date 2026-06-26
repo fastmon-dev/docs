@@ -2,7 +2,7 @@ import "./global.css";
 
 export const metadata = {
   metadataBase: new URL("https://docs.fastmon.eu"),
-  title: "Fastmon Docs",
+  title: "fastmon Docs",
   description: "Privacy-first real-user monitoring & Core Web Vitals.",
   icons: { icon: "/favicon.svg" },
 };

@@ -1,4 +1,4 @@
-# Fastmon Docs
+# fastmon Docs
 
 Documentation site built with [Fumadocs](https://fumadocs.dev) on Next.js.
 Static-export only — no Node runtime in production.
