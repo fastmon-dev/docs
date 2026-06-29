@@ -16,15 +16,15 @@
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
-    "fumadocs-core": "16.10.2",
+    "fumadocs-core": "16.10.5",
     "fumadocs-mdx": "15.0.12",
-    "fumadocs-openapi": "^11.0.3",
-    "fumadocs-ui": "16.10.2",
+    "fumadocs-openapi": "^11.0.5",
+    "fumadocs-ui": "16.10.5",
     "lucide-react": "^1.14.0",
     "next": "16.2.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "shiki": "^4.2.0",
+    "shiki": "^4.3.0",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
@@ -36,7 +36,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.9",
     "postcss": "^8.5.15",
-    "prettier": "^3.8.4",
+    "prettier": "^3.8.5",
     "serve": "^14.2.6",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3"
