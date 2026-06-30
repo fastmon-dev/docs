@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Shareable metric-panel view">
+
+The **Over time / Distribution / Both** toggle on the metric detail pages (LCP, FCP, CLS, INP, TTFB, Page Weight, …) is now reflected in the URL, with a **share-link button** — a copied link re-opens the exact view, time range pinned. Shared links to a panel view or a breakdown sub-panel now reliably keep their view (the `view`, `pview`, and `panel` params survive navigation) and scroll all the way to the target panel.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attribution tables show every row, with per-column aggregation">
+
+The slowest/worst pages, the breakdown grids, and the Cache and Errors attribution tables no longer hide low-volume rows behind a **≥1%-of-pageviews (min. 30)** floor — every row is shown; narrow by volume yourself in the Explorer (for example `beacons:ge:N`). And a count-only metric (Requests / Visitors) next to a value metric no longer forces the whole table to **Count** — each column uses its own aggregation, so **LCP shows its p75** instead of a meaningless count (the Explorer KPI tiles too).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: distribution of a dimension over time">
 
 In the Explorer you can now group by a categorical dimension — for example CDN or origin cache status — and chart how each of its values (HIT, MISS, EXPIRED, …) develops **over time** with a Line, Stacked Line, or Stacked Bar view, instead of only the aggregate breakdown. Stacked views toggle between **100%** (each value's share per interval) and **absolute** counts. You can overlay a second metric, such as TTFB, as a dashed line on a right-hand axis for context. Choosing a Group-by dimension no longer forces the chart to Bar — Line, Stacked, and Pie are kept where they make sense — and the chart-type picker greys out options that can't render the current query.

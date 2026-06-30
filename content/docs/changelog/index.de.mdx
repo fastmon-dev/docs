@@ -17,6 +17,18 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Teilbare Metrik-Panel-Ansicht">
+
+Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht, …) wird jetzt in der URL abgebildet, mit einem **Teilen-Button** — ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten jetzt zuverlässig ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen die Navigation) und scrollen vollständig zum Ziel-Panel.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attributionstabellen zeigen jede Zeile, mit Aggregation je Spalte">
+
+Die langsamsten/schlechtesten Seiten, die Breakdown-Grids sowie die Cache- und Fehler-Attributionstabellen verbergen Zeilen mit wenig Volumen nicht mehr hinter einer Grenze von **≥ 1 % der Seitenaufrufe (mind. 30)** — jede Zeile wird angezeigt; nach Volumen grenzt du selbst im Explorer ein (zum Beispiel `beacons:ge:N`). Und eine reine Zähl-Metrik (Requests / Visitors) neben einer Wert-Metrik zwingt die ganze Tabelle nicht mehr auf **Count** — jede Spalte nutzt ihre eigene Aggregation, sodass **LCP sein p75** statt einer sinnlosen Zahl zeigt (auch die Explorer-KPI-Kacheln).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: Verteilung einer Dimension über die Zeit">
 
 Im Explorer kannst du jetzt nach einer kategorialen Dimension gruppieren — etwa dem CDN- oder Origin-Cache-Status — und als Linie, gestapelte Linie oder gestapeltes Balkendiagramm darstellen, wie sich die einzelnen Werte (HIT, MISS, EXPIRED, …) **über die Zeit** entwickeln, statt nur die aggregierte Aufschlüsselung zu sehen. Gestapelte Ansichten schalten zwischen **100 %** (Anteil je Wert pro Intervall) und **absoluten** Zahlen um. Eine zweite Metrik wie TTFB lässt sich als gestrichelte Linie auf einer rechten Achse zur Einordnung überlagern. Eine Group-by-Dimension erzwingt nicht mehr das Balkendiagramm — Linie, Stapel und Kreis bleiben erhalten, wo sie sinnvoll sind — und der Diagrammtyp-Auswähler graut Optionen aus, die die aktuelle Abfrage nicht darstellen kann.
