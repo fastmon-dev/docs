@@ -1,6 +1,6 @@
 {
-  "backend": { "repo": "../backend", "since": "2026.6.57" },
-  "frontend": { "repo": "../frontend", "since": "2026.6.41" },
+  "backend": { "repo": "../backend", "since": "2026.6.58" },
+  "frontend": { "repo": "../frontend", "since": "2026.6.46" },
   "tracker": { "paths": ["tracker", "app/templates/source"] },
   "openapi": {
     "url": "https://api.fastmon.eu/v1/openapi.json",

@@ -17,6 +17,42 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: Verteilung einer Dimension über die Zeit">
+
+Im Explorer kannst du jetzt nach einer kategorialen Dimension gruppieren — etwa dem CDN- oder Origin-Cache-Status — und als Linie, gestapelte Linie oder gestapeltes Balkendiagramm darstellen, wie sich die einzelnen Werte (HIT, MISS, EXPIRED, …) **über die Zeit** entwickeln, statt nur die aggregierte Aufschlüsselung zu sehen. Gestapelte Ansichten schalten zwischen **100 %** (Anteil je Wert pro Intervall) und **absoluten** Zahlen um. Eine zweite Metrik wie TTFB lässt sich als gestrichelte Linie auf einer rechten Achse zur Einordnung überlagern. Eine Group-by-Dimension erzwingt nicht mehr das Balkendiagramm — Linie, Stapel und Kreis bleiben erhalten, wo sie sinnvoll sind — und der Diagrammtyp-Auswähler graut Optionen aus, die die aktuelle Abfrage nicht darstellen kann.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="fixed" area="dashboard" title="Prozent-Metriken im Explorer">
+
+Verhältnis-Metriken wie die Cache-Trefferquote werden in den Explorer-Diagrammen und -Tabellen jetzt als echter Prozentwert dargestellt (zum Beispiel **80 %**) statt als „0,8 %“.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Gut/Verbesserungswürdig/Schlecht-Aufteilung auf den Verteilungs-Cards">
+
+Die Verteilungs-Metrik-Cards im Dashboard zeigen jetzt die **Aufteilung Gut / Verbesserungswürdig / Schlecht** als farbcodierte Prozentwerte im Card-Kopf — für jede Metrik mit Schwellwerten, einschließlich FCP, TTFB und Seitenladezeit, nicht nur die Core Web Vitals — während Bewertungs-Badge und Trendpfeil an ihrem Platz bleiben. Das Histogramm der Card ist größer, und seine Balken lassen sich jetzt sowohl für Details überfahren als auch anklicken, um die Metrik-Detailseite zu öffnen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Filtern, ausschließen und Breakdown-Panels verlinken">
+
+Die Zeilen der „Woran es liegt“-Aufschlüsselung haben jetzt Hover-Aktionen **+ / −**, um einen Wert direkt zu filtern oder auszuschließen, passend zu den Grid-Panels je Zeile; Ausschließen wird mit Begründung deaktiviert angezeigt für Dimensionen, die sich nicht ausschließen lassen, etwa Seiten-URLs. Jedes Breakdown-Panel hat außerdem einen Teilen-Button, der direkt auf dieses Panel verlinkt — beim Öffnen des Links wird dorthin gescrollt und das Panel kurz hervorgehoben.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Aufgeräumtere Verteilungsdarstellung">
+
+Detailseiten wiederholen die Werteverteilung nicht mehr am Seitenende — sie lebt jetzt nur noch im oberen „Über die Zeit“-Panel. Die Grid-Panels der Aufschlüsselung zeigen den Anteil jedes Werts an den Seitenaufrufen neben der absoluten Zahl, und Teilen-Links stellen die gewählte Diagrammansicht (Über die Zeit, Verteilung oder beides) einer aufgeklappten Zeile wieder her, nicht nur die Zeile selbst. CDN- und Origin-Cache-Aufschlüsselungen enthalten jetzt einen „unbekannt“-Bucket für Antworten ohne Cache-Header, aber nur, wenn mindestens 1 % der Aufrufe einen bekannten Cache-Status haben, sodass eine vollständig ungecachte Seite kein nutzloses „unbekannt 100 %“-Panel mehr zeigt. Auf der Fehler-Seite wurde der „Im Explorer öffnen“-Button oben rechts entfernt — den Drill-down auf Datensatzebene erreichst du jetzt über die Tabellen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="api" title="Anzahl ad-geblockter Tracker-Aufrufe wird jetzt von der API zurückgegeben">
+
+Die Zahl der als ad-geblockt verworfenen Tracker-Aufrufe — bereits aus deiner Fehlerrate ausgeschlossen, aber nirgends ausgewiesen — wird jetzt von den Read-APIs zurückgegeben. Die Fetch/XHR-Endpunkt-Aufschlüsselung und das Detail je Beacon enthalten eine `blocked`-Zahl neben `aborts`, und die Fehlertypen-Übersicht liefert ein neues `blocked_count`. Deine Fehlerrate bleibt unverändert; das macht nur sichtbar, wie viele Aufrufe ausgeschlossen wurden, sodass das Dashboard „N als ad-geblockt ausgeschlossen“ anzeigen kann, statt sie still zu verwerfen. Siehe die [API-Referenz](/de/api).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metrik-Detailseiten neu gestaltet rund um ein „Über die Zeit“-Panel">
 
 Jede Metrik-Detailseite (LCP, INP, CLS, TBT, Seitengewicht und die Ladezeit-Seiten) beginnt jetzt mit einem einzigen **„Über die Zeit“-Panel**, das du zwischen dem Perzentil-Verlauf, der Werteverteilung oder beidem nebeneinander umschaltest. Die Verteilungs-Buckets und die Gut/Schlecht-Zonen sind klickbar: Sie öffnen den Explorer eingegrenzt auf diesen Wertebereich und übernehmen deinen aktuellen Zeitraum. Kurze Zeitfenster (2 Stunden oder weniger) werden jetzt minutengenau statt stündlich dargestellt, sodass eine Ein-Stunden-Ansicht nicht mehr fast leer ist.
