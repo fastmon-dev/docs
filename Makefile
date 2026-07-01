@@ -1,4 +1,4 @@
-.PHONY: help dev build start test lint typecheck format format-check generate-api draft-changelog
+.PHONY: help dev build start test lint lint-prose typecheck format format-check generate-api draft-changelog
 
 .DEFAULT: help
 
@@ -8,6 +8,7 @@ help:
 	@echo "make start        – Serve the built ./out locally"
 	@echo "make test         – Run type check, lint, and format check"
 	@echo "make lint         – Run ESLint"
+	@echo "make lint-prose   – Check changelog copy for banned punctuation / phrasing"
 	@echo "make typecheck    – Run TypeScript type checking (fumadocs-mdx + next typegen + tsc)"
 	@echo "make format       – Format code with Prettier"
 	@echo "make format-check – Check formatting without changes"
@@ -23,10 +24,13 @@ build:
 start:
 	npm run start
 
-test: typecheck lint format-check
+test: typecheck lint lint-prose format-check
 
 lint:
 	npm run lint
+
+lint-prose:
+	npm run lint:prose
 
 typecheck:
 	npm run types:check

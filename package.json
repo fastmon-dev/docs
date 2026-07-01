@@ -11,6 +11,7 @@
     "generate:api": "node scripts/generate-api-docs.mjs",
     "draft:changelog": "node scripts/draft-changelog.mjs",
     "lint": "eslint",
+    "lint:prose": "node scripts/check-prose.mjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" \"scripts/**/*.{mjs,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"scripts/**/*.{mjs,ts}\""
   },

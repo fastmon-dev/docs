@@ -14,19 +14,19 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Shareable metric-panel view">
 
-The **Over time / Distribution / Both** toggle on the metric detail pages (LCP, FCP, CLS, INP, TTFB, Page Weight, …) is now reflected in the URL, with a **share-link button** — a copied link re-opens the exact view, time range pinned. Shared links to a panel view or a breakdown sub-panel now reliably keep their view (the `view`, `pview`, and `panel` params survive navigation) and scroll all the way to the target panel.
+The **Over time / Distribution / Both** toggle on the metric detail pages (LCP, FCP, CLS, INP, TTFB, Page Weight) is now reflected in the URL, and the panel has a **share-link button**. A copied link reopens the exact view with the time range pinned. Shared links to a panel view or a breakdown sub-panel keep their view (the `view`, `pview`, and `panel` params now survive navigation) and scroll all the way to the target panel.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attribution tables show every row, with per-column aggregation">
 
-The slowest/worst pages, the breakdown grids, and the Cache and Errors attribution tables no longer hide low-volume rows behind a **≥1%-of-pageviews (min. 30)** floor — every row is shown; narrow by volume yourself in the Explorer (for example `beacons:ge:N`). And a count-only metric (Requests / Visitors) next to a value metric no longer forces the whole table to **Count** — each column uses its own aggregation, so **LCP shows its p75** instead of a meaningless count (the Explorer KPI tiles too).
+The slowest/worst pages, the breakdown grids, and the Cache and Errors attribution tables no longer hide low-volume rows behind a **≥1%-of-pageviews (min. 30)** floor. Every row is shown; narrow by volume yourself in the Explorer (for example `beacons:ge:N`). A count-only metric (Requests / Visitors) next to a value metric no longer forces the whole table to **Count**: each column uses its own aggregation, so **LCP shows its p75** rather than a meaningless count. The Explorer KPI tiles behave the same way.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: distribution of a dimension over time">
 
-In the Explorer you can now group by a categorical dimension — for example CDN or origin cache status — and chart how each of its values (HIT, MISS, EXPIRED, …) develops **over time** with a Line, Stacked Line, or Stacked Bar view, instead of only the aggregate breakdown. Stacked views toggle between **100%** (each value's share per interval) and **absolute** counts. You can overlay a second metric, such as TTFB, as a dashed line on a right-hand axis for context. Choosing a Group-by dimension no longer forces the chart to Bar — Line, Stacked, and Pie are kept where they make sense — and the chart-type picker greys out options that can't render the current query.
+In the Explorer you can now group by a categorical dimension, such as CDN or origin cache status, and chart how each of its values (HIT, MISS, EXPIRED) develops **over time** with a Line, Stacked Line, or Stacked Bar view, rather than only the aggregate breakdown. Stacked views toggle between **100%** (each value's share per interval) and **absolute** counts. You can overlay a second metric, such as TTFB, as a dashed line on a right-hand axis for context. Choosing a Group-by dimension no longer forces the chart to Bar: Line, Stacked, and Pie are kept where they make sense, and the chart-type picker greys out options that can't render the current query.
 
 </ChangelogEntry>
 
@@ -38,25 +38,25 @@ Ratio metrics such as cache hit rate now render as a real percentage (for exampl
 
 <ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Good / Needs-improvement / Poor split on the distribution cards">
 
-The dashboard's distribution metric cards now show the **Good / Needs-improvement / Poor split** as colour-coded percentages in the card header — for every metric with thresholds, including FCP, TTFB, and Page Load, not just the Core Web Vitals — while the rating badge and trend arrow stay in place. The card histogram is larger, and its bars are now both hoverable for detail and clickable to open the metric detail page.
+The dashboard's distribution metric cards now show the **Good / Needs-improvement / Poor split** as colour-coded percentages in the card header, for every metric with thresholds (the Core Web Vitals plus FCP, TTFB, and Page Load), while the rating badge and trend arrow stay in place. The card histogram is larger, and its bars are now both hoverable for detail and clickable to open the metric detail page.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Filter, exclude, and deep-link breakdown panels">
 
-The “What's driving it” breakdown rows now carry hover **+ / −** actions to filter to or exclude a value in place, matching the per-row grid panels; exclude is shown disabled with a reason for dimensions that can't be excluded, such as page URLs. Each breakdown panel also has a share button that deep-links straight to that panel — opening the link scrolls to it and briefly highlights it.
+The “What's driving it” breakdown rows now carry hover **+ / −** actions to filter to or exclude a value in place, matching the per-row grid panels. For dimensions that can't be excluded, such as page URLs, exclude is shown disabled with a reason. Each breakdown panel also has a share button that deep-links straight to that panel; opening the link scrolls to it and briefly highlights it.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Cleaner distribution presentation">
 
-Detail pages no longer repeat the value distribution at the bottom of the page — it now lives only in the top “Over time” panel. Breakdown grid panels show each value's share of pageviews next to the absolute count, and share links restore the chosen chart view (Over time, Distribution, or both) of an expanded row, not just the row itself. CDN and origin cache breakdowns now include an “unknown” bucket for responses with no cache header, but only when at least 1% of views have a known cache status, so an all-uncached site no longer shows a useless “unknown 100%” panel. On the Errors page, the top-right “Open in Explorer” button has been removed — record-level drill-down is reached from the tables instead.
+Detail pages no longer repeat the value distribution at the bottom of the page; it now lives only in the top “Over time” panel. Breakdown grid panels show each value's share of pageviews next to the absolute count, and share links restore the chosen chart view (Over time, Distribution, or both) of an expanded row, not only the row itself. CDN and origin cache breakdowns now include an “unknown” bucket for responses with no cache header, but only when at least 1% of views have a known cache status, so an all-uncached site no longer shows a useless “unknown 100%” panel. On the Errors page, the top-right “Open in Explorer” button has been removed; record-level drill-down is reached from the tables instead.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-26" type="changed" area="api" title="Ad-blocked tracker count is now returned by the API">
 
-The number of tracker calls dropped as ad-blocked — already excluded from your error rate, but not reported anywhere — is now returned by the read APIs. The fetch/XHR endpoint breakdown and the per-beacon detail include a `blocked` count alongside `aborts`, and the error-types overview returns a new `blocked_count`. Your error rate is unchanged; this only surfaces how many calls were excluded, so the dashboard can show “N excluded as ad-blocked” instead of silently dropping them. See the [API reference](/en/api).
+Tracker calls dropped as ad-blocked were already excluded from your error rate, but not reported anywhere. The read APIs now return that count: the fetch/XHR endpoint breakdown and the per-beacon detail include a `blocked` count alongside `aborts`, and the error-types overview returns a new `blocked_count`. Your error rate is unchanged; this only surfaces how many calls were excluded, so the dashboard can show “N excluded as ad-blocked” rather than silently dropping them. See the [API reference](/en/api).
 
 </ChangelogEntry>
 

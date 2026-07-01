@@ -21,6 +21,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run lint:prose
       - run: npm run format:check
       # `if: always()` so the typecheck still runs (and reports) even when an
       # earlier check fails — we want both signals from a single run rather

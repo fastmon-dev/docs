@@ -19,19 +19,19 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Teilbare Metrik-Panel-Ansicht">
 
-Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht, …) wird jetzt in der URL abgebildet, mit einem **Teilen-Button** — ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten jetzt zuverlässig ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen die Navigation) und scrollen vollständig zum Ziel-Panel.
+Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht) wird jetzt in der URL abgebildet, und das Panel hat einen **Teilen-Button**. Ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen jetzt die Navigation) und scrollen vollständig zum Ziel-Panel.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attributionstabellen zeigen jede Zeile, mit Aggregation je Spalte">
 
-Die langsamsten/schlechtesten Seiten, die Breakdown-Grids sowie die Cache- und Fehler-Attributionstabellen verbergen Zeilen mit wenig Volumen nicht mehr hinter einer Grenze von **≥ 1 % der Seitenaufrufe (mind. 30)** — jede Zeile wird angezeigt; nach Volumen grenzt du selbst im Explorer ein (zum Beispiel `beacons:ge:N`). Und eine reine Zähl-Metrik (Requests / Visitors) neben einer Wert-Metrik zwingt die ganze Tabelle nicht mehr auf **Count** — jede Spalte nutzt ihre eigene Aggregation, sodass **LCP sein p75** statt einer sinnlosen Zahl zeigt (auch die Explorer-KPI-Kacheln).
+Die langsamsten/schlechtesten Seiten, die Breakdown-Grids sowie die Cache- und Fehler-Attributionstabellen verbergen Zeilen mit wenig Volumen nicht mehr hinter einer Grenze von **≥ 1 % der Seitenaufrufe (mind. 30)**. Jede Zeile wird angezeigt; nach Volumen grenzt du selbst im Explorer ein (zum Beispiel `beacons:ge:N`). Eine reine Zähl-Metrik (Requests / Visitors) neben einer Wert-Metrik zwingt die ganze Tabelle nicht mehr auf **Count**: Jede Spalte nutzt ihre eigene Aggregation, sodass **LCP sein p75** statt einer sinnlosen Zahl zeigt. Für die Explorer-KPI-Kacheln gilt dasselbe.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: Verteilung einer Dimension über die Zeit">
 
-Im Explorer kannst du jetzt nach einer kategorialen Dimension gruppieren — etwa dem CDN- oder Origin-Cache-Status — und als Linie, gestapelte Linie oder gestapeltes Balkendiagramm darstellen, wie sich die einzelnen Werte (HIT, MISS, EXPIRED, …) **über die Zeit** entwickeln, statt nur die aggregierte Aufschlüsselung zu sehen. Gestapelte Ansichten schalten zwischen **100 %** (Anteil je Wert pro Intervall) und **absoluten** Zahlen um. Eine zweite Metrik wie TTFB lässt sich als gestrichelte Linie auf einer rechten Achse zur Einordnung überlagern. Eine Group-by-Dimension erzwingt nicht mehr das Balkendiagramm — Linie, Stapel und Kreis bleiben erhalten, wo sie sinnvoll sind — und der Diagrammtyp-Auswähler graut Optionen aus, die die aktuelle Abfrage nicht darstellen kann.
+Im Explorer kannst du jetzt nach einer kategorialen Dimension gruppieren, etwa dem CDN- oder Origin-Cache-Status, und als Linie, gestapelte Linie oder gestapeltes Balkendiagramm darstellen, wie sich die einzelnen Werte (HIT, MISS, EXPIRED) **über die Zeit** entwickeln, statt nur die aggregierte Aufschlüsselung zu sehen. Gestapelte Ansichten schalten zwischen **100 %** (Anteil je Wert pro Intervall) und **absoluten** Zahlen um. Eine zweite Metrik wie TTFB lässt sich als gestrichelte Linie auf einer rechten Achse zur Einordnung überlagern. Eine Group-by-Dimension erzwingt nicht mehr das Balkendiagramm: Linie, Stapel und Kreis bleiben erhalten, wo sie sinnvoll sind, und der Diagrammtyp-Auswähler graut Optionen aus, die die aktuelle Abfrage nicht darstellen kann.
 
 </ChangelogEntry>
 
@@ -43,25 +43,25 @@ Verhältnis-Metriken wie die Cache-Trefferquote werden in den Explorer-Diagramme
 
 <ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Gut/Verbesserungswürdig/Schlecht-Aufteilung auf den Verteilungs-Cards">
 
-Die Verteilungs-Metrik-Cards im Dashboard zeigen jetzt die **Aufteilung Gut / Verbesserungswürdig / Schlecht** als farbcodierte Prozentwerte im Card-Kopf — für jede Metrik mit Schwellwerten, einschließlich FCP, TTFB und Seitenladezeit, nicht nur die Core Web Vitals — während Bewertungs-Badge und Trendpfeil an ihrem Platz bleiben. Das Histogramm der Card ist größer, und seine Balken lassen sich jetzt sowohl für Details überfahren als auch anklicken, um die Metrik-Detailseite zu öffnen.
+Die Verteilungs-Metrik-Cards im Dashboard zeigen jetzt die **Aufteilung Gut / Verbesserungswürdig / Schlecht** als farbcodierte Prozentwerte im Card-Kopf, für jede Metrik mit Schwellwerten (die Core Web Vitals plus FCP, TTFB und Seitenladezeit), während Bewertungs-Badge und Trendpfeil an ihrem Platz bleiben. Das Histogramm der Card ist größer, und seine Balken lassen sich jetzt sowohl für Details überfahren als auch anklicken, um die Metrik-Detailseite zu öffnen.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Filtern, ausschließen und Breakdown-Panels verlinken">
 
-Die Zeilen der „Woran es liegt“-Aufschlüsselung haben jetzt Hover-Aktionen **+ / −**, um einen Wert direkt zu filtern oder auszuschließen, passend zu den Grid-Panels je Zeile; Ausschließen wird mit Begründung deaktiviert angezeigt für Dimensionen, die sich nicht ausschließen lassen, etwa Seiten-URLs. Jedes Breakdown-Panel hat außerdem einen Teilen-Button, der direkt auf dieses Panel verlinkt — beim Öffnen des Links wird dorthin gescrollt und das Panel kurz hervorgehoben.
+Die Zeilen der „Woran es liegt“-Aufschlüsselung haben jetzt Hover-Aktionen **+ / −**, um einen Wert direkt zu filtern oder auszuschließen, passend zu den Grid-Panels je Zeile. Für Dimensionen, die sich nicht ausschließen lassen, etwa Seiten-URLs, wird Ausschließen mit Begründung deaktiviert angezeigt. Jedes Breakdown-Panel hat außerdem einen Teilen-Button, der direkt auf dieses Panel verlinkt; beim Öffnen des Links wird dorthin gescrollt und das Panel kurz hervorgehoben.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Aufgeräumtere Verteilungsdarstellung">
 
-Detailseiten wiederholen die Werteverteilung nicht mehr am Seitenende — sie lebt jetzt nur noch im oberen „Über die Zeit“-Panel. Die Grid-Panels der Aufschlüsselung zeigen den Anteil jedes Werts an den Seitenaufrufen neben der absoluten Zahl, und Teilen-Links stellen die gewählte Diagrammansicht (Über die Zeit, Verteilung oder beides) einer aufgeklappten Zeile wieder her, nicht nur die Zeile selbst. CDN- und Origin-Cache-Aufschlüsselungen enthalten jetzt einen „unbekannt“-Bucket für Antworten ohne Cache-Header, aber nur, wenn mindestens 1 % der Aufrufe einen bekannten Cache-Status haben, sodass eine vollständig ungecachte Seite kein nutzloses „unbekannt 100 %“-Panel mehr zeigt. Auf der Fehler-Seite wurde der „Im Explorer öffnen“-Button oben rechts entfernt — den Drill-down auf Datensatzebene erreichst du jetzt über die Tabellen.
+Detailseiten wiederholen die Werteverteilung nicht mehr am Seitenende; sie lebt jetzt nur noch im oberen „Über die Zeit“-Panel. Die Grid-Panels der Aufschlüsselung zeigen den Anteil jedes Werts an den Seitenaufrufen neben der absoluten Zahl, und Teilen-Links stellen die gewählte Diagrammansicht (Über die Zeit, Verteilung oder beides) einer aufgeklappten Zeile wieder her, nicht nur die Zeile selbst. CDN- und Origin-Cache-Aufschlüsselungen enthalten jetzt einen „unbekannt“-Bucket für Antworten ohne Cache-Header, aber nur, wenn mindestens 1 % der Aufrufe einen bekannten Cache-Status haben, sodass eine vollständig ungecachte Seite kein nutzloses „unbekannt 100 %“-Panel mehr zeigt. Auf der Fehler-Seite wurde der „Im Explorer öffnen“-Button oben rechts entfernt; den Drill-down auf Datensatzebene erreichst du jetzt über die Tabellen.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-06-26" type="changed" area="api" title="Anzahl ad-geblockter Tracker-Aufrufe wird jetzt von der API zurückgegeben">
 
-Die Zahl der als ad-geblockt verworfenen Tracker-Aufrufe — bereits aus deiner Fehlerrate ausgeschlossen, aber nirgends ausgewiesen — wird jetzt von den Read-APIs zurückgegeben. Die Fetch/XHR-Endpunkt-Aufschlüsselung und das Detail je Beacon enthalten eine `blocked`-Zahl neben `aborts`, und die Fehlertypen-Übersicht liefert ein neues `blocked_count`. Deine Fehlerrate bleibt unverändert; das macht nur sichtbar, wie viele Aufrufe ausgeschlossen wurden, sodass das Dashboard „N als ad-geblockt ausgeschlossen“ anzeigen kann, statt sie still zu verwerfen. Siehe die [API-Referenz](/de/api).
+Als ad-geblockt verworfene Tracker-Aufrufe waren bereits aus deiner Fehlerrate ausgeschlossen, aber nirgends ausgewiesen. Die Read-APIs geben diese Zahl jetzt zurück: Die Fetch/XHR-Endpunkt-Aufschlüsselung und das Detail je Beacon enthalten eine `blocked`-Zahl neben `aborts`, und die Fehlertypen-Übersicht liefert ein neues `blocked_count`. Deine Fehlerrate bleibt unverändert; das macht nur sichtbar, wie viele Aufrufe ausgeschlossen wurden, sodass das Dashboard „N als ad-geblockt ausgeschlossen“ anzeigen kann, statt sie still zu verwerfen. Siehe die [API-Referenz](/de/api).
 
 </ChangelogEntry>
 
