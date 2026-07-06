@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Release-Marker auf jedem Chart, mit klarerem Hover">
+
+Release-Marker funktionieren jetzt auf jedem Chart gleich. Die Charts der **Analytics**-Seite (Besucher, Seitenaufrufe, Aufrufe pro Besuch) zeigen sie erstmals, und jedes Zeitreihen-Chart zeichnet sie aus einer gemeinsamen Implementierung, sodass App- und Tracker-Marker überall identisch aussehen und sich gleich verhalten. Charts, die einen Release bisher verbargen, wenn er im gewählten Zeitraum, aber außerhalb der geladenen Daten lag (LCP, Cache-Trefferquote, Synthetic, Explorer), zeigen nun jeden Release im Bereich. Auch das Hover ist überarbeitet: Ein Band am oberen Chart-Rand macht die Marker leicht greifbar, dicht beieinanderliegende Marker werden zu einem Ziel mit Zähler zusammengefasst, und der Marker-Tooltip kollidiert nicht mehr mit dem Daten-Tooltip des Charts und wird am Rand nicht mehr abgeschnitten.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Teilbare Metrik-Panel-Ansicht">
 
 Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht) wird jetzt in der URL abgebildet, und das Panel hat einen **Teilen-Button**. Ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen jetzt die Navigation) und scrollen vollständig zum Ziel-Panel.
