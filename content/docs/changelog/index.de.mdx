@@ -17,6 +17,18 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-06" type="new" area="dashboard" title="Farbenblind-freundlicher Modus">
+
+Ein neuer **farbenblind-freundlicher Modus** unter Account, Darstellung stellt die Status- und Diagrammpalette auf ein rot/grün-sicheres Schema um (Blau, Orange, Zinnoberrot), sodass die Bewertungen Gut / Verbesserungswürdig / Schlecht überall im Dashboard, in den Diagrammen, der Geo-Karte und den Heatmaps als Blau, Orange und Rot erscheinen. Status-Indikatoren tragen zusätzlich Symbole, damit die Bedeutung nie allein von der Farbe abhängt. Die Einstellung wird auf deinem Gerät gemerkt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="fixed" area="dashboard" title="KI-Assistent „Ask“ wiederholt seine Antwort nicht mehr">
+
+Der KI-Assistent „Ask“ hat dieselbe Antwort manchmal zweimal gestreamt und doppelt gespeichert, sodass sie doppelt erschien und nach einem Neuladen doppelt blieb. Eine Ausgabeprüfung hat die Antwort neu erzeugt, nachdem sie bereits gesendet war; diese Selbstkorrektur ist entfernt, und die Prüfung protokolliert Auffälligkeiten jetzt nur noch, statt ein erneutes Senden auszulösen. Jede Antwort wird einmal gesendet und einmal gespeichert.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache-Monitoring, entlang des Request-Pfads neu geordnet">
 
 Die Cache-Seite ist jetzt entlang der drei Schichten aufgebaut, die ein Request durchläuft, mit einem Umschalter **Browser / CDN / Origin**. Jede Schicht zeigt denselben Panel-Satz: Trefferquote, Status-Verteilung, ein gestapeltes Diagramm „Cache-Status über Zeit“ (mit Umschalter absolut/prozentual und einer Legende, die per Klick einen einzelnen Wert isoliert) sowie die Zuordnung nach Seite. Der Browser-Cache ist auf wiederkehrende Aufrufe umgestellt (Reloads sowie Vor und Zurück), bei denen der Cache warm ist; er trägt keine Gut/Schlecht-Bewertung mehr, da es keinen verbindlichen Zielwert gibt, und eine Kennzahl „Erste Navigationen“ liefert Kontext. CDN und Origin nutzen die nativen Trefferquoten-Metriken und schließen Soft-Navigationen aus, die kein Dokument laden und keinen Cache-Status tragen. Ein neues Panel **Ressourcen nach Typ** schlüsselt den Traffic nach Skript, CSS, Bildern, Schriften und Sonstigem auf, mit Umschalter Anzahl/Bytes. Das Dashboard erhält ein einzelnes kombiniertes Cache-Widget mit demselben Umschalter, und der Menüpunkt Cache ist als **Neu** markiert.

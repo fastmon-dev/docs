@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-06" type="new" area="dashboard" title="Colorblind-friendly mode">
+
+A new **Colorblind-friendly mode** under Account, Appearance swaps the status and chart palette to a red/green-safe scheme (blue, orange, vermillion), so the Good / Needs-improvement / Poor ratings read as blue, orange, and red across the dashboard, its charts, the geo map, and the heatmaps. Status indicators also carry icons, so meaning never depends on colour alone. The setting is remembered on your device.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="fixed" area="dashboard" title="AI Ask no longer repeats its answer">
+
+The AI Ask assistant sometimes streamed the same answer twice and stored two copies, so the reply showed up doubled and stayed doubled after a reload. An output check was regenerating the answer after it had already been sent; that self-correction is gone, and the check now only logs issues instead of triggering a resend. Each answer is sent and stored once.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache monitoring, reorganised around the request path">
 
 The Cache page is now built around the three layers a request passes through, with a **Browser / CDN / Origin** switcher. Each layer shows the same panels: hit rate, status distribution, a stacked cache-status-over-time chart (with an absolute/percent toggle and a click-to-isolate legend), and page attribution. Browser cache is reframed around returning views (reloads and back/forward navigations), where the cache is warm; it no longer carries a Good/Poor rating, since there is no authoritative target, and a “First navigations” figure gives context. CDN and Origin read native hit-rate metrics and exclude soft navigations, which fetch no document and carry no cache status. A new **Resources by type** panel splits traffic into script, CSS, images, fonts, and other, with a count/bytes toggle. The dashboard gets a single combined cache widget with the same switcher, and the Cache nav item is marked **New**.
