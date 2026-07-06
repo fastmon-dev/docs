@@ -12,6 +12,12 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache monitoring, reorganised around the request path">
+
+The Cache page is now built around the three layers a request passes through, with a **Browser / CDN / Origin** switcher. Each layer shows the same panels: hit rate, status distribution, a stacked cache-status-over-time chart (with an absolute/percent toggle and a click-to-isolate legend), and page attribution. Browser cache is reframed around returning views (reloads and back/forward navigations), where the cache is warm; it no longer carries a Good/Poor rating, since there is no authoritative target, and a “First navigations” figure gives context. CDN and Origin read native hit-rate metrics and exclude soft navigations, which fetch no document and carry no cache status. A new **Resources by type** panel splits traffic into script, CSS, images, fonts, and other, with a count/bytes toggle. The dashboard gets a single combined cache widget with the same switcher, and the Cache nav item is marked **New**.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Release markers on every chart, with a clearer hover">
 
 Release markers now work the same on every chart. The **Analytics** page charts (visitors, pageviews, views per visit) show them for the first time, and every time-series chart draws them from one shared implementation, so app and tracker markers look and behave identically. Charts that used to hide a release falling inside your selected window but outside the loaded data (LCP, cache hit rate, synthetic, Explorer) now show every release in range. The hover is reworked too: a band along the top of the chart makes markers easy to grab, close-together markers group into one target with a count, and the marker tooltip no longer collides with the chart's data tooltip or clips at the edge.

@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache-Monitoring, entlang des Request-Pfads neu geordnet">
+
+Die Cache-Seite ist jetzt entlang der drei Schichten aufgebaut, die ein Request durchläuft, mit einem Umschalter **Browser / CDN / Origin**. Jede Schicht zeigt denselben Panel-Satz: Trefferquote, Status-Verteilung, ein gestapeltes Diagramm „Cache-Status über Zeit“ (mit Umschalter absolut/prozentual und einer Legende, die per Klick einen einzelnen Wert isoliert) sowie die Zuordnung nach Seite. Der Browser-Cache ist auf wiederkehrende Aufrufe umgestellt (Reloads sowie Vor und Zurück), bei denen der Cache warm ist; er trägt keine Gut/Schlecht-Bewertung mehr, da es keinen verbindlichen Zielwert gibt, und eine Kennzahl „Erste Navigationen“ liefert Kontext. CDN und Origin nutzen die nativen Trefferquoten-Metriken und schließen Soft-Navigationen aus, die kein Dokument laden und keinen Cache-Status tragen. Ein neues Panel **Ressourcen nach Typ** schlüsselt den Traffic nach Skript, CSS, Bildern, Schriften und Sonstigem auf, mit Umschalter Anzahl/Bytes. Das Dashboard erhält ein einzelnes kombiniertes Cache-Widget mit demselben Umschalter, und der Menüpunkt Cache ist als **Neu** markiert.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Release-Marker auf jedem Chart, mit klarerem Hover">
 
 Release-Marker funktionieren jetzt auf jedem Chart gleich. Die Charts der **Analytics**-Seite (Besucher, Seitenaufrufe, Aufrufe pro Besuch) zeigen sie erstmals, und jedes Zeitreihen-Chart zeichnet sie aus einer gemeinsamen Implementierung, sodass App- und Tracker-Marker überall identisch aussehen und sich gleich verhalten. Charts, die einen Release bisher verbargen, wenn er im gewählten Zeitraum, aber außerhalb der geladenen Daten lag (LCP, Cache-Trefferquote, Synthetic, Explorer), zeigen nun jeden Release im Bereich. Auch das Hover ist überarbeitet: Ein Band am oberen Chart-Rand macht die Marker leicht greifbar, dicht beieinanderliegende Marker werden zu einem Ziel mit Zähler zusammengefasst, und der Marker-Tooltip kollidiert nicht mehr mit dem Daten-Tooltip des Charts und wird am Rand nicht mehr abgeschnitten.
