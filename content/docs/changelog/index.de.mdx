@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-07" type="changed" area="dashboard" title="Org-weite Navigation: deine Site-Auswahl wandert mit">
+
+Jede Monitoring-Seite liegt jetzt unter einer org-bezogenen URL, und die Site ist ein Filter, der dich wie der Zeitraum von Seite zu Seite begleitet. Ohne ausgewählte Site siehst du die gesamte Organisation aggregiert, und der Umschalter in der Seitenleiste hat einen eigenen Zustand **Alle Sites**. Der Umschalter erlaubt jetzt Mehrfachauswahl: Ein Klick auf eine Site springt zu ihr, per Checkbox (oder Cmd/Strg-Klick) kombinierst du mehrere. Site-Tags grenzen die Daten jetzt wirklich ein, mehrere Tags werden mit UND verknüpft; der alte, wirkungslose Tag-Selektor ist weg. Alte Site-Links funktionieren weiter über eine dauerhafte Weiterleitung, die die Site als Filter übernimmt. In der Cmd+K-Palette schränkt die Eingabe `org:` die Suche auf Organisationen ein.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-06" type="new" area="dashboard" title="Farbenblind-freundlicher Modus">
 
 Ein neuer **farbenblind-freundlicher Modus** unter Account, Darstellung stellt die Status- und Diagrammpalette auf ein rot/grün-sicheres Schema um (Blau, Orange, Zinnoberrot), sodass die Bewertungen Gut / Verbesserungswürdig / Schlecht überall im Dashboard, in den Diagrammen, der Geo-Karte und den Heatmaps als Blau, Orange und Rot erscheinen. Status-Indikatoren tragen zusätzlich Symbole, damit die Bedeutung nie allein von der Farbe abhängt. Die Einstellung wird auf deinem Gerät gemerkt.
