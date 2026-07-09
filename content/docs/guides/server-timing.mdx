@@ -29,7 +29,7 @@ The browser parses it into the navigation entry's [`serverTiming`](https://devel
 | `dur`  | `dur=`          | the reported duration in milliseconds (optional)          |
 | `desc` | `desc=`         | the free-text description (optional) — e.g. a cache status |
 
-This is **first-party by construction**: the only `Server-Timing` the beacon can see is the one your own origin put on your own document. There's nothing to enable in the beacon and no third-party header is ever read. It's collected in every [collection mode](/en/collection-modes) — it carries no visitor information, just your server's own timing.
+This is **first-party by construction**: the only `Server-Timing` the beacon can see is the one your own origin put on your own document. There's nothing to enable in the beacon and no third-party header is ever read. It's collected under every [tracker setting](/en/tracker) — it carries no visitor information, just your server's own timing.
 
 ## How fastmon normalizes it
 

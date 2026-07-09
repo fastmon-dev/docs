@@ -29,7 +29,7 @@ Der Browser parst ihn in das [`serverTiming`](https://developer.mozilla.org/en-U
 | `dur`  | `dur=`          | die gemeldete Dauer in Millisekunden (optional)       |
 | `desc` | `desc=`         | der Freitext (optional) — z. B. ein Cache-Status      |
 
-Das ist **per Konstruktion First-Party**: Das einzige `Server-Timing`, das der Beacon sehen kann, ist das, das dein eigener Origin auf dein eigenes Dokument gesetzt hat. Es gibt nichts im Beacon zu aktivieren, und es wird nie ein Third-Party-Header gelesen. Erfasst wird es in jedem [Collection Mode](/de/collection-modes) — es trägt keine Besucherinformation, nur die Timing-Werte deines Servers.
+Das ist **per Konstruktion First-Party**: Das einzige `Server-Timing`, das der Beacon sehen kann, ist das, das dein eigener Origin auf dein eigenes Dokument gesetzt hat. Es gibt nichts im Beacon zu aktivieren, und es wird nie ein Third-Party-Header gelesen. Erfasst wird es unter jeder [Tracker-Einstellung](/de/tracker) — es trägt keine Besucherinformation, nur die Timing-Werte deines Servers.
 
 ## Wie fastmon die Werte normalisiert
 

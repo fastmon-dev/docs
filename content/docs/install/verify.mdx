@@ -21,7 +21,7 @@ A `204 No Content` response means the beacon was accepted. That's it; you're up.
 
 Open the site in the fastmon dashboard. After about a minute (beacons are batched into ClickHouse), the **Traffic** section will show:
 
-- non-zero **page views** and **unique visitors** (the visitor count comes from the edge-derived `stitch` and works in every mode; only the *session* identity stays at zero in the default `anonymous` mode, which is expected. See [Visitors and sessions](/en/concepts/sessions)),
+- non-zero **page views** and **unique visitors** (new sites start on `Standard`, which stores the edge-derived `stitch`). Session-level counts need [`store_session`](/en/tracker#store-session) (the `Full` preset); the `Minimal` preset stores no identifier, so its visitor and session counts stay at zero by design. See [Visitors and sessions](/en/concepts/sessions),
 - a **Web Vitals** snapshot for at least the page you opened.
 
 If the only traffic you see is your own visit so far, that's fine; real traffic builds up as visitors load pages.
@@ -60,5 +60,5 @@ Grab the `X-Request-ID` header from any failing response (DevTools â†’ Network â
 
 ## What's next
 
-- Pick a [collection mode](/en/collection-modes) if `anonymous` isn't right for you.
+- Pick a [preset](/en/tracker) or adjust the [tracker settings](/en/tracker) if Standard isn't right for you (switch to Minimal or Full).
 - Tag your first [release](/en/guides/compare-releases) to start comparing deploys.

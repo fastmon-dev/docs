@@ -10,7 +10,7 @@ Fastmons Datenmodell ist klein gehalten, mit Absicht. Wer fünf Ressourcen kennt
   <Card title="Sites" href="/de/concepts/sites" description="Eine überwachte Property. Hat eigene Beacon-Hashes und Einstellungen." />
   <Card title="Sessions" href="/de/concepts/sessions" description="Ein kurzes Fenster von Pageviews desselben Browsers. Anonym per Konstruktion." />
   <Card title="Releases" href="/de/concepts/releases" description="Versionierter Marker auf einer Site. Für Vorher/Nachher-Vergleiche." />
-  <Card title="Collection Modes" href="/de/collection-modes" description="anonymous / consent / full: was der Beacon im Browser tut." />
+  <Card title="Tracker-Einstellungen" href="/de/tracker" description="Presets und die Konfiguration pro Einstellung: was der Beacon im Browser tut." />
 </Cards>
 
 ## Wie die Teile zusammenhängen
@@ -21,7 +21,7 @@ Organisation
  ├── API-Tokens
  ├── Notification Rules
  └── Sites
-      ├── Einstellungen (Collection Mode, Retention, Allowed Origins)
+      ├── Einstellungen (Preset, Retention, Allowed Origins)
       ├── source_hash + collector_hash  (Beacon-URLs)
       ├── Releases
       └── Tags
@@ -35,6 +35,6 @@ Wenn du neu bist, in dieser Reihenfolge:
 
 1. [Organisationen](/de/concepts/organizations): was ein Account eigentlich ist.
 2. [Sites](/de/concepts/sites): was du überwachst.
-3. [Collection Modes](/de/collection-modes): was der Beacon pro Site tut.
+3. [Tracker-Einstellungen](/de/tracker): was der Beacon pro Site tut.
 4. [Sessions](/de/concepts/sessions): wie Pageviews gruppiert werden.
 5. [Releases](/de/concepts/releases): für Vorher/Nachher-Deploys.

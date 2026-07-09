@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-09" type="changed" area="platform" title="Collection modes are now presets and per-setting configuration">
+
+A site's data collection is no longer one of three fixed modes. You pick a **preset** (Minimal, Standard, or Full) when you create a site, then tune each setting on its own: the on-device session id and its consent timing, the edge-derived visitor signal, query-parameter names, error messages and stack-frame detail, and fetch/XHR capture. New sites start on **Standard**, which turns on unique-visitor counts and diagnostics while still writing nothing to the visitor's device. The old `collection_mode` values keep working as a deprecated API alias. See [Tracker settings](/en/tracker).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-09" type="changed" area="tracker" title="Per-domain visitor signal, and no cookies">
+
+The edge-derived `stitch` signal now includes the page domain in its input, so a visitor gets a different signal on each domain: an org-level tracker routes to a site per domain but no longer counts a visitor as one across domains. The beacon also sets no cookies in any build; the only thing written to the device is a single `sessionStorage` entry (`_fms`), the session id, and only when `store_session` is on. Your consent-management platform switches that write on with `window.fastmon.grantConsent()`. See [The RUM Beacon](/en/concepts/beacon) and [Privacy](/en/privacy).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-07" type="changed" area="dashboard" title="Org-scoped navigation: your site selection follows you">
 
 Every monitoring page now lives under an org-scoped URL, and the site is a filter that follows you from page to page like the time range. With no site selected you see the whole org aggregated, and the sidebar switcher has an explicit **All sites** state. The switcher is now multi-select: click a site to jump to it, or use its checkbox (or Cmd/Ctrl-click) to combine several. Site tags now actually scope the data, with multiple tags combining as AND; the old tag selector that had no effect is gone. Old per-site links keep working through a permanent redirect that carries the site over as the filter. Typing `org:` in the Cmd+K palette narrows the search to organizations.

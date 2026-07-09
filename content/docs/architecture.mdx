@@ -11,28 +11,33 @@ Fastmon is two services (an API backend and a single-page dashboard) on top of t
                    visitor browser
                           │
                           ▼
-        ┌─────────────────────────────────────┐
-        │   beacon.js  (PerformanceObserver)  │
-        └─────────────────────────────────────┘
+             beacon.js  (PerformanceObserver)
                           │
-        ┌──── POST /c/{collector_hash} ──────┐
-        ▼                                    │
-   collector  ──── validate, derive geo ─────┤
-        │                                    │
-        ├──── per-process buffer (~30 s) ────┤
-        │                                    │
-        ▼                                    │
-   analytics store                           │
-                                             │
-                    dashboard ───────────────┘
-                          │
+              POST /c/{collector_hash}
                           ▼
-                  analytics queries
+        ┌─────────────────────────────────────┐
+        │  EU edge                            │
+        │  strips IP + User-Agent,            │
+        │  derives country, computes stitch   │
+        └─────────────────────────────────────┘
+                          │  FM-* headers, no raw IP / UA
+                          ▼
+     collector  ──── validate, rate-limit ─────┐
+                          │                     │
+              per-process buffer (~30 s)        │
+                          │                     │
+                          ▼                     │
+                  analytics store               │
+                              dashboard ────────┘
+                                    │
+                                    ▼
+                            analytics queries
 ```
 
-Two spots in the pipeline matter if you want to understand the behavior:
+Three spots in the pipeline matter if you want to understand the behavior:
 
-- **Browser → collector.** A few batched `POST`s per page-view, spread over its lifecycle (load, `pagehide` / `visibilitychange`, periodic flush). See [The RUM Beacon](/en/concepts/beacon).
+- **Browser → EU edge.** The edge strips the visitor's IP and User-Agent at the network boundary, derives the 2-letter country from the IP, and computes the bounded, pseudonymous `stitch` before forwarding. The application only ever sees pre-derived `FM-*` headers, never a raw IP or UA. See [Privacy](/en/privacy).
+- **Edge → collector.** A few batched `POST`s per page-view, spread over its lifecycle (load, `pagehide` / `visibilitychange`, periodic flush). See [The RUM Beacon](/en/concepts/beacon).
 - **Collector → analytics store.** Beacons land in a per-process buffer and flush every few seconds via batched insert. That's why your first visitor takes ~30 s to show up in the dashboard.
 
 ## Components
@@ -40,7 +45,8 @@ Two spots in the pipeline matter if you want to understand the behavior:
 | Component         | What it does                                                                |
 | ----------------- | --------------------------------------------------------------------------- |
 | Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
-| Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, geo derive. |
+| EU edge           | Strips IP and User-Agent at the network boundary, derives country from the IP, computes the bounded `stitch`. Raw IP and UA never reach the application. |
+| Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, server-side sanitization. |
 | API               | `/v1/...`: authenticated REST. Powers the dashboard.                   |
 | Dashboard         | Single-page app. Reads via the API. Static assets only.                     |
 | Configuration DB  | Users, organizations, sites, settings, billing.                             |
@@ -57,7 +63,7 @@ Backend and frontend live in independent repos and deploy independently.
 | Analytics store   | Beacon events, aggregates, error logs                 | Columnar, queries scoped per org.    |
 | Session store     | Sessions, rate limits, short-lived caches             | EU-jurisdiction in-memory store.     |
 
-All three are operated in the EU with versioned, idempotent migrations applied on deploy.
+All three are operated in the EU with versioned, idempotent migrations applied on deploy. For data residency, subprocessors, and the US CLOUD Act position, see [Privacy → Where the data lives](/en/privacy#where-the-data-lives).
 
 ## Routing layout
 
@@ -78,7 +84,7 @@ The two public roots stay outside the `/v1` prefix on purpose: short URLs keep t
 | Site, org, member configuration    | Configuration DB    | Until deletion.                 |
 | Active sessions (auth)             | Session store       | Sliding window, default 30 days idle. |
 | Rate-limit counters                | Session store       | Per-window TTL, < 5 min.        |
-| Personal data (PII)                | n/a                 | Not collected. See [Privacy](/en/privacy). |
+| Raw IP / User-Agent                | Never persisted     | Destroyed at the EU edge before ingest. The stored row carries at most the bounded, pseudonymous `stitch`. See [Privacy](/en/privacy). |
 
 ## Why some things look the way they do
 

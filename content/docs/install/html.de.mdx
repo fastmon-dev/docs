@@ -15,7 +15,7 @@ Logg dich ein, öffne die gewünschte Organisation und klick **Create site**. Au
 - **Domain**: der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
 - **Allowed origins** *(optional)*: leer lassen, dann gibt es keinen Origin-Check. Sobald gesetzt, ist die Liste eine strikte Allow-List; trag die Production-Domain mit ein, als Komma-Liste (`acme.com, staging.acme.com, preview.acme.com`).
 
-Den Rest erstmal auf Default lassen; [Collection Mode](/de/collection-modes) und Retention drehst du später bei Bedarf.
+Den Rest erstmal auf Default lassen; [Preset](/de/tracker) und [Einstellungen](/de/tracker) drehst du später bei Bedarf.
 
 **Save** klicken. Fastmon legt zwei kurze Hashes für die Site an:
 
@@ -67,10 +67,10 @@ Wenn nichts kommt: [Implementierung verifizieren](/de/install/verify).
 
 ### In fastmon
 
-Site im Dashboard öffnen. Nach ungefähr einer Minute (Beacons werden in Batches in ClickHouse geschrieben) zeigt der **Traffic**-Bereich Pageviews &gt; 0. (Sessions bleiben im Default-Modus `anonymous` bei null; das ist so gewollt, siehe [Sessions](/de/concepts/sessions).) Der erste Beacon ist der, den du gerade abgeschickt hast; deine IP behalten wir nicht, aber die Zeile ist da.
+Site im Dashboard öffnen. Nach ungefähr einer Minute (Beacons werden in Batches in ClickHouse geschrieben) zeigt der **Traffic**-Bereich Pageviews &gt; 0, und auch Unique Visitors (neue Sites starten auf `Standard`, das den am Edge abgeleiteten `stitch` speichert). Session-Zahlen brauchen [`store_session`](/de/tracker#store-session) (das Preset `Full`). Siehe [Sessions](/de/concepts/sessions). Der erste Beacon ist der, den du gerade abgeschickt hast; deine IP behalten wir nicht, aber die Zeile ist da.
 
 ## Nächste Schritte
 
-- [Collection Mode](/de/collection-modes) wählen; Default `anonymous` ist für die meisten Sites die richtige Antwort.
+- [Preset](/de/tracker) wählen; neue Sites starten auf Standard, und Minimal ist das schlankste Opt-down. Feintuning über die [einzelnen Einstellungen](/de/tracker).
 - [Privacy: Was wir nicht sammeln](/de/privacy), nützlich, wenn Legal fragt.
 - Releases taggen für Vorher/Nachher-Vergleiche: siehe [Releases vergleichen](/de/guides/compare-releases).

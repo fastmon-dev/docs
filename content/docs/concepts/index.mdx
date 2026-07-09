@@ -10,7 +10,7 @@ Fastmon's data model is small on purpose. Get these five resources, and you've g
   <Card title="Sites" href="/en/concepts/sites" description="A monitored property. Has its own beacon hashes and settings." />
   <Card title="Sessions" href="/en/concepts/sessions" description="A short window of page-views from the same browser. Anonymous by construction." />
   <Card title="Releases" href="/en/concepts/releases" description="A versioned marker on a site. Used for before/after comparisons." />
-  <Card title="Collection modes" href="/en/collection-modes" description="anonymous / consent / full: what the beacon does in the browser." />
+  <Card title="Tracker settings" href="/en/tracker" description="Presets and the per-setting configuration: what the beacon does in the browser." />
 </Cards>
 
 ## How the pieces fit together
@@ -21,7 +21,7 @@ Organization
  ├── API tokens
  ├── Notification rules
  └── Sites
-      ├── Settings (collection mode, retention, allowed origins)
+      ├── Settings (preset, retention, allowed origins)
       ├── source_hash + collector_hash  (beacon URLs)
       ├── Releases
       └── Tags
@@ -35,6 +35,6 @@ If you're new, read in this order:
 
 1. [Organizations](/en/concepts/organizations): what an account actually is.
 2. [Sites](/en/concepts/sites): the thing you monitor.
-3. [Collection modes](/en/collection-modes): what the beacon does per site.
+3. [Tracker settings](/en/tracker): what the beacon does per site.
 4. [Sessions](/en/concepts/sessions): how page-views group.
 5. [Releases](/en/concepts/releases): for before/after deploys.

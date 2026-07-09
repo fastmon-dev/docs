@@ -15,7 +15,7 @@ Sign in, open the org you want to add this site to, and click **Create site**. F
 - **Domain**: the bare hostname, no protocol. Example: `acme.com`.
 - **Allowed origins** *(optional)*: leave blank to skip the origin check. If you set it, it becomes a strict allow-list; include the production domain too, as a comma-separated list (`acme.com, staging.acme.com, preview.acme.com`).
 
-Leave the rest at defaults for now; you can come back to [collection mode](/en/collection-modes) and retention later.
+Leave the rest at defaults for now; you can come back to the [preset](/en/tracker) and [settings](/en/tracker) later.
 
 Click **Save**. Fastmon generates two short hashes for the site:
 
@@ -67,10 +67,10 @@ If you don't see it, jump to [Verifying it works](/en/install/verify).
 
 ### In fastmon
 
-Open the site in the dashboard. After about a minute (beacons are batched into ClickHouse), the **Traffic** section will show non-zero page views. (Sessions stay at zero in the default `anonymous` mode; that's expected. See [Sessions](/en/concepts/sessions).) The first beacon is the one you just sent; your IP isn't stored, but the row is there.
+Open the site in the dashboard. After about a minute (beacons are batched into ClickHouse), the **Traffic** section will show non-zero page views, and unique visitors too (new sites start on `Standard`, which stores the edge-derived `stitch`). Session-level counts need [`store_session`](/en/tracker#store-session) (the `Full` preset). See [Sessions](/en/concepts/sessions). The first beacon is the one you just sent; your IP isn't stored, but the row is there.
 
 ## What's next
 
-- Pick a [collection mode](/en/collection-modes); `anonymous` is the right pick for most sites.
+- Pick a [preset](/en/tracker); new sites start on Standard, and Minimal is the leanest opt-down. Fine-tune with the [individual settings](/en/tracker).
 - Read [Privacy: what we don't collect](/en/privacy), handy when the legal team asks.
 - Tag releases for before/after comparisons: see [Compare releases](/en/guides/compare-releases).

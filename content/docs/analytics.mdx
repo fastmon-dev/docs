@@ -43,13 +43,13 @@ The Errors view tracks JavaScript errors across the site:
   + stack shape), ranked by count.
 - **Detail drill-down**: for one fingerprint: total count, visitors affected, first/last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames.
 
-How much detail you see depends on the site's [collection mode](/en/collection-modes): in `anonymous` mode the tracker sends error **type and count only**. Messages and stack frames arrive in `full` mode, or in `consent` mode after the visitor opts in.
+How much detail you see depends on the site's [tracker settings](/en/tracker): error **type and count** arrive always. The error **message** needs [`store_error_messages`](/en/tracker#store-error-messages), and full **stack frames** need [`error_frame_detail`](/en/tracker#error-frame-detail).
 
 ## Visitors
 
 The Visitors explorer lists distinct visitors (start and end time, duration, page count, device info, average LCP/FCP, error count) with filters, and a per-visitor detail view showing every pageview in order, each with its Web Vitals and errors.
 
-A visitor is counted along an identity axis: `stitch` (the default, present in every mode) or `session` (the cross-page `session_id`, which the tracker only carries in `full` mode or in `consent` mode after opt-in). The site's `preferred_identity` sets the default. Unlike the old sessions view, the explorer is **not** empty on an `anonymous`-mode site: it counts `stitch` visitors there. The per-visitor replay, however, needs the `session` identity, so it stays unavailable without consent. See [Visitors and sessions](/en/concepts/sessions) for the full model.
+A visitor is counted along an identity axis: `stitch` (present when [`store_stitch`](/en/tracker#store-stitch) is on) or `session` (the cross-page `session_id`, present when [`store_session`](/en/tracker#store-session) is on). The site's `preferred_identity` sets the default. New sites start on `Standard`, which stores `stitch`, so the visitor explorer works out of the box; the `Minimal` preset stores neither identity and leaves it empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions) for the full model.
 
 ## Fetch/XHR and Server-Timing
 
@@ -67,6 +67,6 @@ Every panel maps to a query endpoint under `/v1/organizations/{org_id}/analytics
 
 ## What's next
 
-- [Collection modes](/en/collection-modes): what the tracker collects per mode, and why the session identity or stack traces may be missing.
+- [Tracker settings](/en/tracker): what the tracker collects per setting, and why the session identity or stack traces may be missing.
 - [Visitors and sessions](/en/concepts/sessions): how pageviews become visitors and sessions.
 - [Synthetic Monitoring](/en/synthetic): the lab-data complement to these field dashboards.

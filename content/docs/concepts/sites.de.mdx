@@ -7,14 +7,14 @@ Eine **Site** ist die Monitoring-Einheit in fastmon. Praktisch entspricht das ei
 
 ## Warum das zählt
 
-Was der Beacon tut, hängt komplett an der Site: das Script, der [Collection Mode](/de/collection-modes), die Retention, die Allowed Origins, die Daten im Dashboard. Neue Property überwachen = neue Site anlegen.
+Was der Beacon tut, hängt komplett an der Site: das Script, die [Tracker-Einstellungen](/de/tracker), die Retention, die Allowed Origins, die Daten im Dashboard. Neue Property überwachen = neue Site anlegen.
 
 Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe unten). Ein Cross-Site-Analytics-Scope, der alle Sites mit einem Tag gemeinsam auswertet, ist geplant; heute sind Tags Labels zum Gruppieren, kein Analytics-Filter.
 
 ## Wann du sie anfasst
 
 - **Neue Property hinzufügen.** Site anlegen, Snippet kopieren, einbetten.
-- **Beacon-Erfassung anpassen.** Collection Mode der Site bearbeiten.
+- **Beacon-Erfassung anpassen.** Die [Tracker-Einstellungen](/de/tracker) der Site bearbeiten, oder ein [Preset](/de/tracker) wählen.
 - **Staging oder Preview hinzufügen.** Staging-Origin in **Allowed Origins** eintragen, oder eine separate Site für Staging anlegen, wenn du isolierte Daten willst.
 - **Retention reduzieren.** Default 90 Tage. Manche Sites wollen kürzer für Compliance, manche länger.
 - **Ohne Löschen pausieren.** `is_active = false` behält Historie, stoppt neuen Ingest.
@@ -32,15 +32,23 @@ Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe unten). Ein C
 | `collector_endpoint`  | string · nullable                     | Eigener Collector-Hostname für Enterprise-Routing. Default `fastmon.site`.        |
 | `source_hash`         | string                                | Per-Site-Hash für die Script-URL (`/s/{source_hash}.js`).                         |
 | `collector_hash`      | string                                | Per-Site-Hash für die Ingest-URL (`/c/{collector_hash}`).                         |
-| `collection_mode`     | enum                                  | `anonymous`, `consent` oder `full`. Siehe [Collection Modes](/de/collection-modes). |
-| `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen.              |
-| `store_stitch`        | bool                                  | Default `true`. Bei `false` wird der am Edge abgeleitete `stitch` in jedem Modus verworfen — eine echt anonyme Zeile, auf Kosten von Visitor- und Session-Metriken. Siehe [Privacy](/de/privacy#identifier-ganz-abschalten). |
-| `store_session`       | bool                                  | Default `true`. Bei `false` lässt das ausgelieferte Bundle `sessionStorage` aus und `sid` wird verworfen — volle Content-Telemetrie, keine seitenübergreifende Session-ID. |
+| `data_retention_days` | int                                   | Default `90`. Nach Ablauf werden Zeilen auf Storage-Ebene verworfen. Siehe [`data_retention_days`](/de/tracker#data-retention-days). |
+| `store_stitch`        | bool                                  | Default `false`. Bei `true` wird der am Edge abgeleitete `stitch` für Visitor- und Session-Metriken gespeichert; aus bleibt die Zeile echt anonym. Siehe [`store_stitch`](/de/tracker#store-stitch). |
+| `store_session`       | bool                                  | Default `false`. Bei `true` schreibt das Stateful-Bundle eine `sessionStorage`-Session-ID für seitenübergreifende Verknüpfung; aus fasst es `sessionStorage` nie an. Siehe [`store_session`](/de/tracker#store-session). |
+| `preconsent_level`    | string                                | Default `off`. `off` schiebt den Session-ID-Schreibvorgang bis `grantConsent()` auf; `configured` schreibt beim Load. Greift nur bei `store_session` an. Siehe [`preconsent_level`](/de/tracker#preconsent-level). |
+| `store_error_messages`| bool                                  | Default `false`. Bei `true` bleibt der freie Fehlermessage-Text erhalten (durch den PII-Scrubber). Siehe [`store_error_messages`](/de/tracker#store-error-messages). |
+| `error_frame_detail`  | bool                                  | Default `false`. Bei `true` bleibt volles Stack-Frame-Detail für jeden Frame erhalten. Siehe [`error_frame_detail`](/de/tracker#error-frame-detail). |
+| `track_query_keys`    | bool                                  | Default `false`. Bei `true` bleiben Query-Parameter-Namen erhalten (Werte weiterhin verworfen). Siehe [`track_query_keys`](/de/tracker#track-query-keys). |
+| `query_value_keys`    | Liste von Strings (max 20)            | Default leer. Allow-List von Parameternamen, deren Wert zusätzlich behalten wird. Setzt `track_query_keys` voraus. Siehe [`query_value_keys`](/de/tracker#query-value-keys). |
+| `fetch_xhr_enabled`   | bool                                  | Default `false`. Bei `true` werden Fetch/XHR-Aggregate deiner eigenen APIs erfasst. Siehe [`fetch_xhr_enabled`](/de/tracker#fetch-xhr-enabled). |
 | `preferred_identity`  | enum                                  | Default `stitch`. Wonach das Dashboard Besucher zählt (`stitch` oder `session`). Ein Reporting-Default, getrennt von `store_stitch` / `store_session`, begrenzt auf das, was die Site tatsächlich erfasst. Siehe [Besucher und Sessions](/de/concepts/sessions). |
+| `collector_mode`      | enum                                  | Default `default`. Wohin das Beacon POSTet: `default` (geteilter Collector), `custom` (`collector_endpoint`) oder `relative` (same-origin). Siehe [`collector_mode`](/de/tracker#collector-mode). |
 | `enforce_domain_match`| bool                                  | Default `false`. Bei `true` werden Beacons verworfen, deren gemeldeter Seiten-URL-Host nicht `domain` oder eine Subdomain davon ist (siehe unten). |
 | `source_version`      | string                                | Pinnt eine Beacon-Template-Version (`v1` aktuell).                                |
 | `tags`                | Liste von Strings (max 10)            | Freie Labels zum Organisieren von Sites. Cross-Site-Analytics per Tag ist geplant, noch nicht live. |
 | `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
+
+Sites, die im Dashboard angelegt werden, starten auf dem Preset **Standard**, das `store_stitch`, `track_query_keys`, `error_frame_detail` und `fetch_xhr_enabled` anschaltet.
 
 ## Die zwei Hashes
 
@@ -49,7 +57,7 @@ Jede Site hat zwei Hashes. Sehen ähnlich aus, machen aber zwei unterschiedliche
 - **`source_hash`** steht in der **Script-URL** und sagt, welche Beacon-Konfiguration an den Browser geliefert wird.
 - **`collector_hash`** steht in der **Ingest-URL** und sagt, zu welcher Site eingehende Beacons gehören.
 
-Getrennt sind sie, damit sich das Script-Template ändern kann (etwa beim Beacon-Upgrade oder Collection-Mode-Wechsel), ohne dass die Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den `source_hash`; der `collector_hash` ist im Script drin und kommt automatisch mit.
+Getrennt sind sie, damit sich das Script-Template ändern kann (etwa beim Beacon-Upgrade oder einer Einstellungs-Änderung), ohne dass die Daten-Pipeline davon was mitkriegt. Du kopierst manuell nur den `source_hash`; der `collector_hash` ist im Script drin und kommt automatisch mit.
 
 ## Tags
 
@@ -72,7 +80,7 @@ Beacons von nicht gelisteten Origins werden **still verworfen**: Der Collector a
 
 Staging- und Preview-Hostnames hier eintragen. Wildcards nicht unterstützt; jeden Origin explizit listen.
 
-### Page-Domain erzwingen
+### Seiten-Domain erzwingen
 
 `allowed_origins` prüft den HTTP-`Origin`-Header — aber `sendBeacon` und Keepalive-POSTs lassen `Origin` oft weg, sodass ein von einer fremden Seite mit bekanntem `collector_hash` abgespielter Beacon an einer Origin-Allow-List vorbeirutschen kann. `enforce_domain_match` (Opt-In, Default aus) schließt die Lücke von der anderen Seite: aktiviert verwirft der Collector jeden Beacon, dessen *gemeldeter Seiten-URL-Host* weder die `domain` der Site noch eine Subdomain davon ist. Der Match ist label-gebunden (`shop.example.com` matcht `example.com`, `notexample.com` nicht), und ein Beacon mit leerem oder nicht parsbarem Host wird beim Erzwingen verworfen.
 
@@ -80,12 +88,12 @@ Default aus, weil Multi-Domain- und Vanity-Domain-Setups sonst legitimen Traffic
 
 ## Privacy-Schalter
 
-Zwei Schalter pro Site steuern, welche Identifier in den Storage gelangen, ohne zu ändern, welche Datenkategorien der Beacon sammelt:
+Zwei Schalter pro Site steuern, ob überhaupt ein Besucher-Identifier in den Storage gelangt, ohne zu ändern, welche Datenkategorien der Beacon sammelt. Unter dem Default-Preset `Standard` ist `store_stitch` **an** und `store_session` **aus**; das Preset `Minimal` schaltet beide aus:
 
-- **`store_stitch`** (Default `true`). Aus verwirft den am Edge abgeleiteten `stitch`-Identifier beim Insert in *jedem* Collection Mode und lässt eine Zeile ganz ohne Besucher-Identifier zurück — vollständig anonym. Der Preis ist Analytics: keine Unique-Visitor-Zahlen und keine Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer) für die Site. Per-Pageview-Signale (Web Vitals, Fehler, Third-Party, Attribution) bleiben unberührt.
-- **`store_session`** (Default `true`). Aus sagt dem ausgelieferten Bundle, `sessionStorage` nie anzufassen, und der Collector verwirft `sid` als Absicherung. Eine `full`- oder `consent`-Site nach Opt-In behält dann die volle Content-Telemetrie (volle URLs, Fehler-Messages und -Frames), läuft aber ohne seitenübergreifende Session-ID. (`anonymous` hat ohnehin keine `sid`, also greift das nur unter `full` / `consent`.)
+- **`store_stitch`** (Default `false`). An speichert den am Edge abgeleiteten `stitch`-Identifier für Unique-Visitor-Zahlen und Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer). Aus lässt eine Zeile ganz ohne Besucher-Identifier zurück, vollständig anonym. Per-Pageview-Signale (Web Vitals, Fehler, Third-Party, Attribution) bleiben so oder so unberührt.
+- **`store_session`** (Default `false`). An liefert das Stateful-Bundle aus, das eine `sessionStorage`-Session-ID für seitenübergreifende Verknüpfung schreibt; ob dieser Schreibvorgang auf Consent wartet, entscheidet [`preconsent_level`](/de/tracker#preconsent-level). Aus sagt dem ausgelieferten Bundle, `sessionStorage` nie anzufassen, und der Collector verwirft `sid` als Absicherung.
 
-Die beiden sind unabhängig — schalte einen aus, beide oder keinen. Die vollständige Begründung steht unter [Privacy → Identifier ganz abschalten](/de/privacy#identifier-ganz-abschalten).
+Die beiden sind unabhängig, schalte einen an, beide oder keinen. Siehe [Tracker-Einstellungen](/de/tracker) für jeden Schalter und [Privacy → Identifier abschalten, oder aus lassen](/de/privacy#identifier-abschalten-oder-aus-lassen) für die Begründung.
 
 ## Häufige Szenarien
 
@@ -115,7 +123,8 @@ Neue Site für die neue Domain anlegen. Beide während des Cutovers laufen lasse
 
 ## Verwandt
 
-- [Collection Modes](/de/collection-modes): was der Beacon pro Site tut.
+- [Tracker-Einstellungen](/de/tracker): jede Einstellung pro Site, einzeln.
+- [Presets](/de/tracker): die drei Ausgangspunkte.
 - [Der RUM-Beacon](/de/concepts/beacon): was der Beacon erfasst.
 - [Releases](/de/concepts/releases): versionierte Marker auf einer Site.
 - [API: Sites-Endpunkte](/de/api): programmatisches Site-CRUD.

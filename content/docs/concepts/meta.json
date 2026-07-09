@@ -4,6 +4,7 @@
     "index",
     "organizations",
     "sites",
+    "org-trackers",
     "sessions",
     "releases",
     "beacon"

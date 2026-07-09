@@ -33,8 +33,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **`collector_hash`**: Per-Site-Hash in der Ingest-URL. Getrennt vom `source_hash`, damit das Script-Template sich ändern kann, ohne Daten zu invalidieren.
 
-**Collection Mode**: Per-Site-Einstellung: `anonymous`, `consent`, `full`. Siehe [Collection Modes](/de/collection-modes).
-
+**Preset**: Ausgangspunkt, den du beim Anlegen einer Site wählst: `Minimal`, `Standard` (Default), `Full`. Es setzt die [Tracker-Einstellungen](/de/tracker) pro Site auf einmal; danach ist jede Einstellung unabhängig. Siehe [Presets](/de/tracker).
 **Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker clientseitig erzeugt. Nicht persistiert.
 
 **`pst` / `cst`**: Page-Started-Timestamp / Client-Sent-At-Timestamp. Beide auf der Besucher-Uhr, in Millisekunden seit Epoch. Das Intervall `cst - pst` misst die Pageview-Dauer bis zum Flush unabhängig von Clock-Skew.
@@ -91,6 +90,4 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Third-Party**: Request an eine andere Domain als die der Site selbst. Fastmon gruppiert nach Domain und Kategorie für Impact-Analyse. Siehe `/analytics/third-party`.
 
-**`window.__fastmon_consent(true|false)`**: Die Funktion, die dein CMP aufruft, um im `consent`-Mode die Zustimmung zu erteilen oder zu widerrufen. Siehe [Collection Modes](/de/collection-modes#consent-vom-cmp-entscheiden-lassen).
-
-**`__FASTMON_SAMPLE_RATE`**: Window-Variable (0–1), die der Tracker beim Laden der Seite liest, um zu entscheiden, ob dieser Pageview Beacons sendet. Vor dem Script-Tag auf `0` setzen, und der Pageview sendet gar nicht.
+**`window.fastmon.grantConsent()`**: Die Funktion, die dein CMP nach Consent aufruft, um den Gerät-Schreibvorgang der Session-ID freizuschalten (wenn [`store_session`](/de/tracker#store-session) an ist). Es gibt keinen Widerruf mitten in der Session: die Session-ID ist tab-gebunden, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert. Siehe [Consent und TDDDG](/de/tracker#consent-and-the-tdddg).
