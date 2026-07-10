@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-10" type="changed" area="tracker" title="Der Beacon sendet weniger Requests und lässt sich feinjustieren">
+
+Der Tracker hält den Request-Umfang jetzt von Haus aus gering: bei einem schnellen Load fassen sich die ersten zwei Beacons zu einem zusammen, frühe Mid-Pageview-Updates warten auf das finale Beacon, und die Update-Beacons einer pollenden Seite werden gedeckelt. Seiten, die daran etwas ändern müssen, setzen ein paar `window`-Globals: `__FASTMON_SAMPLE_RATE`, `__FASTMON_INIT_COALESCE_MS`, `__FASTMON_UPDATE_MIN_AGE_MS` und `__FASTMON_MAX_VERSION`. Die Defaults passen für die meisten Sites. Siehe [Der RUM-Beacon](/de/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-09" type="changed" area="platform" title="Collection Modes sind jetzt Presets und Einstellungen pro Feld">
 
 Die Datenerfassung einer Site ist nicht mehr einer von drei festen Modi. Du wählst beim Anlegen ein **Preset** (Minimal, Standard oder Full) und stellst danach jede Einstellung einzeln: die On-Device-Session-ID und ihr Consent-Timing, das am Edge abgeleitete Besuchersignal, Query-Parameter-Namen, Fehlermessages und Stack-Frame-Detail sowie die Fetch/XHR-Erfassung. Neue Sites starten auf **Standard**, das Unique-Visitor-Zahlen und Diagnose einschaltet und trotzdem nichts auf das Gerät des Besuchers schreibt. Die alten `collection_mode`-Werte laufen als veralteter API-Alias weiter. Siehe [Tracker-Einstellungen](/de/tracker).

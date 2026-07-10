@@ -127,7 +127,7 @@ You don't need to redeploy your site to take a beacon upgrade. The browser picks
 
 ## Customer-facing JS API
 
-One integration point, namespace-stable across bundle versions:
+The tracker reads a few namespace-stable globals off `window`.
 
 ### Grant consent
 
@@ -138,6 +138,17 @@ window.fastmon.grantConsent();   // after the visitor opts in
 ```
 
 `grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. It's idempotent, and there's no mid-session revoke: the id lives in `sessionStorage` and dies with the tab, so declining just means the write never happens.
+
+### Fine-tuning [#fine-tuning]
+
+By default the tracker keeps request volume low: on a fast load the first two beacons coalesce into one, early mid-page-view updates wait for the final beacon, and a polling page's update beacons are capped. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
+
+| Global | Default | Effect |
+| --- | --- | --- |
+| `__FASTMON_SAMPLE_RATE` | `1` | Fraction of page-views that send beacons (0 to 1). `0` skips a page-view entirely. The decision is per page-view; a sampled page-view still sends all of its lifecycle beacons. |
+| `__FASTMON_INIT_COALESCE_MS` | `500` | Delay before the `init` beacon, so a fast load can merge it with the `loaded` beacon into a single request. `0` fires `init` immediately. |
+| `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Holds mid-page-view update beacons (errors, fetch/XHR) until the page is at least this old; a shorter visit ships them on the final beacon instead. `0` fires them immediately. |
+| `__FASTMON_MAX_VERSION` | `20` | Caps mid-page-view update beacons per page-view, so a polling page can't fire thousands. Lifecycle beacons are never capped, and the cumulative aggregates still land on the final beacon. `0` removes the cap. |
 
 ## Tracker settings
 
