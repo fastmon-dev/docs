@@ -29,12 +29,6 @@ Die Datenerfassung einer Site ist nicht mehr einer von drei festen Modi. Du wäh
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="tracker" title="Besuchersignal jetzt pro Domain, und keine Cookies">
-
-Der am Edge abgeleitete `stitch` enthält jetzt die Domain im Input, ein Besucher bekommt also auf jeder Domain ein anderes Signal: ein org-weiter Tracker routet auf eine Site pro Domain, zählt einen Besucher aber nicht mehr domainübergreifend als einen. Der Beacon setzt außerdem in keinem Build ein Cookie; das Einzige, was auf das Gerät geschrieben wird, ist ein einzelner `sessionStorage`-Eintrag (`_fms`), die Session-ID, und nur wenn `store_session` an ist. Deine Consent-Management-Plattform schaltet diesen Schreibvorgang mit `window.fastmon.grantConsent()` frei. Siehe [Der RUM-Beacon](/de/concepts/beacon) und [Privacy](/de/privacy).
-
-</ChangelogEntry>
-
 <ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Visitors Explorer, mit Stitch als vollwertiger Identität">
 
 Die Sessions-Seite heißt jetzt **Visitors**, unter `/visitors` (alte Links leiten weiter, geteilte Links funktionieren weiter). Stitch und Session sind gleichwertig: der Identitäts-Umschalter startet mit der bevorzugten Identität der Site, und eine Stitch-Zeile klappt in den vollen Pageview-Verlauf dieses Besuchers auf, dasselbe Drill-down wie bei Sessions. Die überflüssige Zähl-Card „Besucher auf dieser Seite" ist weg.

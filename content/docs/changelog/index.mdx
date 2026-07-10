@@ -24,12 +24,6 @@ A site's data collection is no longer one of three fixed modes. You pick a **pre
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="tracker" title="Per-domain visitor signal, and no cookies">
-
-The edge-derived `stitch` signal now includes the page domain in its input, so a visitor gets a different signal on each domain: an org-level tracker routes to a site per domain but no longer counts a visitor as one across domains. The beacon also sets no cookies in any build; the only thing written to the device is a single `sessionStorage` entry (`_fms`), the session id, and only when `store_session` is on. Your consent-management platform switches that write on with `window.fastmon.grantConsent()`. See [The RUM Beacon](/en/concepts/beacon) and [Privacy](/en/privacy).
-
-</ChangelogEntry>
-
 <ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Visitors Explorer, with stitch as a first-class identity">
 
 The Sessions page is now **Visitors**, at `/visitors` (old links redirect, shared links keep working). Stitch and session are treated as equals: the identity toggle defaults to the site's preferred identity, and a stitch row expands into that visitor's full page-view journey, the same drill-down sessions already had. The stray "visitors on this page" count card is gone.
