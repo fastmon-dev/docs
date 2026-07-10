@@ -12,12 +12,6 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
-<ChangelogEntry date="2026-07-10" type="new" area="tracker" title="Runtime tuning knobs for the beacon">
-
-For pages that need finer control over how many beacons they send, the tracker now reads a few `window` globals: `__FASTMON_SAMPLE_RATE` (sample a fraction of page-views), `__FASTMON_INIT_COALESCE_MS` (merge the first two beacons on a fast load into one request), `__FASTMON_UPDATE_MIN_AGE_MS` (hold early mid-page-view updates for the final beacon), and `__FASTMON_MAX_VERSION` (cap update beacons so a polling page can't fire thousands). The defaults are sensible, so most sites never touch them. See [The RUM Beacon](/en/concepts/beacon#tuning-knobs).
-
-</ChangelogEntry>
-
 <ChangelogEntry date="2026-07-09" type="changed" area="platform" title="Collection modes are now presets and per-setting configuration">
 
 A site's data collection is no longer one of three fixed modes. You pick a **preset** (Minimal, Standard, or Full) when you create a site, then tune each setting on its own: the on-device session id and its consent timing, the edge-derived visitor signal, query-parameter names, error messages and stack-frame detail, and fetch/XHR capture. New sites start on **Standard**, which turns on unique-visitor counts and diagnostics while still writing nothing to the visitor's device. The old `collection_mode` values keep working as a deprecated API alias. See [Tracker settings](/en/tracker).

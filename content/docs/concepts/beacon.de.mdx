@@ -129,7 +129,7 @@ Du musst dafür nicht redeployen. Beim nächsten Cache-Check holt der Browser si
 
 ## Kunden-JS-API
 
-Der Tracker liest ein paar namensstabile Globals von `window`.
+Ein Integrationspunkt, namensstabil über Bundle-Versionen:
 
 ### Consent erteilen
 
@@ -140,17 +140,6 @@ window.fastmon.grantConsent();   // nachdem der Besucher Opt-In gegeben hat
 ```
 
 `grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Idempotent, und es gibt keinen Widerruf mitten in der Session: die ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.
-
-### Tuning-Knöpfe [#tuning-knobs]
-
-Runtime-Knöpfe für Seiten mit hohem Volumen oder Sonderfällen; die meisten Sites fassen sie nie an. Setz einen Wert auf `window` **vor** dem `<script>`-Tag, damit schon das allererste Beacon ihn respektiert.
-
-| Global | Default | Wirkung |
-| --- | --- | --- |
-| `__FASTMON_SAMPLE_RATE` | `1` | Anteil der Pageviews, die Beacons senden (0 bis 1). `0` lässt einen Pageview ganz aus. Die Entscheidung gilt pro Pageview; ein gesampelter Pageview sendet alle seine Lifecycle-Beacons. |
-| `__FASTMON_INIT_COALESCE_MS` | `500` | Verzögerung vor dem `init`-Beacon, damit ein schneller Load es mit dem `loaded`-Beacon zu einem Request zusammenfasst. `0` sendet `init` sofort. |
-| `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Hält Mid-Pageview-Update-Beacons (Fehler, Fetch/XHR) zurück, bis die Seite mindestens so alt ist; ein kürzerer Besuch schickt sie stattdessen auf dem finalen Beacon. `0` sendet sie sofort. |
-| `__FASTMON_MAX_VERSION` | `20` | Deckelt Mid-Pageview-Update-Beacons pro Pageview, damit eine pollende Seite nicht Tausende feuert. Lifecycle-Beacons werden nie gedeckelt, und die kumulativen Aggregate landen trotzdem auf dem finalen Beacon. `0` hebt den Deckel auf. |
 
 ## Tracker-Einstellungen
 
