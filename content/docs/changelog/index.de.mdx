@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-10" type="new" area="dashboard" title="Cache-Status im Besucherverlauf">
+
+Der Besucherverlauf im Visitors Explorer zeigt jetzt pro Pageview das CDN- und Origin-Cache-Ergebnis (HIT / MISS), damit du siehst, ob eine langsame Seite für einen Besucher warm oder kalt ausgeliefert wurde. Ein Pageview ohne erfassten Cache-Status lässt das Badge einfach weg.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-10" type="changed" area="tracker" title="Der Beacon sendet weniger Requests und lässt sich feinjustieren">
 
 Der Tracker hält den Request-Umfang jetzt von Haus aus gering: bei einem schnellen Load fassen sich die ersten zwei Beacons zu einem zusammen, frühe Mid-Pageview-Updates warten auf das finale Beacon, und die Update-Beacons einer pollenden Seite werden gedeckelt. Seiten, die daran etwas ändern müssen, setzen ein paar `window`-Globals: `__FASTMON_SAMPLE_RATE`, `__FASTMON_INIT_COALESCE_MS`, `__FASTMON_UPDATE_MIN_AGE_MS` und `__FASTMON_MAX_VERSION`. Die Defaults passen für die meisten Sites. Siehe [Der RUM-Beacon](/de/concepts/beacon#fine-tuning).
