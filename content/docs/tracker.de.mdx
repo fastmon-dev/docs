@@ -50,11 +50,12 @@ fastmon ist ein deutscher Anbieter, also gehen wir von der strengen Auslegung au
 Wenn eine Site eine Session-ID schreibt ([`store_session`](#store-session) an), schaltet dein CMP den Gerät-Schreibvorgang nach Consent mit einem einzelnen Call frei:
 
 ```js
-// In your cookie banner's "accept" handler:
-window.fastmon.grantConsent();
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-`grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Ob der Schreibvorgang auf diesen Call wartet oder beim Load passiert, entscheidet der Schalter [`preconsent_level`](#preconsent-level). Es gibt keinen Widerruf mitten in der Session: die Session-ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.
+`grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Ruf ihn bei jedem Seitenload auf, solange Consent besteht (die meisten Consent-Management-Plattformen tun das für dich); die `&&`-Guards machen ihn zu einem harmlosen No-op, falls das Tracker-Skript noch nicht fertig geladen ist. Ob der Schreibvorgang auf diesen Call wartet oder beim Load passiert, entscheidet der Schalter [`preconsent_level`](#preconsent-level). Es gibt keinen Widerruf mitten in der Session: die Session-ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.
 
 ## Session und seitenübergreifende Verknüpfung
 

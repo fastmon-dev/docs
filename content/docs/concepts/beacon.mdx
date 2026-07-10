@@ -134,7 +134,9 @@ The tracker reads a few namespace-stable globals off `window`.
 When [`store_session`](/en/tracker#store-session) is on with [`preconsent_level`](/en/tracker#preconsent-level) left at `off`, the session-id write is deferred until your CMP grants consent:
 
 ```js
-window.fastmon.grantConsent();   // after the visitor opts in
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
 `grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. It's idempotent, and there's no mid-session revoke: the id lives in `sessionStorage` and dies with the tab, so declining just means the write never happens.

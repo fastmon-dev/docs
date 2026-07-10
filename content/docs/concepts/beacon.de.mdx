@@ -136,7 +136,9 @@ Der Tracker liest ein paar namensstabile Globals von `window`.
 Wenn [`store_session`](/de/tracker#store-session) an ist und [`preconsent_level`](/de/tracker#preconsent-level) auf `off` steht, wird der Session-ID-Schreibvorgang aufgeschoben, bis dein CMP Consent erteilt:
 
 ```js
-window.fastmon.grantConsent();   // nachdem der Besucher Opt-In gegeben hat
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
 `grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Idempotent, und es gibt keinen Widerruf mitten in der Session: die ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.

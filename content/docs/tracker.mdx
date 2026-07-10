@@ -50,11 +50,12 @@ fastmon is a German provider, so we assume the strict reading and build and docu
 When a site writes a session id ([`store_session`](#store-session) on), your CMP switches the on-device write on with a single call after consent:
 
 ```js
-// In your cookie banner's "accept" handler:
-window.fastmon.grantConsent();
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Whether the write waits for that call or happens on load is the [`preconsent_level`](#preconsent-level) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
+`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands (most consent-management platforms do this for you); the `&&` guards make it a harmless no-op if the tracker script hasn't finished loading yet. Whether the write waits for that call or happens on load is the [`preconsent_level`](#preconsent-level) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
 
 ## Session and cross-page linkage
 
