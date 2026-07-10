@@ -24,6 +24,30 @@ The edge-derived `stitch` signal now includes the page domain in its input, so a
 
 </ChangelogEntry>
 
+<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Visitors Explorer, with stitch as a first-class identity">
+
+The Sessions page is now **Visitors**, at `/visitors` (old links redirect, shared links keep working). Stitch and session are treated as equals: the identity toggle defaults to the site's preferred identity, and a stitch row expands into that visitor's full page-view journey, the same drill-down sessions already had. The stray "visitors on this page" count card is gone.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Cross-domain trackers, and one-click site provisioning">
+
+A cross-domain tracker (one embed across several domains) now carries the same data scope as a site, applied to every domain it runs on; only the visitor signal stays per domain. Domains it observes that aren't sites yet appear as **detected domains**, and **Add as site** creates the site in one click, inheriting the tracker's data scope, collector config, and bundle version. See [Org-level trackers](/en/concepts/org-trackers).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-09" type="fixed" area="platform" title="One bad value no longer drops a batch of beacons">
+
+A single beacon carrying a non-finite or out-of-range connection or timing value used to fail the whole batch insert, dropping every other beacon in that flush. Such values are now coerced to "unknown" per field, so one malformed or hostile beacon can't take down the legitimate traffic around it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-08" type="changed" area="dashboard" title="Breakdown lists: +/- filter actions and share of total">
+
+The breakdown lists on **Analytics** (Sources, Pages, Countries, Devices, and the Audience and Cache top lists) gain the hover actions from the metric detail pages: **+** filters to a value, **−** excludes it. Where a dimension can't be excluded, the **−** is disabled with a tooltip. Each row also shows its **share of the total** next to the count (for example `12% · 4.3K`), computed across the whole window, not just the visible rows.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-07" type="changed" area="dashboard" title="Org-scoped navigation: your site selection follows you">
 
 Every monitoring page now lives under an org-scoped URL, and the site is a filter that follows you from page to page like the time range. With no site selected you see the whole org aggregated, and the sidebar switcher has an explicit **All sites** state. The switcher is now multi-select: click a site to jump to it, or use its checkbox (or Cmd/Ctrl-click) to combine several. Site tags now actually scope the data, with multiple tags combining as AND; the old tag selector that had no effect is gone. Old per-site links keep working through a permanent redirect that carries the site over as the filter. Typing `org:` in the Cmd+K palette narrows the search to organizations.
