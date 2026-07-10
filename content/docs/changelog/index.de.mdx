@@ -19,13 +19,19 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minuten-Auflösung deckt jetzt bis zu 6 Stunden ab">
 
-Eine Minuten-granulare Ansicht war bisher auf ein 2-Stunden-Fenster begrenzt; sie akzeptiert jetzt bis zu 6 Stunden, sodass du eine volle 6-Stunden-Spanne in Minuten-Auflösung auf einmal siehst. Längere Spannen fallen weiterhin auf Stunden- oder Tages-Buckets zurück.
+**Nach Minute** ist jetzt eine Granularität im Datumswähler für Fenster bis zu 6 Stunden (vorher bei 2 gedeckelt). Kurze Custom-Ranges und relative Spannen wie `3h` wählen automatisch Minuten-Buckets; längere fallen weiter auf Stunden oder Tage zurück.
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-10" type="new" area="dashboard" title="Cache-Status im Besucherverlauf">
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Besucherverlauf, neu mit key=value-Chips">
 
-Der Besucherverlauf im Visitors Explorer zeigt jetzt pro Pageview das CDN- und Origin-Cache-Ergebnis (HIT / MISS), damit du siehst, ob eine langsame Seite für einen Besucher warm oder kalt ausgeliefert wurde. Ein Pageview ohne erfassten Cache-Status lässt das Badge einfach weg.
+Jede Angabe zu einem Pageview im Besucherverlauf ist jetzt ein **key=value-Chip**: Navigationstyp (Soft-Nav, Reload, Back/Forward, Prerender), **CDN- und Origin-Cache-Status** (HIT / MISS, neu), Fehleranzahl und die Web Vitals (FCP, LCP, CLS, INP, TTFB, Load), jeweils nach Schwellenwert eingefärbt. Metriken links, Kontext-Fakten rechts, unter einer schlichten URL-Zeile mit Verweildauer. Chips ohne Wert werden ausgeblendet.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors-Filter bleiben in der URL">
+
+Die Verhaltensfilter auf **Visitors** (Mindestwerte für Fehler, Seiten, Dauer, durchschnittlicher LCP) stehen jetzt in der URL, sodass Neuladen oder Teilen der Seite dieselbe gefilterte Liste behält.
 
 </ChangelogEntry>
 
