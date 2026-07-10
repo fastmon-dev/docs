@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minuten-Auflösung deckt jetzt bis zu 6 Stunden ab">
+
+Eine Minuten-granulare Ansicht war bisher auf ein 2-Stunden-Fenster begrenzt; sie akzeptiert jetzt bis zu 6 Stunden, sodass du eine volle 6-Stunden-Spanne in Minuten-Auflösung auf einmal siehst. Längere Spannen fallen weiterhin auf Stunden- oder Tages-Buckets zurück.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-10" type="new" area="dashboard" title="Cache-Status im Besucherverlauf">
 
 Der Besucherverlauf im Visitors Explorer zeigt jetzt pro Pageview das CDN- und Origin-Cache-Ergebnis (HIT / MISS), damit du siehst, ob eine langsame Seite für einen Besucher warm oder kalt ausgeliefert wurde. Ein Pageview ohne erfassten Cache-Status lässt das Badge einfach weg.
