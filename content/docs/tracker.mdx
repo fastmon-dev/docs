@@ -55,7 +55,7 @@ When a site writes a session id ([`store_session`](#store-session) on), your CMP
 window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands (most consent-management platforms do this for you); the `&&` guards make it a harmless no-op if the tracker script hasn't finished loading yet. Whether the write waits for that call or happens on load is the [`preconsent_level`](#preconsent-level) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
+`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands (most consent-management platforms do this for you). The `&&` guards matter because the beacon loads asynchronously: on a fast navigation your consent code can run before the script, when `window.fastmon` doesn't exist yet. Guarded, that early call is a harmless no-op and the write happens once the tracker has loaded; unguarded, the bare call would throw a `TypeError`. Whether the write waits for that call or happens on load is the [`preconsent_level`](#preconsent-level) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
 
 ## Session and cross-page linkage
 
