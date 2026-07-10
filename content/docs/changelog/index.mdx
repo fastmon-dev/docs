@@ -30,25 +30,25 @@ The tracker now keeps request volume low out of the box: on a fast load the firs
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="platform" title="Collection modes are now presets and per-setting configuration">
+<ChangelogEntry date="2026-07-10" type="changed" area="platform" title="Collection modes are now presets and per-setting configuration">
 
 A site's data collection is no longer one of three fixed modes. You pick a **preset** (Minimal, Standard, or Full) when you create a site, then tune each setting on its own: the on-device session id and its consent timing, the edge-derived visitor signal, query-parameter names, error messages and stack-frame detail, and fetch/XHR capture. New sites start on **Standard**, which turns on unique-visitor counts and diagnostics while still writing nothing to the visitor's device. The old `collection_mode` values keep working as a deprecated API alias. See [Tracker settings](/en/tracker).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Visitors Explorer, with stitch as a first-class identity">
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors Explorer, with stitch as a first-class identity">
 
 The Sessions page is now **Visitors**, at `/visitors` (old links redirect, shared links keep working). Stitch and session are treated as equals: the identity toggle defaults to the site's preferred identity, and a stitch row expands into that visitor's full page-view journey, the same drill-down sessions already had. The stray "visitors on this page" count card is gone.
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Cross-domain trackers, and one-click site provisioning">
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Cross-domain trackers, and one-click site provisioning">
 
 A cross-domain tracker (one embed across several domains) now carries the same data scope as a site, applied to every domain it runs on; only the visitor signal stays per domain. Domains it observes that aren't sites yet appear as **detected domains**, and **Add as site** creates the site in one click, inheriting the tracker's data scope, collector config, and bundle version. See [Org-level trackers](/en/concepts/org-trackers).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="fixed" area="platform" title="One bad value no longer drops a batch of beacons">
+<ChangelogEntry date="2026-07-10" type="fixed" area="platform" title="One bad value no longer drops a batch of beacons">
 
 A single beacon carrying a non-finite or out-of-range connection or timing value used to fail the whole batch insert, dropping every other beacon in that flush. Such values are now coerced to "unknown" per field, so one malformed or hostile beacon can't take down the legitimate traffic around it.
 

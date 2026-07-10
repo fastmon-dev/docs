@@ -35,25 +35,25 @@ Der Tracker hält den Request-Umfang jetzt von Haus aus gering: bei einem schnel
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="platform" title="Collection Modes sind jetzt Presets und Einstellungen pro Feld">
+<ChangelogEntry date="2026-07-10" type="changed" area="platform" title="Collection Modes sind jetzt Presets und Einstellungen pro Feld">
 
 Die Datenerfassung einer Site ist nicht mehr einer von drei festen Modi. Du wählst beim Anlegen ein **Preset** (Minimal, Standard oder Full) und stellst danach jede Einstellung einzeln: die On-Device-Session-ID und ihr Consent-Timing, das am Edge abgeleitete Besuchersignal, Query-Parameter-Namen, Fehlermessages und Stack-Frame-Detail sowie die Fetch/XHR-Erfassung. Neue Sites starten auf **Standard**, das Unique-Visitor-Zahlen und Diagnose einschaltet und trotzdem nichts auf das Gerät des Besuchers schreibt. Die alten `collection_mode`-Werte laufen als veralteter API-Alias weiter. Siehe [Tracker-Einstellungen](/de/tracker).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Visitors Explorer, mit Stitch als vollwertiger Identität">
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors Explorer, mit Stitch als vollwertiger Identität">
 
 Die Sessions-Seite heißt jetzt **Visitors**, unter `/visitors` (alte Links leiten weiter, geteilte Links funktionieren weiter). Stitch und Session sind gleichwertig: der Identitäts-Umschalter startet mit der bevorzugten Identität der Site, und eine Stitch-Zeile klappt in den vollen Pageview-Verlauf dieses Besuchers auf, dasselbe Drill-down wie bei Sessions. Die überflüssige Zähl-Card „Besucher auf dieser Seite" ist weg.
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="changed" area="dashboard" title="Domainübergreifende Tracker und Site-Anlage per Klick">
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Domainübergreifende Tracker und Site-Anlage per Klick">
 
 Ein domainübergreifender Tracker (ein Embed über mehrere Domains) trägt jetzt denselben Datenumfang wie eine Site, angewandt auf jede Domain, auf der er läuft; nur das Besuchersignal bleibt pro Domain. Beobachtete Domains, die noch keine Site sind, erscheinen als **erkannte Domains**, und **Als Site hinzufügen** legt die Site mit einem Klick an, mit Datenumfang, Collector-Konfiguration und Bundle-Version des Trackers. Siehe [Org-weite Tracker](/de/concepts/org-trackers).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-09" type="fixed" area="platform" title="Ein fehlerhafter Wert kippt nicht mehr einen ganzen Beacon-Batch">
+<ChangelogEntry date="2026-07-10" type="fixed" area="platform" title="Ein fehlerhafter Wert kippt nicht mehr einen ganzen Beacon-Batch">
 
 Ein einzelnes Beacon mit einem nicht-endlichen oder außerhalb des Bereichs liegenden Connection- oder Timing-Wert ließ bisher den ganzen Batch-Insert scheitern und verwarf jedes andere Beacon im selben Flush. Solche Werte werden jetzt pro Feld auf „unbekannt" gesetzt, sodass ein fehlerhaftes oder bösartiges Beacon den legitimen Traffic drumherum nicht mehr mitreißt.
 
