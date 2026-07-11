@@ -14,13 +14,25 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load for soft navigations, and Web Vitals to come">
 
-Single-page route changes (soft navigations) used to record no loading metrics, so LCP and FCP for SPA-heavy sites came only from cold page loads and read worse than the real experience. Soft navigations now report **Route Load** (`soft_nav_load`), a network-based proxy derived from the route's own same-site requests, on every browser and surfaced as its own metric and alert (labeled a proxy, never merged into LCP or FCP). Real LCP and FCP for soft navigations also arrive on Chromium once its Soft Navigations API ships; expect SPA LCP/FCP p75 to start reflecting in-app navigations then, a methodology change rather than a regression.
+SPA route changes (soft navigations) used to record no loading metrics, so LCP and FCP for single-page apps came only from cold page loads and read worse than the real experience. The tracker now measures soft-navigation loading two ways: **Route Load** (`soft_nav_load`), a same-site network proxy on every browser, and real LCP/FCP on Chromium once its Soft Navigations API ships. Route Load lands in the dashboard as its own metric, kept separate from LCP/FCP and rolling out gradually. When native LCP/FCP arrive, SPA LCP/FCP p75 will start reflecting in-app navigations, a methodology change rather than a regression.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Leaner beacon wire format">
 
 The beacon's wire keys got shorter to shave bytes off every request: `lifecycle` is now `lcy`, the campaign fields (`utm_source` and friends, `click_id_param`) collapse to two-letter keys, and empty campaign fields are dropped entirely instead of riding along as empty strings (around 110 to 130 bytes per beacon). The values are unchanged, and old cached bundles keep working: the collector accepts both the old and new keys permanently.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Backend performance page for Server-Timing">
+
+A new **Performance → Backend** page turns your `Server-Timing` response headers into analytics: a request-path card (Edge, Origin, Backend) showing each cache status and how much traffic reaches each phase, backend sub-phases (DB, cache, external, render) as share-of-backend bars, a phase trend over time, and a matrix breaking phases down by page, page type, or cache status. Every non-promoted `Server-Timing` key also gets its own ranked trend. See [Server-Timing](/en/guides/server-timing).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Metrics view in the breakdown grid">
+
+The breakdown grid (on metric detail pages and expanded Explorer rows) gets a **Facts / Metrics** switch. **Metrics** replaces the dimension panels with a compact panel per Web Vital (LCP, INP, CLS, FCP, TTFB, Page Load, TBT) scoped to the same row and filters, so you can tell at a glance whether a page is bad only at LCP or slow across the board. Each panel is the standard percentile trend or distribution, and the active view persists in the URL for shareable links.
 
 </ChangelogEntry>
 

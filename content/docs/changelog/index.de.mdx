@@ -19,13 +19,25 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load für Soft-Navigationen, und Web Vitals in Kürze">
 
-Single-Page-Routenwechsel (Soft-Navigationen) erfassten bisher keine Loading-Metriken, LCP und FCP für SPA-lastige Sites kamen also nur aus kalten Seitenladungen und lasen sich schlechter als die echte Erfahrung. Soft-Navigationen melden jetzt **Route Load** (`soft_nav_load`), einen netzwerkbasierten Proxy aus den Same-Site-Requests der Route, in jedem Browser und als eigene Metrik plus Alert (als Proxy gekennzeichnet, nie in LCP oder FCP verrechnet). Echte LCP und FCP für Soft-Navigationen kommen zusätzlich auf Chromium, sobald dessen Soft-Navigations-API ausgeliefert wird; dann spiegelt der SPA-LCP/FCP-p75 auch In-App-Navigationen wider, eine Änderung der Messmethodik, keine Regression.
+SPA-Routenwechsel (Soft-Navigationen) erfassten bisher keine Loading-Metriken, LCP und FCP für Single-Page-Apps kamen also nur aus kalten Seitenladungen und lasen sich schlechter als die echte Erfahrung. Der Tracker misst das Soft-Nav-Loading jetzt auf zwei Wegen: **Route Load** (`soft_nav_load`), einen Same-Site-Netzwerk-Proxy in jedem Browser, und echte LCP/FCP auf Chromium, sobald dessen Soft-Navigations-API ausgeliefert wird. Route Load landet im Dashboard als eigene Metrik, getrennt von LCP/FCP und schrittweise ausgerollt. Wenn die nativen LCP/FCP einlaufen, spiegelt der SPA-LCP/FCP-p75 auch In-App-Navigationen wider, eine Änderung der Messmethodik, keine Regression.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Schlankeres Beacon-Wire-Format">
 
 Die Wire-Keys des Beacons wurden kürzer, um pro Request Bytes zu sparen: `lifecycle` heißt jetzt `lcy`, die Kampagnenfelder (`utm_source` & Co., `click_id_param`) werden zu Zwei-Buchstaben-Keys, und leere Kampagnenfelder fallen ganz weg statt als leere Strings mitzureisen (rund 110 bis 130 Bytes pro Beacon). Die Werte bleiben gleich, und alte gecachte Bundles laufen weiter: der Collector akzeptiert alte und neue Keys dauerhaft.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Backend-Performance-Seite für Server-Timing">
+
+Eine neue Seite **Performance → Backend** macht aus deinen `Server-Timing`-Response-Headern Analytics: eine Request-Pfad-Card (Edge, Origin, Backend) mit jedem Cache-Status und wie viel Traffic welche Phase erreicht, Backend-Subphasen (DB, Cache, External, Render) als Share-of-Backend-Balken, ein Phasen-Trend über die Zeit und eine Matrix, die Phasen nach Seite, Seitentyp oder Cache-Status aufschlüsselt. Jeder nicht-promotete `Server-Timing`-Key bekommt zusätzlich einen eigenen gerankten Trend. Siehe [Server-Timing](/de/guides/server-timing).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Metrics-Ansicht im Breakdown-Grid">
+
+Das Breakdown-Grid (auf Metrik-Detailseiten und aufgeklappten Explorer-Zeilen) bekommt einen **Facts / Metrics**-Umschalter. **Metrics** ersetzt die Dimensions-Panels durch je ein kompaktes Panel pro Web Vital (LCP, INP, CLS, FCP, TTFB, Page Load, TBT), auf dieselbe Zeile und dieselben Filter bezogen, sodass du auf einen Blick siehst, ob eine Seite nur bei LCP schlecht ist oder durchweg langsam. Jedes Panel ist der Standard-Perzentil-Trend oder die Verteilung, und die aktive Ansicht bleibt in der URL für teilbare Links.
 
 </ChangelogEntry>
 
