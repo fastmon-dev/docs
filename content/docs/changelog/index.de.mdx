@@ -17,6 +17,18 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load für Soft-Navigationen, und Web Vitals in Kürze">
+
+Single-Page-Routenwechsel (Soft-Navigationen) erfassten bisher keine Loading-Metriken, LCP und FCP für SPA-lastige Sites kamen also nur aus kalten Seitenladungen und lasen sich schlechter als die echte Erfahrung. Soft-Navigationen melden jetzt **Route Load** (`soft_nav_load`), einen netzwerkbasierten Proxy aus den Same-Site-Requests der Route, in jedem Browser und als eigene Metrik plus Alert (als Proxy gekennzeichnet, nie in LCP oder FCP verrechnet). Echte LCP und FCP für Soft-Navigationen kommen zusätzlich auf Chromium, sobald dessen Soft-Navigations-API ausgeliefert wird; dann spiegelt der SPA-LCP/FCP-p75 auch In-App-Navigationen wider, eine Änderung der Messmethodik, keine Regression.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Schlankeres Beacon-Wire-Format">
+
+Die Wire-Keys des Beacons wurden kürzer, um pro Request Bytes zu sparen: `lifecycle` heißt jetzt `lcy`, die Kampagnenfelder (`utm_source` & Co., `click_id_param`) werden zu Zwei-Buchstaben-Keys, und leere Kampagnenfelder fallen ganz weg statt als leere Strings mitzureisen (rund 110 bis 130 Bytes pro Beacon). Die Werte bleiben gleich, und alte gecachte Bundles laufen weiter: der Collector akzeptiert alte und neue Keys dauerhaft.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minuten-Auflösung deckt jetzt bis zu 6 Stunden ab">
 
 **Nach Minute** ist jetzt eine Granularität im Datumswähler für Fenster bis zu 6 Stunden (vorher bei 2 gedeckelt). Kurze Custom-Ranges und relative Spannen wie `3h` wählen automatisch Minuten-Buckets; längere fallen weiter auf Stunden oder Tage zurück.
@@ -32,6 +44,12 @@ Jede Angabe zu einem Pageview im Besucherverlauf ist jetzt ein **key=value-Chip*
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors-Filter bleiben in der URL">
 
 Die Verhaltensfilter auf **Visitors** (Mindestwerte für Fehler, Seiten, Dauer, durchschnittlicher LCP) stehen jetzt in der URL, sodass Neuladen oder Teilen der Seite dieselbe gefilterte Liste behält.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="dashboard" title="Geteilte Stitch-Besucher öffnen korrekt">
+
+Das Teilen oder Neuladen eines aufgeklappten **Stitch**-Besuchers konnte auf „keine Pageviews gefunden" landen: die URL merkte sich nur die Session-Identität, ein Stitch-Wert wurde also in der falschen Spalte gesucht. Die aufgeklappte Zeile merkt sich jetzt ihre Identität in der URL, sodass Neuladen und geteilte Links den richtigen Besucher wieder öffnen. Auch die Verhaltensfilter (`?minErrors=…`) überstehen den Round-Trip.
 
 </ChangelogEntry>
 

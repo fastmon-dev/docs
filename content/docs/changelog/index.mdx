@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load for soft navigations, and Web Vitals to come">
+
+Single-page route changes (soft navigations) used to record no loading metrics, so LCP and FCP for SPA-heavy sites came only from cold page loads and read worse than the real experience. Soft navigations now report **Route Load** (`soft_nav_load`), a network-based proxy derived from the route's own same-site requests, on every browser and surfaced as its own metric and alert (labeled a proxy, never merged into LCP or FCP). Real LCP and FCP for soft navigations also arrive on Chromium once its Soft Navigations API ships; expect SPA LCP/FCP p75 to start reflecting in-app navigations then, a methodology change rather than a regression.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Leaner beacon wire format">
+
+The beacon's wire keys got shorter to shave bytes off every request: `lifecycle` is now `lcy`, the campaign fields (`utm_source` and friends, `click_id_param`) collapse to two-letter keys, and empty campaign fields are dropped entirely instead of riding along as empty strings (around 110 to 130 bytes per beacon). The values are unchanged, and old cached bundles keep working: the collector accepts both the old and new keys permanently.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minute-resolution charts now cover up to 6 hours">
 
 **By minute** is now a date-picker granularity for windows up to 6 hours (it used to cap at 2). Short custom ranges and relative spans like `3h` pick minute buckets automatically; longer spans still fall back to hourly or daily.
@@ -27,6 +39,12 @@ Each fact on a page-view in the Visitors journey is now a **key=value chip**: na
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors filters stay in the URL">
 
 The behavior filters on **Visitors** (minimum errors, pages, duration, average LCP) are now kept in the URL, so reloading or sharing the page keeps the same filtered list.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="dashboard" title="Shared stitch visitors open correctly">
+
+Sharing or reloading an expanded **stitch** visitor could land on "no page visits found": the URL only recorded the session identity, so a stitch id was looked up in the wrong column. The expanded row now pins its identity into the URL, so reloads and shared links reopen the right visitor. Behavior filters (`?minErrors=…`) survive the round-trip too.
 
 </ChangelogEntry>
 

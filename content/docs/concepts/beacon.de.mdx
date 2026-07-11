@@ -76,7 +76,7 @@ Der Payload ist JSON mit absichtlich kurzen Keys, um den Body klein zu halten. D
   "sid":  "01HZX...",
   "pvid": "01HZY...",
   "ver":  3,
-  "lifecycle": "hidden",
+  "lcy": "hidden",
   "pst":  1746604800000,
   "cst":  1746604803456,
   "u":    "https://acme.com/pricing",
@@ -105,18 +105,21 @@ Schlüssel-Abkürzungen:
 - `sid`: Session-ID. Liegt im `sessionStorage._fms`. Nur wenn [`store_session`](/de/tracker#store-session) an ist (beim Load oder nach `grantConsent()`, je nach [`preconsent_level`](/de/tracker#preconsent-level)).
 - `pvid`: Per-Pageview-ID. Pro Pageview neu, nicht persistiert.
 - `ver`: monoton steigende Version dieses Pageview-Payloads.
-- `lifecycle`: einer von `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
+- `lcy`: Lifecycle-Marker, einer von `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Gecachte ältere Bundles senden ihn als langen `lifecycle`-Key, den der Collector ebenfalls akzeptiert.)
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
 - `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt. Server nutzt das, um Clock-Skew gegen die Empfangszeit zu erkennen.
 - `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf Origin + Pathname vorbereinigt (Query und Hash entfernt). `r` wird serverseitig in gebucketete Source + Medium klassifiziert und der rohe Wert vor jedem Logging-Pfad verworfen. Er persistiert nie, in keinem Modus.
-- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `click_id_param`: Kampagnen-Attribution aus `window.location.search`. Jeweils auf 64 Zeichen begrenzt. `click_id_param` ist nur das Plattform-*Label* (`"gclid"` / `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen. In jeder Konfiguration auf der Leitung.
+- `us`, `um`, `uc`, `ut`, `un`, `ci`: Kampagnen-Attribution (utm source / medium / campaign / term / content und das Click-ID-Plattform-Label) aus `window.location.search`. Jeweils auf 64 Zeichen begrenzt. `ci` ist nur das Plattform-*Label* (`"gclid"` / `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen. In jeder Konfiguration auf der Leitung, und ganz weggelassen, wenn leer.
 - `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major, Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die ersten vier kommen aus `FM-*`-Edge-Headern; `vc` und `c` aus dem Browser. `rtt` / `dl` gesellen sich als Echtzeit-RTT- und Downlink-Schätzungen dazu.
 - `pre`, `ad`, `vd`: Prerender-Flag (Speculation Rules API), Activation-Delta (ms, nur bei prerendered Pages) und Visibility-Dirty (war der Tab während des Pageviews im Hintergrund).
 - `t1`…`t36`: numerische Timing-Slots (TTFB, FCP, LCP, INP, CLS, Cache-Hit-Rate, Resource-Breakdowns, LoAF-Aggregate, …).
 - `errs`: Error-Einträge (`t` Typ, `n` Count, `m` Message, `fr` Frames). `t` und `n` gehen in jeder Konfiguration raus, ebenso der Host jedes Frames — dazu Pfad und Zeile/Spalte der Frames in deinen eigenen First-Party-External-Scripts. Die Message `m` ist Opt-in über [`store_error_messages`](/de/tracker#store-error-messages), Pfad/Zeile/Spalte von Inline- und Third-Party-Frames über [`error_frame_detail`](/de/tracker#error-frame-detail); auch dann läuft `m` durch einen Scrubber, der URLs, E-Mails, IDs und Strings in Anführungszeichen maskiert.
+- `snl`: **Route Load** für Soft-Navigationen (`soft_nav_load`) — das maximale End-Offset der Same-Site-Requests der Route. Ein Netzwerk-Proxy für den SPA-Routen-Load, bewusst nie in LCP/FCP verrechnet; `null` bei Hard-Loads und wenn die Route keinen qualifizierenden Request abgesetzt hat.
 - `tv`: Tracker-Version, Format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: Delivery-Methode (`b` für `sendBeacon`, leer für `fetch`).
 - Fetch/XHR und `Server-Timing`: aggregierte Fetch/XHR-Werte je Endpunkt (Aufrufzahlen, Dauern, Dauer-Buckets, Statusfehler) und die `Server-Timing`-Metriken der Seite. Beide sind templated und werden serverseitig normalisiert (die Leitung ist fälschbar), also tragen Pfade keine Query-Strings oder rohen IDs.
+
+Soft-Navigationen (SPA-Routenwechsel) erzeugen keine nativen Paint- oder Navigation-Timing-Einträge, ihre Loading-Vitals kommen also aus zwei Quellen: dem `snl`-Netzwerk-Proxy (jeder Browser) und, auf Chromium sobald dessen Soft-Navigations-API ausgeliefert wird, echten LCP/FCP, die in die üblichen `t9`/`t2`-Slots geschrieben und der Route zugeordnet werden.
 
 ## Cache und Rollouts
 

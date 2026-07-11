@@ -74,7 +74,7 @@ The payload is JSON with deliberately short keys to keep the wire size down. The
   "sid":  "01HZX...",
   "pvid": "01HZY...",
   "ver":  3,
-  "lifecycle": "hidden",
+  "lcy": "hidden",
   "pst":  1746604800000,
   "cst":  1746604803456,
   "u":    "https://acme.com/pricing",
@@ -103,18 +103,21 @@ Key abbreviations:
 - `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`store_session`](/en/tracker#store-session) is on (on load, or after `grantConsent()`, per [`preconsent_level`](/en/tracker#preconsent-level)).
 - `pvid`: per-pageview id. New on every pageview, not persisted.
 - `ver`: monotonic version of this pageview's payload.
-- `lifecycle`: one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
+- `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
 - `cst`: client-sent-at timestamp, visitor wall-clock at flush. Used server-side to detect clock skew against receive time.
 - `u`, `r`: page URL and referrer, both pre-sanitized at the tracker to origin + pathname (query and hash dropped). `r` is classified server-side into bucketed source + medium and the raw value is dropped before any logging path. It never persists, in any mode.
-- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `click_id_param`: campaign attribution extracted from `window.location.search`. Each capped at 64 chars. `click_id_param` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration.
+- `us`, `um`, `uc`, `ut`, `un`, `ci`: campaign attribution (utm source / medium / campaign / term / content, and the click-ID platform label) extracted from `window.location.search`. Each capped at 64 chars. `ci` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration, and omitted entirely when empty.
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
 - `t1`…`t36`: numeric timing slots (TTFB, FCP, LCP, INP, CLS, cache hit rate, resource breakdowns, LoAF aggregates, …).
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`store_error_messages`](/en/tracker#store-error-messages), and the path/line/column of inline and third-party frames via [`error_frame_detail`](/en/tracker#error-frame-detail); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
+- `snl`: **Route Load** for soft navigations (`soft_nav_load`) — the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 - Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs.
+
+Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `t9`/`t2` slots and attributed to the route.
 
 ## Cache and rollouts
 
