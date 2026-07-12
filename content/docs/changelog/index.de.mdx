@@ -17,6 +17,24 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer in Charts und Table aufgeteilt">
+
+Der Explorer sind jetzt zwei Seiten, **Charts** und **Table**, die sich Zeitraum, Filterleiste und gespeicherte Queries teilen, sodass ein Wechsel zwischen ihnen deine Query nie verwirft. **Charts** ist eine Multi-Chart-Arbeitsfläche: füge bis zu acht Charts hinzu, jedes mit eigenen Metriken, Gruppierung und Overlays für Vorperiode oder Perzentilbänder, mach sie halb- oder vollbreit und ordne sie per Drag & Drop neu an. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) tauschen den Stapel gegen einen kuratierten Satz, und eine gespeicherte Query hält jetzt das ganze Layout fest. **Table** bekommt über den Zeilen eine Hits-über-Zeit-Linie, damit du siehst, wo der Traffic dahinter entstanden ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Zwei Filtersätze in einem Chart vergleichen">
+
+Die Charts-Seite kann jedem Chart einen **zweiten, unabhängigen Filtersatz** über denselben Zeitraum überlagern, sodass du Chrome gegen Safari oder ein Land gegen ein anderes vergleichst. Zeig Fall B als gestrichelte Zwillingsreihe auf denselben Achsen (Overlay) oder als zwei Charts pro Card mit geteilter Skala (Side by side). Solange ein Vergleich aktiv ist, zeigt das KPI-Raster oben das Delta B-gegen-A.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page-Type im ganzen Dashboard">
+
+Sobald eine Shop-Ruleset an ist ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), wird **Page-Type** zu einer vollwertigen Dimension im Dashboard. Du setzt die Ruleset pro Site oder domänenübergreifendem Tracker unter Collection, schlüsselst dann nach Page-Type auf und filterst danach, nimmst ihn als Spalte in die Beacon-Liste, stellst mit dem neuen Preset **Page types** den Traffic-Mix und die Web Vitals je Typ als Chart dar und öffnest die eingeordnete Ansicht unter Analytics → Pages. Traffic ohne erkannten Typ erscheint als kein Page-Type.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatischer Page-Type für Shop-Systeme">
 
 Für Shops auf Shopware 5/6, OXID, Magento oder WooCommerce kann fastmon jeden Pageview jetzt ohne Code auf deiner Seite in einen **Page-Type** einordnen (Product, Category, Cart, Checkout und so weiter). Schalte pro Site eine Ruleset ein ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), und der Tracker liest nur die Body-Controller-Klasse des Shop-Frameworks aus, um den Typ abzuleiten. Standardmäßig **aus** (gar kein DOM-Read), und ein `Server-Timing: pageType`-Header hat, falls du einen sendest, weiter Vorrang.

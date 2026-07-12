@@ -12,6 +12,24 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer split into Charts and Table">
+
+The Explorer is now two pages, **Charts** and **Table**, that share one time range, filter bar, and set of saved queries, so switching between them never loses your query. **Charts** is a multi-chart workspace: add up to eight charts, each with its own metrics, grouping, and previous-period or percentile-band overlays, size them half or full width, and rearrange them by drag and drop. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) swap the stack for a curated set, and a saved query now stores the whole layout. **Table** gains a hits-over-time line above the rows, so you can see where the traffic behind them happened.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Compare two filter sets on one chart">
+
+The Charts page can overlay a **second, independent filter set** on every chart over the same period, so you can compare Chrome against Safari, or one country against another. Show case B as a dashed twin series on the same axes (Overlay) or as two charts per card with a shared scale (Side by side). While a comparison is active, the KPI grid at the top switches to the B-vs-A delta.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page type across the dashboard">
+
+Once a shop ruleset is on ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset)), **page type** becomes a first-class dimension across the dashboard. You set the ruleset per site or cross-domain tracker under Collection, then break down and filter by page type, add it as a column in the beacons list, chart the traffic mix and Web Vitals per type with the new **Page types** preset, and open the classified view under Analytics → Pages. Traffic with no detected type shows as no page type.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatic page type for shop systems">
 
 For shops on Shopware 5/6, OXID, Magento, or WooCommerce, fastmon can now classify each pageview into a **page type** (product, category, cart, checkout, and so on) with no code on your side. Turn on a ruleset per site ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset)) and the tracker reads just the shop framework's body controller class to infer the type. It's **off by default** (no DOM read at all), and a `Server-Timing: pageType` header, if you send one, still takes priority.
