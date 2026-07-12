@@ -95,7 +95,7 @@ A reserved metric labels the *kind* of page, which becomes a dashboard dimension
 Server-Timing: pageType;desc="checkout"
 ```
 
-Fastmon accepts `pageType` / `page_type` and the first-party `fm-pagetype`, lowercases the label, and caps it at 32 chars. The header value takes priority over fastmon's URL-pattern fallback.
+Fastmon accepts `pageType` / `page_type` and the first-party `fm-pagetype`, lowercases the label, and caps it at 32 chars. The header value always wins over the body-class detection you can enable with [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), so it's the authoritative source whenever you can set it server-side.
 
 ## Emitting the header
 

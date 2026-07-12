@@ -12,6 +12,12 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatic page type for shop systems">
+
+For shops on Shopware 5/6, OXID, Magento, or WooCommerce, fastmon can now classify each pageview into a **page type** (product, category, cart, checkout, and so on) with no code on your side. Turn on a ruleset per site ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset)) and the tracker reads just the shop framework's body controller class to infer the type. It's **off by default** (no DOM read at all), and a `Server-Timing: pageType` header, if you send one, still takes priority.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load for soft navigations, and Web Vitals to come">
 
 SPA route changes (soft navigations) used to record no loading metrics, so LCP and FCP for single-page apps came only from cold page loads and read worse than the real experience. The tracker now measures soft-navigation loading two ways: **Route Load** (`soft_nav_load`), a same-site network proxy on every browser, and real LCP/FCP on Chromium once its Soft Navigations API ships. Route Load lands in the dashboard as its own metric, kept separate from LCP/FCP and rolling out gradually. When native LCP/FCP arrive, SPA LCP/FCP p75 will start reflecting in-app navigations, a methodology change rather than a regression.

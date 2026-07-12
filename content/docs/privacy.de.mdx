@@ -16,7 +16,7 @@ Diese Regeln gelten unabhängig davon, wie die Site konfiguriert ist:
 | **Device- oder Browser-Fingerprints** | Kein Canvas-Fingerprinting, keine Font-Enumeration, keine `userAgentData`-High-Entropy-Hints, kein Battery-/Sensor-/AudioContext-Probing. |
 | **Cross-Site-IDs**                 | Wir vergeben keine Kennung, die eine Domain-Grenze überlebt. Eine Session auf `acme.com` ist nicht mit einer auf `other.com` verknüpfbar. |
 | **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine "Audience"-Daten. |
-| **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. |
+| **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. Die einzige Ausnahme ist das Opt-in [`pagetype_ruleset`](/de/tracker#pagetype-ruleset), das einen einzelnen Body-Controller-Klassen-Token zur Page-Type-Einordnung liest; standardmäßig aus. |
 | **Query-Parameter-Werte und URL-Fragmente** | Die URL wird im Tracker auf Origin + Pfad gekürzt. Das `#…`-Fragment wird immer verworfen, und Query-*Werte* werden verworfen. `/orders/checkout?email=jane@x.com` kommt unter dem Default-Preset Standard als `/orders/checkout?email` an (der Name `email` bleibt via [`track_query_keys`](/de/tracker#track-query-keys), der Wert wird gestrippt), oder als `/orders/checkout` bei Minimal. Ein Wert bleibt nur für Schlüssel, die du explizit in [`query_value_keys`](/de/tracker#query-value-keys) allow-listest. |
 | **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst.                     |
 

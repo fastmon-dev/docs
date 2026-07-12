@@ -46,7 +46,7 @@ Geo data (the country) is **not** read in the browser. The edge derives it from 
 
 - Read or write `localStorage` / `IndexedDB` / `Cache Storage`, ever.
 - Set cookies. fastmon sets no cookies at all, in any configuration.
-- Touch DOM content (no scroll-replay, no session-replay, no form capture).
+- Touch DOM content (no scroll-replay, no session-replay, no form capture). The one carve-out is opt-in [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), which reads a single body controller-class token to classify the page type, nothing else.
 - Read the visitor's media devices, sensors, or geolocation.
 - Mint an on-device identifier that links page-views together, unless [`store_session`](/en/tracker#store-session) is on (then the tab-scoped session id). The per-pageview `pvid` exists in every configuration and dies with the pageview.
 

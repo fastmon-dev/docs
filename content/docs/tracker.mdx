@@ -119,6 +119,30 @@ Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, er
 
 **PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
 
+## Page type
+
+### `pagetype_ruleset` [#pagetype-ruleset]
+
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page-controller token (for example `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type).
+
+**PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
+
+#### What each ruleset detects [#ruleset-page-types]
+
+Each ruleset maps the framework's page-controller token to one of a fixed set of page types (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Tokens outside this table map to nothing, and the pageview keeps an empty page type. The mapping lives in the collector, so it improves without redeploying the browser-cached tracker.
+
+| Page type    | Shopware 6          | Shopware 5 <sup>1</sup> | OXID eShop                        | Magento                     | WooCommerce                              |
+| ------------ | ------------------- | ----------------------- | --------------------------------- | --------------------------- | ---------------------------------------- |
+| **home**     | `is-ctl-index`      | `is--ctl-index`         | `cl-start`                        | `cms-index-index`           | not typed <sup>2</sup>                   |
+| **product**  | `is-ctl-product`    | `is--ctl-detail`        | `cl-details`                      | `catalog-product-view`      | `single-product`                         |
+| **category** | `is-ctl-navigation` | `is--ctl-listing`       | `cl-alist`                        | `catalog-category-view`     | `post-type-archive-product`, `tax-product_cat` |
+| **cart**     | `is-ctl-checkout` <sup>3</sup> | `is--ctl-checkout` <sup>3</sup> | `cl-basket`             | `checkout-cart-index`       | `woocommerce-cart`                       |
+| **checkout** | folded into cart <sup>3</sup> | folded into cart <sup>3</sup> | `cl-user`, `cl-payment`, `cl-order` | `checkout-index-index` | `woocommerce-checkout`                   |
+| **search**   | `is-ctl-search`     | `is--ctl-search`        | `cl-search`                       | `catalogsearch-result-index` | not typed <sup>2</sup>                  |
+| **account**  | `is-ctl-account`    | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
+
+<sup>1</sup> Shopware 5 markup is provisional and still being verified against production shops. <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
+
 ## Ingest and routing
 
 ### `enforce_domain_match` [#enforce-domain-match]

@@ -119,6 +119,30 @@ Erfasst aggregierte Fetch/XHR-Telemetrie: Aufruf-Counts pro Endpunkt, Dauern, Fe
 
 **PII:** Endpunkt-Pfade werden genau wie die Seiten-URL sanitisiert (Query, Fragment und Matrix-Params gestrippt; ID-artige Segmente auf `:id` templatisiert), und zwar strenger als Seiten-URLs. Die Zähler sind aggregierte Zahlen, und der Ziel-Host ist Site-Metadaten (welche deiner APIs, nicht wer sie aufgerufen hat). Das eine Restrisiko ist ein alphabetisches Pfadsegment wie `/users/jane-doe`, das die Templatisierung übersteht, dieselbe Betreiberpflicht wie bei Seiten-URLs: keine personenbezogenen Daten in Pfade.
 
+## Page-Type
+
+### `pagetype_ruleset` [#pagetype-ruleset]
+
+Ordnet jeden Pageview in einen **Page-Type** ein (Product, Category, Cart, Checkout und so weiter), für Shop-Systeme, indem die Body-Controller-Klasse des Shop-Frameworks gelesen wird. Standardmäßig aus (`""`), dann wird nichts aus dem DOM gelesen. Setz es auf eine eingebaute Ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`), und der Tracker extrahiert nur den Page-Controller-Token des Frameworks (etwa `is-ctl-product`), den der Collector auf die Page-Type-Kategorie mappt. Ein `Server-Timing: pageType`-Header hat, falls du einen sendest, immer Vorrang. Pro Site, und auch auf org-weiten Trackern verfügbar. Siehe [Server-Timing → Page-Type](/de/guides/server-timing#page-type).
+
+**PII:** das Einzige, was aus dem DOM gelesen wird, ist ein einzelner Framework-Klassen-Token, gematcht über ein ruleset-spezifisches Muster; nie das volle `class`-Attribut, nie Seiteninhalt oder Formularwerte, und die rohe Klasse verlässt den Browser nie. Aus ist der Default, eine Site entscheidet sich also bewusst für diesen einen DOM-Read.
+
+#### Was jede Ruleset erkennt [#ruleset-page-types]
+
+Jede Ruleset mappt den Page-Controller-Token des Frameworks auf einen aus einem festen Satz von Page-Types (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Tokens außerhalb dieser Tabelle mappen auf nichts, und der Pageview behält einen leeren Page-Type. Das Mapping liegt im Collector, verbessert sich also ohne erneutes Ausrollen des browser-gecachten Trackers.
+
+| Page-Type    | Shopware 6          | Shopware 5 <sup>1</sup> | OXID eShop                        | Magento                     | WooCommerce                              |
+| ------------ | ------------------- | ----------------------- | --------------------------------- | --------------------------- | ---------------------------------------- |
+| **home**     | `is-ctl-index`      | `is--ctl-index`         | `cl-start`                        | `cms-index-index`           | nicht typisiert <sup>2</sup>             |
+| **product**  | `is-ctl-product`    | `is--ctl-detail`        | `cl-details`                      | `catalog-product-view`      | `single-product`                         |
+| **category** | `is-ctl-navigation` | `is--ctl-listing`       | `cl-alist`                        | `catalog-category-view`     | `post-type-archive-product`, `tax-product_cat` |
+| **cart**     | `is-ctl-checkout` <sup>3</sup> | `is--ctl-checkout` <sup>3</sup> | `cl-basket`             | `checkout-cart-index`       | `woocommerce-cart`                       |
+| **checkout** | als `cart` gewertet <sup>3</sup> | als `cart` gewertet <sup>3</sup> | `cl-user`, `cl-payment`, `cl-order` | `checkout-index-index` | `woocommerce-checkout`                   |
+| **search**   | `is-ctl-search`     | `is--ctl-search`        | `cl-search`                       | `catalogsearch-result-index` | nicht typisiert <sup>2</sup>            |
+| **account**  | `is-ctl-account`    | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
+
+<sup>1</sup> Das Shopware-5-Markup ist vorläufig und wird noch gegen Produktiv-Shops verifiziert. <sup>2</sup> WooCommerce nutzt für Home- und Suchseiten generische WordPress-Klassen, die zu breit sind, um sie zuverlässig zu typisieren, also bleiben sie untypisiert. <sup>3</sup> Shopware teilt sich einen Controller-Token über Warenkorb- und Bestätigungsschritt, daher melden beide das gröbere `cart` statt eines geratenen `checkout`.
+
 ## Ingest und Routing
 
 ### `enforce_domain_match` [#enforce-domain-match]

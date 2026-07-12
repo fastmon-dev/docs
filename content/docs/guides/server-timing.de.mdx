@@ -95,7 +95,7 @@ Eine reservierte Metrik kennzeichnet die *Art* der Seite und wird zu einer Dashb
 Server-Timing: pageType;desc="checkout"
 ```
 
-Fastmon akzeptiert `pageType` / `page_type` und das First-Party `fm-pagetype`, schreibt das Label klein und kappt es bei 32 Zeichen. Der Header-Wert hat Vorrang vor fastmons URL-Muster-Fallback.
+Fastmon akzeptiert `pageType` / `page_type` und das First-Party `fm-pagetype`, schreibt das Label klein und kappt es bei 32 Zeichen. Der Header-Wert gewinnt immer gegen die Body-Class-Erkennung, die du mit [`pagetype_ruleset`](/de/tracker#pagetype-ruleset) aktivieren kannst, und ist damit die maßgebliche Quelle, sobald du ihn serverseitig setzen kannst.
 
 ## Den Header senden
 

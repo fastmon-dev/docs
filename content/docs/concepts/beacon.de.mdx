@@ -47,7 +47,7 @@ Geo-Daten (das Land) werden im Browser **nicht** gelesen. Der Edge leitet sie au
 
 - `localStorage` / `IndexedDB` / `Cache Storage` lesen oder schreiben, niemals.
 - Cookies setzen. fastmon setzt überhaupt keine Cookies, in keiner Konfiguration.
-- DOM-Inhalt anfassen (kein Scroll-Replay, kein Session-Replay, keine Formularerfassung).
+- DOM-Inhalt anfassen (kein Scroll-Replay, kein Session-Replay, keine Formularerfassung). Die einzige Ausnahme ist das Opt-in [`pagetype_ruleset`](/de/tracker#pagetype-ruleset), das einen einzelnen Body-Controller-Klassen-Token zur Page-Type-Einordnung liest, sonst nichts.
 - Mediengeräte, Sensoren oder Geolokation des Besuchers anfragen.
 - Einen Identifier auf dem Gerät vergeben, der Pageviews verknüpft, außer [`store_session`](/de/tracker#store-session) ist an (dann die tab-gebundene Session-ID). Die Per-Pageview-ID `pvid` gibt es in jeder Konfiguration und stirbt mit dem Pageview.
 

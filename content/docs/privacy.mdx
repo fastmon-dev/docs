@@ -16,7 +16,7 @@ These rules hold regardless of how the site is configured:
 | **Device or browser fingerprints**    | No canvas fingerprinting, no font enumeration, no `userAgentData` high-entropy hints, no battery / sensor / audio-context probing. |
 | **Cross-site identifiers**            | We mint nothing that survives a navigation across domains. A session on `acme.com` cannot be linked to one on `other.com`. |
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
-| **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. |
+| **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. The one carve-out is opt-in [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), which reads a single body controller-class token to classify the page type; off by default. |
 | **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`track_query_keys`](/en/tracker#track-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`query_value_keys`](/en/tracker#query-value-keys). |
 | **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
 

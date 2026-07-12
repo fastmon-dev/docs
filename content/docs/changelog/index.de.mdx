@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatischer Page-Type für Shop-Systeme">
+
+Für Shops auf Shopware 5/6, OXID, Magento oder WooCommerce kann fastmon jeden Pageview jetzt ohne Code auf deiner Seite in einen **Page-Type** einordnen (Product, Category, Cart, Checkout und so weiter). Schalte pro Site eine Ruleset ein ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), und der Tracker liest nur die Body-Controller-Klasse des Shop-Frameworks aus, um den Typ abzuleiten. Standardmäßig **aus** (gar kein DOM-Read), und ein `Server-Timing: pageType`-Header hat, falls du einen sendest, weiter Vorrang.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load für Soft-Navigationen, und Web Vitals in Kürze">
 
 SPA-Routenwechsel (Soft-Navigationen) erfassten bisher keine Loading-Metriken, LCP und FCP für Single-Page-Apps kamen also nur aus kalten Seitenladungen und lasen sich schlechter als die echte Erfahrung. Der Tracker misst das Soft-Nav-Loading jetzt auf zwei Wegen: **Route Load** (`soft_nav_load`), einen Same-Site-Netzwerk-Proxy in jedem Browser, und echte LCP/FCP auf Chromium, sobald dessen Soft-Navigations-API ausgeliefert wird. Route Load landet im Dashboard als eigene Metrik, getrennt von LCP/FCP und schrittweise ausgerollt. Wenn die nativen LCP/FCP einlaufen, spiegelt der SPA-LCP/FCP-p75 auch In-App-Navigationen wider, eine Änderung der Messmethodik, keine Regression.
