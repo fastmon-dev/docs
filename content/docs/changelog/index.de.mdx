@@ -29,6 +29,12 @@ Die Charts-Seite kann jedem Chart einen **zweiten, unabhängigen Filtersatz** ü
 
 </ChangelogEntry>
 
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page-Type in der Besucher-Journey">
+
+Die Besucher-Journey zeigt jetzt den **erkannten Page-Type** als Chip an jedem Pageview (Product, Category, Cart, Checkout und so weiter), neben den Chips für Navigationstyp und Cache-Status, überall dort, wo eine Site einen sendet oder erkennt. Pageviews ohne Page-Type zeigen keinen.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page-Type im ganzen Dashboard">
 
 Sobald eine Shop-Ruleset an ist ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), wird **Page-Type** zu einer vollwertigen Dimension im Dashboard. Du setzt die Ruleset pro Site oder domänenübergreifendem Tracker unter Collection, schlüsselst dann nach Page-Type auf und filterst danach, nimmst ihn als Spalte in die Beacon-Liste, stellst mit dem neuen Preset **Page types** den Traffic-Mix und die Web Vitals je Typ als Chart dar und öffnest die eingeordnete Ansicht unter Analytics → Pages. Traffic ohne erkannten Typ erscheint als kein Page-Type.
