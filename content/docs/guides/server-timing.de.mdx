@@ -85,7 +85,22 @@ Ein Cache-Urteil wird als Description übertragen, nicht als Dauer — z. B. `Se
 
 Die bloßen Flags von CloudFront werden als Fallback für die CDN-Schicht erkannt: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (ein explizites `fm-cdn` überschreibt sie weiterhin).
 
-Der Wert wird großgeschrieben und auf einen bekannten Status normalisiert — `HIT`, `MISS`, `EXPIRED`, `STALE`, `BYPASS`, `REVALIDATED`, `UPDATING`, `DYNAMIC`, `PASS`, `NONE`. Fastlys zusammengesetzte Formen kollabieren (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); Unbekanntes wird durchgereicht, gekappt auf 12 Zeichen. Das Ergebnis ist der schnellste Blick darauf, ob dein Edge-Cache wirklich greift, direkt neben [TTFB](/de/web-vitals/ttfb).
+Der Wert wird großgeschrieben und auf einen der Status normalisiert, die fastmon speichert. Fastlys zusammengesetzte Formen kollabieren zuerst (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); alles außerhalb der Liste unten wird unverändert durchgereicht, gekappt auf 12 Zeichen, sodass ein herstellerspezifischer Status nie stillschweigend verloren geht.
+
+| Status        | Bedeutung                                                                           |
+| ------------- | ----------------------------------------------------------------------------------- |
+| `HIT`         | Aus dem Cache ausgeliefert, kein Origin-Abruf.                                       |
+| `MISS`        | Nicht im Cache; vom Origin geholt (und meist für das nächste Mal gespeichert).      |
+| `EXPIRED`     | Eine gecachte Kopie war abgelaufen und wurde vom Origin aufgefrischt.               |
+| `STALE`       | Eine veraltete Kopie wurde ausgeliefert (stale-while-revalidate oder Origin nicht erreichbar). |
+| `REVALIDATED` | Die gecachte Kopie wurde gegen den Origin geprüft und als noch frisch bestätigt.    |
+| `UPDATING`    | Eine veraltete Kopie wurde ausgeliefert, während der Cache sie im Hintergrund auffrischte. |
+| `BYPASS`      | Der Cache wurde für diese Anfrage bewusst übersprungen; der Origin lieferte aus.    |
+| `DYNAMIC`     | Als dynamisch und nicht cachebar behandelt; immer vom Origin.                       |
+| `PASS`        | Ungecacht durchgereicht (Fastly `pass`; `HITPASS` kollabiert hierher).              |
+| `NONE`        | Kein Caching angewandt oder konfiguriert.                                           |
+
+Beide Schichten nutzen dasselbe Vokabular. Ein Pageview, der keinen Cache-Status meldet, wird leer gespeichert und erscheint im Dashboard als **Unknown** (in den Share-Metriken pro Status zählt er als `unreported`). Zusammen sind sie der schnellste Blick darauf, ob dein Edge-Cache wirklich greift, direkt neben [TTFB](/de/web-vitals/ttfb).
 
 ## Seitentyp
 

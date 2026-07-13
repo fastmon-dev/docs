@@ -85,7 +85,22 @@ A cache verdict is carried as a description, not a duration — e.g. `Server-Tim
 
 CloudFront's bare flags are recognized as a fallback for the CDN layer: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (an explicit `fm-cdn` still overrides them).
 
-The value is uppercased and normalized to a known status — `HIT`, `MISS`, `EXPIRED`, `STALE`, `BYPASS`, `REVALIDATED`, `UPDATING`, `DYNAMIC`, `PASS`, `NONE`. Fastly's compound forms collapse (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); anything unknown passes through, capped to 12 chars. The result is the fastest read on whether your edge cache is doing its job, sat right next to [TTFB](/en/web-vitals/ttfb).
+The value is uppercased and normalized to one of the statuses fastmon stores. Fastly's compound forms collapse first (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); anything outside the list below passes through as-is, capped to 12 characters, so a vendor-specific status is never silently dropped.
+
+| Status        | What it means                                                             |
+| ------------- | ------------------------------------------------------------------------- |
+| `HIT`         | Served from cache, no origin fetch.                                       |
+| `MISS`        | Not in cache; fetched from origin (and usually stored for next time).     |
+| `EXPIRED`     | A cached copy had expired, so it was refreshed from origin.               |
+| `STALE`       | A stale copy was served (stale-while-revalidate, or origin unreachable).  |
+| `REVALIDATED` | The cached copy was checked against origin and confirmed still fresh.     |
+| `UPDATING`    | A stale copy was served while the cache refreshed it in the background.   |
+| `BYPASS`      | The cache was deliberately skipped for this request; origin served it.    |
+| `DYNAMIC`     | Treated as dynamic and uncacheable; always from origin.                   |
+| `PASS`        | Passed through uncached (Fastly `pass`; `HITPASS` collapses here).        |
+| `NONE`        | No caching applied or configured for the response.                        |
+
+Both layers use the same vocabulary. A pageview that reports no cache status is stored empty and shows as **Unknown** in the dashboard (it counts as `unreported` in the per-status share metrics). Together they give the fastest read on whether your edge cache is doing its job, right next to [TTFB](/en/web-vitals/ttfb).
 
 ## Page type
 
