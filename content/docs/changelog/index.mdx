@@ -12,6 +12,24 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query retention now applies to fetch/XHR endpoint paths">
+
+The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#query-value-keys) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#track-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Filter analytics by visitor (stitch ID)">
+
+Analytics filters now include **`stitch`**: narrow any breakdown, chart, or drill-down to one or more specific visitors by their stitch ID. The values are the same 32-character hex ids that `POST /analytics/beacons` returns, so what you filter by matches what you read back. Ids that aren't valid are ignored, and a filter made only of invalid ids matches nothing. It is a match filter (there is no exclude-by-stitch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Richer beacon drill-down">
+
+The beacon drill-down (`POST /analytics/beacons`) returns more per-beacon detail and can be scoped to a single error. A new **`error_fingerprint`** field returns only the pageviews carrying that error signature, which is what backs the Errors page's "open in Explorer" link. Each beacon row now also carries its error class (normal or ad-blocked), the average waterfall position of each fetch/XHR endpoint, the third-party and resource maps (counts, sizes, and durations by category), and per-script long-animation-frame attribution. The long-animation-frame data needs the v2 beacon schema and comes back empty on v1.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web Vitals measurement aligned with web-vitals v5">
 
 The tracker now measures the Core Web Vitals the way Google's web-vitals v5 library and CrUX do, so your field numbers line up with what Search Console shows. **INP** is now the CrUX p98 estimate (roughly your 98th-percentile interaction) rather than the single worst interaction, so it reads lower on interaction-heavy pages: a change in method, not a regression. **Prerendered pages** no longer create phantom pageviews or inflated timings, because the tracker arms itself only once the page is activated and rebases TTFB, FCP and LCP to that moment. A page opened in a **background tab** no longer counts its delayed first paint as slow loading: paints from after the tab was first hidden are dropped and the pageview is flagged. CLS still counts layout shifts during prerender, matching CrUX.

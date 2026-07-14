@@ -17,6 +17,24 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query-Aufbewahrung gilt jetzt auch für fetch/XHR-Endpoint-Pfade">
+
+Der Tracker hat den Query-String bisher von jedem fetch/XHR-Endpoint-Pfad entfernt, sodass ein Front-Controller-Shop, der die Route im Query hält (`/index.php?controller=Search` gegenüber `?controller=Cart`), jeden Request in einen nutzlosen `/index.php`-Bucket zusammenfallen ließ. Diese Pfade beachten jetzt dieselben zwei Site-Einstellungen wie die Seiten-URL: [`query_value_keys`](/de/tracker#query-value-keys) behält die gewählten `key=value`-Paare (sodass `controller` und `action` die Routen trennen), und [`track_query_keys`](/de/tracker#track-query-keys) behält die bloßen Key-Namen. Ist keins von beiden gesetzt, wird der Query weiterhin verworfen, unkonfigurierte Sites ändern sich also nicht und es gibt keine Migration. Die Reduktion läuft im Tracker (der Pfad ist sein Aggregationsschlüssel), und der Collector wendet dieselbe Regel als Absicherung erneut an. Konfigurierte Keys sind auf Buchstaben, Ziffern, `_` und `-` beschränkt, sowohl beim Speichern als auch beim Ausliefern des Skripts, sodass ein Key nie aus dem ausgelieferten Bundle ausbrechen kann.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Analytics nach Besucher filtern (Stitch-ID)">
+
+Die Analytics-Filter enthalten jetzt **`stitch`**: schränke jede Aufschlüsselung, jedes Chart und jeden Drill-down auf einen oder mehrere bestimmte Besucher per Stitch-ID ein. Die Werte sind dieselben 32-stelligen Hex-IDs, die `POST /analytics/beacons` zurückgibt, worauf du filterst, entspricht also dem, was du zurückliest. Ungültige IDs werden ignoriert, und ein Filter nur aus ungültigen IDs trifft nichts. Es ist ein Treffer-Filter (ein Ausschließen per Stitch gibt es nicht).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Reicheres Beacon-Drill-down">
+
+Das Beacon-Drill-down (`POST /analytics/beacons`) liefert mehr Detail je Beacon und lässt sich auf einen einzelnen Fehler einschränken. Ein neues Feld **`error_fingerprint`** gibt nur die Pageviews mit dieser Fehlersignatur zurück, was den „In Explorer öffnen“-Link der Fehler-Seite trägt. Jede Beacon-Zeile führt jetzt außerdem ihre Fehlerklasse (normal oder ad-geblockt), die durchschnittliche Waterfall-Position jedes fetch/XHR-Endpoints, die Third-Party- und Ressourcen-Maps (Anzahl, Größe und Dauer je Kategorie) sowie die Long-Animation-Frame-Attribution je Skript. Die Long-Animation-Frame-Daten brauchen das v2-Beacon-Schema und kommen auf v1 leer zurück.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web-Vitals-Messung an web-vitals v5 angeglichen">
 
 Der Tracker misst die Core Web Vitals jetzt so, wie es Googles web-vitals-v5-Bibliothek und CrUX tun, damit deine Feld-Werte zu dem passen, was die Search Console zeigt. **INP** ist jetzt die CrUX-p98-Schätzung (etwa deine 98.-Perzentil-Interaktion) statt der einzelnen langsamsten Interaktion und liest sich auf interaktionsreichen Seiten daher niedriger: eine Änderung der Methode, keine Regression. **Prerender-Seiten** erzeugen keine Phantom-Pageviews und keine aufgeblähten Zeiten mehr, denn der Tracker startet erst, sobald die Seite aktiviert wird, und rebasiert TTFB, FCP und LCP auf diesen Moment. Eine im **Hintergrund-Tab** geöffnete Seite zählt ihren verzögerten ersten Paint nicht mehr als langsames Laden: Paints, nachdem der Tab zum ersten Mal verborgen war, werden verworfen und der Pageview wird markiert. CLS zählt Layout-Verschiebungen während des Prerenders weiterhin mit, passend zu CrUX.
