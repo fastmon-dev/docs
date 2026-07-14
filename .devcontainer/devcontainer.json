@@ -4,14 +4,16 @@
     "dockerfile": "Dockerfile"
   },
   "workspaceFolder": "/workspaces/docs",
-  // Workspace on a named volume (native to the OrbStack Linux VM) instead of a
-  // virtiofs bind mount. virtiofs does not make rename() atomic, so a concurrent
-  // reader (Zed's worktree/git scanner) sees files briefly vanish during
-  // atomic-save/index rewrites — that's the "flashing git status" (#58069) and
-  // the empty-tree-commit data loss. A btrfs-backed volume has 0 such races.
-  // The volume survives rebuilds, so uncommitted work persists across them.
-  // It is bootstrapped (cloned) by postCreateCommand below on first create.
-  "workspaceMount": "source=fastmon-docs-src,target=/workspaces/docs,type=volume",
+  // Workspace as a virtiofs BIND MOUNT of the host docs checkout, so edits land
+  // on the host directly. virtiofs does not make rename() atomic, so a concurrent
+  // reader (Zed's worktree/git scanner) used to see files briefly vanish during
+  // atomic-save/index rewrites — the "flashing git status" (#58069) and
+  // empty-tree-commit data loss. That race is now defused by core.checkStat=minimal
+  // (set system-wide in the Dockerfile), so the bind mount is safe as the default.
+  // To fall back to a clone-isolated named volume instead, swap this line for
+  //   "source=fastmon-docs-src,target=/workspaces/docs,type=volume"
+  // (bootstrapped by the git init+fetch guard in postCreateCommand on first create).
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/docs,type=bind",
   "mounts": [
     // Sibling repos, mounted read-write so docs scripts can read
     // OpenAPI / type sources directly from backend and frontend without

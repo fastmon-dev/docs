@@ -39,3 +39,12 @@ RUN install -d -m 0700 -o dev -g dev /home/dev/.ssh \
 # mounts as root and the postCreateCommand bootstrap clone (run as dev) can't
 # write to it.
 RUN mkdir -p /workspaces/docs && chown dev:dev /workspaces/docs
+
+# Git change detection: compare only mtime+size (core.checkStat=minimal). The
+# default also compares ctime/ino/dev/uid/gid, which are unstable across the
+# OrbStack/virtiofs bind mount — git then reports the whole tree as modified
+# ("all files changed") on every stat, the Zed git-panel flash. This defuses the
+# rename race, making the host bind mount safe as the default workspace again.
+# System scope so it applies regardless of workspace mode; set as root (writing
+# /etc/gitconfig needs root).
+RUN git config --system core.checkStat minimal
