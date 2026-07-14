@@ -17,6 +17,42 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web-Vitals-Messung an web-vitals v5 angeglichen">
+
+Der Tracker misst die Core Web Vitals jetzt so, wie es Googles web-vitals-v5-Bibliothek und CrUX tun, damit deine Feld-Werte zu dem passen, was die Search Console zeigt. **INP** ist jetzt die CrUX-p98-Schätzung (etwa deine 98.-Perzentil-Interaktion) statt der einzelnen langsamsten Interaktion und liest sich auf interaktionsreichen Seiten daher niedriger: eine Änderung der Methode, keine Regression. **Prerender-Seiten** erzeugen keine Phantom-Pageviews und keine aufgeblähten Zeiten mehr, denn der Tracker startet erst, sobald die Seite aktiviert wird, und rebasiert TTFB, FCP und LCP auf diesen Moment. Eine im **Hintergrund-Tab** geöffnete Seite zählt ihren verzögerten ersten Paint nicht mehr als langsames Laden: Paints, nachdem der Tab zum ersten Mal verborgen war, werden verworfen und der Pageview wird markiert. CLS zählt Layout-Verschiebungen während des Prerenders weiterhin mit, passend zu CrUX.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element-Attribution für LCP, INP und CLS">
+
+Jeder Pageview hält jetzt fest, warum ein Web Vital langsam war und welches Element es verursacht hat. LCP teilt sich in vier Phasen (Time to First Byte, Resource Load Delay, Load Duration, Render Delay), die in Summe den LCP ergeben, INP in drei (Input Delay, Processing, Presentation), und LCP, CLS und INP tragen je einen CSS-Selektor-Pfad zum verantwortlichen Element (bei LCP zusätzlich die Bild-URL). Dynamische IDs wie `#order-98123` dienen nie als Anker: Sie sind schwache personenbezogene Daten und würden die Kardinalität aufblähen, also fällt der Pfad auf einen stabilen Vorfahren zurück. Was verfügbar ist, hängt vom Browser ab: LCP-Phasen brauchen Chrome 77, Firefox 122 oder Safari 26.2; INP-Phasen Chrome 96, Firefox 144 oder Safari 26.2; und CLS-Attribution gibt es nur in Chromium. Auf Apple-Traffic bleiben diese Felder vorerst also leer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web-Vitals-Attribution im Dashboard">
+
+Die Detailseiten der Core Web Vitals zeigen jetzt die neue Attribution je Pageview. LCP und INP bekommen je eine **Phase Breakdown**-Card: die durchschnittliche Metrik als Kaskade in ihre Phasen zerlegt und dieselben Phasen über die Zeit gestapelt. Die Breakdown-Tabellen (langsamste Seiten, nach Seite, Land, Gerät) bekommen eine Spalte **Phases**, die zeigt, welche Phase je Zeile dominiert, und beim Aufklappen einer Zeile kommt eine auf sie beschränkte Phasen-Ansicht hinzu. Ein neues Panel **Element Targets** auf LCP, CLS und INP reiht die CSS-Selektoren, die am häufigsten für das Vital verantwortlich sind, angeführt von einem Hauptverursacher-Callout („verantwortlich für N % der attribuierten Pageviews“); bei LCP kannst du stattdessen die verantwortliche Bild-URL reihen lassen. Der **Explorer** bekommt die Phasen-Metriken und die Dimension INP-Interaktionstyp, und die **Visitors**-Journey samt Beacon-Drawer zeigt je Pageview die Phasenaufteilung, das Element und den Interaktionstyp.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Web-Vitals-Attribution in der API">
+
+Die neue Attribution steht über die API bereit. `POST /analytics/visitors/detail` liefert je Pageview die Phasenaufteilung, die Element-Selektoren und den Interaktionstyp, und die sieben LCP- und INP-Teilmetriken sind in `POST /analytics/query` abfragbar, mit `inp_interaction_type` als gruppierbarer Dimension. Ein neues `POST /analytics/element-targets` reiht die Elemente, die am häufigsten für LCP, CLS oder INP verantwortlich sind (nach Selektor-Pfad, bei LCP auch nach Resource-URL), mit Anteil und Durchschnittswert, site-weit oder pro URL; ein eigener Endpoint, weil die Selektor-Spalten zu hochkardinal sind, um direkt danach zu gruppieren. Wie im Dashboard bleiben diese Felder leer, bis der Browser des Besuchers sie meldet.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Visitors öffnet auf echten Journeys und filtert auf Checkout">
+
+Die **Visitors**-Liste zeigt jetzt standardmäßig Sitzungen mit mindestens drei Seiten statt jedes einzelnen Ein-Seiten-Besuchs, sodass sie auf lesenswerten Journeys öffnet; das Minimum ist einstellbar und bleibt in der URL. Ein neuer Verhaltensfilter **Includes page type** behält nur Besucher, deren Sitzung einen Pageview eines bestimmten Typs enthält, mit einem Ein-Klick-**Checkout** für den häufigen Fall „Sitzungen, die den Checkout erreicht haben“.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-13" type="new" area="dashboard" title="Performance nach Cache-Status">
+
+Network → Cache bekommt ein Raster **Performance by cache status**: die Kennzahlen (LCP, TTFB, FCP, Page Load, p75) mit einer Zeile je CDN- und Origin-Cache-Status, sodass du auf einen Blick siehst, ob ein MISS hier wirklich langsamer ist als ein HIT und um wie viel. Jede Zeile ist nach ihrem Web-Vitals-Schwellenwert eingefärbt und zeigt ihren Anteil an den Pageviews, im selben Document-Navigation-Scope wie die Verteilung darüber. Die umschaltbare **Breakdown**-Card bekommt einen Share-Button auf Panel-Ebene, und die Cache-Chart-Cards bekommen den Hover-Share-Button und Deep-Link-Anker, den die Analytics-Panels schon haben.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer in Charts und Table aufgeteilt">
 
 Der Explorer sind jetzt zwei Seiten, **Charts** und **Table**, die sich Zeitraum, Filterleiste und gespeicherte Queries teilen, sodass ein Wechsel zwischen ihnen deine Query nie verwirft. **Charts** ist eine Multi-Chart-Arbeitsfläche: füge bis zu acht Charts hinzu, jedes mit eigenen Metriken, Gruppierung und Overlays für Vorperiode oder Perzentilbänder, mach sie halb- oder vollbreit und ordne sie per Drag & Drop neu an. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) tauschen den Stapel gegen einen kuratierten Satz, und eine gespeicherte Query hält jetzt das ganze Layout fest. **Table** bekommt über den Zeilen eine Hits-über-Zeit-Linie, damit du siehst, wo der Traffic dahinter entstanden ist.

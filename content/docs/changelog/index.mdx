@@ -12,6 +12,42 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web Vitals measurement aligned with web-vitals v5">
+
+The tracker now measures the Core Web Vitals the way Google's web-vitals v5 library and CrUX do, so your field numbers line up with what Search Console shows. **INP** is now the CrUX p98 estimate (roughly your 98th-percentile interaction) rather than the single worst interaction, so it reads lower on interaction-heavy pages: a change in method, not a regression. **Prerendered pages** no longer create phantom pageviews or inflated timings, because the tracker arms itself only once the page is activated and rebases TTFB, FCP and LCP to that moment. A page opened in a **background tab** no longer counts its delayed first paint as slow loading: paints from after the tab was first hidden are dropped and the pageview is flagged. CLS still counts layout shifts during prerender, matching CrUX.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element attribution for LCP, INP, and CLS">
+
+Each pageview now records why a Web Vital was slow and which element caused it. LCP splits into four phases (time to first byte, resource load delay, load duration, render delay) that add up to the LCP, INP into three (input delay, processing, presentation), and LCP, CLS, and INP each carry a CSS-selector path to the element responsible (plus the image URL for LCP). Dynamic ids such as `#order-98123` are never used as the anchor: they are weak personal data and would inflate cardinality, so the path falls back to a stable parent. What's available depends on the browser: LCP phases need Chrome 77, Firefox 122, or Safari 26.2; INP phases need Chrome 96, Firefox 144, or Safari 26.2; and CLS attribution is Chromium-only, so expect these fields to be empty on Apple traffic for now.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web Vitals attribution in the dashboard">
+
+The Core Web Vitals detail pages now surface the new per-pageview attribution. LCP and INP each get a **Phase Breakdown** card: the average metric split into its phases as a cascade, and the same phases stacked over time. The breakdown tables (slowest pages, by page, country, device) gain a **Phases** column showing which phase dominates each row, and expanding a row adds a phases view scoped to it. A new **Element Targets** panel on LCP, CLS, and INP ranks the CSS selectors most often responsible for the vital, led by a main-culprit callout ("responsible for N% of attributed pageviews"); on LCP you can switch it to rank the responsible image URL instead. The **Explorer** picks up the phase metrics and the INP interaction-type dimension, and the **Visitors** journey and beacon drawer show each pageview's phase split, element, and interaction type.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Web Vitals attribution in the API">
+
+The new attribution is available over the API. `POST /analytics/visitors/detail` returns the phase split, element selectors, and interaction type for each pageview, and the seven LCP and INP subpart metrics are queryable in `POST /analytics/query`, with `inp_interaction_type` as a groupable dimension. A new `POST /analytics/element-targets` ranks the elements most responsible for LCP, CLS, or INP (by selector path, or by resource URL for LCP) with each one's share and average value, site-wide or per URL; it is a dedicated endpoint because the selector columns are too high-cardinality to group on directly. As in the dashboard, these fields stay empty until the visitor's browser reports them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Visitors opens on real journeys, and filters to checkout">
+
+The **Visitors** list now defaults to sessions of at least three pages instead of every single-page visit, so it opens on journeys worth reading; the minimum is adjustable and kept in the URL. A new behaviour filter, **Includes page type**, keeps only visitors whose session contains a pageview of a given type, with a one-click **Checkout** option for the common "sessions that reached checkout" case.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-13" type="new" area="dashboard" title="Performance by cache status">
+
+Network → Cache gains a **Performance by cache status** grid: the headline metrics (LCP, TTFB, FCP, Page Load, p75) with one row per CDN and origin cache status, so you can see at a glance whether a MISS is really slower than a HIT and by how much. Each row is coloured by its Web Vitals threshold and shows its share of pageviews, over the same document-navigation scope as the distribution above. The switchable **Breakdown** card gains a panel-level share button, and the cache chart cards get the hover share button and deep-link anchor that the Analytics panels already have.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer split into Charts and Table">
 
 The Explorer is now two pages, **Charts** and **Table**, that share one time range, filter bar, and set of saved queries, so switching between them never loses your query. **Charts** is a multi-chart workspace: add up to eight charts, each with its own metrics, grouping, and previous-period or percentile-band overlays, size them half or full width, and rearrange them by drag and drop. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) swap the stack for a curated set, and a saved query now stores the whole layout. **Table** gains a hits-over-time line above the rows, so you can see where the traffic behind them happened.
