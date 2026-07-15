@@ -63,7 +63,7 @@ page loads
       with a versioned payload (lifecycle marks each emission)
 ```
 
-The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party / resource-breakdown / LoAF JSON blobs) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
+The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party, resource, and Long Animation Frame breakdowns) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
 
 ## The wire payload
 
@@ -85,11 +85,11 @@ The payload is JSON with deliberately short keys to keep the wire size down. The
   "o":    "macOS",
   "vc":   "wide",
   "c":    "4g",
-  "t1":   320,
-  "t2":   1100,
-  "t9":   1820,
-  "t10":  140,
-  "t11":  0.05,
+  "ttfb": 320,
+  "fcp":  1100,
+  "lcp":  1820,
+  "inp":  140,
+  "cls":  0.05,
   "errs": [ { "t": "TypeError", "n": 1, "m": "...", "fr": "..." } ],
   "tv":   "260508-a1b2c3d",
   "dlv":  "b"
@@ -110,14 +110,14 @@ Key abbreviations:
 - `us`, `um`, `uc`, `ut`, `un`, `ci`: campaign attribution (utm source / medium / campaign / term / content, and the click-ID platform label) extracted from `window.location.search`. Each capped at 64 chars. `ci` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration, and omitted entirely when empty.
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
-- `t1`…`t36`: numeric timing slots (TTFB, FCP, LCP, INP, CLS, cache hit rate, resource breakdowns, LoAF aggregates, …).
+- Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. They were previously opaque numbered slots (`t1`…`t36`); cached older bundles still send those names, which the collector maps onto the same fields.
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`store_error_messages`](/en/tracker#store-error-messages), and the path/line/column of inline and third-party frames via [`error_frame_detail`](/en/tracker#error-frame-detail); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
 - `snl`: **Route Load** for soft navigations (`soft_nav_load`) — the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 - Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs.
 
-Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `t9`/`t2` slots and attributed to the route.
+Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `lcp`/`fcp` keys and attributed to the route.
 
 ## Cache and rollouts
 

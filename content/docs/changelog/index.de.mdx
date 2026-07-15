@@ -17,6 +17,36 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon-Wire-Keys sind jetzt lesbare Mnemonics">
+
+Die kompakten Wire-Keys des Beacons, früher ein undurchsichtiges Nummernschema (`t1`, `t9`, `t10` und so weiter), sind jetzt kurze Mnemonics: `ttfb`, `lcp`, `inp`, `cls` und der Rest. Vollständig abwärtskompatibel und ohne Zutun deinerseits: Der Collector akzeptiert die alten Keys weiter, eine Seite mit einem älteren gecachten Bundle meldet also unverändert, bis sie sich aktualisiert. Dasselbe Release wirft drei veraltete JSON-Blobs raus, die der Beacon nicht mehr braucht (die alten Third-Party-, Resource- und Long-Animation-Frame-Strings, längst durch strukturierte Felder ersetzt), und spart so ein paar Hundert Bytes pro Pageview. Siehe [Der RUM-Beacon](/de/concepts/beacon#der-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="fixed" area="tracker" title="Keine doppelten Update-Beacons mehr mitten im Pageview">
+
+Auf einer Seite, die sowohl einen Fehler als auch einen fetch/XHR-Aufruf protokollierte, konnte der Tracker zwei Byte-identische Update-Beacons im selben Moment absenden: Der Fehler-Kanal und der fetch/XHR-Kanal führten je einen eigenen Sende-Timer, und keiner wusste, dass der andere den vollen Snapshot bereits verschickt hatte. Da jedes Beacon den kompletten kumulativen Stand trägt, war das zweite reine Dopplung. Der Tracker merkt sich unversendete Aktivität jetzt pro Kanal und überspringt ein Update, sobald der aktuelle Stand schon auf dem Draht ist. Weniger Requests, und kein Datenverlust: Das Update, das rausgeht, trägt weiterhin beide Kanäle.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="„Beacon“ heißt jetzt „Pageview“">
+
+Der Drill-down-Datensatz heißt im ganzen Dashboard jetzt **Pageview** (Beschriftungen, Tooltips, Kopier-Buttons, Leer- und Ladezustände sowie der Markdown-Export) statt „Beacon“, was sich wie Fachjargon las. Seine Deep-Link-Parameter wechseln auf `?pageview=` und `?pvtab=`, alte `?beacon=`-Links lösen also nicht mehr auf. Das Öffnen eines Pageviews aus der rohen Explorer-Liste schreibt ihn jetzt ebenfalls in die URL, sodass ein Neuladen dieselbe Zeile wieder öffnet und der Link teilbar ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Schnelle +/-Filter im Explorer und im Pageview-Drawer">
+
+Jeder filterbare Wert in der Explorer-Tabelle und im Pageview-Drawer bekommt beim Hovern **+ / −**-Buttons, die diesen Wert direkt in die Explorer-Filter aufnehmen oder ausschließen. In der Tabelle schweben sie über dem Ende der Zelle, sodass ihr Einblenden nie eine Spalte verschiebt oder abschneidet; im Drawer sitzen sie in einem reservierten Slot neben Land, Page-Type, Gerät, OS, Browser, Connection, Protokoll, Navigation, Referrer, Kampagne, Cache-Status und Domain (Browser filtert `Chrome`, nicht `Chrome 120`). Das **+** wirkt auch auf den Besucher (Stitch) eines Pageviews und schränkt den Explorer auf genau diesen Besucher ein.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Reicheres Netzwerk- und Server-Timing-Detail im Pageview-Drawer">
+
+Der Pageview-Drawer zeichnet seine Netzwerk-Abschnitte jetzt als proportionale Bar-Lists (Schlimmstes zuerst) statt als flache Zeilen. **Resources** zeigen Anzahl, Größe und Dauer je Initiator-Typ (die Größen und Dauern wurden erfasst, aber nie angezeigt), **Third Parties** teilen sich nach Domain (Blocking-Zeit) und nach Kategorie (Request-Anteil), und **Long Animation Frames** reihen sich nach Blocking-Zeit je Skript. **Server Timing** wird zu einem gestapelten Kompositions-Balken aller Backend-Phasen (die sieben promoteten Metriken plus deine eigenen `Server-Timing`-Keys) mit passender Legende; eigene Keys, die bereits eine promotete Phase speisen, werden dedupliziert, sodass die Summe nicht doppelt zählt.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query-Aufbewahrung gilt jetzt auch für fetch/XHR-Endpoint-Pfade">
 
 Der Tracker hat den Query-String bisher von jedem fetch/XHR-Endpoint-Pfad entfernt, sodass ein Front-Controller-Shop, der die Route im Query hält (`/index.php?controller=Search` gegenüber `?controller=Cart`), jeden Request in einen nutzlosen `/index.php`-Bucket zusammenfallen ließ. Diese Pfade beachten jetzt dieselben zwei Site-Einstellungen wie die Seiten-URL: [`query_value_keys`](/de/tracker#query-value-keys) behält die gewählten `key=value`-Paare (sodass `controller` und `action` die Routen trennen), und [`track_query_keys`](/de/tracker#track-query-keys) behält die bloßen Key-Namen. Ist keins von beiden gesetzt, wird der Query weiterhin verworfen, unkonfigurierte Sites ändern sich also nicht und es gibt keine Migration. Die Reduktion läuft im Tracker (der Pfad ist sein Aggregationsschlüssel), und der Collector wendet dieselbe Regel als Absicherung erneut an. Konfigurierte Keys sind auf Buchstaben, Ziffern, `_` und `-` beschränkt, sowohl beim Speichern als auch beim Ausliefern des Skripts, sodass ein Key nie aus dem ausgelieferten Bundle ausbrechen kann.

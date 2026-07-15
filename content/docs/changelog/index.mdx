@@ -12,6 +12,36 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon wire keys are now readable mnemonics">
+
+The beacon's compact wire keys, previously an opaque numbered scheme (`t1`, `t9`, `t10`, and so on), are now short mnemonics: `ttfb`, `lcp`, `inp`, `cls`, and the rest. It is fully backward-compatible and needs nothing from you: the collector still accepts the old keys, so a page running an older cached bundle keeps reporting until it refreshes. The same release drops three legacy JSON blobs the beacon no longer needs (the old third-party, resource, and Long Animation Frame strings, long since replaced by structured fields), trimming a few hundred bytes off each pageview. See [The RUM Beacon](/en/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="fixed" area="tracker" title="No duplicate mid-pageview update beacons">
+
+On a page that logged both an error and a fetch/XHR call, the tracker could fire two byte-identical update beacons at the same instant: the error channel and the fetch/XHR channel each tracked their own send timer, and neither knew the other had already shipped the full snapshot. Because every beacon carries the complete cumulative state, the second one was pure duplication. The tracker now tracks unsent activity per channel and skips an update once the current state is already on the wire. Fewer requests, and no data lost: the update that does go out still carries both channels.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="'Beacon' is now 'Pageview'">
+
+The drill-down record is called a **Pageview** throughout the dashboard now (labels, tooltips, copy buttons, the empty and loading states, and the Markdown export) instead of "Beacon", which read as jargon. Its deep-link parameters change to `?pageview=` and `?pvtab=`, so old `?beacon=` links no longer resolve. Opening a pageview from the raw Explorer list also writes it to the URL now, so a refresh reopens the same row and the link is shareable.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Quick +/- filters in the Explorer and pageview drawer">
+
+Every filterable value in the Explorer table and the pageview drawer gains hover **+ / −** buttons that filter to or exclude that value straight into the Explorer filters. In the table they float over the end of the cell, so revealing them never shifts or truncates a column; in the drawer they sit in a reserved slot beside Country, Page type, Device, OS, Browser, connection, protocol, navigation, referrer, campaign, cache status, and domain (Browser filters `Chrome`, not `Chrome 120`). The **+** also works on a pageview's visitor (stitch), scoping the Explorer to that one visitor.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Richer network and server-timing detail in the pageview drawer">
+
+The pageview drawer now draws its network sections as proportional, worst-first bar lists instead of flat rows. **Resources** show count, size, and duration per initiator type (the sizes and durations were collected but never shown before), **third parties** split by domain (blocking time) and by category (request share), and **Long Animation Frames** rank by per-script blocking time. **Server timing** becomes one stacked composition bar of every backend phase (the seven promoted metrics plus your custom `Server-Timing` keys) with a matching legend; custom keys that already feed a promoted phase are de-duplicated, so the total is not double-counted.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query retention now applies to fetch/XHR endpoint paths">
 
 The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#query-value-keys) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#track-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
