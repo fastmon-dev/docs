@@ -12,6 +12,48 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Fewer, better-timed beacons per pageview">
+
+The tracker's beacon emission is reworked to send fewer requests and record more accurate loading metrics. `init` now fires immediately as a pageview-exists marker (so a bot or a page that closes abruptly still registers), and `loaded` is held back until LCP is final (the first interaction, the tab hiding, or a 10-second cap) rather than firing on the first, often provisional, LCP entry. The metric that reaches storage is now the real final LCP. Mid-pageview update beacons fire only on a meaningful signal (a new first-party endpoint, a failed request, or a slow call over 500 ms) instead of on every fetch or XHR, so first-party prefetch and third-party analytics chatter no longer drive a flood: a typical pageview now sends two to four beacons. Terminal beacons keep `keepalive` while live-page beacons no longer do, so the final beacon (with the page's final INP and CLS) is reliably delivered on Chromium instead of occasionally being dropped under heavy navigation. No change to the wire format or your setup; see [the beacon's lifecycle and knobs](/en/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-navigation LCP is measured again on Chromium">
+
+Soft-navigation (SPA route change) pageviews had been shipping no LCP at all on current Chrome, even when the route clearly rendered a large image, while FCP and INP came through fine. A shape change in Chrome's `interaction-contentful-paint` entries meant the tracker was reading the interaction (click) time instead of the paint time, giving an LCP of zero that the sanity guard then dropped. The tracker now reads the paint time and matches each paint to its route by interaction id, so SPA route LCP is populated again.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="A tag included twice no longer doubles a pageview">
+
+If the tracking tag was included or executed twice on a page (a common tag-manager mistake), each copy wrapped the browser's history API again and registered its own listeners, so a single SPA route change fired in every copy and produced duplicate pageviews and doubled beacons. The tracker now guards against a second execution and bails out, so an extra inclusion is harmless.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Live mode for the Explorer and Visitors">
+
+The Explorer's raw requests list and the Visitors page get a proper **Live** mode. Turning it on snaps the range to the last hour (a live stream over 30 days is pointless) and restores your previous range when you stop, pins to the newest page, and surfaces brand-new pageviews as they arrive rather than waiting on the 30-second count cache (it shows "Live · showing N" without an exact total, for freshness). The Live toggle and the Refresh button fuse into one control with a countdown border that depletes over the interval and restarts on every refresh, manual or automatic.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Filter by browser version, and type a stitch value">
+
+Two new ways to filter. **Browser version** is a numeric range filter on the browser's major version (`Browser version ≥ 150`, with `≥`, `≤`, or a range, like any numeric filter); pair it with a `browser` filter, since a version number means different things across families. And you can now **type or paste a `stitch` value** into the filter bar to scope to a single visitor, where before it was click-only; a pasted value is normalised to lowercase hex.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="changed" area="dashboard" title="Smoother, leaner refreshes">
+
+Refreshes (manual or a live tick) are smoother and do less work. A refresh now only refetches the analytics data, not the org metadata (sites, usage) that doesn't change with the time window. Charts keep their previous data while refetching instead of flashing an empty skeleton, and the Explorer's hits-over-time strip no longer re-animates on every tick. A bug where an auto-refresh could keep querying the same time window, so new pageviews only appeared after a hard reload, is fixed: one refresh now advances the window for every part of the page in lockstep.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="dashboard" title="Adding a site leads straight into setup">
+
+After you create a site you now go straight to the tracking-code setup drawer, instead of landing back on the list with no obvious next step, and the site's **Set up** button lights up right away (its status used to come from a stale cache, so the highlight only appeared after a reload). The add-site form's Name and Domain fields also get example placeholders and a one-line hint each, so it is clear what the domain is for and how to enter it.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon wire keys are now readable mnemonics">
 
 The beacon's compact wire keys, previously an opaque numbered scheme (`t1`, `t9`, `t10`, and so on), are now short mnemonics: `ttfb`, `lcp`, `inp`, `cls`, and the rest. It is fully backward-compatible and needs nothing from you: the collector still accepts the old keys, so a page running an older cached bundle keeps reporting until it refreshes. The same release drops three legacy JSON blobs the beacon no longer needs (the old third-party, resource, and Long Animation Frame strings, long since replaced by structured fields), trimming a few hundred bytes off each pageview. See [The RUM Beacon](/en/concepts/beacon#the-wire-payload).

@@ -17,6 +17,48 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Weniger, besser getimte Beacons pro Pageview">
+
+Die Beacon-Aussendung des Trackers wurde überarbeitet: weniger Requests und genauere Loading-Metriken. `init` feuert jetzt sofort als Marker „dieser Pageview existiert“ (sodass auch ein Bot oder eine abrupt geschlossene Seite registriert wird), und `loaded` wird zurückgehalten, bis der LCP final ist (erste Interaktion, Tab-Wechsel oder ein 10-Sekunden-Deckel), statt beim ersten, oft vorläufigen LCP-Eintrag zu feuern. In den Speicher gelangt jetzt der echte finale LCP. Mid-Pageview-Update-Beacons feuern nur noch bei einem aussagekräftigen Signal (ein neuer First-Party-Endpoint, ein fehlgeschlagener Request oder ein langsamer Aufruf über 500 ms) statt bei jedem fetch oder XHR, sodass First-Party-Prefetch und Third-Party-Analytics-Geplapper keine Flut mehr auslösen: ein typischer Pageview sendet jetzt zwei bis vier Beacons. Terminale Beacons behalten `keepalive`, Beacons der lebenden Seite nicht mehr, sodass das finale Beacon (mit dem endgültigen INP und CLS der Seite) auf Chromium zuverlässig ankommt, statt unter starker Navigation gelegentlich verloren zu gehen. Keine Änderung am Wire-Format oder an deiner Einbindung; siehe [Lifecycle und Stellschrauben des Beacons](/de/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-Navigation-LCP wird auf Chromium wieder gemessen">
+
+Soft-Navigation-Pageviews (SPA-Routenwechsel) sendeten auf aktuellem Chrome gar keinen LCP mehr, selbst wenn die Route klar ein großes Bild rendert, während FCP und INP normal durchkamen. Eine Formänderung in Chromes `interaction-contentful-paint`-Einträgen führte dazu, dass der Tracker die Interaktions-(Klick-)Zeit statt der Paint-Zeit las, was einen LCP von null ergab, den die Plausibilitätsprüfung dann verwarf. Der Tracker liest jetzt die Paint-Zeit und ordnet jeden Paint über die Interaction-ID seiner Route zu, sodass der SPA-Routen-LCP wieder befüllt wird.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Ein doppelt eingebundenes Tag verdoppelt keinen Pageview mehr">
+
+Wurde das Tracking-Tag auf einer Seite zweimal eingebunden oder ausgeführt (ein häufiger Tag-Manager-Fehler), umschloss jede Kopie die History-API des Browsers erneut und registrierte eigene Listener, sodass ein einzelner SPA-Routenwechsel in jeder Kopie feuerte und doppelte Pageviews und doppelte Beacons erzeugte. Der Tracker sichert sich jetzt gegen eine zweite Ausführung ab und bricht ab, sodass eine zusätzliche Einbindung folgenlos bleibt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Live-Modus für Explorer und Visitors">
+
+Die rohe Requests-Liste des Explorers und die Visitors-Seite bekommen einen echten **Live**-Modus. Eingeschaltet rastet er den Zeitraum auf die letzte Stunde ein (ein Live-Stream über 30 Tage ist sinnlos) und stellt beim Beenden den vorherigen Zeitraum wieder her, heftet sich an die neueste Seite und zeigt brandneue Pageviews, sobald sie eintreffen, statt auf den 30-Sekunden-Count-Cache zu warten (er zeigt „Live · N angezeigt“ ohne exakte Gesamtzahl, zugunsten der Aktualität). Der Live-Umschalter und der Refresh-Button verschmelzen zu einem Control mit Countdown-Rand, der über das Intervall abläuft und bei jedem Refresh neu startet, ob manuell oder automatisch.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Nach Browser-Version filtern und Stitch-Wert eintippen">
+
+Zwei neue Filtermöglichkeiten. **Browser-Version** ist ein numerischer Bereichsfilter auf die Major-Version des Browsers (`Browser-Version ≥ 150`, mit `≥`, `≤` oder einem Bereich, wie bei jedem numerischen Filter); kombiniere ihn mit einem `browser`-Filter, denn eine Versionsnummer bedeutet je Familie etwas anderes. Und du kannst jetzt einen **`stitch`-Wert eintippen oder einfügen**, um auf einen einzelnen Besucher einzuschränken, wo es vorher nur per Klick ging; ein eingefügter Wert wird auf Kleinbuchstaben-Hex normalisiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="changed" area="dashboard" title="Sanftere, schlankere Refreshes">
+
+Refreshes (manuell oder ein Live-Tick) sind sanfter und machen weniger Arbeit. Ein Refresh lädt jetzt nur noch die Analytics-Daten neu, nicht die Org-Metadaten (Sites, Nutzung), die sich mit dem Zeitraum nicht ändern. Charts behalten ihre bisherigen Daten während des Nachladens, statt ein leeres Skeleton aufblitzen zu lassen, und der Hits-über-Zeit-Streifen des Explorers animiert nicht mehr bei jedem Tick neu. Ein Fehler, bei dem ein Auto-Refresh weiter denselben Zeitraum abfragte, sodass neue Pageviews erst nach einem harten Neuladen erschienen, ist behoben: ein Refresh schiebt das Zeitfenster jetzt für alle Teile der Seite im Gleichschritt weiter.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="dashboard" title="Eine Site anzulegen führt direkt in die Einrichtung">
+
+Nachdem du eine Site angelegt hast, landest du jetzt direkt im Setup-Drawer mit dem Tracking-Code, statt ohne erkennbaren nächsten Schritt zurück auf der Liste, und der **Einrichten**-Button der Site leuchtet sofort auf (sein Status kam bisher aus einem veralteten Cache, sodass die Hervorhebung erst nach einem Neuladen erschien). Die Felder Name und Domain im Anlegen-Formular bekommen außerdem Beispiel-Platzhalter und je einen einzeiligen Hinweis, sodass klar ist, wofür die Domain dient und wie sie einzugeben ist.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon-Wire-Keys sind jetzt lesbare Mnemonics">
 
 Die kompakten Wire-Keys des Beacons, früher ein undurchsichtiges Nummernschema (`t1`, `t9`, `t10` und so weiter), sind jetzt kurze Mnemonics: `ttfb`, `lcp`, `inp`, `cls` und der Rest. Vollständig abwärtskompatibel und ohne Zutun deinerseits: Der Collector akzeptiert die alten Keys weiter, eine Seite mit einem älteren gecachten Bundle meldet also unverändert, bis sie sich aktualisiert. Dasselbe Release wirft drei veraltete JSON-Blobs raus, die der Beacon nicht mehr braucht (die alten Third-Party-, Resource- und Long-Animation-Frame-Strings, längst durch strukturierte Felder ersetzt), und spart so ein paar Hundert Bytes pro Pageview. Siehe [Der RUM-Beacon](/de/concepts/beacon#der-wire-payload).

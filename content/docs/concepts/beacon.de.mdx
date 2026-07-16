@@ -148,13 +148,13 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 
 ### Feintuning [#fine-tuning]
 
-Standardmäßig hält der Tracker den Request-Umfang gering: bei einem schnellen Load fassen sich die ersten zwei Beacons zu einem zusammen, frühe Mid-Pageview-Updates warten auf das finale Beacon, und die Update-Beacons einer pollenden Seite werden gedeckelt. Für Seiten, die daran etwas ändern müssen, liest er ein paar `window`-Globals. Die meisten Sites fassen sie nie an; setz einen Wert **vor** dem `<script>`-Tag, damit schon das erste Beacon ihn respektiert.
+Standardmäßig hält der Tracker den Request-Umfang gering: `init` feuert sofort als Marker „dieser Pageview existiert“, `loaded` folgt, sobald der LCP final ist, Mid-Pageview-Updates feuern nur bei einem aussagekräftigen Signal (ein neuer First-Party-Endpoint, ein Fehler oder ein langsamer Aufruf), und die Update-Beacons einer pollenden Seite werden gedeckelt. Ein typischer Pageview sendet zwei bis vier Beacons. Für Seiten, die daran etwas ändern müssen, liest er ein paar `window`-Globals. Die meisten Sites fassen sie nie an; setz einen Wert **vor** dem `<script>`-Tag, damit schon das erste Beacon ihn respektiert.
 
 | Global | Default | Wirkung |
 | --- | --- | --- |
 | `__FASTMON_SAMPLE_RATE` | `1` | Anteil der Pageviews, die Beacons senden (0 bis 1). `0` lässt einen Pageview ganz aus. Die Entscheidung gilt pro Pageview; ein gesampelter Pageview sendet alle seine Lifecycle-Beacons. |
-| `__FASTMON_INIT_COALESCE_MS` | `500` | Verzögerung vor dem `init`-Beacon, damit ein schneller Load es mit dem `loaded`-Beacon zu einem Request zusammenfasst. `0` sendet `init` sofort. |
-| `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Hält Mid-Pageview-Update-Beacons (Fehler, Fetch/XHR) zurück, bis die Seite mindestens so alt ist; ein kürzerer Besuch schickt sie stattdessen auf dem finalen Beacon. `0` sendet sie sofort. |
+| `__FASTMON_INIT_COALESCE_MS` | `0` | Verzögerung vor dem `init`-Beacon. Bei `0` (Standard) feuert `init` sofort, sodass ein Pageview, der vor jedem anderen Beacon endet (ein Bot, ein Crash, ein abruptes Schließen), trotzdem registriert wird. Ein positiver Wert verzögert es wieder. |
+| `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | Wie lange der Tracker auf das Finalwerden des LCP wartet, bevor er `loaded` sendet, wenn keine Interaktion und kein Tab-Wechsel den LCP vorher finalisiert. `0` deaktiviert den Deckel. |
 | `__FASTMON_MAX_VERSION` | `20` | Deckelt Mid-Pageview-Update-Beacons pro Pageview, damit eine pollende Seite nicht Tausende feuert. Lifecycle-Beacons werden nie gedeckelt, und die kumulativen Aggregate landen trotzdem auf dem finalen Beacon. `0` hebt den Deckel auf. |
 
 ## Tracker-Einstellungen

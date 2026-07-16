@@ -146,12 +146,13 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 
 ### Fine-tuning [#fine-tuning]
 
-By default the tracker keeps request volume low: on a fast load the first two beacons coalesce into one, early mid-page-view updates wait for the final beacon, and a polling page's update beacons are capped. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
+By default the tracker keeps request volume low: `init` fires immediately as a pageview-exists marker, `loaded` follows once LCP is final, mid-page-view updates fire only on a meaningful signal (a new first-party endpoint, a failure, or a slow call), and a polling page's update beacons are capped. A typical pageview sends two to four beacons. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
 
 | Global | Default | Effect |
 | --- | --- | --- |
 | `__FASTMON_SAMPLE_RATE` | `1` | Fraction of page-views that send beacons (0 to 1). `0` skips a page-view entirely. The decision is per page-view; a sampled page-view still sends all of its lifecycle beacons. |
-| `__FASTMON_INIT_COALESCE_MS` | `500` | Delay before the `init` beacon, so a fast load can merge it with the `loaded` beacon into a single request. `0` fires `init` immediately. |
+| `__FASTMON_INIT_COALESCE_MS` | `0` | Delay before the `init` beacon. At `0` (the default) `init` fires immediately, so a pageview that dies before any other beacon (a bot, a crash, an abrupt close) still registers. A positive value re-delays it. |
+| `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | How long the tracker waits for LCP to settle before it sends `loaded`, when no interaction or tab-hide has finalized LCP first. `0` disables the cap. |
 | `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Holds mid-page-view update beacons (errors, fetch/XHR) until the page is at least this old; a shorter visit ships them on the final beacon instead. `0` fires them immediately. |
 | `__FASTMON_MAX_VERSION` | `20` | Caps mid-page-view update beacons per page-view, so a polling page can't fire thousands. Lifecycle beacons are never capped, and the cumulative aggregates still land on the final beacon. `0` removes the cap. |
 
