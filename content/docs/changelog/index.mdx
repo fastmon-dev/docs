@@ -18,9 +18,9 @@ The tracker's beacon emission is reworked to send fewer requests and record more
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-navigation LCP is measured again on Chromium">
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-navigation LCP is now measured on Chromium">
 
-Soft-navigation (SPA route change) pageviews had been shipping no LCP at all on current Chrome, even when the route clearly rendered a large image, while FCP and INP came through fine. A shape change in Chrome's `interaction-contentful-paint` entries meant the tracker was reading the interaction (click) time instead of the paint time, giving an LCP of zero that the sanity guard then dropped. The tracker now reads the paint time and matches each paint to its route by interaction id, so SPA route LCP is populated again.
+Soft-navigation (SPA route change) pageviews shipped no LCP at all on current Chrome, even when the route clearly rendered a large image, while FCP and INP came through fine. A shape change in Chrome's `interaction-contentful-paint` entries meant the tracker was reading the interaction (click) time instead of the paint time, giving an LCP of zero that the sanity guard then dropped. The tracker now reads the paint time and matches each paint to its route by interaction id, so SPA route LCP is populated.
 
 </ChangelogEntry>
 
@@ -39,18 +39,6 @@ The Explorer's raw requests list and the Visitors page get a proper **Live** mod
 <ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Filter by browser version, and type a stitch value">
 
 Two new ways to filter. **Browser version** is a numeric range filter on the browser's major version (`Browser version ≥ 150`, with `≥`, `≤`, or a range, like any numeric filter); pair it with a `browser` filter, since a version number means different things across families. And you can now **type or paste a `stitch` value** into the filter bar to scope to a single visitor, where before it was click-only; a pasted value is normalised to lowercase hex.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-16" type="changed" area="dashboard" title="Smoother, leaner refreshes">
-
-Refreshes (manual or a live tick) are smoother and do less work. A refresh now only refetches the analytics data, not the org metadata (sites, usage) that doesn't change with the time window. Charts keep their previous data while refetching instead of flashing an empty skeleton, and the Explorer's hits-over-time strip no longer re-animates on every tick. A bug where an auto-refresh could keep querying the same time window, so new pageviews only appeared after a hard reload, is fixed: one refresh now advances the window for every part of the page in lockstep.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-16" type="fixed" area="dashboard" title="Adding a site leads straight into setup">
-
-After you create a site you now go straight to the tracking-code setup drawer, instead of landing back on the list with no obvious next step, and the site's **Set up** button lights up right away (its status used to come from a stale cache, so the highlight only appeared after a reload). The add-site form's Name and Domain fields also get example placeholders and a one-line hint each, so it is clear what the domain is for and how to enter it.
 
 </ChangelogEntry>
 

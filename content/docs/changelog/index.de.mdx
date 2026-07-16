@@ -23,9 +23,9 @@ Die Beacon-Aussendung des Trackers wurde überarbeitet: weniger Requests und gen
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-Navigation-LCP wird auf Chromium wieder gemessen">
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-Navigation-LCP wird auf Chromium jetzt gemessen">
 
-Soft-Navigation-Pageviews (SPA-Routenwechsel) sendeten auf aktuellem Chrome gar keinen LCP mehr, selbst wenn die Route klar ein großes Bild rendert, während FCP und INP normal durchkamen. Eine Formänderung in Chromes `interaction-contentful-paint`-Einträgen führte dazu, dass der Tracker die Interaktions-(Klick-)Zeit statt der Paint-Zeit las, was einen LCP von null ergab, den die Plausibilitätsprüfung dann verwarf. Der Tracker liest jetzt die Paint-Zeit und ordnet jeden Paint über die Interaction-ID seiner Route zu, sodass der SPA-Routen-LCP wieder befüllt wird.
+Soft-Navigation-Pageviews (SPA-Routenwechsel) sendeten auf aktuellem Chrome gar keinen LCP, selbst wenn die Route klar ein großes Bild rendert, während FCP und INP normal durchkamen. Eine Formänderung in Chromes `interaction-contentful-paint`-Einträgen führte dazu, dass der Tracker die Interaktions-(Klick-)Zeit statt der Paint-Zeit las, was einen LCP von null ergab, den die Plausibilitätsprüfung dann verwarf. Der Tracker liest jetzt die Paint-Zeit und ordnet jeden Paint über die Interaction-ID seiner Route zu, sodass der SPA-Routen-LCP befüllt wird.
 
 </ChangelogEntry>
 
@@ -44,18 +44,6 @@ Die rohe Requests-Liste des Explorers und die Visitors-Seite bekommen einen echt
 <ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Nach Browser-Version filtern und Stitch-Wert eintippen">
 
 Zwei neue Filtermöglichkeiten. **Browser-Version** ist ein numerischer Bereichsfilter auf die Major-Version des Browsers (`Browser-Version ≥ 150`, mit `≥`, `≤` oder einem Bereich, wie bei jedem numerischen Filter); kombiniere ihn mit einem `browser`-Filter, denn eine Versionsnummer bedeutet je Familie etwas anderes. Und du kannst jetzt einen **`stitch`-Wert eintippen oder einfügen**, um auf einen einzelnen Besucher einzuschränken, wo es vorher nur per Klick ging; ein eingefügter Wert wird auf Kleinbuchstaben-Hex normalisiert.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-16" type="changed" area="dashboard" title="Sanftere, schlankere Refreshes">
-
-Refreshes (manuell oder ein Live-Tick) sind sanfter und machen weniger Arbeit. Ein Refresh lädt jetzt nur noch die Analytics-Daten neu, nicht die Org-Metadaten (Sites, Nutzung), die sich mit dem Zeitraum nicht ändern. Charts behalten ihre bisherigen Daten während des Nachladens, statt ein leeres Skeleton aufblitzen zu lassen, und der Hits-über-Zeit-Streifen des Explorers animiert nicht mehr bei jedem Tick neu. Ein Fehler, bei dem ein Auto-Refresh weiter denselben Zeitraum abfragte, sodass neue Pageviews erst nach einem harten Neuladen erschienen, ist behoben: ein Refresh schiebt das Zeitfenster jetzt für alle Teile der Seite im Gleichschritt weiter.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-16" type="fixed" area="dashboard" title="Eine Site anzulegen führt direkt in die Einrichtung">
-
-Nachdem du eine Site angelegt hast, landest du jetzt direkt im Setup-Drawer mit dem Tracking-Code, statt ohne erkennbaren nächsten Schritt zurück auf der Liste, und der **Einrichten**-Button der Site leuchtet sofort auf (sein Status kam bisher aus einem veralteten Cache, sodass die Hervorhebung erst nach einem Neuladen erschien). Die Felder Name und Domain im Anlegen-Formular bekommen außerdem Beispiel-Platzhalter und je einen einzeiligen Hinweis, sodass klar ist, wofür die Domain dient und wie sie einzugeben ist.
 
 </ChangelogEntry>
 
