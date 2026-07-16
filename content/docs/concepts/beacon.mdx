@@ -63,7 +63,7 @@ page loads
       with a versioned payload (lifecycle marks each emission)
 ```
 
-The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party / resource-breakdown / LoAF JSON blobs) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
+The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party, resource, and Long Animation Frame breakdowns) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
 
 ## The wire payload
 
@@ -85,11 +85,11 @@ The payload is JSON with deliberately short keys to keep the wire size down. The
   "o":    "macOS",
   "vc":   "wide",
   "c":    "4g",
-  "t1":   320,
-  "t2":   1100,
-  "t9":   1820,
-  "t10":  140,
-  "t11":  0.05,
+  "ttfb": 320,
+  "fcp":  1100,
+  "lcp":  1820,
+  "inp":  140,
+  "cls":  0.05,
   "errs": [ { "t": "TypeError", "n": 1, "m": "...", "fr": "..." } ],
   "tv":   "260508-a1b2c3d",
   "dlv":  "b"
@@ -110,14 +110,14 @@ Key abbreviations:
 - `us`, `um`, `uc`, `ut`, `un`, `ci`: campaign attribution (utm source / medium / campaign / term / content, and the click-ID platform label) extracted from `window.location.search`. Each capped at 64 chars. `ci` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration, and omitted entirely when empty.
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
-- `t1`…`t36`: numeric timing slots (TTFB, FCP, LCP, INP, CLS, cache hit rate, resource breakdowns, LoAF aggregates, …).
+- Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. They were previously opaque numbered slots (`t1`…`t36`); cached older bundles still send those names, which the collector maps onto the same fields.
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`store_error_messages`](/en/tracker#store-error-messages), and the path/line/column of inline and third-party frames via [`error_frame_detail`](/en/tracker#error-frame-detail); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
 - `snl`: **Route Load** for soft navigations (`soft_nav_load`) — the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 - Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs.
 
-Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `t9`/`t2` slots and attributed to the route.
+Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `lcp`/`fcp` keys and attributed to the route.
 
 ## Cache and rollouts
 
@@ -146,12 +146,13 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 
 ### Fine-tuning [#fine-tuning]
 
-By default the tracker keeps request volume low: on a fast load the first two beacons coalesce into one, early mid-page-view updates wait for the final beacon, and a polling page's update beacons are capped. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
+By default the tracker keeps request volume low: `init` fires immediately as a pageview-exists marker, `loaded` follows once LCP is final, mid-page-view updates fire only on a meaningful signal (a new first-party endpoint, a failure, or a slow call), and a polling page's update beacons are capped. A typical pageview sends two to four beacons. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
 
 | Global | Default | Effect |
 | --- | --- | --- |
 | `__FASTMON_SAMPLE_RATE` | `1` | Fraction of page-views that send beacons (0 to 1). `0` skips a page-view entirely. The decision is per page-view; a sampled page-view still sends all of its lifecycle beacons. |
-| `__FASTMON_INIT_COALESCE_MS` | `500` | Delay before the `init` beacon, so a fast load can merge it with the `loaded` beacon into a single request. `0` fires `init` immediately. |
+| `__FASTMON_INIT_COALESCE_MS` | `0` | Delay before the `init` beacon. At `0` (the default) `init` fires immediately, so a pageview that dies before any other beacon (a bot, a crash, an abrupt close) still registers. A positive value re-delays it. |
+| `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | How long the tracker waits for LCP to settle before it sends `loaded`, when no interaction or tab-hide has finalized LCP first. `0` disables the cap. |
 | `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Holds mid-page-view update beacons (errors, fetch/XHR) until the page is at least this old; a shorter visit ships them on the final beacon instead. `0` fires them immediately. |
 | `__FASTMON_MAX_VERSION` | `20` | Caps mid-page-view update beacons per page-view, so a polling page can't fire thousands. Lifecycle beacons are never capped, and the cumulative aggregates still land on the final beacon. `0` removes the cap. |
 

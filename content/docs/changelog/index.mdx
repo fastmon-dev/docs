@@ -12,6 +12,120 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Fewer, better-timed beacons per pageview">
+
+The tracker's beacon emission is reworked to send fewer requests and record more accurate loading metrics. `init` now fires immediately as a pageview-exists marker (so a bot or a page that closes abruptly still registers), and `loaded` is held back until LCP is final (the first interaction, the tab hiding, or a 10-second cap) rather than firing on the first, often provisional, LCP entry. The metric that reaches storage is now the real final LCP. Mid-pageview update beacons fire only on a meaningful signal (a new first-party endpoint, a failed request, or a slow call over 500 ms) instead of on every fetch or XHR, so first-party prefetch and third-party analytics chatter no longer drive a flood: a typical pageview now sends two to four beacons. Terminal beacons keep `keepalive` while live-page beacons no longer do, so the final beacon (with the page's final INP and CLS) is reliably delivered on Chromium instead of occasionally being dropped under heavy navigation. No change to the wire format or your setup; see [the beacon's lifecycle and knobs](/en/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-navigation LCP is now measured on Chromium">
+
+Soft-navigation (SPA route change) pageviews shipped no LCP at all on current Chrome, even when the route clearly rendered a large image, while FCP and INP came through fine. A shape change in Chrome's `interaction-contentful-paint` entries meant the tracker was reading the interaction (click) time instead of the paint time, giving an LCP of zero that the sanity guard then dropped. The tracker now reads the paint time and matches each paint to its route by interaction id, so SPA route LCP is populated.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="A tag included twice no longer doubles a pageview">
+
+If the tracking tag was included or executed twice on a page (a common tag-manager mistake), each copy wrapped the browser's history API again and registered its own listeners, so a single SPA route change fired in every copy and produced duplicate pageviews and doubled beacons. The tracker now guards against a second execution and bails out, so an extra inclusion is harmless.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Live mode for the Explorer and Visitors">
+
+The Explorer's raw requests list and the Visitors page get a proper **Live** mode. Turning it on snaps the range to the last hour (a live stream over 30 days is pointless) and restores your previous range when you stop, pins to the newest page, and surfaces brand-new pageviews as they arrive rather than waiting on the 30-second count cache (it shows "Live · showing N" without an exact total, for freshness). The Live toggle and the Refresh button fuse into one control with a countdown border that depletes over the interval and restarts on every refresh, manual or automatic.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Filter by browser version, and type a stitch value">
+
+Two new ways to filter. **Browser version** is a numeric range filter on the browser's major version (`Browser version ≥ 150`, with `≥`, `≤`, or a range, like any numeric filter); pair it with a `browser` filter, since a version number means different things across families. And you can now **type or paste a `stitch` value** into the filter bar to scope to a single visitor, where before it was click-only; a pasted value is normalised to lowercase hex.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon wire keys are now readable mnemonics">
+
+The beacon's compact wire keys, previously an opaque numbered scheme (`t1`, `t9`, `t10`, and so on), are now short mnemonics: `ttfb`, `lcp`, `inp`, `cls`, and the rest. It is fully backward-compatible and needs nothing from you: the collector still accepts the old keys, so a page running an older cached bundle keeps reporting until it refreshes. The same release drops three legacy JSON blobs the beacon no longer needs (the old third-party, resource, and Long Animation Frame strings, long since replaced by structured fields), trimming a few hundred bytes off each pageview. See [The RUM Beacon](/en/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="fixed" area="tracker" title="No duplicate mid-pageview update beacons">
+
+On a page that logged both an error and a fetch/XHR call, the tracker could fire two byte-identical update beacons at the same instant: the error channel and the fetch/XHR channel each tracked their own send timer, and neither knew the other had already shipped the full snapshot. Because every beacon carries the complete cumulative state, the second one was pure duplication. The tracker now tracks unsent activity per channel and skips an update once the current state is already on the wire. Fewer requests, and no data lost: the update that does go out still carries both channels.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="'Beacon' is now 'Pageview'">
+
+The drill-down record is called a **Pageview** throughout the dashboard now (labels, tooltips, copy buttons, the empty and loading states, and the Markdown export) instead of "Beacon", which read as jargon. Its deep-link parameters change to `?pageview=` and `?pvtab=`, so old `?beacon=` links no longer resolve. Opening a pageview from the raw Explorer list also writes it to the URL now, so a refresh reopens the same row and the link is shareable.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Quick +/- filters in the Explorer and pageview drawer">
+
+Every filterable value in the Explorer table and the pageview drawer gains hover **+ / −** buttons that filter to or exclude that value straight into the Explorer filters. In the table they float over the end of the cell, so revealing them never shifts or truncates a column; in the drawer they sit in a reserved slot beside Country, Page type, Device, OS, Browser, connection, protocol, navigation, referrer, campaign, cache status, and domain (Browser filters `Chrome`, not `Chrome 120`). The **+** also works on a pageview's visitor (stitch), scoping the Explorer to that one visitor.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Richer network and server-timing detail in the pageview drawer">
+
+The pageview drawer now draws its network sections as proportional, worst-first bar lists instead of flat rows. **Resources** show count, size, and duration per initiator type (the sizes and durations were collected but never shown before), **third parties** split by domain (blocking time) and by category (request share), and **Long Animation Frames** rank by per-script blocking time. **Server timing** becomes one stacked composition bar of every backend phase (the seven promoted metrics plus your custom `Server-Timing` keys) with a matching legend; custom keys that already feed a promoted phase are de-duplicated, so the total is not double-counted.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query retention now applies to fetch/XHR endpoint paths">
+
+The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#query-value-keys) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#track-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Filter analytics by visitor (stitch ID)">
+
+Analytics filters now include **`stitch`**: narrow any breakdown, chart, or drill-down to one or more specific visitors by their stitch ID. The values are the same 32-character hex ids that `POST /analytics/beacons` returns, so what you filter by matches what you read back. Ids that aren't valid are ignored, and a filter made only of invalid ids matches nothing. It is a match filter (there is no exclude-by-stitch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Richer beacon drill-down">
+
+The beacon drill-down (`POST /analytics/beacons`) returns more per-beacon detail and can be scoped to a single error. A new **`error_fingerprint`** field returns only the pageviews carrying that error signature, which is what backs the Errors page's "open in Explorer" link. Each beacon row now also carries its error class (normal or ad-blocked), the average waterfall position of each fetch/XHR endpoint, the third-party and resource maps (counts, sizes, and durations by category), and per-script long-animation-frame attribution. The long-animation-frame data needs the v2 beacon schema and comes back empty on v1.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web Vitals measurement aligned with web-vitals v5">
+
+The tracker now measures the Core Web Vitals the way Google's web-vitals v5 library and CrUX do, so your field numbers line up with what Search Console shows. **INP** is now the CrUX p98 estimate (roughly your 98th-percentile interaction) rather than the single worst interaction, so it reads lower on interaction-heavy pages: a change in method, not a regression. **Prerendered pages** no longer create phantom pageviews or inflated timings, because the tracker arms itself only once the page is activated and rebases TTFB, FCP and LCP to that moment. A page opened in a **background tab** no longer counts its delayed first paint as slow loading: paints from after the tab was first hidden are dropped and the pageview is flagged. CLS still counts layout shifts during prerender, matching CrUX.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element attribution for LCP, INP, and CLS">
+
+Each pageview now records why a Web Vital was slow and which element caused it. LCP splits into four phases (time to first byte, resource load delay, load duration, render delay) that add up to the LCP, INP into three (input delay, processing, presentation), and LCP, CLS, and INP each carry a CSS-selector path to the element responsible (plus the image URL for LCP). Dynamic ids such as `#order-98123` are never used as the anchor: they are weak personal data and would inflate cardinality, so the path falls back to a stable parent. What's available depends on the browser: LCP phases need Chrome 77, Firefox 122, or Safari 26.2; INP phases need Chrome 96, Firefox 144, or Safari 26.2; and CLS attribution is Chromium-only, so expect these fields to be empty on Apple traffic for now.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web Vitals attribution in the dashboard">
+
+The Core Web Vitals detail pages now surface the new per-pageview attribution. LCP and INP each get a **Phase Breakdown** card: the average metric split into its phases as a cascade, and the same phases stacked over time. The breakdown tables (slowest pages, by page, country, device) gain a **Phases** column showing which phase dominates each row, and expanding a row adds a phases view scoped to it. A new **Element Targets** panel on LCP, CLS, and INP ranks the CSS selectors most often responsible for the vital, led by a main-culprit callout ("responsible for N% of attributed pageviews"); on LCP you can switch it to rank the responsible image URL instead. The **Explorer** picks up the phase metrics and the INP interaction-type dimension, and the **Visitors** journey and beacon drawer show each pageview's phase split, element, and interaction type.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Web Vitals attribution in the API">
+
+The new attribution is available over the API. `POST /analytics/visitors/detail` returns the phase split, element selectors, and interaction type for each pageview, and the seven LCP and INP subpart metrics are queryable in `POST /analytics/query`, with `inp_interaction_type` as a groupable dimension. A new `POST /analytics/element-targets` ranks the elements most responsible for LCP, CLS, or INP (by selector path, or by resource URL for LCP) with each one's share and average value, site-wide or per URL; it is a dedicated endpoint because the selector columns are too high-cardinality to group on directly. As in the dashboard, these fields stay empty until the visitor's browser reports them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Visitors opens on real journeys, and filters to checkout">
+
+The **Visitors** list now defaults to sessions of at least three pages instead of every single-page visit, so it opens on journeys worth reading; the minimum is adjustable and kept in the URL. A new behaviour filter, **Includes page type**, keeps only visitors whose session contains a pageview of a given type, with a one-click **Checkout** option for the common "sessions that reached checkout" case.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-13" type="new" area="dashboard" title="Performance by cache status">
+
+Network → Cache gains a **Performance by cache status** grid: the headline metrics (LCP, TTFB, FCP, Page Load, p75) with one row per CDN and origin cache status, so you can see at a glance whether a MISS is really slower than a HIT and by how much. Each row is coloured by its Web Vitals threshold and shows its share of pageviews, over the same document-navigation scope as the distribution above. The switchable **Breakdown** card gains a panel-level share button, and the cache chart cards get the hover share button and deep-link anchor that the Analytics panels already have.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer split into Charts and Table">
 
 The Explorer is now two pages, **Charts** and **Table**, that share one time range, filter bar, and set of saved queries, so switching between them never loses your query. **Charts** is a multi-chart workspace: add up to eight charts, each with its own metrics, grouping, and previous-period or percentile-band overlays, size them half or full width, and rearrange them by drag and drop. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) swap the stack for a curated set, and a saved query now stores the whole layout. **Table** gains a hits-over-time line above the rows, so you can see where the traffic behind them happened.
