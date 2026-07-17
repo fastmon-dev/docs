@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 // present and lets the reader narrow the feed (the Tracker area is documented
 // exhaustively, so the filter is the way to read just tracker changes).
 
-export type ChangelogArea = "dashboard" | "api" | "tracker" | "platform";
+export type ChangelogArea = "dashboard" | "api" | "tracker" | "platform" | "extension";
 export type ChangelogType = "new" | "changed" | "fixed" | "removed";
 
 type EntryProps = {
@@ -34,7 +34,13 @@ type Labels = {
 
 const DEFAULT_LABELS: Labels = {
   all: "All",
-  areas: { dashboard: "Dashboard", api: "API", tracker: "Tracker", platform: "Platform" },
+  areas: {
+    dashboard: "Dashboard",
+    api: "API",
+    tracker: "Tracker",
+    platform: "Platform",
+    extension: "Extension",
+  },
   types: { new: "New", changed: "Changed", fixed: "Fixed", removed: "Removed" },
   months: [
     "January",
@@ -69,7 +75,7 @@ const TYPE_STYLES: Record<ChangelogType, string> = {
   removed: "bg-rose-500/12 text-rose-700 dark:text-rose-300",
 };
 
-const AREA_ORDER: ChangelogArea[] = ["dashboard", "api", "tracker", "platform"];
+const AREA_ORDER: ChangelogArea[] = ["dashboard", "api", "tracker", "platform", "extension"];
 
 function slugify(s: string): string {
   return s

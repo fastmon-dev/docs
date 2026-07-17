@@ -6,7 +6,7 @@ full: true
 
 export const labels = {
   all: "Alle",
-  areas: { dashboard: "Dashboard", api: "API", tracker: "Tracker", platform: "Plattform" },
+  areas: { dashboard: "Dashboard", api: "API", tracker: "Tracker", platform: "Plattform", extension: "Erweiterung" },
   types: { new: "Neu", changed: "Geändert", fixed: "Behoben", removed: "Entfernt" },
   months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
@@ -16,6 +16,12 @@ Das Neueste von fastmon, über Dashboard, API, Plattform und Tracker hinweg. Den
 Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpassung. Die Ausnahme ist der **Tracker** (das Skript, das du einbindest): Ihn dokumentieren wir lückenlos, denn er läuft im Browser deiner Besucher, wo schon eine kleine Änderung beeinflussen kann, was gemessen wird.
 
 <Changelog labels={labels}>
+
+<ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: eine DevTools-Erweiterung zum Lesen von Beacons">
+
+Der **Beacon Inspector** ist eine Browser-DevTools-Erweiterung, die die Collector-Beacons deiner Seite liest und live dekodiert. Er gruppiert jeden Beacon nach Pageview, schlüsselt die kurzen Wire-Keys in lesbare Felder auf, verfolgt den Lebenszyklus von `init` bis zum terminalen Beacon und zeigt die Web Vitals, während sie sich einpendeln. Er erfasst sowohl die `fetch`-Beacons, die das Network-Panel ohnehin listet, als auch die `sendBeacon`-Bodies, die es nicht zeigt, du siehst also jede Emission mit vollständigem Payload. Ein Follow-Modus pinnt den neuesten Pageview, Compare stellt zwei nebeneinander, und der Export kopiert einen Beacon als Markdown (optional anonymisiert) für einen Bug-Report. Er ist Open Source und läuft komplett im Browser; keine Beacon-Daten verlassen das Gerät. Siehe [Beacon Inspector](/de/guides/beacon-inspector).
+
+</ChangelogEntry>
 
 <ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Weniger, besser getimte Beacons pro Pageview">
 
