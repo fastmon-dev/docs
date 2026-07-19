@@ -66,11 +66,15 @@ immediate flush.
 
 A `204` is the standard accept response. It's also what you get
 when the beacon is silently dropped. The most common reason is
-that the site has **Allowed origins** set and the page you're
-loading from isn't on the list. Open the site settings, add the
-missing origin (e.g. `staging.acme.com`), and save. The script
-cache invalidates automatically. Other silent drops: site marked
-inactive, or unknown `collector_hash`.
+that the page's hostname isn't a registered **site** on the
+application. Open the application, check the sites it serves, and
+add the missing domain (e.g. `staging.acme.com`). Depending on the
+application's **Unknown domains** setting, an unregistered hostname
+either shows up as a discovery suggestion you can adopt in one
+click, is created automatically, or is dropped silently.
+
+Other silent drops: the site is marked inactive, or the
+`collector_hash` is unknown.
 
 ### Request to `/c/` returns `429`
 

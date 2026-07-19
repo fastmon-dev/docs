@@ -66,12 +66,16 @@ triggert sofort einen Flush.
 ### Beacon liefert `204`, aber im Dashboard taucht nichts auf
 
 `204` ist die normale Erfolgsantwort, kommt aber auch, wenn der
-Beacon still verworfen wird. Häufigster Grund: die Site hat
-**Allowed origins** gesetzt, und der Origin, von dem du lädst,
-steht nicht drauf. Site-Einstellungen öffnen, fehlenden Origin
-hinzufügen (z. B. `staging.acme.com`), speichern. Der Script-Cache
-wird automatisch invalidiert. Andere stille Drops: Site auf inaktiv
-gesetzt, unbekannter `collector_hash`.
+Beacon still verworfen wird. Häufigster Grund: der Hostname der
+Seite ist keine registrierte **Seite** an der Application.
+Application öffnen, die zugehörigen Seiten prüfen und die fehlende
+Domain ergänzen (z. B. `staging.acme.com`). Je nach Einstellung
+**Unbekannte Domains** der Application taucht ein nicht
+registrierter Hostname als Vorschlag zum Hinzufügen auf, wird
+automatisch angelegt oder still verworfen.
+
+Andere stille Drops: Seite auf inaktiv gesetzt, unbekannter
+`collector_hash`.
 
 ### Request an `/c/` liefert `429`
 

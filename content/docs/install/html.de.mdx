@@ -1,113 +1,204 @@
 ---
-title: Fastmon auf einer Website implementieren
-description: Fastmon mit einem einzigen Script-Tag auf jeder Website einbinden. Fünf Minuten vom Signup bis zum ersten Datenpunkt.
+title: Tracking-Code einbinden
+description: Fastmon mit einem einzigen Script-Tag einbinden. Fünf Minuten vom Signup bis zum ersten Datenpunkt.
 ---
 
-Der universelle Weg: ein `<script>`-Tag im `<head>`. Läuft auf
-jeder Site, die du selbst hostest: statisches HTML, Vue/React,
-Hugo-Blog, ein Next.js-Projekt, eine WordPress-Site, alles, wo du
-ein `<script>` einbauen kannst.
+Ein `<script>`-Tag im `<head>`, das ist die ganze Einrichtung. Das läuft
+überall, wo du ein Script einfügen kannst: statisches HTML, eine React-
+oder Vue-App, Hugo, Next.js, WordPress, ein Tag-Manager.
 
-**Zeit bis zu den ersten Daten:** etwa fünf Minuten.
-**Was du brauchst:** Zugriff aufs HTML deiner Site und einen
+**Zeit bis zum ersten Datenpunkt:** etwa fünf Minuten.
+**Du brauchst:** Zugriff auf das HTML deiner Seite und einen
 Fastmon-Account.
 
-## 1. Site in Fastmon anlegen
+<InstallConfigPanel />
 
-Logg dich ein, öffne die gewünschte Organisation und klick **Create site**.
-Ausfüllen:
+## Applications und Seiten
 
-- **Name**: ein Name, an dem du die Site später wiedererkennst (z. B. `acme-marketing`).
-- **Domain**: der reine Hostname, kein Protokoll. Beispiel: `acme.com`.
-- **Allowed origins** *(optional)*: leer lassen, dann gibt es
-  keinen Origin-Check. Sobald gesetzt, ist die Liste eine strikte
-  Allow-List; trag die Production-Domain mit ein, als Komma-Liste
-  (`acme.com, staging.acme.com, preview.acme.com`).
+Hast du diese Seite über den **Einrichten**-Button einer Application
+geöffnet, existiert sie bereits und die Hashes oben sind ausgefüllt,
+dann spring direkt zu Schritt 1.
 
-Den Rest erstmal auf Default lassen; [Collection Mode](/de/collection-modes)
-und Retention drehst du später bei Bedarf.
+Sonst leg zuerst eine an. Eine **Application** ist ein Tracking-Snippet.
+Ihr gehören die Erfassungseinstellungen und die beiden Hashes unten, und
+sie kann eine Domain bedienen oder zwanzig.
 
-**Save** klicken. Fastmon legt zwei kurze Hashes für die Site an:
+Öffne in Fastmon **Applications** und klicke auf **Add**. Vergib einen
+Namen und die Domain, die du messen willst (nur der Hostname, ohne
+Protokoll: `acme.com`). Fastmon legt die Application *und* ihre erste
+**Seite** für diese Domain in einem Schritt an und gibt dir das Snippet.
 
-- `source_hash`: kommt in die Script-URL.
-- `collector_hash`: nutzt der Beacon zum Senden. Steckt im Script
-  drin, den musst du nicht extra kopieren.
+Damit hat die Application zwei kurze Hashes:
 
-Beide findest du auf der Einstellungsseite. Dort liegt auch ein
-fertiges Snippet zum Reinkopieren; genau das, was im nächsten
-Schritt erklärt wird.
+- `source_hash` — kommt in die Script-URL.
+- `collector_hash` — dorthin sendet der Tracker die Daten. Er steckt
+  fest im Script, du fasst ihn normalerweise nie von Hand an.
 
-## 2. Script auf deiner Site einbinden
+Beide findest du auf der Karte der Application unter
+**··· → IDs & Hashes**.
 
-Bau dieses Tag in den `<head>` jeder Seite ein, die du überwachen willst.
-`{source_hash}` durch den Wert aus Schritt 1 ersetzen:
+<Callout type="info">
+  Mehrere Domains mit einem Snippet? Füge sie als weitere Seiten
+  derselben Application hinzu. Jede Seite behält ihr eigenes Dashboard
+  und ihren eigenen Traffic, aber sie teilen sich ein Snippet und eine
+  Erfassungskonfiguration. Eine *zweite Application* brauchst du erst,
+  wenn eine Domain wirklich andere Einstellungen benötigt.
+</Callout>
 
-```html title="<head>"
-<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
-```
+## 1. Tracker-Tag einbauen
 
-Mehr ist es nicht. Der Tracker:
+Dieses eine Tag ist die komplette Pflicht-Einrichtung. Füge es in den
+`<head>` jeder Seite ein, die du messen willst:
 
-- registriert `PerformanceObserver` für Web Vitals,
-- puffert Events im Speicher,
-- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt
-  über den Lebenszyklus des Pageviews: beim Laden, bei
-  `visibilitychange → hidden`, bei `pagehide` und in periodischen
-  Flushes. Rechne mit einigen wenigen pro Pageview, nicht mit
-  genau einem.
+<InstallSnippet kind="script" />
 
-Das Tag nutzt `defer`: lädt parallel zum HTML-Parsing, blockiert den Parser nie und läuft in Reihenfolge, sobald das DOM steht. `async` würde auch ohne Blockieren laden, kann das Parsing aber jederzeit unterbrechen, und die Reihenfolge zwischen mehreren async-Tags ist „wer zuerst fertig ist". Für Web-Vitals-Messung ist vorhersagbares Timing wichtig — daher defer. Wo du es
-einbaust, ist relativ egal; der `<head>` ist trotzdem die bessere
-Wahl, dann erwischt der Beacon auch den ersten Paint.
+Das Tag nutzt `defer`: Es lädt parallel zum HTML-Parsing, blockiert den
+Parser nie und läuft in Quellreihenfolge, sobald das DOM geparst ist.
+`async` würde ebenfalls nicht blockieren, kann das Parsing aber
+unterbrechen, sobald der Download fertig ist, und die Reihenfolge
+mehrerer async-Scripts ist zufällig. Für Web Vitals wollen wir
+vorhersagbares Timing, also gewinnt `defer`.
 
-### Wo das Tag hinkommt
+(Die Reihenfolge der Attribute im Tag ist dem Browser egal:
+`<script defer src="…">` und `<script src="…" defer>` verhalten sich
+identisch. Wir schreiben `defer` zuerst, damit es zu dem passt, was dir
+die App ausgibt.)
 
-| Site-Typ                   | Tag einfügen in…                                              |
-| -------------------------- | ------------------------------------------------------------- |
-| Plain HTML / Hugo / Jekyll | `<head>` des Base-Templates.                                  |
-| WordPress                  | Header-Snippet-Plugin oder `header.php`.                      |
-| Next.js / Nuxt / Astro     | Das Head/Script-Primitive des Frameworks (z. B. Next.js `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
-| Single-Page-Apps           | Die statische `index.html`-Shell (einmal reicht).             |
+Die Platzierung ist nicht kritisch, aber `<head>` ist die bessere Wahl:
+So erwischt der Tracker den allerersten Paint.
 
-## 3. Deployen und Seite laden
+### Wohin damit
 
-Pushe die Änderung nach Production (oder in die Umgebung, die du
-überwachen willst), und ruf eine beliebige Seite im Browser auf.
+| Seitentyp                  | Tag einbauen in…                                                   |
+| -------------------------- | ------------------------------------------------------------------ |
+| Reines HTML / Hugo / Jekyll | `<head>` deines Basis-Templates.                                   |
+| WordPress                  | Ein Header-Snippet-Plugin oder `header.php`.                        |
+| Next.js / Nuxt / Astro     | Das Head/Script-Primitive des Frameworks (Next.js: `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
+| Single-Page-Apps           | Die statische `index.html`-Hülle, einmal reicht.                    |
 
-Der Tracker flusht periodisch, solange die Seite offen ist, und
-zusätzlich bei `visibilitychange → hidden` und `pagehide`.
-Tab-Wechsel oder Schließen der Seite ist beim Testen der
-zuverlässigste Weg, einen Flush zu erzwingen, aber nicht der einzige
-Trigger.
+## 2. Deployen und eine Seite laden
 
-## 4. Prüfen, ob es läuft
+Deploye in die Umgebung, die du messen willst, und öffne irgendeine
+Seite.
 
-Zwei Checks: einer in DevTools, einer im Dashboard.
+Der Tracker registriert `PerformanceObserver` für Web Vitals, puffert
+Events im Speicher und schickt gebündelte POSTs über den Lebenszyklus
+des Seitenaufrufs: beim Laden, bei `visibilitychange → hidden`, bei
+`pagehide` und in periodischen Flushes. Erwarte einige Requests pro
+Seitenaufruf, nicht genau einen. Beim Testen erzwingst du einen Flush am
+zuverlässigsten, indem du den Tab wechselst oder die Seite schließt.
 
-### Im Browser
+Danach prüfen, ob es angekommen ist: siehe
+[Einbindung prüfen](/de/install/verify).
 
-DevTools → **Network** → nach `/c/` filtern. Du solltest einen
-`POST` an `https://fastmon.site/c/{collector_hash}` sehen, entweder
-nach dem periodischen Flush oder beim Tab-Wechsel / Schließen der
-Seite. Status 204 bedeutet, der Beacon wurde akzeptiert.
+### Wenn die Domain noch keine Seite ist
 
-Wenn nichts kommt: [Implementierung verifizieren](/de/install/verify).
+Beacons werden über den Hostname der Seite einer **Seite** zugeordnet.
+Hast du die Domain beim Anlegen der Application angegeben, bist du
+fertig, die Daten landen auf dieser Seite.
 
-### In Fastmon
+Falls nicht (du hast eine leere Application angelegt oder das Snippet
+gerade auf eine zusätzliche Domain gesetzt), wird der erste Seitenaufruf
+nicht still verworfen: Der Hostname taucht an der Application als
+**vorgeschlagene Domain** auf, und du fügst ihn mit einem Klick als
+Seite hinzu. Beacons von vor dem Hinzufügen werden nicht aufbewahrt, die
+Zahlen starten also ab dem Moment, in dem du sie hinzufügst.
 
-Site im Dashboard öffnen. Nach ungefähr einer Minute (Beacons
-werden in Batches in ClickHouse geschrieben) zeigt der
-**Traffic**-Bereich Pageviews &gt; 0. (Sessions bleiben im
-Default-Modus `anonymous` bei null; das ist so gewollt, siehe
-[Sessions](/de/concepts/sessions).) Der erste Beacon ist der, den
-du gerade abgeschickt hast; deine IP behalten wir nicht, aber die
-Zeile ist da.
+Was davon passiert, steuert die Einstellung **Unbekannte Domains** der
+Application:
 
-## Nächste Schritte
+| Einstellung | Was bei einem Beacon von einer nicht registrierten Domain passiert |
+| ----------- | ------------------------------------------------------------------ |
+| **Vorschlagen** (Standard) | Wird als vorgeschlagene Domain zum Hinzufügen gelistet, der Beacon selbst wird verworfen. |
+| **Automatisch anlegen** | Beim ersten Beacon wird automatisch eine Seite angelegt. |
+| **Ignorieren** | Wird still verworfen, kein Vorschlag, keine Seite. |
 
-- [Collection Mode](/de/collection-modes) wählen; Default
-  `anonymous` ist für die meisten Sites die richtige Antwort.
-- [Privacy: Was wir nicht sammeln](/de/privacy), nützlich, wenn
-  Legal fragt.
-- Releases taggen für Vorher/Nachher-Vergleiche: siehe
+## Einwilligung: wann die Session-ID geschrieben wird
+
+Wenn deine Application eine Session-ID speichert und die
+Einwilligungsstufe auf dem Standard (`off`) steht, schreibt der Tracker
+die Session-ID **nicht**, bis du ihm sagst, dass eingewilligt wurde. Ruf
+das im Accept-Handler deines Cookie-Banners auf, und bei jedem
+Seitenaufruf, solange die Einwilligung gilt:
+
+<InstallSnippet kind="consent" />
+
+Ohne diesen Aufruf misst der Tracker weiterhin Web Vitals und
+Seitenaufrufe, er fügt sie nur nicht zu seitenübergreifenden Sessions
+zusammen. Wenn deine Application gar keine Session-ID speichert, fasst
+das ausgelieferte Bundle den Storage nie an und es gibt nichts zu
+steuern.
+
+Was erhoben wird und was nicht, steht unter [Datenschutz](/de/privacy).
+
+## Optionale Ergänzungen
+
+Beide brauchst du nicht, damit Daten fließen. Ergänze sie, wenn das
+Tracker-Tag steht und funktioniert.
+
+### Fehler abfangen, die vor dem Tracker auftreten
+
+Ein deferred Script startet erst, wenn das DOM geparst ist. Ein
+JavaScript-Fehler beim frühen Parsing passiert also, bevor Fastmon
+zuhört. Dieses kleine Inline-Snippet sammelt solche Fehler und übergibt
+sie, sobald der Tracker startet.
+
+Das funktioniert nur **über** dem Tracker-Tag aus Schritt 1, es gehört
+also dorthin, ganz an den Anfang des `<head>`:
+
+<InstallSnippet kind="bootstrap" />
+
+Lass es weg, wenn dir die ersten paar hundert Millisekunden
+Fehlerabdeckung egal sind.
+
+### Besucher ohne JavaScript zählen
+
+Ein `<noscript>`-Pixel erfasst einen Seitenaufruf für Besucher mit
+deaktiviertem JavaScript. Er liefert keine Web Vitals (es gibt kein JS,
+das sie messen könnte), nur den Seitenaufruf. Es kann überall im
+`<head>` nach dem Tracker-Tag stehen:
+
+<InstallSnippet kind="noscript" />
+
+## Wohin die Beacons gehen [#collector]
+
+Die **Collector**-Einstellung der Application bestimmt den Host im
+Snippet oben.
+
+### fastmon (Standard)
+
+Script und Beacons laden von `fastmon.site`. Nichts zu konfigurieren.
+Aus Sicht deiner Seite ist das Third-Party, ein strikter Content-Blocker
+kann es also blockieren.
+
+### Gleiche Origin (relativ)
+
+**Empfohlen**, wenn du einen Reverse-Proxy vor deine Seite setzen kannst.
+
+Das Snippet nutzt hostlose Pfade (`/s/…`, `/c/…`), Script und Beacons
+kommen also von **deiner** Domain. Sie sind First-Party und nicht von
+deinen eigenen Ressourcen zu unterscheiden, Content-Blocker entfernen
+sie also nicht und deine Besuchszahlen bleiben vollständig. Dafür
+proxyst du die beiden Pfad-Präfixe zu Fastmon. Für nginx:
+
+<InstallSnippet kind="nginx" />
+
+Jeder Reverse-Proxy oder CDN funktioniert genauso: `/s/` und `/c/` an
+`https://fastmon.site` weiterleiten und den Client-IP-Header erhalten.
+
+### Eigene Domain
+
+Derselbe First-Party-Vorteil, aber das Snippet zeigt auf einen
+Collector-Host, den du kontrollierst (`metrics.example.com`), statt auf
+relative Pfade. Praktisch, wenn eine Application mehrere Domains umfasst
+und du einen einzigen stabilen Collector-Host willst.
+
+## Wie es weitergeht
+
+- [Einbindung prüfen](/de/install/verify) — ein Fünf-Sekunden-Check in
+  den DevTools.
+- Erfassung feinjustieren: [Collection Modes](/de/collection-modes).
+- [Datenschutz: was wir nicht erheben](/de/privacy), praktisch für die
+  Rechtsabteilung.
+- Deploys für Vorher/Nachher-Vergleiche markieren:
   [Releases vergleichen](/de/guides/compare-releases).

@@ -46,7 +46,7 @@ JWT-Claim, Admin-Login.
 
 ```html
 {% if not request.session.is_staff %}
-  <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
+  <script defer src="https://fastmon.site/s/{source_hash}.js"></script>
 {% endif %}
 ```
 
@@ -86,7 +86,7 @@ nicht erst laden. Die meisten Monitore setzen einen erkennbaren
 {% if request.user_agent.is_synthetic %}
   <!-- Fastmon für synthetische Checks weglassen -->
 {% else %}
-  <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
+  <script defer src="https://fastmon.site/s/{source_hash}.js"></script>
 {% endif %}
 ```
 

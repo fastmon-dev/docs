@@ -1,49 +1,63 @@
 ---
 title: Fastmon implementieren
-description: Den Fastmon-Beacon mit einem Script-Tag in deine Site einbauen.
+description: Den Fastmon-Beacon mit einem Script-Tag in deine Seite einbauen.
 ---
 
-Fastmon ist ein gehosteter Service. Auf deinen Servern installierst
-du nichts; du baust ein `<script>`-Tag in deine Site ein, das auf
-deine Fastmon-Site zeigt. Etwa fünf Minuten Arbeit.
+Fastmon ist ein gehosteter Dienst. Auf deinen Servern ist nichts zu
+installieren: Du fügst ein einziges `<script>`-Tag ein und richtest es
+auf deine Fastmon-Application. Etwa fünf Minuten Arbeit.
 
-Ein einzelnes Tag im `<head>` läuft auf jeder Site, die du
-kontrollierst: egal ob statisches HTML, Next.js, WordPress, Hugo
-oder über einen Tag-Manager.
+Ein Tag im `<head>` funktioniert auf jeder Seite, die du kontrollierst:
+statisches HTML, Next.js, WordPress, Hugo oder über einen Tag-Manager.
 
 <Cards>
-  <Card title="HTML" href="/de/install/html" description="Jede Website, die du kontrollierst. Läuft mit statischen Sites, Hugo, Jekyll, plain HTML und jedem Framework über dessen Head/Script-Primitive." />
+  <Card title="Tracking-Code einbinden" href="/de/install/html" description="Die komplette Anleitung: Application anlegen, Tag einbauen, deployen, prüfen. Dazu Einwilligung, No-JS-Fallback und First-Party-Collector." />
+  <Card title="Einbindung prüfen" href="/de/install/verify" description="Ein Fünf-Sekunden-Check in den DevTools und im Dashboard, wenn keine Daten ankommen." />
 </Cards>
 
-## Nachdem das Tag drin ist
+## Wie das zusammenhängt
 
-- [Implementierung verifizieren](/de/install/verify):
-  Fünf-Sekunden-Check in DevTools und Dashboard.
-- [Collection Mode wählen](/de/collection-modes); `anonymous`
-  passt für fast alle.
-- [Was wir nicht sammeln](/de/privacy), nützlich, wenn Legal
-  fragt.
+- Eine **Application** ist ein Tracking-Snippet. Ihr gehören die
+  Erfassungseinstellungen und die Hashes, die das Snippet identifizieren.
+- Eine **Seite** ist eine Domain unter dieser Application, mit eigenem
+  Dashboard und eigenem Traffic.
+
+Die meisten brauchen genau eine Application mit einer Seite, und Fastmon
+legt dir beides an, wenn du deine erste Domain hinzufügst. Eine zweite
+Seite an derselben Application brauchst du, wenn du mehrere Domains mit
+einem Snippet betreibst. Eine zweite Application erst dann, wenn eine
+Domain wirklich andere Erfassungseinstellungen benötigt.
 
 ## Was alle Setups gemeinsam haben
 
-Das Script, das du einbettest, ist bis aufs Byte derselbe Inhalt,
-egal wie du es lädst:
+Das eingebundene Script ist byteweise dieselbe Datei, egal wie du es
+lädst:
 
-```html
-<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
-```
+<InstallSnippet kind="script" />
 
-`{source_hash}` ist der Per-Site-Hash, den Fastmon beim Anlegen der
-Site erzeugt hat. Aus den Site-Einstellungen kopieren.
+`source_hash` identifiziert das Snippet deiner Application. Du findest
+ihn zusammen mit `collector_hash` auf der Karte der Application unter
+**··· → IDs & Hashes**. Öffnest du diese Seite über den
+**Einrichten**-Button in der App, stehen oben automatisch beide Werte;
+sonst kannst du sie in der
+[Einbindungs-Anleitung](/de/install/html) eintragen.
 
 Der Tracker:
 
 - registriert `PerformanceObserver` für Web Vitals,
 - puffert Events im Speicher und
-- schickt gebündelte POSTs an `/c/{collector_hash}`, verteilt
-  über den Lebenszyklus des Pageviews: beim Laden, bei
-  `pagehide`, `visibilitychange → hidden` und in periodischen
-  Flushes.
+- schickt gebündelte POSTs an `/c/{collector_hash}` über den
+  Lebenszyklus des Seitenaufrufs: beim Laden, bei `pagehide`, bei
+  `visibilitychange → hidden` und in periodischen Flushes.
 
-Er setzt keine Cookies, speichert keine IPs und macht kein Fingerprinting.
-Volles Statement in [Privacy](/de/privacy).
+Er setzt keine Cookies, speichert keine IPs und erstellt keinen
+Fingerabdruck; die vollständige Aussage steht unter
+[Datenschutz](/de/privacy).
+
+## Nachdem du das Tag eingebaut hast
+
+- [Einbindung prüfen](/de/install/verify): ein Fünf-Sekunden-Check in
+  den DevTools und im Dashboard.
+- [Erfassung festlegen](/de/collection-modes).
+- [Nachlesen, was wir nicht erheben](/de/privacy), praktisch für die
+  Rechtsabteilung.

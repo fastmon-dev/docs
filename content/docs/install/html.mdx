@@ -1,108 +1,192 @@
 ---
-title: Implement Fastmon on a website
-description: Drop Fastmon onto any website with a single script tag. Five minutes from sign-up to first data point.
+title: Install the tracking code
+description: Add Fastmon to your site with a single script tag. Five minutes from sign-up to first data point.
 ---
 
-The universal route: a single `<script>` tag in your `<head>`. It
-works on any site you control: static HTML, a Vue or React app, a
-Hugo blog, a Next.js project, a WordPress site, anything you can
-inject a `<script>` into.
+One `<script>` tag in your `<head>` is the whole setup. It works on
+anything you can inject a script into: static HTML, a React or Vue
+app, Hugo, Next.js, WordPress, a tag manager.
 
 **Time to first data:** about five minutes.
 **You'll need:** access to your site's HTML and a Fastmon account.
 
-## 1. Create a site in Fastmon
+<InstallConfigPanel />
 
-Sign in, open the org you want to add this site to, and click **Create
-site**. Fill in:
+## Applications and sites
 
-- **Name**: whatever helps you recognize it later (e.g. `acme-marketing`).
-- **Domain**: the bare hostname, no protocol. Example: `acme.com`.
-- **Allowed origins** *(optional)*: leave blank to skip the origin
-  check. If you set it, it becomes a strict allow-list; include
-  the production domain too, as a comma-separated list
-  (`acme.com, staging.acme.com, preview.acme.com`).
+If you opened this page from an application's **Set up** button, it
+already exists and the hashes above are filled in — skip to step 1.
 
-Leave the rest at defaults for now; you can come back to
-[collection mode](/en/collection-modes) and retention later.
+Otherwise, create one first. An **application** is one tracking snippet.
+It owns the collection settings and the two hashes below, and it can
+serve one domain or twenty.
 
-Click **Save**. Fastmon generates two short hashes for the site:
+In Fastmon, open **Applications** and click **Add**. Give it a name and
+the domain you want to monitor (the bare hostname, no protocol:
+`acme.com`). Fastmon creates the application *and* its first **site**
+for that domain in one step, then hands you the snippet.
 
-- `source_hash`: goes into the script URL.
-- `collector_hash`: used by the tracker to send data back. It's
-  baked into the script, so you don't need to copy it.
+That gives the application two short hashes:
 
-Both show up on the settings page, along with a copy-paste-ready
-snippet; that's exactly what step 2 walks through.
+- `source_hash` — goes into the script URL.
+- `collector_hash` — where the tracker posts data. It's baked into the
+  script, so you normally never touch it by hand.
 
-## 2. Add the script to your site
+Both are on the application's card under **··· → IDs & hashes**.
 
-Drop this single tag into the `<head>` of every page you want to
-monitor, with `{source_hash}` replaced by the hash from step 1:
+<Callout type="info">
+  Running several domains off one snippet? Add them as further sites on
+  the same application. Every site keeps its own dashboard and traffic,
+  but they share one snippet and one set of collection settings. Only
+  add a *second application* when a domain genuinely needs different
+  settings.
+</Callout>
 
-```html title="<head>"
-<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
-```
+## 1. Add the tracker tag
 
-That's the whole setup. The tracker:
+This one tag is the whole required setup. Drop it into the `<head>` of
+every page you want to monitor:
 
-- registers `PerformanceObserver` for Web Vitals,
-- buffers events in memory, and
-- sends batched POSTs to `/c/{collector_hash}` over the
-  page view's lifecycle: on load, on `visibilitychange → hidden`,
-  on `pagehide`, and at periodic flushes. Expect a few per
-  page view, not exactly one.
+<InstallSnippet kind="script" />
 
-The tag uses `defer`: it loads in parallel with HTML parsing, never blocks the parser, and runs in source order once the DOM is parsed. `async` would also load without blocking, but it can interrupt parsing the moment the download finishes, and the order between multiple async scripts is whichever-finishes-first — for Web Vitals measurement we want predictable timing, so defer wins. Where you place it
-isn't critical, but `<head>` is the better spot; it lets the
+The tag uses `defer`: it loads in parallel with HTML parsing, never
+blocks the parser, and runs in source order once the DOM is parsed.
+`async` would also load without blocking, but it can interrupt parsing
+the moment the download finishes, and the order between multiple async
+scripts is whichever-finishes-first. For Web Vitals we want predictable
+timing, so `defer` wins.
+
+(Attribute order inside the tag is irrelevant to the browser —
+`<script defer src="…">` and `<script src="…" defer>` behave
+identically. We write `defer` first so it matches what the app hands
+you.)
+
+Placement isn't critical, but `<head>` is the better spot: it lets the
 tracker catch the very first paint.
 
 ### Where to put it
 
-| Site type                  | Put the tag in…                                              |
-| -------------------------- | ------------------------------------------------------------ |
-| Plain HTML / Hugo / Jekyll | `<head>` of your base template.                              |
-| WordPress                  | A header-snippet plugin, or `header.php`.                    |
-| Next.js / Nuxt / Astro     | The framework's head/script primitive (e.g. Next.js `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
-| Single-page apps           | The static `index.html` shell (once is enough).              |
+| Site type                  | Put the tag in…                                                    |
+| -------------------------- | ------------------------------------------------------------------ |
+| Plain HTML / Hugo / Jekyll | `<head>` of your base template.                                     |
+| WordPress                  | A header-snippet plugin, or `header.php`.                           |
+| Next.js / Nuxt / Astro     | The framework's head/script primitive (Next.js: `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
+| Single-page apps           | The static `index.html` shell — once is enough.                     |
 
-## 3. Deploy and load a page
+## 2. Deploy and load a page
 
-Push the change to production (or whichever environment you want
-to monitor) and open any page on the site in your own browser.
+Push to the environment you want to monitor and open any page on the
+site.
 
-The tracker flushes periodically while the page is open, and again
-on `visibilitychange → hidden` and `pagehide`. Switching tabs or
-closing the page is the most reliable way to force a flush during
-testing, but it's not the only trigger.
+The tracker registers `PerformanceObserver` for Web Vitals, buffers
+events in memory, and POSTs batched payloads over the page view's
+lifecycle: on load, on `visibilitychange → hidden`, on `pagehide`, and
+at periodic flushes. Expect a few requests per page view, not exactly
+one. Switching tabs or closing the page is the most reliable way to
+force a flush while testing.
 
-## 4. Verify it works
+Then check it arrived — see [Verify it works](/en/install/verify).
 
-Two checks: one in DevTools, one in the dashboard.
+### If the domain isn't a site yet
 
-### In your browser
+Beacons are matched to a **site** by the page's hostname. If you added the
+domain when creating the application, you're done — data lands on that site.
 
-Open DevTools → **Network** → filter for `/c/`. You should see a
-`POST` to `https://fastmon.site/c/{collector_hash}`, either after
-the periodic flush ticks over, or when you switch tabs / close the
-page. Status 204 means the beacon was accepted.
+If you didn't (you created an empty application, or you've just put the
+snippet on an additional domain), the first page view doesn't get thrown
+away silently: the hostname shows up on the application as a **suggested
+domain**, and you add it as a site in one click. Beacons from before you
+adopt it aren't kept, so the numbers start from the moment you add it.
 
-If you don't see it, jump to [Verifying it works](/en/install/verify).
+Which of those happens is the application's **Unknown domains** setting:
 
-### In Fastmon
+| Setting | What happens on a beacon from an unregistered domain |
+| ------- | ---------------------------------------------------- |
+| **Suggest** (default) | Listed as a suggested domain to adopt; the beacon itself is dropped. |
+| **Auto-create** | A site is created automatically on the first beacon. |
+| **Ignore** | Dropped silently — no suggestion, no site. |
 
-Open the site in the dashboard. After about a minute (beacons are
-batched into ClickHouse), the **Traffic** section will show
-non-zero page views. (Sessions stay at zero in the default
-`anonymous` mode; that's expected. See
-[Sessions](/en/concepts/sessions).) The first beacon is the one
-you just sent; your IP isn't stored, but the row is there.
+## Consent: when the session id is written
+
+If your application stores a session id and the consent level is left
+at its default (`off`), the tracker **does not write the session id**
+until you tell it consent was granted. Call this from your cookie
+banner's accept handler, and on every page load while consent stands:
+
+<InstallSnippet kind="consent" />
+
+Without that call the tracker still measures Web Vitals and page views;
+it just doesn't stitch them into multi-page sessions. If your
+application doesn't store a session id at all, the served bundle never
+touches storage and there's nothing to gate.
+
+See [Privacy](/en/privacy) for what is and isn't collected.
+
+## Optional extras
+
+Neither is needed to get data flowing. Add them once the tracker tag is
+in place and working.
+
+### Catch errors that fire before the tracker loads
+
+A deferred script only starts once the DOM is parsed, so a JavaScript
+error thrown during early parsing happens before Fastmon is listening.
+This tiny inline snippet queues those errors and hands them over when
+the tracker boots.
+
+It only works **above** the tracker tag from step 1, so put it there —
+first thing in the `<head>`:
+
+<InstallSnippet kind="bootstrap" />
+
+Skip it if you don't care about the first few hundred milliseconds of
+error coverage.
+
+### Count visitors without JavaScript
+
+A `<noscript>` pixel records a page view for visitors with JavaScript
+disabled. It carries no Web Vitals (there's no JS to measure them), just
+the page view. Goes anywhere in the `<head>` after the tracker tag:
+
+<InstallSnippet kind="noscript" />
+
+## Where the beacons go [#collector]
+
+The **collector** setting on the application decides the host in the
+snippet above.
+
+### fastmon (default)
+
+Script and beacons load from `fastmon.site`. Nothing to configure. It is
+third-party from your site's perspective, so a strict content blocker
+can block it.
+
+### Same-origin (relative)
+
+**Recommended**, if you can put a reverse proxy in front of your site.
+
+The snippet uses host-less paths (`/s/…`, `/c/…`), so script and beacons
+come from **your** domain. They're first-party and indistinguishable
+from your own resources, which means content blockers don't strip them
+and your visit counts stay complete. You proxy the two path prefixes to
+Fastmon. For nginx:
+
+<InstallSnippet kind="nginx" />
+
+Any reverse proxy or CDN works the same way: forward `/s/` and `/c/` to
+`https://fastmon.site` and preserve the client IP header.
+
+### Custom domain
+
+Same first-party benefit, but you point the snippet at a collector host
+you control (`metrics.example.com`) instead of relative paths. Useful
+when one application spans several domains and you want a single stable
+collector host.
 
 ## What's next
 
-- Pick a [collection mode](/en/collection-modes); `anonymous` is
-  the right pick for most sites.
-- Read [Privacy: what we don't collect](/en/privacy), handy when
-  the legal team asks.
-- Tag releases for before/after comparisons: see
+- [Verify it works](/en/install/verify) — a five-second DevTools check.
+- Tune what gets collected: [collection modes](/en/collection-modes).
+- [Privacy: what we don't collect](/en/privacy), handy when legal asks.
+- Tag deploys for before/after comparisons:
   [Compare releases](/en/guides/compare-releases).

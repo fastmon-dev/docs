@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Change: The install guide is now the setup flow, prefilled from the app
+
+The app no longer carries a long-form tracking-code panel — it links here instead, so the setup instructions live in one place.
+
+- **Snippets render with your real values.** The app deep-links with `?source_hash=…&collector_hash=…&collector_mode=…&collector_host=…&party=…`, and a panel at the top of the guide fills every snippet on the page from them. Arrive without params and you can paste your own values in; they're remembered per browser. Query keys are spelled out so a shared link is readable on its own.
+- **Rewritten for the Application model.** An application owns the snippet, the hashes and the collection settings and serves one or more sites; creating one with a domain creates its first site too. Dropped the stale `Allowed origins` guidance (the field no longer exists) — an unregistered domain now surfaces as a **suggested domain** to adopt, governed by the application's **Unknown domains** setting.
+- **Required first, optional after.** The guide leads with the one required `<script>` tag; the early-error bootstrap and the no-JS pixel follow as clearly marked optional extras, each saying where in the `<head>` it belongs. Consent wiring and the first-party collector options (including the reverse-proxy config) round it out, with same-origin marked as recommended.
+- `## Where the beacons go` carries a stable `[#collector]` id so the app can deep-link it in **both** languages — the auto-generated anchors differ per locale.
+
 ### Change: Drop legal claims and statute citations from the privacy/collection-modes pages (EN + DE)
 
 The customer-facing docs now state the facts (storage-free, no cookies, no IP stored, EU-only, no banner needed, `stitch` minimised and switchable off) without arguing the law behind them. Removed every statute reference (TDDDG §25, ePrivacy Art. 5(3), GDPR Art. 6(1)(f)/Art. 4(1)) and legal-conclusion framing (legitimate-interest justification, "strictly necessary", Schrems II, "regulator permits", "GDPR posture"). The detailed legal reasoning lives in the internal `data_collection.md` and the DPA, not on the public page.
