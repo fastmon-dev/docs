@@ -62,10 +62,6 @@ const getSnapshot = () => state;
 // read happens in a layout effect right after, before the browser paints.
 const getServerSnapshot = () => EMPTY;
 
-function isMode(v: string | null): v is CollectorMode {
-  return v === "default" || v === "relative" || v === "custom";
-}
-
 function isParty(v: string | null): v is CollectorParty {
   return v === "first" || v === "third";
 }
@@ -99,15 +95,16 @@ function initFromEnvironment() {
   // URL params win over stored values — a fresh deep link from the app should
   // always show that application's hashes.
   const params = new URLSearchParams(window.location.search);
-  const sourceHash = params.get("source_hash");
-  const collectorHash = params.get("collector_hash");
-  const mode = params.get("collector_mode");
-  const host = params.get("collector_host");
+  for (const field of FIELDS) {
+    const raw = params.get(field.param)?.trim();
+    if (!raw) continue;
+    // A select only accepts one of its own values; anything else is a stale or
+    // hand-edited link and would put the config into a state the UI can't show.
+    if (field.input === "select" && !field.options.some((o) => o.value === raw)) continue;
+    // The registry guarantees key/value agree; TS can't see that through the union.
+    (next as Record<EditableKey, string>)[field.key] = raw;
+  }
   const party = params.get("party");
-  if (sourceHash) next.sourceHash = sourceHash;
-  if (collectorHash) next.collectorHash = collectorHash;
-  if (isMode(mode)) next.mode = mode;
-  if (host) next.host = host;
   if (isParty(party)) next.party = party;
 
   if (JSON.stringify(next) !== JSON.stringify(state)) setInstallConfig(next);
@@ -194,6 +191,69 @@ function useStrings() {
   const pathname = usePathname();
   return pathname?.startsWith("/de") ? STRINGS.de : STRINGS.en;
 }
+
+/* ----------------------------- field registry ---------------------------- */
+
+/**
+ * The editable fields, described once. Reading them from the URL and rendering
+ * the panel both derive from this list, so adding a value means adding an entry
+ * here plus its label in STRINGS (and the key on InstallConfig/EMPTY) rather
+ * than touching the parser and the form separately.
+ *
+ * `party` is deliberately absent: the app computes it and the docs only display
+ * it, so it is not an input.
+ */
+type LabelKey = keyof (typeof STRINGS)["en"];
+/** Fields the panel can edit; `party` is display-only. */
+type EditableKey = "sourceHash" | "collectorHash" | "mode" | "host";
+
+interface FieldBase {
+  key: EditableKey;
+  /** Query-string key the app deep-links with. */
+  param: string;
+  label: LabelKey;
+  /** Hide until the rest of the config makes this field meaningful. */
+  when?: (config: InstallConfig) => boolean;
+}
+type Field =
+  | (FieldBase & { input: "text"; placeholder: string })
+  | (FieldBase & { input: "select"; options: readonly { value: string; label: LabelKey }[] });
+
+const FIELDS: readonly Field[] = [
+  {
+    key: "sourceHash",
+    param: "source_hash",
+    label: "sourceHash",
+    input: "text",
+    placeholder: "{source_hash}",
+  },
+  {
+    key: "collectorHash",
+    param: "collector_hash",
+    label: "collectorHash",
+    input: "text",
+    placeholder: "{collector_hash}",
+  },
+  {
+    key: "mode",
+    param: "collector_mode",
+    label: "mode",
+    input: "select",
+    options: [
+      { value: "default", label: "modeDefault" },
+      { value: "relative", label: "modeRelative" },
+      { value: "custom", label: "modeCustom" },
+    ],
+  },
+  {
+    key: "host",
+    param: "collector_host",
+    label: "host",
+    input: "text",
+    placeholder: "metrics.example.com",
+    when: (config) => config.mode === "custom",
+  },
+];
 
 /* ------------------------------- snippets ------------------------------- */
 
@@ -310,62 +370,44 @@ export function InstallConfigPanel() {
       <p className="mt-1 text-xs text-fd-muted-foreground">{s.intro}</p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className={labelClass} htmlFor="fm-source-hash">
-            {s.sourceHash}
-          </label>
-          <input
-            id="fm-source-hash"
-            className={inputClass}
-            value={config.sourceHash}
-            onChange={(e) => setInstallConfig({ sourceHash: e.target.value })}
-            placeholder="{source_hash}"
-            spellCheck={false}
-          />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="fm-collector-hash">
-            {s.collectorHash}
-          </label>
-          <input
-            id="fm-collector-hash"
-            className={inputClass}
-            value={config.collectorHash}
-            onChange={(e) => setInstallConfig({ collectorHash: e.target.value })}
-            placeholder="{collector_hash}"
-            spellCheck={false}
-          />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="fm-mode">
-            {s.mode}
-          </label>
-          <select
-            id="fm-mode"
-            className={cn(inputClass, "font-sans")}
-            value={config.mode}
-            onChange={(e) => setInstallConfig({ mode: e.target.value as CollectorMode })}
-          >
-            <option value="default">{s.modeDefault}</option>
-            <option value="relative">{s.modeRelative}</option>
-            <option value="custom">{s.modeCustom}</option>
-          </select>
-        </div>
-        {config.mode === "custom" && (
-          <div>
-            <label className={labelClass} htmlFor="fm-host">
-              {s.host}
-            </label>
-            <input
-              id="fm-host"
-              className={inputClass}
-              value={config.host}
-              onChange={(e) => setInstallConfig({ host: e.target.value })}
-              placeholder="metrics.example.com"
-              spellCheck={false}
-            />
-          </div>
-        )}
+        {FIELDS.filter((field) => field.when?.(config) ?? true).map((field) => {
+          const id = `fm-${field.param}`;
+          // The registry pairs each key with a string value; the union hides that.
+          const value = (config as Record<EditableKey, string>)[field.key];
+          const onChange = (v: string) =>
+            setInstallConfig({ [field.key]: v } as Partial<InstallConfig>);
+
+          return (
+            <div key={field.key}>
+              <label className={labelClass} htmlFor={id}>
+                {s[field.label]}
+              </label>
+              {field.input === "select" ? (
+                <select
+                  id={id}
+                  className={cn(inputClass, "font-sans")}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                >
+                  {field.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {s[option.label]}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={id}
+                  className={inputClass}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder={field.placeholder}
+                  spellCheck={false}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {config.party && (
@@ -441,7 +483,7 @@ export function InstallConfigLauncher() {
             onClick={() => setOpen(false)}
             className="absolute inset-0 cursor-default bg-black/50"
           />
-          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg bg-fd-popover p-4 shadow-lg">
+          <div className="relative z-10 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-fd-popover p-4 shadow-lg">
             <InstallConfigPanel />
             <button
               type="button"
