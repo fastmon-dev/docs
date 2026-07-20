@@ -40,7 +40,7 @@
     "prettier": "^3.9.5",
     "serve": "^14.2.6",
     "tailwindcss": "^4.2.4",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "@babel/core": "^7.29.6",
