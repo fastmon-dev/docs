@@ -3,62 +3,110 @@ title: Verify the implementation
 description: "Confirm fastmon is collecting data, and what to look at when it isn't."
 ---
 
-Once the script is on your site, two checks tell you everything's fine. If both pass, you can stop reading.
+Once the script is on your site, two checks tell you everything's
+fine. If both pass, you can stop reading.
 
 ## The five-second check
 
-Open your site in a fresh browser tab, open DevTools (`⌥⌘I` / `F12`), and switch to **Network**. Filter for `c/`.
+Open your site in a fresh browser tab, open DevTools (`⌥⌘I` /
+`F12`), and switch to **Network**. Filter for `c/`.
 
-Now switch to another tab, then come back. You should see one or more `POST` requests (the tracker sends several beacons over a page view's lifecycle; more than one is normal):
+Now switch to another tab, then come back. You should see one or
+more `POST` requests (the tracker sends several beacons over a
+page view's lifecycle; more than one is normal):
 
 ```
 POST https://fastmon.site/c/{collector_hash}     204
 ```
 
-A `204 No Content` response means the beacon was accepted. That's it; you're up.
+A `204 No Content` response means the beacon was accepted. That's
+it; you're up.
 
 ## The dashboard check
 
-Open the site in the fastmon dashboard. After about a minute (beacons are batched into ClickHouse), the **Traffic** section will show:
+Open the site in the fastmon dashboard. After about a minute
+(beacons are batched into ClickHouse), the **Traffic** section will
+show:
 
-- non-zero **page views** and **unique visitors** (new sites start on `Standard`, which stores the edge-derived `stitch`). Session-level counts need [`store_session`](/en/tracker#store-session) (the `Full` preset); the `Minimal` preset stores no identifier, so its visitor and session counts stay at zero by design. See [Visitors and sessions](/en/concepts/sessions),
+- non-zero **page views** (session counts stay at zero on the
+  default `standard` preset — `full` is needed for those; that's
+  expected. See [Sessions](/en/concepts/sessions)),
 - a **Web Vitals** snapshot for at least the page you opened.
 
-If the only traffic you see is your own visit so far, that's fine; real traffic builds up as visitors load pages.
+If the only traffic you see is your own visit so far, that's
+fine; real traffic builds up as visitors load pages.
 
 ## Troubleshooting
 
 ### No request to `/c/` shows up
 
-**Check the script loaded.** In DevTools → Network, filter for `s/`. You should see a request to `https://fastmon.site/s/{source_hash}.js` with a `200` status. A `404` means the `source_hash` in your tag doesn't match a site: either the hash was mistyped, or the site was deleted in fastmon.
+**Check the script loaded.** In DevTools → Network, filter for `s/`.
+You should see a request to
+`https://fastmon.site/s/{source_hash}.js` with a `200` status. A
+`404` means the `source_hash` in your tag doesn't match a site:
+either the hash was mistyped, or the site was deleted in fastmon.
 
-**Check the `<script>` tag is in the rendered HTML.** View source on a production page. The tag must be present in the actual HTML the browser receives; some CMSes strip unknown tags from page builders. Use a header-injection plugin or your theme's `<head>` slot instead of an inline content block.
+**Check the `<script>` tag is in the rendered HTML.** View source on a
+production page. The tag must be present in the actual HTML the browser
+receives; some CMSes strip unknown tags from page builders. Use a
+header-injection plugin or your theme's `<head>` slot instead of an
+inline content block.
 
-**Check that no CSP is blocking it.** Open the Console and look for a CSP violation mentioning `fastmon.site`. If there is one, add `https://fastmon.site` to your `script-src` and `connect-src` directives.
+**Check that no CSP is blocking it.** Open the Console and look
+for a CSP violation mentioning `fastmon.site`. If there is one, add
+`https://fastmon.site` to your `script-src` and `connect-src`
+directives.
 
-**Force a flush.** The tracker flushes periodically and on `pagehide` / `visibilitychange`. If nothing has shown up yet, switch tabs (or close and reopen the page); that triggers an immediate flush.
+**Force a flush.** The tracker flushes periodically and on
+`pagehide` / `visibilitychange`. If nothing has shown up yet,
+switch tabs (or close and reopen the page); that triggers an
+immediate flush.
 
 ### Beacon shows `204`, but no row appears in the dashboard
 
-A `204` is the standard accept response. It's also what you get when the beacon is silently dropped. The most common reason is that the site has **Allowed origins** set and the page you're loading from isn't on the list. Open the site settings, add the missing origin (e.g. `staging.acme.com`), and save. The script cache invalidates automatically. Other silent drops: site marked inactive, or unknown `collector_hash`.
+A `204` is the standard accept response. It's also what you get
+when the beacon is silently dropped. The most common reason is
+that the page's hostname isn't a registered **site** on the
+application. Open the application, check the sites it serves, and
+add the missing domain (e.g. `staging.acme.com`). Depending on the
+application's **Unknown domains** setting, an unregistered hostname
+either shows up as a discovery suggestion you can adopt in one
+click, is created automatically, or is dropped silently.
+
+Other silent drops: the site is marked inactive, or the
+`collector_hash` is unknown.
 
 ### Request to `/c/` returns `429`
 
-You hit the per-IP rate limit. With real traffic, that hardly ever happens; usually it's a synthetic load test or a buggy reload loop. Wait a minute and the limit resets.
+You hit the per-IP rate limit. With real traffic, that hardly ever
+happens; usually it's a synthetic load test or a buggy reload
+loop. Wait a minute and the limit resets.
 
 ### Beacon goes through, but no data in the dashboard
 
-Beacons are batched into ClickHouse, so a delay of about a minute between a successful `204` and the row showing up in the dashboard is normal. Wait a moment and refresh.
+Beacons are batched into ClickHouse, so a delay of about a minute
+between a successful `204` and the row showing up in the dashboard
+is normal. Wait a moment and refresh.
 
-If it's still empty after that, check you're on the right site and the right time range; the dashboard defaults to the last 24 h, which is fine for fresh data.
+If it's still empty after that, check you're on the right site and
+the right time range; the dashboard defaults to the last 24 h,
+which is fine for fresh data.
 
-If the request returned `204` and the dashboard is still empty after a few minutes, ingestion might be paused. Open site settings and check that **Active** is on. Inactive sites accept beacons but don't write them to the analytics tables.
+If the request returned `204` and the dashboard is still empty
+after a few minutes, ingestion might be paused. Open site settings
+and check that **Active** is on. Inactive sites accept beacons but
+don't write them to the analytics tables.
 
 ### Still stuck
 
-Grab the `X-Request-ID` header from any failing response (DevTools → Network → click the request → **Headers**) and include it when you contact support. The request ID lets us pull the matching server log in seconds.
+Grab the `X-Request-ID` header from any failing response (DevTools
+→ Network → click the request → **Headers**) and include it when
+you contact support. The request ID lets us pull the matching
+server log in seconds.
 
 ## What's next
 
-- Pick a [preset](/en/tracker) or adjust the [tracker settings](/en/tracker) if Standard isn't right for you (switch to Minimal or Full).
-- Tag your first [release](/en/guides/compare-releases) to start comparing deploys.
+- Pick a [preset](/en/tracker) if `standard` isn't right
+  for you.
+- Tag your first [release](/en/guides/compare-releases) to start
+  comparing deploys.
