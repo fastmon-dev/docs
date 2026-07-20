@@ -3,15 +3,16 @@ title: Concepts
 description: The handful of resources Fastmon's data model is built on.
 ---
 
-Fastmon's data model is small on purpose. Get these five
-resources, and you've got the whole product.
+Fastmon's data model is small on purpose. Get these resources, and
+you've got the whole product.
 
 <Cards>
-  <Card title="Organizations" href="/en/concepts/organizations" description="Top-level account container. Owns sites, members, tokens." />
-  <Card title="Sites" href="/en/concepts/sites" description="A monitored property. Has its own beacon hashes and settings." />
-  <Card title="Sessions" href="/en/concepts/sessions" description="A short window of page-views from the same browser. Anonymous by construction." />
-  <Card title="Releases" href="/en/concepts/releases" description="A versioned marker on a site. Used for before/after comparisons." />
-  <Card title="Collection modes" href="/en/collection-modes" description="anonymous / consent / full: what the beacon does in the browser." />
+  <Card title="Organizations" href="/en/concepts/organizations" description="Top-level account container. Owns applications, members, tokens." />
+  <Card title="Applications" href="/en/concepts/applications" description="One tracking snippet: its hashes, collection config, and the sites it serves." />
+  <Card title="Sites" href="/en/concepts/sites" description="One domain under an application, with its own dashboard and overrides." />
+  <Card title="Sessions" href="/en/concepts/sessions" description="A short window of page-views from the same browser." />
+  <Card title="Releases" href="/en/concepts/releases" description="A versioned deploy marker. Used for before/after comparisons." />
+  <Card title="Presets" href="/en/collection-modes" description="minimal / standard / full: what the tracker collects in the browser." />
 </Cards>
 
 ## How the pieces fit together
@@ -21,11 +22,14 @@ Organization
  ├── Members (with roles)
  ├── API tokens
  ├── Notification rules
- └── Sites
-      ├── Settings (collection mode, retention, allowed origins)
-      ├── source_hash + collector_hash  (beacon URLs)
+ └── Applications
+      ├── source_hash + collector_hash   (beacon URLs)
+      ├── Preset + collector + site_policy
       ├── Releases
-      └── Tags
+      └── Sites (domains)
+           ├── domain
+           ├── per-domain overrides (retention, store_stitch, …)
+           └── Tags
 ```
 
 Beacon data goes straight from the visitor's browser into our
@@ -38,8 +42,9 @@ If you're new, read in this order:
 
 1. [Organizations](/en/concepts/organizations): what an account
    actually is.
-2. [Sites](/en/concepts/sites): the thing you monitor.
-3. [Collection modes](/en/collection-modes): what the beacon does
-   per site.
-4. [Sessions](/en/concepts/sessions): how page-views group.
-5. [Releases](/en/concepts/releases): for before/after deploys.
+2. [Applications](/en/concepts/applications): the tracking snippet
+   and everything it owns.
+3. [Sites](/en/concepts/sites): the domains under an application.
+4. [Presets](/en/collection-modes): what the beacon collects.
+5. [Sessions](/en/concepts/sessions): how page-views group.
+6. [Releases](/en/concepts/releases): for before/after deploys.

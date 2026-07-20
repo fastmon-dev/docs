@@ -1,180 +1,175 @@
 ---
-title: Collection modes
-description: Anonymous, consent, full. What they are, what they collect, and which one to pick.
+title: Presets
+description: Minimal, standard, full — the collection presets, what each collects, and which one to pick.
 ---
 
-Every Fastmon site has a **collection mode**. It decides what the
-beacon actually does in the visitor's browser. Per site, switchable
-at any time; the script cache invalidates automatically.
+Every Fastmon application has a **collection preset**. It decides what
+the tracker collects in the visitor's browser and how much is retained.
+One setting on the application; switch it any time and the served script
+updates automatically — no redeploy, no tag change.
 
-Three modes: `anonymous`, `consent`, `full`. The default is
-`anonymous`, and for almost everyone that's the right pick.
+Three presets: `minimal`, `standard`, `full`. The default is `standard`,
+and for almost everyone that's the right pick. A preset is just a
+shortcut: it expands into a handful of individual settings (see
+[Fine-tuning](#fine-tuning-the-individual-settings)), so you can start
+from a preset and change one flag — the app then labels the result
+`custom`.
 
 ## Compare at a glance
 
-| Aspect                        | `anonymous` (default)              | `consent`                                                     | `full`                                  |
-| ----------------------------- | ---------------------------------- | ------------------------------------------------------------- | --------------------------------------- |
-| Default behavior              | Anonymous                          | Anonymous before opt-in, full after (toggled by your CMP)     | Full                                    |
-| Storage on the visitor's device | None                             | None before opt-in; `_fm_consent` cookie + `sessionStorage._s` after | `sessionStorage._s` only            |
-| Web Vitals                    | Yes                                | Yes                                                           | Yes                                     |
-| Errors                        | Type, count, frame hosts + your own first-party script paths & line/col; no message | Same before opt-in; full frame detail + message after | Type + count + message + full frame detail |
-| Cross-page `session_id`       | No (stripped)                      | No before opt-in, yes after                                   | Yes                                     |
-| Referrer (bucketed source + medium) | Yes                          | Yes                                                           | Yes                                     |
-| Raw referrer URL persisted    | Never                              | Never                                                         | Never                                   |
-| LCP image URL, LoAF script paths, third-party domain map | Stripped | Stripped before opt-in; kept after                   | Kept                                    |
-| Edge-derived `stitch` (bounded ≤24h, per-site) | Yes      | Yes                                                           | Yes                                     |
-| Consent banner needed for our beacon | No (storage-free, no PII)      | No before opt-in; required for the opt-in path itself | Depends on your setup                   |
-| When to pick it               | Everyone, unless you have a specific reason | You want Web Vitals from page 1 but session linkage only after CMP consent | You've decided session linkage is fine without an opt-in, or you're internal-only |
+|                                   | `minimal`                       | `standard` (default)                     | `full`                          |
+| --------------------------------- | ------------------------------- | ---------------------------------------- | ------------------------------- |
+| Web Vitals                        | Yes                             | Yes                                      | Yes                             |
+| Unique visitors                   | No                              | Yes (edge-derived `stitch`)              | Yes                             |
+| Multi-page sessions               | No                              | No                                       | Yes                             |
+| Storage on the visitor's device   | None                            | None                                     | `sessionStorage` session id     |
+| Page-URL query params             | Stripped                        | Key names kept, values dropped           | Key names kept, values dropped  |
+| Errors                            | Type + count, frame hosts only  | + full stack frames (host, path, line/col) | + the error message           |
+| fetch / XHR endpoint timing       | No                              | Yes                                      | Yes                             |
+| Consent gate for the session id   | —                               | —                                        | None by default (written on load) |
+| When to pick                      | Leanest possible; no visitor identifier at all | Almost everyone       | Session analytics, or internal apps |
 
-## `anonymous`: the default
+Every preset shares the same privacy floor: no cookies, no IP storage,
+no raw User-Agent, no fingerprinting. See [Privacy](/en/privacy).
 
-The tracker sends right away on page load, no consent gate. It
-collects only the baseline fields listed in
-[Privacy](/en/privacy): nothing that could be used to identify
-a visitor across pages or sites.
+## `standard`: the default
 
-**Pick this if:**
+Standard is what a new application starts on, and it's the right pick
+for almost every public website.
 
-- you run a public website in the EU and want the simplest privacy
-  posture. `anonymous` doesn't need a cookie banner *for our
-  beacon*: it sets no cookies and stores no IPs. Other tools on
-  the page may still need one, but that's not on us.
-- you don't have a CMP integrated.
-- you want to ship the setup without dragging engineering and
-  legal into a meeting.
+You get Web Vitals, error diagnostics with full stack frames (but not
+the free-form error message), fetch/XHR endpoint timing, and
+**unique-visitor counts** — all without writing anything to the
+visitor's device.
 
-**What the tracker does:**
+Unique visitors come from the **`stitch`**: a pseudonymous id the
+Fastmon edge derives from the request (IP and User-Agent), never from
+the client. The salt rotates about daily and lives only in edge memory,
+so joinability is bounded to ≤24h with forward secrecy, and nothing is
+stored in the browser. See
+[the edge-derived `stitch`](/en/privacy#the-edge-derived-stitch-identifier).
 
-- Registers `PerformanceObserver` on page load.
-- Buffers Web Vitals, errors, and resource timing in memory.
-- Sends a batched POST on `pagehide` / `visibilitychange` /
-  periodic flush.
-- Mints a per-pageview ID that disappears with the page.
+What standard does **not** do:
 
-**What it doesn't do:**
+- write to the visitor's device (no cookies, no `localStorage` /
+  `sessionStorage`),
+- carry a cross-page session id (that's `full`),
+- keep error **message** text (only the type, count, and stack frames),
+- keep query-parameter **values** (it keeps the key names; values are
+  dropped unless a key is on the allow-list).
 
-- Set cookies.
-- Read or write `localStorage` / `IndexedDB`.
-- Touch form values or DOM content.
-- Carry a `session_id`, LCP image URL, LoAF detail, or
-  third-party domain map (all stripped before send).
-- Try to identify the visitor. (One nuance: the edge derives a
-  bounded, per-site `stitch` hash with ≤24h joinability and
-  forward secrecy; see
-  [Privacy](/en/privacy#the-edge-derived-stitch-identifier).)
+**Pick standard if:** you run a public site and want real diagnostics
+and visitor counts with the simplest posture — no cookies and no device
+storage for our beacon.
 
-## `consent`: let the page choose, controlled by your CMP
+## `minimal`: the leanest
 
-The site is configured for `consent`, and the wire shape each
-beacon uses is decided in real time by the visitor's consent
-state. Your CMP wires that state in with one of two calls:
+Minimal turns every optional setting off. You get core Web Vitals and
+error type + count (frame hosts only, no paths, no message) — and
+nothing that identifies a visitor.
+
+Because it drops the `stitch` too, **minimal has no unique-visitor
+metric at all**: those counts read as unmeasurable (blank), not zero.
+Query strings are stripped entirely (`/p?a=1#x` → `/p`), there's no
+fetch/XHR timing, and no device storage.
+
+**Pick minimal if:** you want the absolute leanest footprint and don't
+need visitor counts or per-endpoint timing — the strictest posture, or a
+site where even a bounded pseudonymous id is more than you want.
+
+## `full`: sessions and message-level detail
+
+Full keeps everything standard collects and adds:
+
+- a **cross-page session id** so pageviews link into a session
+  (journeys, funnels, return-visitor metrics). It's the one thing
+  written to the device — `sessionStorage["_fms"]`, which dies with the
+  tab. Enabled by `collect_sessions`.
+- the **error message** (still run through the PII scrubber before it
+  leaves the browser), on top of the stack frames standard already
+  keeps.
+
+Full ships with the session id written **on page load** — there's no
+consent gate by default (`session_consent` is `immediate`). If you
+need to withhold the session id until a consent manager allows it, see
+[Gating the session id behind consent](#gating-the-session-id-behind-consent).
+
+**Pick full if:** you want session-level analytics, or you're
+internal-only (intranet, employee app) where the visitor and consent
+context are different, or you have a legal basis that covers a
+cross-page identifier.
+
+If you're unsure, stay on standard. A cross-page session id is a bigger
+privacy step; don't take it unless you need what it gives you.
+
+## Gating the session id behind consent
+
+None of the three presets waits for consent — standard stores no session
+id at all, and full writes it on load. If you store sessions **and** must
+hold the session id until your consent manager (CMP) allows it, that's a
+**custom** configuration: keep `collect_sessions` on but set
+`session_consent` to `deferred`.
+
+With that combination the served script defers the one device write
+(`sessionStorage["_fms"]`) until your CMP calls:
 
 ```js
 // In your cookie banner's "accept" handler:
-window.__fastmon_consent(true);
-
-// In the "reject" / "revoke" handler:
-window.__fastmon_consent(false);
+window.fastmon.grantConsent();
 ```
 
-`__fastmon_consent(true)` sets a single `_fm_consent` cookie that
-persists the decision across pages, and unlocks the full wire shape
-(session id, LCP image URL, LoAF script paths, the third-party
-domain map, and error messages and frames).
-`__fastmon_consent(false)` deletes the cookie *and* clears the
-in-memory session id, so a previously-stitched session can't linger
-after opt-out. The call is idempotent; repeated calls with the
-same argument do nothing.
+`grantConsent()` is write-only and idempotent; call it once consent is
+granted. There is no revoke call — before consent nothing was written,
+so there's nothing to clear.
 
-Until the visitor opts in, every beacon goes out **byte-identical
-to `anonymous` mode**: storage-free, no session id, no LCP image
-URL, no LoAF detail, no third-party domain map, error type +
-count only (no message, no frames). Web Vitals still flow.
-Consent unlocks **linkability**, not new categories of data.
+Two things worth being precise about:
 
-The `_fm_consent` cookie does one thing — remember the consent
-decision so it survives a page navigation. That's the only reason
-it exists, and opt-out deletes it.
+- This gates **only the on-device session-id write**, not collection.
+  Beacons still fire before consent — Web Vitals, errors, the
+  unique-visitor `stitch` — just with an empty session id. Consent
+  unlocks cross-page **linkage**, not new categories of data.
+- Without `collect_sessions` there's nothing to gate: the bundle never
+  touches storage, so consent doesn't apply.
 
-**Pick this if:**
+(An older `window.__fastmon_consent()` call still exists as a deprecated
+alias, but prefer `grantConsent()`.)
 
-- you want Web Vitals coverage even for visitors who never accept
-  the CMP,
-- but you also want session-level linkability (cross-page journeys,
-  full URLs) only after explicit consent,
-- you want one consent decision to govern Fastmon along with other
-  tools.
+## Fine-tuning: the individual settings
 
-## `full`: keep everything the tracker collects, no consent gate
+A preset just sets the flags below; you can also set them one by one, in
+which case the app labels the result `custom`.
 
-`full` keeps a handful of fields that `anonymous` strips:
-
-- **`session_id`** so pageviews of the same session link together
-  (cross-page journeys, funnels, return-visitor metrics). Lives in
-  `sessionStorage`, dies with the tab.
-- **LCP image URL** (origin + path, query and fragment stripped)
-  for performance debugging.
-- **Long Animation Frames (LoAF) detail**, including script paths
-  (origin + path) for INP attribution.
-- **Third-party domain map** so dashboard breakdowns show which
-  vendor scripts contributed to load.
-- **Error messages and full stack-frame detail.** Without consent
-  the wire already carries the error type, count, every frame's
-  host, and the path + line/column of frames in your own
-  first-party external scripts. `full` adds the error **message**
-  and the path/line/column of inline and third-party frames. The
-  message still runs through the PII scrubber before transmission.
-
-Everything else (Web Vitals, errors-by-type, browser / OS /
-device / viewport, connection type, RTT and downlink estimates,
-campaign attribution as UTM + click-ID label) is identical to
-`anonymous`. The privacy floor is also unchanged: no IP storage,
-no raw User-Agent, no static device-hint reads, no fingerprints.
-
-What `full` gives up is the lean posture `anonymous` keeps: a
-stable cross-page identifier links pageviews into a real session —
-a bigger privacy step to take without asking the visitor first.
-
-**Pick this if:**
-
-- you're internal-only (intranet, employee app), where the
-  visitor base and consent context look different,
-- you've decided session linkage is fine without an opt-in step,
-- you've signed a DPA that covers it explicitly.
-
-If you're not sure, skip `full`. And if what you actually want is
-the opt-in gate, that's `consent`, not `full`. There's no upside to
-linking sessions you didn't have to.
-
-## Two finer levers, independent of the mode
-
-Beyond the mode, each site has two opt-out switches that cut
-identifiers without changing data categories:
-
-- **`store_stitch`** (default on) — off makes the stored row
-  genuinely anonymous: the edge-derived `stitch` is dropped in
-  *every* mode, at the cost of unique-visitor and session metrics.
-- **`store_session`** (default on) — off makes the served bundle
-  skip `sessionStorage` entirely and drops `sid`, so a `full` /
-  post-opt-in `consent` site keeps full content telemetry but no
-  cross-pageview session id.
+- **`collect_sessions`** (full only) — the `sessionStorage` session id for
+  multi-page sessions. The only setting that writes to the device.
+- **`store_stitch`** (standard, full) — keep the edge-derived visitor
+  `stitch`. Off makes the stored row genuinely anonymous, at the cost of
+  unique-visitor counts. No device storage either way.
+- **`session_consent`** — `deferred` defers the session-id write until
+  `grantConsent()`; `immediate` writes it on load. Only matters when
+  `collect_sessions` is on.
+- **`collect_query_keys`** (standard, full) — keep query-parameter key
+  names (values still dropped, except allow-listed keys). Off strips the
+  whole query string.
+- **`collect_error_frames`** (standard, full) — keep full stack frames
+  (host, path, line/col). Off collapses frames to their host only.
+- **`collect_error_messages`** (full only) — keep the free-form error
+  message (PII-scrubbed). Separate from frame detail.
+- **`collect_fetch_xhr`** (standard, full) — collect fetch/XHR endpoint
+  timing and errors.
 
 See [Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely)
-for the reasoning and [Sites](/en/concepts/sites) for where to set
-them. A third switch, `enforce_domain_match`, hardens ingest rather
-than privacy — see [Sites → Allowed origins](/en/concepts/sites#allowed-origins).
+for the reasoning behind the identifier switches.
 
-## Changing the mode
+## Changing the preset
 
-Open the site in Fastmon, go to **Settings**, change **Collection
-mode**, save. The change takes effect when the script cache rolls
-over; usually within minutes for active visitors, immediately for
-new sessions.
-
-You don't need to redeploy your site or change the `<script>` tag.
+In Fastmon, open the application, go to its collection settings, and pick
+a different preset (or tune the individual settings). The change takes
+effect when the script cache rolls over — usually within minutes for
+active visitors, immediately for new ones. You don't redeploy or change
+the `<script>` tag.
 
 ## What's next
 
-- See exactly what the beacon ships in [The RUM Beacon](/en/concepts/beacon).
-- Read [Privacy: what we don't collect](/en/privacy). The
-  zero-cookie story applies to all three modes.
+- See exactly what the beacon ships in [The RUM beacon](/en/concepts/beacon).
+- Read [Privacy: what we don't collect](/en/privacy) — the zero-cookie
+  story holds for every preset.

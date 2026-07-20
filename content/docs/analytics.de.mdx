@@ -8,7 +8,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Analytics ist die Erkundungsebene über allem, was dein Tracker
 sammelt: Wer ist gerade auf der Site, woher kommt der Traffic,
 welche Seiten werden aufgerufen, welche Fehler treten auf, und wie
-verlaufen ganze Sessions. Es ergänzt das
+verlaufen ganze Sessions. Analytics ergänzt das
 [Web-Vitals-Dashboard](/de/web-vitals): gleiche Daten, andere
 Frage. Web Vitals fragt „wie schnell ist die Site?", Analytics
 fragt „was passiert auf ihr?".
@@ -57,10 +57,9 @@ Die Fehleransicht verfolgt JavaScript-Fehler über die ganze Site:
   Beispiel-Pageviews mit Stack-Frames.
 
 Wie viel Detail du siehst, hängt vom
-[Collection Mode](/de/collection-modes) der Site ab: Im
-`anonymous`-Modus sendet der Tracker nur **Fehlertyp und Anzahl**.
-Meldungen und Stack-Frames kommen im `full`-Modus, oder im
-`consent`-Modus, nachdem der Besucher zugestimmt hat.
+[Preset](/de/collection-modes) der Application ab: `minimal` sendet
+nur **Fehlertyp und Anzahl**, `standard` ergänzt volle Stack-Frames,
+und `full` zusätzlich die Fehler-Message.
 
 ## Sessions
 
@@ -71,9 +70,9 @@ und LCP-Bereich, dazu eine Detailansicht pro Session: jeder Pageview
 in Reihenfolge, jeweils mit seinen Web Vitals und Fehlern.
 
 Sessions brauchen eine seitenübergreifende `session_id`, und die
-trägt der Tracker nur im `full`-Modus oder im `consent`-Modus nach
-dem Opt-In. Auf einer Site im `anonymous`-Modus bleibt der
-Explorer absichtlich leer. Wie eine Session definiert ist, steht
+trägt der Tracker nur unter dem `full`-Preset (oder einem
+Custom-Preset mit `collect_sessions` an). Auf einer `minimal`- oder
+`standard`-Application bleibt der Explorer absichtlich leer. Wie eine Session definiert ist, steht
 unter [Sessions](/de/concepts/sessions).
 
 ## Experience Score
@@ -97,7 +96,7 @@ Third-Party-Breakdowns, LoAF und den Experience Score. Siehe die
 
 ## Weiterlesen
 
-- [Collection Modes](/de/collection-modes): was der Tracker pro
+- [Presets](/de/collection-modes): was der Tracker pro
   Modus sammelt, und warum Sessions oder Stack-Traces fehlen
   können.
 - [Sessions](/de/concepts/sessions): wie aus Pageviews eine

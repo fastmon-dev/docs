@@ -16,23 +16,28 @@ want to exclude.
 
 | You want to exclude…              | Best mechanism                                   |
 | --------------------------------- | ------------------------------------------------ |
-| Your dev / staging environment    | Separate site (or `allowed_origins` discipline)  |
+| Your dev / staging environment    | Separate application (mark it `dev` to keep it apart)   |
 | Your team's office traffic        | Skip the beacon script for internal sessions     |
 | Your CI / synthetic monitors      | Skip the beacon script by User-Agent             |
 | All non-production traffic        | Per-site `is_active` toggle                      |
 
-## Option 1: Separate sites for non-production
+## Option 1: A separate application for non-production
 
 The cleanest answer for staging, preview, and dev environments.
 
-1. Create a second site in Fastmon called e.g. `acme-marketing-staging`.
-2. Use **its** `source_hash` in your staging deploy.
-3. Either ignore the staging site in dashboards, or use it
+1. Create a second application in Fastmon, e.g. `acme-marketing-staging`,
+   and optionally set its [environment](/en/concepts/applications#environment)
+   to `dev` to keep it clearly apart from production.
+2. Use **its** `source_hash` in your staging deploy — a separate
+   application has its own snippet and hashes.
+3. Either ignore the staging application in dashboards, or use it
    intentionally; staging metrics are useful for catching
    regressions before production.
 
 Costs you nothing: no client-side logic, no flags, no risk of
-leaking production data into staging or the other way around.
+leaking production data into staging or the other way around. (If you
+just want a separate dashboard per domain but the same snippet, add
+the domain as another **site** under the same application instead.)
 
 ## Option 2: Skip the beacon for internal sessions
 
@@ -120,8 +125,8 @@ store). If it doesn't, the filter isn't catching those visits.
 
 ## Related
 
-- [Sites](/en/concepts/sites): separate sites for environments.
-- [Collection modes](/en/collection-modes): runtime beacon
+- [Applications](/en/concepts/applications): separate apps (and the `dev` environment) for non-production.
+- [Presets](/en/collection-modes): runtime beacon
   control.
 - [Privacy: what we don't collect](/en/privacy): why there's no
   server-side IP filter.

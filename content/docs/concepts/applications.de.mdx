@@ -1,0 +1,153 @@
+---
+title: Applications
+description: Eine Application ist ein Tracking-Snippet — ihre Hashes, Erfassungs-Config und die Sites (Domains), die sie bedient.
+---
+
+Eine **Application** ist der Tracking-Embed: ein Snippet, ein Satz
+Erfassungseinstellungen und die zwei Hashes, die sie identifizieren.
+Sie bedient eine Domain oder zwanzig — jede Domain ist eine **Site**
+mit eigenem Dashboard und eigenem Traffic. Die meisten brauchen genau
+eine Application mit einer Site.
+
+Die Hierarchie ist **Organization → Application → Site**:
+
+- Eine **Organization** besitzt Applications, Members und Tokens.
+- Eine **Application** besitzt das ausgelieferte
+  `/s/{source_hash}.js`-Bundle, die komplette Erfassungs-Config und
+  den `collector_hash`, an den Beacons posten. Sie hat eine oder
+  mehrere Sites.
+- Eine **Site** ist eine einzelne Domain unter der Application — eine
+  reine Analytics-Einheit mit eigenem Dashboard. Siehe
+  [Sites](/de/concepts/sites).
+
+Es gibt keinen „Single vs. Multi"-Modus: eine Application mit einer
+Site ist der Normalfall; weitere Sites kommen dazu, wenn sich mehrere
+Domains ein Snippet und eine Erfassungs-Config teilen sollen.
+
+## Die zwei Hashes
+
+Eine Application hat zwei kurze Hashes — beide auf der Application,
+nicht auf der Site:
+
+- **`source_hash`** steht in der **Script-URL** (`/s/{source_hash}.js`)
+  und sagt, welches Application-Bundle an den Browser geliefert wird.
+- **`collector_hash`** steht in der **Ingest-URL** (`/c/{collector_hash}`)
+  und sagt, zu welcher Application ein eingehender Beacon gehört. Er
+  ist im Script eingebacken; du kopierst ihn nie von Hand.
+
+Beide findest du auf der Karte der Application unter
+**··· → IDs & Hashes**. Beim Rotieren werden beide neu erzeugt und
+das ausgelieferte Script wird invalidiert.
+
+## Was erfasst wird: Presets
+
+Die Erfassungs-Config lebt auf der Application: ein
+[Preset](/de/collection-modes) (`minimal` / `standard` / `full`,
+Default `standard`), das sich in Einzelflags entfaltet — Sessions,
+der Besucher-`stitch`, Fehlerdetail, Query-Keys, fetch/XHR. Alles
+davon wird ins ausgelieferte Bundle gebacken. Die volle
+Aufschlüsselung steht unter [Presets](/de/collection-modes).
+
+## Wohin die Beacons gehen: der Collector
+
+`collector_mode` bestimmt den Host im Snippet:
+
+- **`default`** — fastmons geteilter Collector (`fastmon.site`); aus
+  Sicht deiner Seite Third-Party.
+- **`relative`** — hostlose `/s/`- und `/c/`-Pfade, same-origin über
+  deinen Reverse-Proxy ausgeliefert; First-Party.
+- **`custom`** — ein absoluter `collector_endpoint`-Host, den du
+  kontrollierst.
+
+Der Browser entscheidet First- vs. Third-Party zur Laufzeit, indem er
+den Host mit der Seiten-Origin vergleicht. Den Collector später zu
+wählen hieße, das schon eingebettete Snippet zu tauschen — deshalb
+wird er beim Anlegen gesetzt. Siehe [Implementierung](/de/install/html).
+
+## Unbekannte Domains: `site_policy`
+
+Kommt ein Beacon von einem Hostnamen, der keine registrierte Site
+ist, entscheidet die **`site_policy`** der Application:
+
+- **`open`** (Default) — der Beacon wird verworfen, aber der Hostname
+  als **vorgeschlagene Domain** vermerkt, die du mit einem Klick
+  adoptierst (sie wird eine Site und erbt die Config der Application).
+- **`auto`** — für den Hostnamen wird automatisch eine Site angelegt,
+  und ihr Traffic wird ab dann behalten.
+- **`strict`** — der Beacon wird verworfen, ohne Vorschlag und ohne
+  Auto-Provisioning; nur exakt registrierte Domains werden bedient.
+
+Das ersetzt die alte `allowed_origins`-Liste und das per-Site
+`enforce_domain_match`. Mit `strict` nagelst du den Ingest auf
+explizit registrierte Domains fest.
+
+## Environment
+
+`environment` markiert eine Application als **`prod`** oder **`dev`**
+(Default `prod`). Nutze `dev`, um Staging-, Preview- oder
+Wegwerf-Apps klar von deinem Produktions-Traffic zu trennen.
+
+## Page-Type-Detection
+
+Optional. Setz `pagetype_ruleset` auf dein Shop-System — `shopware6`,
+`shopware5`, `oxid`, `magento` oder `woocommerce` — und der Tracker
+klassifiziert jeden Pageview (Home / Product / Cart / Checkout / …)
+aus der `<body>`-Klasse der Seite, ohne Server-Timing-Integration.
+Default aus (leer); ein per Server-Timing-Header geschickter
+Page-Type hat immer Vorrang vor der Body-Class-Vermutung.
+
+## Per-Domain-Defaults
+
+Drei Einstellungen sind Application-Level-**Defaults**, die jede
+Mitglieds-Site erbt und pro Domain überschreiben kann:
+
+- **`data_retention_days`** (Default `90`) — wie lange Rohdaten
+  behalten werden.
+- **`store_stitch`** — den Edge-Besucher-`stitch` persistieren
+  (treibt Unique-Visitor-Zahlen). Folgt dem Preset der Application;
+  eine Site kann ihn trotzdem selbst abschalten.
+- **`count_visitors_by`** (`stitch` / `session`) — nach welcher
+  Kennung die **Visitors**-Metrik in Reports zählt. Eine
+  Reporting-Präferenz, die zur Query-Zeit auf das begrenzt wird, was
+  die Site tatsächlich speichert.
+
+Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
+[Sites](/de/concepts/sites).
+
+## Was eine Application hat
+
+| Feld                  | Typ                  | Hinweise                                                              |
+| --------------------- | -------------------- | --------------------------------------------------------------------- |
+| `id`                  | UUID v7              | Stabiler Identifier.                                                  |
+| `organization_id`     | UUID v7              | Die besitzende Organisation.                                          |
+| `name`                | string               | Wie die Application im UI erscheint.                                  |
+| `environment`         | enum                 | `prod` oder `dev`. Default `prod`. Markiert Nicht-Produktions-Apps.    |
+| `source_hash`         | string               | Global eindeutig; in der Script-URL (`/s/{source_hash}.js`).          |
+| `collector_hash`      | string               | Global eindeutig; in der Ingest-URL (`/c/{collector_hash}`).          |
+| Preset-Flags          | —                    | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. Siehe [Presets](/de/collection-modes). |
+| `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
+| `collector_endpoint`  | string · nullable    | Eigener Collector-Host (nur bei `custom`).                            |
+| `pagetype_ruleset`    | enum · optional      | Shop-System-Ruleset für Page-Type-Detection, oder leer (aus).         |
+| `site_policy`         | enum                 | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
+| `data_retention_days` | int                  | Per-Domain-Default (`90`); eine Site kann überschreiben.              |
+| `store_stitch`        | bool                 | Per-Domain-Default; eine Site kann überschreiben.                     |
+| `count_visitors_by`   | enum                 | Per-Domain-Default (`stitch` / `session`); eine Site kann überschreiben. |
+| `source_version`      | string               | Gepinnte Beacon-Template-Version (`v1`).                              |
+| `is_active`           | bool                 | Bei `false` werden Beacons angenommen, aber nicht geschrieben.        |
+
+## Sites: adoptieren, verschieben, löschen
+
+- **Domain hinzufügen** — eine Site unter der Application anlegen oder
+  eine vorgeschlagene Domain adoptieren (siehe `site_policy` oben).
+- **Site verschieben** — eine Site einer anderen Application zuweisen;
+  sie übernimmt deren Config. Es gibt kein „Unassign": eine Domain
+  gehört immer zu genau einer Application.
+- **Site löschen** — entfernt die Daten dieser Domain (mit
+  Bestätigung).
+
+## Verwandt
+
+- [Sites](/de/concepts/sites): die Per-Domain-Einheit unter einer Application.
+- [Presets](/de/collection-modes): was der Beacon erfasst.
+- [Implementierung](/de/install): eine Application anlegen und das Snippet einbetten.
+- [Der RUM-Beacon](/de/concepts/beacon): was das ausgelieferte Script tut.

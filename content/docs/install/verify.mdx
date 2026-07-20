@@ -28,9 +28,9 @@ Open the site in the Fastmon dashboard. After about a minute
 (beacons are batched into ClickHouse), the **Traffic** section will
 show:
 
-- non-zero **page views** (sessions stay at zero in the default
-  `anonymous` mode; that's expected. See
-  [Sessions](/en/concepts/sessions)),
+- non-zero **page views** (session counts stay at zero on the
+  default `standard` preset — `full` is needed for those; that's
+  expected. See [Sessions](/en/concepts/sessions)),
 - a **Web Vitals** snapshot for at least the page you opened.
 
 If the only traffic you see is your own visit so far, that's
@@ -106,7 +106,7 @@ server log in seconds.
 
 ## What's next
 
-- Pick a [collection mode](/en/collection-modes) if `anonymous`
-  isn't right for you.
+- Pick a [preset](/en/collection-modes) if `standard` isn't right
+  for you.
 - Tag your first [release](/en/guides/compare-releases) to start
   comparing deploys.

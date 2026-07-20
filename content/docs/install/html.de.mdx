@@ -13,33 +13,33 @@ Fastmon-Account.
 
 <InstallConfigPanel />
 
-## Applications und Seiten
+## Applications und Sites
 
 Hast du diese Seite über den **Einrichten**-Button einer Application
-geöffnet, existiert sie bereits und die Hashes oben sind ausgefüllt,
-dann spring direkt zu Schritt 1.
+geöffnet, existiert die Application bereits und die Hashes oben sind
+ausgefüllt — dann spring direkt zu Schritt 1.
 
 Sonst leg zuerst eine an. Eine **Application** ist ein Tracking-Snippet.
 Ihr gehören die Erfassungseinstellungen und die beiden Hashes unten, und
 sie kann eine Domain bedienen oder zwanzig.
 
-Öffne in Fastmon **Applications** und klicke auf **Add**. Vergib einen
-Namen und die Domain, die du messen willst (nur der Hostname, ohne
+Öffne in Fastmon **Applications** und klicke auf **Add**. Gib einen Namen
+und die Domain an, die du messen willst (nur der Hostname, ohne
 Protokoll: `acme.com`). Fastmon legt die Application *und* ihre erste
-**Seite** für diese Domain in einem Schritt an und gibt dir das Snippet.
+**Site** für diese Domain in einem Schritt an und gibt dir das Snippet.
 
 Damit hat die Application zwei kurze Hashes:
 
 - `source_hash` — kommt in die Script-URL.
-- `collector_hash` — dorthin sendet der Tracker die Daten. Er steckt
-  fest im Script, du fasst ihn normalerweise nie von Hand an.
+- `collector_hash` — dorthin sendet der Tracker die Daten. Er ist
+  fest ins Script eingebaut, du fasst ihn normalerweise nie von Hand an.
 
 Beide findest du auf der Karte der Application unter
 **··· → IDs & Hashes**.
 
 <Callout type="info">
-  Mehrere Domains mit einem Snippet? Füge sie als weitere Seiten
-  derselben Application hinzu. Jede Seite behält ihr eigenes Dashboard
+  Mehrere Domains mit einem Snippet? Füge sie als weitere Sites
+  derselben Application hinzu. Jede Site behält ihr eigenes Dashboard
   und ihren eigenen Traffic, aber sie teilen sich ein Snippet und eine
   Erfassungskonfiguration. Eine *zweite Application* brauchst du erst,
   wenn eine Domain wirklich andere Einstellungen benötigt.
@@ -88,20 +88,20 @@ des Seitenaufrufs: beim Laden, bei `visibilitychange → hidden`, bei
 Seitenaufruf, nicht genau einen. Beim Testen erzwingst du einen Flush am
 zuverlässigsten, indem du den Tab wechselst oder die Seite schließt.
 
-Danach prüfen, ob es angekommen ist: siehe
+Danach prüfen, ob die Daten angekommen sind: siehe
 [Einbindung prüfen](/de/install/verify).
 
-### Wenn die Domain noch keine Seite ist
+### Wenn die Domain noch keine Site ist
 
-Beacons werden über den Hostname der Seite einer **Seite** zugeordnet.
+Beacons werden anhand des Hostnamens der Seite einer **Site** zugeordnet.
 Hast du die Domain beim Anlegen der Application angegeben, bist du
-fertig, die Daten landen auf dieser Seite.
+fertig, die Daten landen auf dieser Site.
 
 Falls nicht (du hast eine leere Application angelegt oder das Snippet
 gerade auf eine zusätzliche Domain gesetzt), wird der erste Seitenaufruf
 nicht still verworfen: Der Hostname taucht an der Application als
 **vorgeschlagene Domain** auf, und du fügst ihn mit einem Klick als
-Seite hinzu. Beacons von vor dem Hinzufügen werden nicht aufbewahrt, die
+Site hinzu. Beacons von vor dem Hinzufügen werden nicht aufbewahrt, die
 Zahlen starten also ab dem Moment, in dem du sie hinzufügst.
 
 Was davon passiert, steuert die Einstellung **Unbekannte Domains** der
@@ -110,8 +110,8 @@ Application:
 | Einstellung | Was bei einem Beacon von einer nicht registrierten Domain passiert |
 | ----------- | ------------------------------------------------------------------ |
 | **Vorschlagen** (Standard) | Wird als vorgeschlagene Domain zum Hinzufügen gelistet, der Beacon selbst wird verworfen. |
-| **Automatisch anlegen** | Beim ersten Beacon wird automatisch eine Seite angelegt. |
-| **Ignorieren** | Wird still verworfen, kein Vorschlag, keine Seite. |
+| **Automatisch anlegen** | Beim ersten Beacon wird automatisch eine Site angelegt. |
+| **Ignorieren** | Wird still verworfen, kein Vorschlag, keine Site. |
 
 ## Einwilligung: wann die Session-ID geschrieben wird
 
@@ -154,7 +154,7 @@ Fehlerabdeckung egal sind.
 ### Besucher ohne JavaScript zählen
 
 Ein `<noscript>`-Pixel erfasst einen Seitenaufruf für Besucher mit
-deaktiviertem JavaScript. Er liefert keine Web Vitals (es gibt kein JS,
+deaktiviertem JavaScript. Es liefert keine Web Vitals (es gibt kein JS,
 das sie messen könnte), nur den Seitenaufruf. Es kann überall im
 `<head>` nach dem Tracker-Tag stehen:
 
@@ -184,7 +184,7 @@ proxyst du die beiden Pfad-Präfixe zu Fastmon. Für nginx:
 <InstallSnippet kind="nginx" />
 
 Jeder Reverse-Proxy oder CDN funktioniert genauso: `/s/` und `/c/` an
-`https://fastmon.site` weiterleiten und den Client-IP-Header erhalten.
+`https://fastmon.site` weiterleiten und den Client-IP-Header beibehalten.
 
 ### Eigene Domain
 
@@ -197,7 +197,7 @@ und du einen einzigen stabilen Collector-Host willst.
 
 - [Einbindung prüfen](/de/install/verify) — ein Fünf-Sekunden-Check in
   den DevTools.
-- Erfassung feinjustieren: [Collection Modes](/de/collection-modes).
+- Erfassung feinjustieren: [Presets](/de/collection-modes).
 - [Datenschutz: was wir nicht erheben](/de/privacy), praktisch für die
   Rechtsabteilung.
 - Deploys für Vorher/Nachher-Vergleiche markieren:

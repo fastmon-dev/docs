@@ -4,20 +4,20 @@ description: Wie Fastmon Pageviews desselben Browsers gruppiert, ohne den Besuch
 ---
 
 Eine **Session** ist ein kurzes Fenster mit Pageviews desselben
-Browsers auf derselben Site. Damit kann das Dashboard Sachen
+Browsers auf derselben Site. Damit kann das Dashboard Fragen
 beantworten wie „wie viele Seiten pro Besuch?" oder „an welcher
 Stelle im Besuch kam der Fehler?", ohne dass wir den Besucher
 identifizieren müssen.
 
-Anonym sind Sessions schon vom Aufbau her. Fastmon setzt nie einen
+Sessions sind schon vom Aufbau her anonym. Fastmon setzt nie einen
 persistenten Identifier; die Session-Grenze rechnen wir aus dem
 Beacon-Stream, nicht aus einem Cookie.
 
-## Warum das zählt
+## Warum das wichtig ist
 
 Manche Fragen kannst du nur auf Session-Ebene beantworten:
 
-- „Wie viele Besuche haben eine Web-Vitals-Schwelle gerissen?" (ein
+- „Wie viele Besuche haben eine Web-Vitals-Schwelle überschritten?" (ein
   Mehr-Seiten-Besuch hat vielleicht eine schlechte Seite und mehrere
   gute).
 - „Kam der Fehler auf der Checkout-Stufe nach einem langsamen
@@ -26,7 +26,7 @@ Manche Fragen kannst du nur auf Session-Ebene beantworten:
 - „Wie verteilen sich die Seiten pro Besuch je Entry-Pfad?" (ein
   einzelner Pageview kann das nicht beantworten).
 
-Dafür gibt's den **Sessions**-View im Dashboard. Die meisten
+Dafür gibt es den **Sessions**-View im Dashboard. Die meisten
 anderen Views arbeiten auf Pageview-Ebene und kommen ohne Sessions
 aus.
 
@@ -36,15 +36,14 @@ Eine Session enthält Pageviews, die **alles** Folgende teilen:
 
 - dieselbe `site_id`,
 - dieselbe `session_id` (`sid` auf der Leitung), clientseitig
-  pro Session vergeben und nur gesendet, wenn der
-  [Collection Mode](/de/collection-modes) das erlaubt (`full`,
-  oder `consent` nach Opt-In),
+  pro Session vergeben und nur unter dem `full`-[Preset](/de/collection-modes)
+  gesendet (oder einem Custom-Preset mit `collect_sessions` on),
 - eine Lücke von **weniger als 30 Minuten** zwischen
   aufeinanderfolgenden Pageviews.
 
-In `anonymous` (und in `consent` vor dem Opt-In) wird die `sid`
-vor dem Senden entfernt; diese Pageviews bilden also gar keine
-Session und tauchen nur in Pageview-Views auf.
+Unter `minimal` und `standard` gibt es gar keine `sid`; diese
+Pageviews bilden also keine Session und tauchen nur in
+Pageview-Views auf.
 
 Die Session endet, wenn:
 
@@ -82,13 +81,13 @@ Die Analytics-API bietet zwei Endpunkte:
 - `POST /analytics/sessions/detail`: Pageviews und Timing einer
   einzelnen Session.
 
-Request-Shapes: [Analytics-API](/en/api/analytics/queryAnalytics).
+Die Request-Shapes stehen in der [Analytics-API](/de/api/analytics/queryAnalytics).
 
 ## Häufige Überraschungen
 
 - **Eine „Session" in Fastmon ist kürzer als bei manchen anderen
-  Tools.** Wer ein 1- oder 2-Jahre-Cookie setzt, klebt jeden
-  Wiederbesuch an die alte Session. Wir haben das Cookie nicht,
+  Tools.** Wer ein 1- oder 2-Jahres-Cookie setzt, ordnet jeden
+  Wiederbesuch der alten Session zu. Wir haben das Cookie nicht,
   und damit ist die 30-Minuten-Lücke die harte Grenze.
 - **Ein Besucher an zwei Tagen = zwei Sessions.** Mit Absicht.
   Alles andere würde voraussetzen, dass wir wissen, wer derselbe
@@ -104,8 +103,8 @@ Request-Shapes: [Analytics-API](/en/api/analytics/queryAnalytics).
 
 ## Verwandt
 
-- [Collection Modes](/de/collection-modes): was der Beacon pro
+- [Presets](/de/collection-modes): was der Beacon pro
   Pageview erfasst, woraus Sessions gebaut werden.
 - [Privacy: was wir nicht sammeln](/de/privacy): warum Sessions
   anonym sind.
-- [Analytics-API](/en/api/analytics/queryAnalytics): Sessions programmatisch.
+- [Analytics-API](/de/api/analytics/queryAnalytics): Sessions programmatisch abfragen.

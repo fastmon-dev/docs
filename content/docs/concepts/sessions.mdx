@@ -33,13 +33,13 @@ A session contains the page-views that share **all** of these:
 
 - the same `site_id`,
 - the same `session_id` (`sid` on the wire), minted client-side
-  per session and only sent when the [collection mode](/en/collection-modes)
-  permits (`full`, or `consent` after opt-in),
+  per session and only sent under the `full` [preset](/en/collection-modes)
+  (or a custom preset with `collect_sessions` on),
 - a gap of **less than 30 minutes** between consecutive page-views.
 
-In `anonymous` (and in `consent` before opt-in) the `sid` is
-stripped before send, so those page-views don't form a session at
-all; they show up only in page-view-level views.
+Under `minimal` and `standard` there's no `sid` at all, so those
+page-views don't form a session; they show up only in
+page-view-level views.
 
 The session ends when:
 
@@ -97,7 +97,7 @@ See [Analytics API](/en/api/analytics/queryAnalytics) for the request shapes.
 
 ## Related
 
-- [Collection modes](/en/collection-modes): what the beacon
+- [Presets](/en/collection-modes): what the beacon
   collects per page-view, which is the data sessions are built from.
 - [Privacy: what we don't collect](/en/privacy): why sessions are
   anonymous.

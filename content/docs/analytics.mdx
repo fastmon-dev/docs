@@ -55,11 +55,10 @@ The Errors view tracks JavaScript errors across the site:
   URL, browser, device, OS, and country, and sample pageviews with
   stack frames.
 
-How much detail you see depends on the site's
-[collection mode](/en/collection-modes): in `anonymous` mode the
-tracker sends error **type and count only**. Messages and stack
-frames arrive in `full` mode, or in `consent` mode after the
-visitor opts in.
+How much detail you see depends on the application's
+[preset](/en/collection-modes): `minimal` sends error **type and
+count only**, `standard` adds full stack frames, and `full` adds the
+error message too.
 
 ## Sessions
 
@@ -70,8 +69,9 @@ range, and a per-session detail view showing every pageview in order, each
 with its Web Vitals and errors.
 
 Sessions require a cross-page `session_id`, which the tracker only
-carries in `full` mode or in `consent` mode after opt-in. On an
-`anonymous`-mode site the explorer stays empty by design. See
+carries under the `full` preset (or a custom preset with
+`collect_sessions` on). On a `minimal` or `standard` application the
+explorer stays empty by design. See
 [Sessions](/en/concepts/sessions) for how a session is defined.
 
 ## Experience Score
@@ -94,7 +94,7 @@ LoAF, and the Experience Score. See the
 
 ## What's next
 
-- [Collection modes](/en/collection-modes): what the tracker
+- [Presets](/en/collection-modes): what the tracker
   collects per mode, and why sessions or stack traces may be
   missing.
 - [Sessions](/en/concepts/sessions): how pageviews become a

@@ -1,0 +1,17 @@
+{
+  "title": "Applications",
+  "description": "Manage applications: the tracking embed (script + collector hashes + collection config) that a site's beacons post to. An application runs on one or more domains (its sites); each beacon's site is resolved at ingest by its page-URL host. Covers application CRUD, script/collector hash rotation, domain (site) membership, and discovery of unregistered hostnames seen hitting the application.",
+  "pages": [
+    "listApplications",
+    "createApplication",
+    "listApplicationUnknownHostnames",
+    "dismissApplicationUnknownHostname",
+    "getApplication",
+    "updateApplication",
+    "deleteApplication",
+    "rotateApplicationHashes",
+    "listApplicationSites",
+    "createApplicationSite",
+    "assignApplicationSite"
+  ]
+}

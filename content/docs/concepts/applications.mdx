@@ -1,0 +1,148 @@
+---
+title: Applications
+description: An application is one tracking snippet — its hashes, collection config, and the sites (domains) it serves.
+---
+
+An **application** is the tracking embed: one snippet, one set of
+collection settings, and the two hashes that identify it. It serves
+one domain or twenty — each domain is a **site** with its own
+dashboard and traffic. Most people need exactly one application with
+one site.
+
+The hierarchy is **Organization → Application → Site**:
+
+- An **organization** owns applications, members, and tokens.
+- An **application** owns the served `/s/{source_hash}.js` bundle,
+  all collection config, and the `collector_hash` that beacons post
+  to. It has one or more sites.
+- A **site** is a single domain under the application — a pure
+  analytics unit with its own dashboard. See [Sites](/en/concepts/sites).
+
+There's no "single vs multi" mode: an application with one site is
+the common case; add more sites when several domains should share one
+snippet and one collection config.
+
+## The two hashes
+
+An application has two short hashes — both on the application, not on
+the site:
+
+- **`source_hash`** sits in the **script URL** (`/s/{source_hash}.js`)
+  and tells us which application's bundle to ship to the browser.
+- **`collector_hash`** sits in the **ingest URL** (`/c/{collector_hash}`)
+  and tells us which application an incoming beacon belongs to. It's
+  baked into the script; you never copy it by hand.
+
+Both are on the application's card under **··· → IDs & hashes**.
+Rotating them regenerates both and invalidates the served script.
+
+## What gets collected: presets
+
+The collection config lives on the application: a
+[preset](/en/collection-modes) (`minimal` / `standard` / `full`,
+default `standard`) that expands into individual flags — sessions,
+the visitor `stitch`, error detail, query keys, fetch/XHR. All of it
+is baked into the served bundle. See [Presets](/en/collection-modes)
+for the full breakdown.
+
+## Where beacons go: the collector
+
+`collector_mode` decides the host in the snippet:
+
+- **`default`** — fastmon's shared collector (`fastmon.site`);
+  third-party to your site.
+- **`relative`** — host-less `/s/` and `/c/` paths, served
+  same-origin via your reverse proxy; first-party.
+- **`custom`** — an absolute `collector_endpoint` host you control.
+
+The browser decides first- vs third-party at runtime by comparing
+the host to the page origin. Picking the collector later means
+swapping the snippet you already embedded, so it's set at create
+time. See [Implementation](/en/install/html).
+
+## Unknown domains: `site_policy`
+
+When a beacon arrives from a hostname that isn't a registered site,
+the application's **`site_policy`** decides what happens:
+
+- **`open`** (default) — the beacon is dropped, but the hostname is
+  recorded as a **suggested domain** you can adopt in one click (it
+  becomes a site, inheriting the application's config).
+- **`auto`** — a site is created automatically for the hostname, and
+  its traffic is kept from then on.
+- **`strict`** — the beacon is dropped with no suggestion and no
+  auto-provisioning; only exactly-registered domains are served.
+
+This replaces the old `allowed_origins` list and the per-site
+`enforce_domain_match`. `strict` is how you lock ingest to domains
+you've explicitly registered.
+
+## Environment
+
+`environment` marks an application **`prod`** or **`dev`** (default
+`prod`). Use `dev` to keep staging, preview, or throwaway apps
+clearly separate from your production traffic.
+
+## Page-type detection
+
+Optional. Set `pagetype_ruleset` to your shop system — `shopware6`,
+`shopware5`, `oxid`, `magento`, or `woocommerce` — and the tracker
+classifies each pageview (home / product / cart / checkout / …) from
+the page's `<body>` class, no Server-Timing integration needed. Off
+by default (empty); a page type sent via the Server-Timing header
+always wins over the body-class guess.
+
+## Per-domain defaults
+
+Three settings are application-level **defaults** that each member
+site inherits and can override per domain:
+
+- **`data_retention_days`** (default `90`) — how long raw data is
+  kept.
+- **`store_stitch`** — persist the edge visitor `stitch` (drives
+  unique-visitor counts). Follows the application's preset; a site
+  can still turn it off on its own.
+- **`count_visitors_by`** (`stitch` / `session`) — which identifier
+  the **visitors** metric counts by in reports. A reporting
+  preference, clamped at query time to what the site actually stores.
+
+A site inherits these unless it sets its own value. See
+[Sites](/en/concepts/sites).
+
+## What's on an application
+
+| Field                 | Type                 | Notes                                                                 |
+| --------------------- | -------------------- | --------------------------------------------------------------------- |
+| `id`                  | UUID v7              | Stable identifier.                                                    |
+| `organization_id`     | UUID v7              | The owning organization.                                              |
+| `name`                | string               | How the application appears in the UI.                                |
+| `environment`         | enum                 | `prod` or `dev`. Default `prod`. Marks non-production apps.            |
+| `source_hash`         | string               | Globally unique; in the script URL (`/s/{source_hash}.js`).           |
+| `collector_hash`      | string               | Globally unique; in the ingest URL (`/c/{collector_hash}`).           |
+| preset flags          | —                    | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. See [Presets](/en/collection-modes). |
+| `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
+| `collector_endpoint`  | string · nullable    | Custom collector host (only for `custom`).                            |
+| `pagetype_ruleset`    | enum · optional      | Shop-system ruleset for page-type detection, or empty (off).          |
+| `site_policy`         | enum                 | `open` / `auto` / `strict`. Unknown-hostname handling.                |
+| `data_retention_days` | int                  | Per-domain default (`90`); a site can override.                       |
+| `store_stitch`        | bool                 | Per-domain default; a site can override.                              |
+| `count_visitors_by`   | enum                 | Per-domain default (`stitch` / `session`); a site can override.       |
+| `source_version`      | string               | Pinned beacon template version (`v1`).                                |
+| `is_active`           | bool                 | When false, beacons are accepted but not written.                     |
+
+## Sites: adopt, move, delete
+
+- **Add a domain** — create a site under the application, or adopt a
+  suggested domain (see `site_policy` above).
+- **Move a site** — reassign a site to another application; it takes
+  on that application's config. There's no "unassign": a domain
+  always belongs to exactly one application.
+- **Delete a site** — removes that domain's data (with a
+  confirmation).
+
+## Related
+
+- [Sites](/en/concepts/sites): the per-domain unit under an application.
+- [Presets](/en/collection-modes): what the beacon collects.
+- [Implementation](/en/install): create an application and embed the snippet.
+- [The RUM beacon](/en/concepts/beacon): what the served script does.

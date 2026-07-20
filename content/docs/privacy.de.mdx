@@ -4,77 +4,74 @@ description: Fastmons Datenschutz-Position, Punkt für Punkt. Nützlich, wenn Le
 ---
 
 Mit Fastmon sollst du Real-User-Performance messen können, ohne
-dafür ein Datenschutz-Minenfeld aufzumachen. Kurz: **keine IPs auf
-der Platte, kein roher User-Agent, kein Fingerprinting, kein
-Cross-Site-Tracking, EU-Infrastruktur** und ein speicherfreier
-Default, der ohne Cookie-Banner auskommt. Auf dieser Seite steht
-die ausführliche Version: was die Zusagen in der Praxis heißen,
-was wir trotzdem sammeln, damit das Produkt funktioniert, und wie
-sich das je nach Collection Mode unterscheidet.
+dafür in ein Datenschutz-Minenfeld zu geraten. Kurz: **keine IPs auf
+Festplatte, kein roher User-Agent, kein Fingerprinting, kein
+Cross-Site-Tracking, EU-Infrastruktur**, keine Cookies und ein
+Default, der nichts auf dem Gerät des Besuchers speichert. Auf dieser
+Seite steht die ausführliche Version: was die Zusagen in der Praxis
+heißen, was wir trotzdem sammeln, damit das Produkt funktioniert, und
+wie sich das je nach [Preset](/de/collection-modes) unterscheidet.
 
-## Was wir nie sammeln, in keinem Modus
+## Was wir nie sammeln, in keinem Preset
 
-Diese Regeln gelten unabhängig davon, in welchem
-[Collection Mode](/de/collection-modes) die Site läuft:
+Diese Regeln gelten unabhängig davon, welches
+[Preset](/de/collection-modes) die Application nutzt:
 
 | Wir sammeln **kein**…              | Was das praktisch heißt                                                                       |
 | ---------------------------------- | --------------------------------------------------------------------------------------------- |
-| **IP-Adressen**                    | Die IP wird am Edge entfernt, bevor sie irgendein Application-Code zu Gesicht bekommt. Das Backend liest nur einen vorbereiteten Ländercode (`FM-Country`, zweistelliges ISO), nie die IP selbst. Keine IP wird je auf Disk geschrieben, in keinem Modus. |
+| **IP-Adressen**                    | Die IP wird am Edge entfernt, bevor sie irgendein Application-Code zu Gesicht bekommt. Das Backend liest nur einen vorbereiteten Ländercode (`FM-Country`, zweistelliges ISO), nie die IP selbst. Keine IP wird je auf Festplatte geschrieben, in keinem Modus. |
 | **Roher User-Agent-String**        | Der `User-Agent`-Header wird ebenfalls am Edge entfernt. Das Backend liest nur vorgefertigte `FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device`-Header. Der rohe UA ist für die Anwendung und ihre Logs nie sichtbar. |
 | **Device- oder Browser-Fingerprints** | Kein Canvas-Fingerprinting, keine Font-Enumeration, keine `userAgentData`-High-Entropy-Hints, kein Battery-/Sensor-/AudioContext-Probing. |
 | **Cross-Site-IDs**                 | Wir vergeben keine Kennung, die eine Domain-Grenze überlebt. Eine Session auf `acme.com` ist nicht mit einer auf `other.com` verknüpfbar. |
-| **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine "Audience"-Daten. |
+| **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine „Audience"-Daten. |
 | **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. |
-| **URL-Query-Strings oder Hash-Fragmente** | Im Tracker entfernt, bevor irgendein Beacon rausgeht. `/orders/checkout?email=jane@x.com` kommt beim Collector als `/orders/checkout` an. |
+| **URL-Query-Werte und Hash-Fragmente** | Werte und `#Fragmente` werden entfernt, bevor irgendein Beacon rausgeht. `/orders/checkout?email=jane@x.com` wird zu `/orders/checkout` (`minimal`) oder `/orders/checkout?email` — nur der Key-Name — bei `standard` / `full`. Werte bleiben nur für Keys erhalten, die du explizit auf die Allow-List setzt. |
 | **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst.                     |
 
 ### Zu Cookies und Storage
 
-`anonymous` ist **strikt speicherfrei**: keine Cookies, kein
-`localStorage`, kein `sessionStorage`, kein IndexedDB, keine Cache
-API. Daher braucht der Modus keinen Cookie-Banner: es liegt nichts
-auf dem Gerät, wofür man Consent einholen müsste.
+Fastmon setzt **keine Cookies, in keinem Preset** — nicht für Consent,
+für nichts. Das Einzige, was der Tracker je auf das Gerät des
+Besuchers schreibt, ist eine Session-ID, und nur unter `full` (oder
+einem Custom-Preset mit `collect_sessions` an).
 
-`consent` ist **vor Opt-In** ebenfalls speicherfrei: auf dem Wire
-byte-identisch zu `anonymous`. Bei Opt-In setzt der Tracker ein
-`_fm_consent`-Cookie, das die Consent-Entscheidung persistiert, und
-schreibt eine Session-ID in den `sessionStorage` (`_s`). Das Cookie
-macht genau eine Sache — sich die Consent-Entscheidung merken, damit
-sie den nächsten Seitenwechsel übersteht. Opt-Out löscht beides
-sofort.
+`minimal` und `standard` sind **strikt speicherfrei**: keine Cookies,
+kein `localStorage`, kein `sessionStorage`, kein IndexedDB, keine
+Cache API. Es liegt nichts auf dem Gerät.
 
-`full` behält die Session-ID im `sessionStorage` ab dem ersten
-Pageview. Keine Cookies. Speicher auf dem Gerät ist genau ein
-`sessionStorage`-Eintrag, der beim Tab-Schließen verschwindet.
+`full` ergänzt genau einen `sessionStorage`-Eintrag — die Session-ID
+unter dem Key `_fms` —, geschrieben beim ersten Pageview und weg beim
+Tab-Schließen. Weiterhin keine Cookies. Um auch das zurückzuhalten,
+bis ein Consent-Manager es erlaubt, siehe
+[Die Session-ID hinter Consent gaten](/de/collection-modes#die-session-id-hinter-consent-gaten).
 
-Mehr fasst der Beacon auf dem Gerät des Besuchers nie an. Kein
-`localStorage` in irgendeinem Modus. Kein IndexedDB. Keine Cache
-API.
+Mehr fasst der Beacon auf dem Gerät des Besuchers nie an. Keine
+Cookies in keinem Preset. Kein `localStorage`, kein IndexedDB, keine
+Cache API, nie.
 
 ## Was wir schon sammeln
 
 Genau das, was wir brauchen, um Web Vitals und Performance pro
 Seite auszurechnen:
 
-- **Seiten-URL**: bereinigt je nach
-  [Collection Mode](/de/collection-modes).
+- **Seiten-URL**: bereinigt je nach [Preset](/de/collection-modes)
+  (Werte verworfen; Key-Namen bei `standard` / `full` erhalten).
 - **Web Vitals**: LCP, INP, CLS, FCP, TTFB und verwandte Timings.
 - **Navigation-Timing**: Nav-Typ, TTFB, Pageload-Timing.
 - **Resource-Timing**: pro Kategorie aggregierte Byte-Größen und
   Counts (Script, CSS, Image, Font, Sonstige).
-- **Fehler**: Typ und Count in jedem Modus, dazu der Script-Host
-  jedes Stack-Frames. Für Frames in deinen *eigenen*
-  First-Party-External-Scripts behält der Wire auch ohne Consent
-  Script-Pfad und Zeile/Spalte — genug, um einen Bug in Code zu
-  lokalisieren, den du selbst fixen kannst, und für jeden
-  betroffenen Besucher identisch: das identifiziert den Fehler,
-  nicht die Person. Inline- und Third-Party-Frames bleiben ohne
-  Consent host-only. Die Fehler-**Message** ist consent-only
-  (`full` / `consent` nach Opt-In) und läuft auch dann durch einen
-  immer aktiven Scrubber, der URLs, E-Mail-Adressen, numerische IDs
-  und Strings in Anführungszeichen vor dem Versand durch `*`
-  maskiert. Ein `Bearer eyJhbG…`-Token, der sich in eine Exception
-  schleicht, erreicht uns nicht.
+- **Fehler**: Typ und Count in jedem Preset, dazu der Script-Host
+  jedes Stack-Frames. `standard` und `full` ergänzen Script-Pfad und
+  Zeile/Spalte jedes Frames (`collect_error_frames`) — genug, um einen
+  Bug in Code zu lokalisieren, den du selbst fixen kannst, und für
+  jeden betroffenen Besucher identisch: das identifiziert den Fehler,
+  nicht die Person; `minimal` behält nur die Frame-Hosts. Die
+  Fehler-**Message** wird nur unter `full` behalten
+  (`collect_error_messages`) und läuft auch dann durch einen immer
+  aktiven Scrubber, der URLs, E-Mail-Adressen, numerische IDs und
+  Strings in Anführungszeichen vor dem Versand durch `*` maskiert. Ein
+  `Bearer eyJhbG…`-Token, der sich in eine Exception schleicht,
+  erreicht uns nicht.
 - **Umgebung**: Browser-Familie, OS-Familie, Device-Klasse
   (`mobile`/`tablet`/`desktop`), Viewport-Klasse, effektiver
   Connection-Typ, Netzwerk-RTT- und Downlink-Schätzungen. Die
@@ -95,12 +92,11 @@ Seite auszurechnen:
   Click-ID-*Wert* (`Cj0KCQabc...`) wird bewusst verworfen; nur
   das Label, welche Plattform den Klick geschickt hat, wird
   gespeichert. Das sind vom Marketer auf den eigenen Outbound-URLs
-  gesetzte Tags, keine Besucher-abgeleiteten Daten, und werden in
-  jedem Modus gespeichert.
-- **Session-ID**: nur in `full`, und in `consent` nachdem der
-  Besucher über den CMP der Site Opt-In gegeben hat. Liegt im
-  `sessionStorage`, gruppiert Pageviews einer Session, stirbt mit
-  dem Tab.
+  gesetzte Tags, keine aus dem Besucher abgeleiteten Daten; sie
+  werden in jedem Modus gespeichert.
+- **Session-ID**: nur unter `full` (oder einem Custom-Preset mit
+  `collect_sessions` an). Liegt im `sessionStorage` unter `_fms`,
+  gruppiert Pageviews einer Session, stirbt mit dem Tab.
 - **Referrer**: vom Tracker auf Origin + Pathname vorbereinigt
   (Query und Hash werden bereits im Browser verworfen). Das
   Backend klassifiziert ihn per
@@ -110,12 +106,13 @@ Seite auszurechnen:
   `paid` / `chatbot` / `internal` / `unknown`) und verwirft den
   rohen Wert sofort danach, vor jedem Logging-Pfad. **Gespeichert
   werden nur die beiden gebucketeten Spalten** (in jedem Modus);
-  die rohe URL landet nie auf der Platte.
-- **LCP-Image-URL, LoAF-Script-Pfade, Third-Party-Domain-Map**:
-  nur in `full` oder in `consent` nach Opt-In. URLs werden bei der
+  die rohe URL landet nie auf der Festplatte.
+- **LCP-Image-URL, LoAF-Script-Pfade, Third-Party-Domain-Map**: nicht
+  vom Preset gesteuert — das sind Site-Metadaten (für jeden Besucher
+  einer Seite identisch), keine Besucherdaten. URLs werden bei der
   Erfassung auf Origin + Pathname reduziert.
 
-Mehr schickt der Beacon nicht. Es gibt auch keinen Opt-In, mit dem
+Mehr schickt der Beacon nicht. Es gibt auch kein Opt-in, mit dem
 du irgendwo „noch ein bisschen mehr" freischaltest. Das Mehr haben
 wir gar nicht gebaut.
 
@@ -154,43 +151,42 @@ arbeiten ließe: die Inputs werden am Edge zerstört, das Salt ist
 binnen eines Tages weg, und nichts verknüpft über Sites hinweg. Und
 wenn du lieber gar keinen
 Besucher-Identifier speicherst, verwirft `store_stitch = false`
-(siehe unten) ihn in jedem Modus — für eine vollständig anonyme
-Zeile.
+(siehe unten, und das `minimal`-Preset) ihn — für eine vollständig
+anonyme Zeile.
 
-Die explizite, consent-gedeckte `sid` (die tab-gebundene
-Session-ID in `full` / `consent` nach Opt-In) bleibt unverändert.
+Die explizite `sid` (die tab-gebundene Session-ID unter `full`)
+bleibt unverändert.
 
 ### Identifier ganz abschalten
 
-Zwei Schalter pro Site lassen dich noch sparsamer fahren, als der
-Modus allein vorgibt. Beide stehen per Default auf *an* (die oben
-beschriebene Position); umstellen kannst du sie in den
-Site-Einstellungen.
+Zwei Einstellungen entscheiden, ob Fastmon überhaupt einen
+Besucher-Identifier behält. Die Presets setzen sie für dich —
+`standard` behält den `stitch`, `full` ergänzt die Session-ID,
+`minimal` verwirft beide —, aber du kannst jede direkt umstellen, was
+die App dann als `custom`-Preset kennzeichnet.
 
-- **`store_stitch` (Default an).** Aus erzwingt `stitch` beim
-  Insert in *jedem* Modus auf leer und lässt eine Zeile ganz ohne
-  Besucher-Identifier zurück — vollständig anonym. Der Trade-off
-  ist Analytics, nicht Legalität: ohne `stitch` gibt es für die Site
-  keine Unique-Visitor-Zahlen und keine Session-Metriken
-  (Bounce-Rate, Seiten pro Session, Verweildauer). Alle
-  Per-Pageview-Signale (Web Vitals, Fehler, Third-Party,
-  Attribution) bleiben unberührt. Das ist der Schalter für Sites
-  aus dem öffentlichen Sektor, dem Gesundheits- oder Finanzbereich,
-  die lieber das Visitor-Stitching verlieren, als irgendeinen
-  Identifier zu speichern.
-- **`store_session` (Default an).** Aus sagt dem ausgelieferten
-  Bundle, `sessionStorage` gar nicht erst anzufassen — der
-  Storage-Schritt auf dem Gerät entfällt, er wird nicht bloß
-  serverseitig verworfen — und der Collector erzwingt `sid` als
-  Absicherung auf leer. Die Site behält die volle
-  Content-Telemetrie (volle URLs, Fehler-Messages und -Frames unter
-  Consent), läuft aber ohne jede seitenübergreifende Session-ID.
-  Nützlich, wenn du reichhaltiges Debugging auf Opt-In-Traffic
-  willst, aber keine Session-Rekonstruktion.
+- **`store_stitch`** (an in `standard` / `full`, aus in `minimal`).
+  Aus erzwingt `stitch` beim Insert auf leer und lässt eine Zeile ganz
+  ohne Besucher-Identifier zurück — vollständig anonym. Der Trade-off
+  ist Analytics, nicht Legalität: ohne `stitch` gibt es keine
+  Unique-Visitor-Zahlen und keine Session-Metriken (Bounce-Rate,
+  Seiten pro Session, Verweildauer). Alle Per-Pageview-Signale (Web
+  Vitals, Fehler, Third-Party, Attribution) bleiben unberührt. Das ist
+  der Schalter für Sites aus dem öffentlichen Sektor, dem
+  Gesundheits- oder Finanzbereich, die lieber das Visitor-Stitching
+  verlieren, als irgendeinen Identifier zu speichern.
+- **`collect_sessions`** (nur in `full` an; sonst aus). An erzeugt das
+  ausgelieferte Bundle eine `sessionStorage`-Session-ID; aus fasst es
+  `sessionStorage` gar nicht erst an — der Storage-Schritt auf dem
+  Gerät entfällt, er wird nicht bloß serverseitig verworfen — und der
+  Collector erzwingt `sid` als Absicherung auf leer. Allein
+  eingeschaltet, gibt es dir eine seitenübergreifende Session-ID und
+  sonst nichts Neues.
 
-Die beiden sind unabhängig: schalte einen aus, beide oder keinen.
-Im `anonymous`-Modus fehlt `sid` ohnehin, also greift
-`store_session` nur unter `full` / `consent` nach Opt-In.
+Die beiden sind unabhängig: schalte einen ein, beide oder keinen.
+Unter `minimal` und `standard` fehlt `sid` ohnehin, also greift
+`collect_sessions` erst, wenn du es einschaltest (genau das macht
+`full`).
 
 ### Site-Metadaten vs. Besucherdaten
 
@@ -206,29 +202,30 @@ werden bei der Erfassung auf Origin + Pathname reduziert —, aber sie
 sind nicht das, worum es bei den Consent- und Verknüpfbarkeits-Reglern
 geht.
 
-## Collection Mode und was sich ändert
+## Was das Preset ändert
 
-Der [Collection Mode](/de/collection-modes) der Site entscheidet
-nur über **Verknüpfbarkeit**, nicht über Datenkategorien. Die
-Privacy-Untergrenze oben (keine IP-Speicherung, kein roher
-User-Agent, keine Fingerprints) gilt in jedem Modus. Was sich
-zwischen den Modi unterscheidet: ob `session_id`, LCP-Image-URL,
-LoAF-Detail und Third-Party-Domain-Map mitgeschickt werden (und
-damit Pageviews zu Sessions verknüpfbar) oder entfernt sind, und
-ob Fehler-Messages und Stack-Frames gesendet werden.
-Per-Mode-Aufschlüsselung und wie `window.__fastmon_consent(true|false)`
-deinen CMP an den Beacon koppelt, stehen unter
-[Collection Modes](/de/collection-modes).
+Das [Preset](/de/collection-modes) der Application entscheidet über
+**Verknüpfbarkeit und Detailtiefe**, nicht über die
+Privacy-Untergrenze. Diese Untergrenze oben (keine IP-Speicherung,
+kein roher User-Agent, keine Fingerprints, keine Cookies) gilt in
+jedem Preset. Was sich zwischen Presets unterscheidet: ob Pageviews
+eine seitenübergreifende `session id` und den Edge-`stitch` tragen,
+wie viel Fehlerdetail (Stack-Frames, und die Message unter `full`)
+behalten wird und ob Query-Key-Namen und fetch/XHR-Timing erfasst
+werden. Die Per-Preset-Aufschlüsselung steht unter
+[Presets](/de/collection-modes), und wie du
+`window.fastmon.grantConsent()` an deinen CMP koppelst unter
+[Die Session-ID hinter Consent gaten](/de/collection-modes#die-session-id-hinter-consent-gaten).
 
 ## Wo die Daten liegen
 
 - **Nur EU.** Unsere komplette Infrastruktur läuft in der EU. Kein
   Anbieter mit US-Jurisdiktion im Datenpfad: kein Cloudflare, kein
   AWS, kein GCP, kein Vercel.
-- **Verantwortlich.** Verarbeitet wird von Fastmon, der Firma
+- **Betreiber.** Verarbeitet wird von Fastmon, der Firma
   hinter dem Produkt. Im AVV stehen alle Sub-Auftragsverarbeiter,
   den schicken wir auf Anfrage.
-- **Retention.** Per Default 90 Tage. Pro Site einstellbar
+- **Retention.** Standardmäßig 90 Tage. Pro Site einstellbar
   (`data_retention_days` in den Site-Einstellungen). Was abläuft, wird
   weggeworfen, nicht archiviert.
 
@@ -239,12 +236,12 @@ Delta:
 
 | Fähigkeit                        | Fastmon | Typischer US-RUM-Anbieter        |
 | -------------------------------- | ------- | -------------------------------- |
-| Gesetzte Cookies                 | 0 (1 in `consent`, nach Opt-In) | 1–N (Analytics + Ad-Partner) |
-| IP gespeichert                   | Nein    | Oft, manchmal trunkiert          |
-| Cross-Site-Identity-Graph        | Nein    | Oft, via SDK oder Pixel-Netz     |
-| Session-Replay / DOM-Dump        | Nein    | Häufig als Opt-In                |
-| Datenpfad ausschließlich EU      | Ja      | Selten                           |
-| Daten verlassen die EU           | Nein    | Oft (US-Transfermechanismen)     |
+| Gesetzte Cookies                 | 0       | 1–N (Analytics + Ad-Partner)     |
+| IP gespeichert                   | ✗       | Oft, manchmal trunkiert          |
+| Cross-Site-Identity-Graph        | ✗       | Oft, via SDK oder Pixel-Netz     |
+| Session-Replay / DOM-Dump        | ✗       | Häufig als Opt-in                |
+| Datenpfad ausschließlich EU      | ✓       | Selten                           |
+| Daten verlassen die EU           | ✗       | Oft (US-Transfermechanismen)     |
 
 ## Deine Verantwortung
 
@@ -254,7 +251,7 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
   werden entfernt, der Pathname bleibt erhalten.
   `/orders/jane.doe@x.com` würde die E-Mail in unsere Pipeline
   tragen. Nutze opake IDs (UUIDs, numerische DB-IDs) oder bring PII
-  in Query-Parameter, die ohnehin gestrippt werden.
+  in Query-Parameter, die ohnehin entfernt werden.
 - **Keine PII in UTM-Parametern.** UTM-Tags und Click-ID-Labels
   landen wortwörtlich aus den Outbound-URLs der Marketer in der
   Datenbank. Pack da keine Besucher-PII rein. Bau Kampagnen-URLs
@@ -264,30 +261,32 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
   Ad-Plattform-Click-ID-*Werte* verwirft der Tracker selbst,
   damit greift das Per-Empfänger-Join-Risiko nur bei den
   UTM-Feldern.
-- **Kein roher User-Input in `throw`.** Der immer aktive Scrubber
+- **Keine rohen Nutzereingaben in `throw`.** Der immer aktive Scrubber
   fängt gemusterte PII (URLs, E-Mails, IDs), aber freier Text
   (Namen, eigene Bezeichner) kann durchrutschen. Typisiere den
   Fehler: `throw new EmailDeliveryError({ code: "..." })` statt
   `throw new Error("Failed to send to " + email)`. Greift nur unter
-  Consent=1 / `full`; ohne Consent wird die Message ohnehin
-  komplett verworfen.
+  `full`, das die Message behält; die anderen Presets verwerfen sie
+  komplett.
 
 ## Was das für dich heißt
 
-- **Im `anonymous`-Modus brauchst du für unseren Beacon keinen
-  Cookie-Banner.** Keine Cookies, keine Cross-Site-IDs, keine
-  IP-Speicherung, speicherfrei auf dem Gerät des Besuchers. Andere
-  Tools auf der Seite vielleicht trotzdem, aber das liegt nicht an
-  uns.
+- **`minimal` und `standard` speichern nichts auf dem Gerät des
+  Besuchers.** Keine Cookies, keine Cross-Site-IDs, keine
+  IP-Speicherung. `full` ergänzt eine einzige
+  `sessionStorage`-Session-ID und setzt weiterhin keine Cookies. Was
+  das für deinen Banner heißt, entscheidest du mit deiner
+  Rechtsabteilung — wir setzen die Cookies jedenfalls nicht.
 - **Deine Daten verlassen die EU nie.** Es gibt gar keinen
   US-Transfer, über den man nachdenken müsste.
-- **Deinem Team kannst du eine Ein-Seiter-Antwort geben**: Link auf
+- **Deinem Team kannst du eine Antwort auf einer Seite geben**: Link auf
   diese Seite plus unseren AVV, fertig.
-- **Explizites Opt-In vor jeder Session-Verknüpfung?** Nutze den
-  [Collection Mode](/de/collection-modes) `consent`.
+- **Explizites Opt-in vor jeder Session-Verknüpfung?** Speichere
+  Sessions (`full`) und gate die ID hinter Consent — siehe
+  [Die Session-ID hinter Consent gaten](/de/collection-modes#die-session-id-hinter-consent-gaten).
 
 ## Nächste Schritte
 
-- [Collection Modes](/de/collection-modes) ansehen.
+- [Presets](/de/collection-modes) ansehen.
 - Technische Details zum [Beacon](/de/concepts/beacon).
 - AVV gewünscht? Mail an [support@fastmon.eu](mailto:support@fastmon.eu).

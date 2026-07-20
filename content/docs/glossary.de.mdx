@@ -59,9 +59,8 @@ Beacon-Upgrades.
 vom `source_hash`, damit das Script-Template sich ändern kann,
 ohne Daten zu invalidieren.
 
-**Collection Mode**: Per-Site-Einstellung: `anonymous`,
-`consent`, `full`. Siehe
-[Collection Modes](/de/collection-modes).
+**Preset**: Erfassungseinstellung pro Application: `minimal`,
+`standard`, `full`. Siehe [Presets](/de/collection-modes).
 
 **Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker
 clientseitig erzeugt. Nicht persistiert.
@@ -98,7 +97,7 @@ etc.
 **Member**: User in einer Organisation mit Rolle
 (`owner` / `member`).
 
-**Invite**: Schwebende Mitgliedschaft, wartet auf Annahme.
+**Invite**: Ausstehende Mitgliedschaft, wartet auf Annahme.
 
 **API-Token**: Bearer-Token mit Präfix `fm_…` für programmatischen
 Zugriff. Server-seitig gehasht; verlorene Tokens nicht
@@ -132,7 +131,7 @@ direkt; Liste = `data` + `meta`; Fehler = `error`. Siehe
 mit `meta.total` und `meta.has_more`.
 
 **`X-Request-ID`**: Header auf jeder Response. Bei Fehlern in
-`error.request_id` gespiegelt. Beim Reporting immer mitsenden.
+`error.request_id` gespiegelt. Beim Melden von Problemen immer mitschicken.
 
 **UUID v7**: Zeitlich sortierbares UUID-Format für alle
 Ressourcen-IDs.
@@ -149,10 +148,12 @@ länger als 50 ms dauerten; meist die Ursache eines schlechten INP.
 selbst. Fastmon gruppiert nach Domain und Kategorie für
 Impact-Analyse. Siehe `/analytics/third-party`.
 
-**`window.__fastmon_consent(true|false)`**: Die Funktion, die dein
-CMP aufruft, um im `consent`-Mode die Zustimmung zu erteilen oder
-zu widerrufen. Siehe
-[Collection Modes](/de/collection-modes#consent-vom-cmp-entscheiden-lassen).
+**`window.fastmon.grantConsent()`**: Die Funktion, die dein CMP
+aufruft, um die Session-ID freizugeben, sobald Consent erteilt ist —
+auf einer Application, die sie zurückhält (`session_consent = deferred`).
+Schreibt nur, kein Widerruf; `window.__fastmon_consent(true)` ist ein
+deprecated Alias. Siehe
+[Presets → Die Session-ID hinter Consent gaten](/de/collection-modes#die-session-id-hinter-consent-gaten).
 
 **`__FASTMON_SAMPLE_RATE`**: Window-Variable (0–1), die der Tracker
 beim Laden der Seite liest, um zu entscheiden, ob dieser Pageview

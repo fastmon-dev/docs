@@ -58,8 +58,8 @@ beacon upgrades.
 from `source_hash` so the script template can change without
 invalidating data.
 
-**Collection mode**: Per-site setting: `anonymous`, `consent`,
-`full`. See [Collection modes](/en/collection-modes).
+**Preset**: Per-application collection setting: `minimal`,
+`standard`, `full`. See [Presets](/en/collection-modes).
 
 **Page-view ID (`pvid`)**: Per-page-view identifier the tracker
 generates client-side. Not persisted.
@@ -145,9 +145,11 @@ that took longer than 50 ms; usually the root cause of bad INP.
 own. Fastmon groups these by domain and category for impact
 analysis. See `/analytics/third-party`.
 
-**`window.__fastmon_consent(true|false)`**: The function your CMP
-calls to grant or revoke consent in `consent` mode. See
-[Collection modes](/en/collection-modes#consent-let-the-page-choose-controlled-by-your-cmp).
+**`window.fastmon.grantConsent()`**: The function your CMP calls to
+release the session id once consent is granted, on an application
+configured to defer it (`session_consent = deferred`). Write-only, no
+revoke; `window.__fastmon_consent(true)` is a deprecated alias. See
+[Presets → Gating the session id behind consent](/en/collection-modes#gating-the-session-id-behind-consent).
 
 **`__FASTMON_SAMPLE_RATE`**: Window variable (0–1) the tracker
 reads at page load to decide whether this page-view sends beacons.

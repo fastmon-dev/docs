@@ -10,7 +10,7 @@ Schluss.
 ## Der Fünf-Sekunden-Check
 
 Öffne die Site in einem frischen Tab, öffne die DevTools (`⌥⌘I` / `F12`)
-und wechsle zu **Network**. Nach `c/` filtern.
+und wechsle zu **Network**. Filtere nach `c/`.
 
 Wechsle jetzt zu einem anderen Tab und dann zurück. Du solltest einen
 oder mehrere `POST`-Requests sehen (der Tracker schickt über den
@@ -26,13 +26,13 @@ deine Implementierung läuft.
 
 ## Der Dashboard-Check
 
-Site im Fastmon-Dashboard öffnen. Nach ungefähr einer Minute (Beacons
+Öffne die Site im Fastmon-Dashboard. Nach ungefähr einer Minute (Beacons
 werden in Batches in ClickHouse geschrieben) zeigt der Bereich
 **Traffic**:
 
-- **Page Views** &gt; 0 (Sessions bleiben im Default-Modus
-  `anonymous` bei null; das ist so gewollt, siehe
-  [Sessions](/de/concepts/sessions)),
+- **Page Views** &gt; 0 (Session-Zahlen bleiben beim Default-Preset
+  `standard` bei null — dafür brauchst du `full`; das ist so
+  gewollt, siehe [Sessions](/de/concepts/sessions)),
 - ein **Web Vitals**-Snapshot zumindest für die Seite, die du geladen hast.
 
 Wenn da erstmal nur dein eigener Besuch steht: alles gut. Echter
@@ -48,14 +48,14 @@ filtern. Du solltest einen Request an
 Ein `404` heißt, der `source_hash` passt zu keiner Site: entweder
 vertippt oder die Site wurde gelöscht.
 
-**Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf
-der Production-Seite „View Source". Das Tag muss tatsächlich im
+**Prüfen, ob das `<script>`-Tag im gerenderten HTML steht.** Auf einer
+Production-Seite „View Source" aufrufen. Das Tag muss tatsächlich im
 ausgelieferten HTML stehen. Manche CMS filtern unbekannte Tags
 aus Page-Buildern raus; dann brauchst du ein
 Header-Injection-Plugin oder den `<head>`-Slot des Themes.
 
 **Prüfen, ob keine Content-Security-Policy blockt.** Console öffnen
-und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Wenn ja,
+und nach einem CSP-Violation-Eintrag mit `fastmon.site` suchen. Falls ja,
 `https://fastmon.site` zu `script-src` und `connect-src` hinzufügen.
 
 **Flush erzwingen.** Geflusht wird periodisch und zusätzlich bei
@@ -67,14 +67,14 @@ triggert sofort einen Flush.
 
 `204` ist die normale Erfolgsantwort, kommt aber auch, wenn der
 Beacon still verworfen wird. Häufigster Grund: der Hostname der
-Seite ist keine registrierte **Seite** an der Application.
-Application öffnen, die zugehörigen Seiten prüfen und die fehlende
+Seite ist keine registrierte **Site** an der Application.
+Application öffnen, die zugehörigen Sites prüfen und die fehlende
 Domain ergänzen (z. B. `staging.acme.com`). Je nach Einstellung
 **Unbekannte Domains** der Application taucht ein nicht
 registrierter Hostname als Vorschlag zum Hinzufügen auf, wird
 automatisch angelegt oder still verworfen.
 
-Andere stille Drops: Seite auf inaktiv gesetzt, unbekannter
+Andere stille Drops: Site auf inaktiv gesetzt, unbekannter
 `collector_hash`.
 
 ### Request an `/c/` liefert `429`
@@ -109,7 +109,7 @@ Server-Log in Sekunden.
 
 ## Nächste Schritte
 
-- Einen [Collection Mode](/de/collection-modes) wählen, falls
-  `anonymous` nicht passt.
+- Ein [Preset](/de/collection-modes) wählen, falls `standard`
+  nicht passt.
 - Erstes [Release taggen](/de/guides/compare-releases) und Deploys
   vergleichen.
