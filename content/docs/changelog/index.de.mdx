@@ -17,9 +17,69 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Applications: ein Tracking-Snippet über eine oder mehrere Sites">
+
+Sites und domainübergreifende Tracker werden durch **Applications** ersetzt. Eine Application ist ein Tracking-Snippet: Ihr gehören der Embed, die zwei Hashes und jede [Tracker-Einstellung](/de/tracker), und sie bedient eine Domain oder zwanzig. Jede Domain bleibt eine eigene **Site** mit eigenem Dashboard und eigenem Traffic; einen „Single vs. Multi"-Modus gibt es damit nicht mehr, nur noch die Anzahl der Sites einer Application. Die neue Applications-Seite gibt jeder App eine Karte mit ihren Sites samt Live-Status, ihren Releases, dem Embed-Snippet und Analytics pro App; Sites adoptierst, verschiebst oder löschst du direkt dort. Eine Domain, die Beacons schickt, ohne registriert zu sein, taucht als **vorgeschlagene Domain** auf, die du mit einem Klick adoptierst; die neue Einstellung **Unbekannte Domains** entscheidet, ob unbekannte Hosts vorgeschlagen (Default), automatisch angelegt oder ignoriert werden. Retention, Besuchersignal und die Zähl-Identität kommen jetzt als Default von der Application und lassen sich pro Site überschreiben. Den **Collector** wählst du beim Anlegen einer Application (fastmon, gleiche Origin oder eigene Domain), denn ein späterer Wechsel hieße, das schon eingebettete Snippet zu tauschen; außerdem kannst du eine Application als Produktion oder Development markieren. Gleichzeitig wurden die Erfassungseinstellungen passend zu ihrer Wirkung umbenannt: `store_session` heißt jetzt `collect_sessions`, `preconsent_level` heißt `session_consent` (`deferred` oder `immediate`), und die Schalter für Fehler, Query und fetch/XHR haben ein `collect_`-Präfix bekommen. Siehe [Applications](/de/concepts/applications), [Sites](/de/concepts/sites) und [Tracker-Einstellungen](/de/tracker).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="changed" area="platform" title="Setup liegt jetzt in der Doku, vorausgefüllt mit deinen Werten">
+
+Das Tracking-Code-Panel in der App ist durch einen **Set up**-Link in diese Dokumentation ersetzt. Die App gibt deine Hashes und den Collector-Modus mit, jedes Snippet im [Install-Guide](/de/install/html) ist also copy-paste-fertig statt mit `{source_hash}`-Platzhaltern. Kommst du ohne diese Werte, kannst du sie oben im Guide selbst eintragen; sie werden pro Browser gemerkt. Der Guide führt jetzt mit dem einen erforderlichen `<script>`-Tag und markiert den Early-Error-Bootstrap und das No-JS-Pixel klar als optionale Ergänzungen, jeweils mit ihrem Platz im `<head>`; danach folgen die Consent-Anbindung und die First-Party-Collector-Optionen. Der **Set up**-Button bleibt hervorgehoben, bis die Application tatsächlich ihren ersten Beacon erhalten hat, eine halbfertige Einbindung sieht man also auf einen Blick.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Spalten im Explorer umsortieren, in der Breite ändern und ausblenden">
+
+Die Rohdaten-Tabelle im Explorer lässt dich jetzt **Spalten am Titel greifen und umsortieren**, **die Breite an der rechten Kante des Headers ziehen** und über ein „…"-Menü pro Spalte filtern oder die Spalte entfernen. Alle drei Einstellungen bleiben pro Browser erhalten. Auch die Seiten-Spalte (URL) ist jetzt breitenverstellbar: Sie füllt standardmäßig den Rest der Breite und rastet ein, sobald du sie ziehst, kann also unter ihren Inhalt schrumpfen, statt zurückzuspringen. Ein neuer Auto-Fit-Button in der Toolbar setzt alle eigenen Breiten zurück, sodass die Tabelle wieder ohne horizontales Scrollen ins Fenster passt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Browser-Zurück macht jetzt den letzten Filter rückgängig">
+
+Ein gesetzter Analytics-Filter legt jetzt einen eigenen Verlaufseintrag an, **Zurück nimmt also diesen Filter zurück**, statt direkt von der Seite zu springen. Alle Filter zu löschen bleibt eine Aktion: Ein einzelnes Zurück stellt sie wieder her, statt sie einzeln abzutragen. Zeitraum, Perzentil und Sortierung ersetzen den aktuellen Eintrag bewusst weiterhin, damit sie den Verlauf nicht zumüllen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Lifecycle- und Versions-Badges im Beacon-Drawer">
+
+Der Beacon-Drawer im Explorer zeigt jetzt das **Lifecycle-Event** und die **Version** des einzelnen Beacons (der Zähler, der hochläuft, wenn spätere Beacons eines Pageviews eintreffen) als kleine Badges im Header. Beides stand schon in der Zeile, war aber nie sichtbar.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="Filterleiste: Mehrfachauswahl, Chip-Bearbeitung und „Alle löschen“">
+
+Mehrere Werte derselben Dimension nacheinander auszuwählen überschreibt die vorherige Auswahl nicht mehr; aufeinanderfolgende Klicks arbeiteten alle auf demselben veralteten Stand. Beim Bearbeiten eines Filter-Chips hängt das Popover jetzt am Chip und hebt ihn hervor, statt am Filter-hinzufügen-Button zu kleben, der währenddessen auch nicht mehr aktiv aussieht. **Alle löschen** steht jetzt hinter allen Chips, statt sie zu zerteilen, und der Zähler, der über das Erscheinen entscheidet, berücksichtigt endlich auch Metrik-Bereiche.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="„Hits über Zeit“ fiel bei Minutenauflösung auf einen Punkt zusammen">
+
+Auf der Tabellenseite des Explorers wurde der Streifen **Hits über Zeit** bei Minutengranularität (das `6h`-Preset und kurze eigene Zeiträume) als einzelner Punkt gezeichnet. Das Bucket-Label dient zugleich als X-Achsen-Schlüssel, und der Minutenfall fiel auf ein Label mit nur Tag und Monat zurück; alle Buckets desselben Tages teilten sich also ein Label und stapelten sich an derselben Position. Minuten-Buckets enthalten jetzt die Uhrzeit, wie die anderen Trend-Charts.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="platform" title="Speicherleiste, Breadcrumbs und eine Sackgasse im Dashboard">
+
+Die Speicherleiste auf den Einstellungsseiten von Application und Site sitzt jetzt bündig am unteren Rand, statt darüber zu schweben, während Einstellungen darunter durchscrollen. Die Breadcrumbs dort zeigen den echten Namen der Application oder Site statt eines generischen „Einstellungen", und der Zurück-Pfeil führt eine Ebene nach oben, statt sich wie Browser-Zurück zu verhalten. Wer zu keiner Organisation gehört, landet nicht mehr auf einem Dashboard, das ewig lädt, sondern bekommt einen Zustand zum Anlegen einer Organisation. Und die Live-Rate im Dashboard wird nicht mehr als `0.30000000000000004/min` angezeigt.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: eine DevTools-Erweiterung zum Lesen von Beacons">
 
 Der **Beacon Inspector** ist eine Browser-DevTools-Erweiterung, die die Collector-Beacons deiner Seite liest und live dekodiert. Er gruppiert jeden Beacon nach Pageview, schlüsselt die kurzen Wire-Keys in lesbare Felder auf, verfolgt den Lebenszyklus von `init` bis zum terminalen Beacon und zeigt die Web Vitals, während sie sich einpendeln. Er erfasst sowohl die `fetch`-Beacons, die das Network-Panel ohnehin listet, als auch die `sendBeacon`-Bodies, die es nicht zeigt, du siehst also jede Emission mit vollständigem Payload. Ein Follow-Modus pinnt den neuesten Pageview, Compare stellt zwei nebeneinander, und der Export kopiert einen Beacon als Markdown (optional anonymisiert) für einen Bug-Report. Er ist Open Source und läuft komplett im Browser; keine Beacon-Daten verlassen das Gerät. Siehe [Beacon Inspector](/de/guides/beacon-inspector).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-17" type="new" area="platform" title="E-Mails auf Deutsch, und eine Nachricht, wenn eine Site live geht">
+
+Transaktions-E-Mails kommen jetzt auf **Deutsch oder Englisch**, passend zur Sprache in deinem Account, mit Englisch als Rückfallebene; lokalisiert sind heute E-Mail-Bestätigung, Passwort-Zurücksetzen und Passkey-hinzugefügt. Und wenn eine Site live geht, bekommt jedes Mitglied der besitzenden Organisation eine **„Site ist live"**-E-Mail in der eigenen Sprache, mit Link direkt auf das Dashboard dieser Site.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-17" type="new" area="dashboard" title="Theme und Farbfehlsichtigkeits-Modus folgen dir über Geräte hinweg">
+
+Dein **Theme** (hell, dunkel oder automatisch) und der Schalter für die **Rot-Grün-Farbfehlsichtigkeits-Palette** liegen jetzt an deinem Account statt nur in einem Browser, eine Änderung auf einem Gerät gilt also auch auf dem nächsten. Die Auswahl greift sofort und wird zuerst lokal gespeichert, dann im Hintergrund synchronisiert; sie funktioniert also auch offline oder wenn die Synchronisierung fehlschlägt. Beim Login gewinnt die im Account gespeicherte Einstellung.
 
 </ChangelogEntry>
 

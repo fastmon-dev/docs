@@ -12,9 +12,69 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Applications: one tracking snippet across one or more sites">
+
+Sites and cross-domain trackers are replaced by **applications**. An application is one tracking snippet: it owns the embed, the two hashes, and every [tracker setting](/en/tracker), and it serves one domain or twenty. Each domain stays its own **site** with its own dashboard and traffic, so there's no "single vs multi" mode any more, just how many sites an application has. The new Applications page gives each app a card with its sites and their live status, its releases, the embed snippet, and per-app analytics, and you adopt, move, or delete a site inline. A domain that sends beacons without being registered shows up as a **suggested domain** you adopt in one click; the new **Unknown domains** setting decides whether unknown hosts are suggested (the default), created automatically, or ignored. Retention, the visitor signal, and the visitor-counting identifier now default to the application and can be overridden per site. You pick the **collector** when you create an application (fastmon, same-origin, or your own domain), because changing it later means swapping the snippet you already embedded, and you can mark an application as production or development. The collection settings were renamed to match what they do at the same time: `store_session` is now `collect_sessions`, `preconsent_level` is now `session_consent` (`deferred` or `immediate`), and the error, query, and fetch/XHR switches gained a `collect_` prefix. See [Applications](/en/concepts/applications), [Sites](/en/concepts/sites), and [Tracker settings](/en/tracker).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="changed" area="platform" title="Setup moved into the docs, prefilled with your own values">
+
+The tracking-code panel in the app is replaced by a **Set up** link into this documentation. The app passes your hashes and collector mode along, so every snippet in the [install guide](/en/install/html) is copy-paste ready instead of showing `{source_hash}` placeholders. Arrive without those values and a panel at the top of the guide lets you paste your own; they're remembered per browser. The guide now leads with the one required `<script>` tag and marks the early-error bootstrap and the no-JS pixel as clearly optional extras, each saying where in the `<head>` it belongs, with the consent wiring and the first-party collector options after them. The **Set up** button stays highlighted until the application has actually received its first beacon, so a half-finished install is visible at a glance.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Reorder, resize, and hide columns on the Explorer's table">
+
+The Explorer's raw-requests table now lets you **reorder columns by dragging a column title**, **resize them by dragging a header's right edge**, and filter or remove a column from its own "…" menu. All three preferences persist per browser. The Page (URL) column is resizable too: it fills the remaining width by default, and once you drag it, it pins and truncates so it can shrink past its content instead of snapping back. A new auto-fit button in the toolbar resets every custom width so the table fits the viewport again with no horizontal scrolling.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Browser Back now undoes the last filter">
+
+Setting an analytics filter now creates its own browser history entry, so **Back undoes that filter** instead of jumping straight off the page. Clearing all filters stays a single action: one Back restores them, rather than peeling off one parameter at a time. Time range, percentile, and sorting deliberately keep replacing the current entry, so they don't flood your history.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Lifecycle and version badges in the beacon drawer">
+
+The Explorer's beacon drawer now shows the per-beacon **lifecycle event** and the **version** (the counter that increments as a pageview's later beacons arrive) as small badges in the header. Both were already on the row, just never surfaced.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="Filter bar: multi-select, chip editing, and Clear all">
+
+Picking several values for the same dimension in a row no longer overwrites the previous pick; consecutive toggles were all reducing against the same stale state. Editing a filter chip now anchors the popover to that chip and highlights it, instead of hanging off the add-filter button, which no longer looks active while you're editing. **Clear all** trails all chips instead of splitting them, and the counter that decides whether it appears finally counts metric ranges too.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="'Hits over time' collapsed to a single point at minute resolution">
+
+On the Explorer's table page the **Hits over time** strip rendered as a single point at minute granularity (the `6h` preset and short custom windows). The bucket label doubles as the chart's x-axis key, and the minute case fell through to a day-and-month-only label, so every bucket on the same day shared one label and all points stacked onto the same position. Minute buckets now include the time of day, like the other trend charts.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-19" type="fixed" area="platform" title="Sticky save bar, breadcrumbs, and a dashboard dead end">
+
+The save bar on the application and site settings pages now sits flush against the bottom edge, instead of floating above it with settings scrolling underneath. Breadcrumbs on those pages show the application's or site's actual name rather than a generic "Settings", and the back arrow navigates up to the parent page instead of acting like browser Back. A user who belongs to no organization no longer lands on a dashboard that spins forever with no way out; they get a create-organization state. The dashboard's live rate also stopped rendering as `0.30000000000000004/min`.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: a DevTools extension for reading beacons">
 
 The **Beacon Inspector** is a browser DevTools extension that reads the collector beacons your page sends and decodes them live. It groups every beacon by pageview, unpacks the short wire keys into readable fields, tracks the lifecycle from `init` to the terminal beacon, and shows the Web Vitals as they settle. It captures both the `fetch` beacons the Network panel already lists and the `sendBeacon` bodies it can't, so you see every emission with its full payload. A Follow mode pins the newest pageview, Compare puts two side by side, and export copies a beacon as Markdown (optionally anonymized) for a bug report. It's open source and runs entirely in your browser; no beacon data leaves the device. See [Beacon Inspector](/en/guides/beacon-inspector).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-17" type="new" area="platform" title="Emails in German, and a note when a site goes live">
+
+Transactional emails now go out in **German or English**, following the language on your account, with English as the fallback; verify-email, password reset, and passkey-added are localized today. And when a site goes live, every member of the owning organization gets a **"site is live"** email in their own language, linking straight to that site's dashboard.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-17" type="new" area="dashboard" title="Theme and colorblind mode follow you across devices">
+
+Your **theme** (light, dark, or auto) and the **red-green colorblind palette** toggle are now stored on your account instead of only in one browser, so a change on one device carries over to the next. The choice is applied instantly and saved locally first, then synced in the background, so it keeps working offline or when the sync fails; on login, the preference stored on your account wins.
 
 </ChangelogEntry>
 
