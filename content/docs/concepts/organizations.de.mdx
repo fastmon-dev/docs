@@ -1,31 +1,23 @@
 ---
 title: Organisationen
-description: Der Top-Level-Account-Container. Alles in Fastmon gehört zu genau einer.
+description: Der Top-Level-Account-Container. Alles in fastmon gehört zu genau einer.
 ---
 
-Eine **Organisation** ist der oberste Container in Fastmon. Sites,
-Mitglieder, Einladungen, API-Tokens, Notification Rules: alles
-hängt an genau einer Organisation, und nichts geht darüber hinaus.
+Eine **Organisation** ist der oberste Container in fastmon. Sites, Mitglieder, Einladungen, API-Tokens, Notification Rules: alles hängt an genau einer Organisation, und nichts geht darüber hinaus.
 
 ## Warum das wichtig ist
 
-Über die Organisation trennt Fastmon Kunden voneinander. Hier hängen
-Billing, Plan und Zugriffsrechte.
+Über die Organisation trennt fastmon Kunden voneinander. Hier hängen Billing, Plan und Zugriffsrechte.
 
-Die meisten Accounts haben genau eine Organisation. Mehrere lohnen
-sich vor allem für Agenturen und Partner; siehe `partner`-Plan
-unten.
+Die meisten Accounts haben genau eine Organisation. Mehrere lohnen sich vor allem für Agenturen und Partner; siehe `partner`-Plan unten.
 
 ## Wann du sie anfasst
 
-- **Beim Setup.** Das Allererste. Der „Account anlegen"-Flow legt
-  eine Organisation für dich an.
+- **Beim Setup.** Das Allererste. Der „Account anlegen"-Flow legt eine Organisation für dich an.
 - **Team einladen.** Per E-Mail, Rolle zuweisen, fertig.
 - **Plan kaufen.** Plan hängt an der Organisation, nicht am User.
-- **AVV oder Rechnung anfordern.** Die Organisation ist die
-  Vertragspartei.
-- **Compliance-Review.** „Wer hat Zugriff?" beantwortet sich auf
-  Organisations-Ebene.
+- **AVV oder Rechnung anfordern.** Die Organisation ist die Vertragspartei.
+- **Compliance-Review.** „Wer hat Zugriff?" beantwortet sich auf Organisations-Ebene.
 
 ## Was eine Organisation hat
 
@@ -46,9 +38,7 @@ unten.
 | `partner`     | Agenturen. **Partner-Clients** verwalten (Sub-Organisationen, die die Agentur für jemand anderen betreibt). |
 | `enterprise`  | Custom-Limits, Custom-Retention, AVV.                        |
 
-Der Plan steuert Features und Quotas. Welche Web Vitals erfasst
-werden, hängt nicht am Plan; gemessen wird in jedem Plan
-dasselbe.
+Der Plan steuert Features und Quotas. Welche Web Vitals erfasst werden, hängt nicht am Plan; gemessen wird in jedem Plan dasselbe.
 
 ## Rollen
 
@@ -57,41 +47,29 @@ dasselbe.
 | `owner`  | Alles. Sites, Mitglieder, Billing und Integrationen verwalten. Ownership transferieren. Organisation löschen. |
 | `member` | Dashboards ansehen, Analytics-Queries laufen lassen, eigene Notification Rules verwalten.    |
 
-Es gibt immer genau einen Owner. **Transfer ownership** übergibt
-ihn; der bisherige Owner wird Mitglied.
+Es gibt immer genau einen Owner. **Transfer ownership** übergibt ihn; der bisherige Owner wird Mitglied.
 
 ## Häufige Szenarien
 
 ### Ein Produkt, eine Org
 
-Der Standardfall. Eine Organisation, eine Rechnung, mehrere Sites
-darunter (`acme-marketing`, `acme-app`, `acme-docs`).
+Der Standardfall. Eine Organisation, eine Rechnung, mehrere Sites darunter (`acme-marketing`, `acme-app`, `acme-docs`).
 
 ### Mehrere unabhängige Produkte
 
-Wenn du zwei eigenständige Brands betreibst und Billing wie Zugriffe
-sauber trennen willst, leg zwei Organisationen an. Du kannst in
-beiden Mitglied sein.
+Wenn du zwei eigenständige Brands betreibst und Billing wie Zugriffe sauber trennen willst, leg zwei Organisationen an. Du kannst in beiden Mitglied sein.
 
 ### Agentur, die Kunden-Sites betreibt
 
-Hier passt der `partner`-Plan. Jeder Kunde ist ein
-**Partner-Client**: eine Sub-Organisation, die die Agentur
-verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst.
+Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-Organisation, die die Agentur verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst.
 
 ## Häufige Überraschungen
 
-- **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen
-  über die URL (`/v1/organizations/{id}/…`), nicht über
-  irgendeinen aktiven Tab.
-- **Mitglieder sind globale Fastmon-User.** Lädst du einen
-  bestehenden User neu ein, wird der bestehende Account
-  weiterverwendet, kein Duplikat.
-- **Sites können nicht zwischen Organisationen umziehen.** Falls
-  doch nötig: Support melden, das geht nicht per Self-Service.
+- **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen über die URL (`/v1/organizations/{id}/…`), nicht über irgendeinen aktiven Tab.
+- **Mitglieder sind globale fastmon-User.** Lädst du einen bestehenden User neu ein, wird der bestehende Account weiterverwendet, kein Duplikat.
+- **Sites können nicht zwischen Organisationen umziehen.** Falls doch nötig: Support melden, das geht nicht per Self-Service.
 
 ## Verwandt
 
-- [Sites](/de/concepts/sites): die Ressourcen, die einer
-  Organisation gehören.
+- [Sites](/de/concepts/sites): die Ressourcen, die einer Organisation gehören.
 - [API: Organizations-Endpunkte](/de/api): programmatischer Zugriff.

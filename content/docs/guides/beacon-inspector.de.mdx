@@ -1,0 +1,84 @@
+---
+title: Beacon Inspector
+description: Eine DevTools-Erweiterung, die fastmons RUM-Beacons beim Senden abfängt und jedes Feld, jede Lifecycle-Marke und jeden Web Vital direkt im Browser aufschlüsselt.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Der [Beacon](/de/concepts/beacon) schickt über den Lebenszyklus eines Pageviews mehrmals einen kompakten JSON-Payload mit kurzen Keys. Das ist sparsam auf der Leitung und im Network-Panel schwer mit bloßem Auge zu lesen. Der **Beacon Inspector** ist eine Browser-Erweiterung, die diese Beacons beim Verlassen der Seite abfängt, nach Pageview gruppiert und dir die dekodierten Felder, den Lifecycle-Verlauf und die Web Vitals zeigt, während sie sich einpendeln.
+
+Es ist ein Entwickler-Werkzeug zum Bauen und Debuggen deiner Integration. Alles läuft im Browser; keine Beacon-Daten verlassen das Gerät.
+
+<Callout type="info" title="Bezugsquelle">
+  Die Erweiterung ist Open Source unter [github.com/fastmon-dev/beacon-inspector](https://github.com/fastmon-dev/beacon-inspector). Hol dir ein fertiges Build von der Releases-Seite oder lade das Repository als entpackte Erweiterung.
+</Callout>
+
+## Installieren
+
+**Chrome, Edge, Brave (Chromium ≥ 116)**
+
+1. `beacon-inspector-chrome-<version>.zip` von den [Releases](https://github.com/fastmon-dev/beacon-inspector/releases) laden und entpacken, oder das Repo klonen.
+2. `chrome://extensions` öffnen und **Entwicklermodus** einschalten.
+3. Auf **Entpackte Erweiterung laden** klicken und den Ordner wählen.
+4. DevTools (`⌥⌘I` / `F12`) auf einer Seite öffnen, die den Beacon lädt, und zum Tab **fastmon** wechseln.
+
+**Firefox (≥ 128)**
+
+1. `beacon-inspector-firefox-<version>.zip` von den [Releases](https://github.com/fastmon-dev/beacon-inspector/releases) laden und entpacken (oder selbst mit `npm run build` bauen, das schreibt nach `build/firefox/`).
+2. `about:debugging` → **Dieser Firefox** → **Temporäres Add-on laden** öffnen und die `manifest.json` aus diesem Ordner wählen.
+3. DevTools auf einer getrackten Seite öffnen und zum Tab **fastmon** wechseln.
+
+Die Erweiterung braucht `<all_urls>` (um Beacon-Bodies auf jeder Testseite zu lesen) und `storage` (um Beacons pro Tab zu puffern). Sie spricht selbst nie mit dem Netzwerk.
+
+## Warum das Network-Panel nicht reicht
+
+Die `POST /c/{collector_hash}`-Requests siehst du auch selbst in den DevTools unter Network (das ist der [Fünf-Sekunden-Check](/de/install/verify)). Zwei Dinge machen sie dort mühsam:
+
+- Der Payload nutzt kurze mnemonische Keys (`lcp`, `inp`, `cst`, `lcy`, …) und lässt leere Felder weg, ein roher Body ist also knapp.
+- Ein Pageview sendet mehrere Beacons (`init`, `loaded`, Update-Beacons, dann ein terminales `hidden` / `frozen` / `terminated`). In der Network-Liste sind das nur gleich aussehende POSTs hintereinander.
+- `sendBeacon`-Bodies gibt die Network-API gar nicht her, der Request erscheint also oft ganz ohne lesbaren Payload.
+
+Der Inspector liest beide Quellen (den DevTools-Network-Feed für `fetch`-Beacons plus ein In-Page-Content-Script für `sendBeacon`-Bodies), du siehst also jede Emission mit vollständig dekodiertem Payload.
+
+## Was du siehst
+
+Die linke Spalte listet Pageviews nach Erstellzeit, je mit URL, Lifecycle-Zustand und einem **Live**- oder **Final**-Badge (Live heißt, es sammelt noch Beacons). Wählst du einen aus, zeigt die rechte Spalte:
+
+- **Web-Vitals-Scorecards** für LCP, INP, CLS, FCP und TTFB, farbcodiert nach good / needs-improvement / poor.
+- **Charts**: eine Lifecycle-Timeline, den Navigation-Waterfall und Vitals-Phasen-Stacks, gezeichnet aus den Timing-Feldern des Beacons.
+- **Eine Feldtabelle** mit jedem dekodierten Key. Standardmäßig zeigt sie den zusammengeführten aktuellen Stand des Pageviews; mit **show versions** klappst du sie in Spalten pro Beacon auf, geänderte Werte hervorgehoben, sodass du eine Metrik von einer Emission zur nächsten wandern siehst.
+- **Fehler-Einträge** mit Stack-Frames, wenn der Pageview welche gemeldet hat.
+
+### Dem neuesten Pageview folgen
+
+Schalte **Follow** (Live-Modus) ein, und der Inspector wählt automatisch den neuesten Pageview aus, sobald er auftaucht. Seite neu laden, in einer Single-Page-App herumklicken, und jeder neue Pageview springt nach vorn. Das ist der schnellste Weg zu sehen, was eine bestimmte Interaktion sendet.
+
+### Soft-Navigationen
+
+SPA-Routenwechsel erzeugen einen neuen Pageview ([Soft-Navs](/de/concepts/beacon#was-du-wissen-solltest)). Der Inspector markiert sie mit einem Badge und zeigt passende Hinweise, sodass du bestätigen kannst, dass deine Router-Wechsel den `softnav`-Beacon und eine frische `pvid` erzeugen, so wie erwartet.
+
+### Pageviews vergleichen
+
+Pinne zwei oder mehr Pageviews und wechsle in den **Compare**-Modus, um ihre Metriken nebeneinander zu sehen. Praktisch für ein Vorher/Nachher zu einer Änderung, oder um zu erkennen, warum eine Route langsamer ist als eine andere.
+
+### Session-Overview
+
+Das **Overview**-Dashboard aggregiert die erfassten Pageviews zu KPI-Kacheln und Sparklines, ein schneller Blick darauf, wie eine Browsing-Session von Anfang bis Ende aussieht, statt Pageview für Pageview.
+
+## Suchen und Exportieren
+
+**Search** filtert die Pageview-Liste nach URL oder `pvid`.
+
+**Export** kopiert die aktuelle Ansicht als Markdown-Tabelle, mit einer optionalen **anonymisierten** Variante, die identifizierende Werte entfernt, sodass du einen Beacon in ein Issue oder einen Support-Thread einfügen kannst, ohne URLs oder IDs preiszugeben. Leg einen Export bei, wenn du zu einem auffälligen Beacon [den Support kontaktierst](/de/install/verify#immer-noch-nichts).
+
+Die Oberfläche gibt es auf Deutsch und Englisch, automatisch nach Browsersprache erkannt und in der Toolbar umschaltbar.
+
+## Datenschutz
+
+Alle Verarbeitung ist lokal. Die Erweiterung liest Beacons, die deine Seite ohnehin schon sendet, und dekodiert sie im Speicher; sie stellt selbst keine Netzwerk-Requests und speichert nichts außer dem Puffer pro Tab. Sie ist eine Linse auf Traffic, der die Seite sowieso verlässt, kein neuer Erfassungsweg.
+
+## Verwandt
+
+- [Implementierung verifizieren](/de/install/verify): der Fünf-Sekunden-Network-Check, auf dem der Inspector aufsetzt.
+- [Der RUM-Beacon](/de/concepts/beacon): jedes Feld, jede Lifecycle-Marke und jeder Key, den der Inspector dekodiert.
+- [Beacon fein einstellen](/de/concepts/beacon#fine-tuning): die `window`-Globals, die steuern, wie viele Beacons ein Pageview sendet.

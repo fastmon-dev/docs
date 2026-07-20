@@ -7,19 +7,23 @@ export default async function Layout({ children, params }: LayoutProps<"/[lang]"
   return (
     <DocsLayout
       tree={getDocsTree(lang)}
-      // Two-tab section switcher rendered as a sidebar dropdown
+      // Three-tab section switcher rendered as a sidebar dropdown
       // (`tabMode: 'auto'` is the default → dropdown above the tree).
-      // The Docs tab follows the active locale; API is English-only
+      // Docs and Changelog follow the active locale; API is English-only
       // because the auto-generated endpoint pages come from the
       // English OpenAPI document — no DE translation exists.
       tabs={[
         {
-          title: lang === "de" ? "Doku" : "Docs",
+          title: lang === "de" ? "Dokumentation" : "Docs",
           url: `/${lang}`,
         },
         {
           title: "API Reference",
           url: "/en/api",
+        },
+        {
+          title: "Changelog",
+          url: `/${lang}/changelog`,
         },
       ]}
       {...baseOptions(lang)}

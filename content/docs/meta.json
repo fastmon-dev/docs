@@ -6,7 +6,7 @@
     "install",
     "---Concepts---",
     "concepts",
-    "collection-modes",
+    "tracker",
     "privacy",
     "---Web Vitals---",
     "web-vitals",
@@ -19,6 +19,8 @@
     "api",
     "---Reference---",
     "architecture",
-    "glossary"
+    "glossary",
+    "---Changelog---",
+    "changelog"
   ]
 }

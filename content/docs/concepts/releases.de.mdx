@@ -3,33 +3,19 @@ title: Releases
 description: Versionierter Marker auf einer Site. Der Mechanismus für „hat dieser Deploy die Performance verschlechtert?"
 ---
 
-Ein **Release** ist ein benannter Zeitpunkt auf einer Site,
-meistens ein Deploy. Damit lässt sich „ist LCP gestiegen, nachdem
-wir `v2.4.1` ausgerollt haben?" per API-Call beantworten, statt
-sich durch Charts zu klicken.
+Ein **Release** ist ein benannter Zeitpunkt auf einer Site, meistens ein Deploy. Damit lässt sich „ist LCP gestiegen, nachdem wir `v2.4.1` ausgerollt haben?" per API-Call beantworten, statt sich durch Charts zu klicken.
 
 ## Warum das wichtig ist
 
-Performance-Regressionen hängen fast immer an einem Deploy. Ohne
-Release-Marker musst du dir merken, wann was live ging, und dann
-manuell vergleichen. Mit Markern macht die
-[Analytics-API](/en/api/analytics/queryAnalytics) den Vorher-Nachher-Vergleich in
-einem einzigen Request.
+Performance-Regressionen hängen fast immer an einem Deploy. Ohne Release-Marker musst du dir merken, wann was live ging, und dann manuell vergleichen. Mit Markern macht die [Analytics-API](/en/api/analytics/queryAnalytics) den Vorher-Nachher-Vergleich in einem einzigen Request.
 
 ## Wann du sie anfasst
 
-- **Bei jedem Deploy.** Sauberster Weg: ein
-  `POST /sites/{id}/releases` aus der CI/CD nach erfolgreichem
-  Deploy.
-- **Wenn du eine Regression untersuchst.** Im Dashboard den
-  Release-Picker nehmen und Metriken über Releases hinweg
-  überlagern.
-- **Bei einem Rollback.** Auch den als Release taggen; du willst
-  beide Übergänge im Chart sehen.
+- **Bei jedem Deploy.** Sauberster Weg: ein `POST /sites/{id}/releases` aus der CI/CD nach erfolgreichem Deploy.
+- **Wenn du eine Regression untersuchst.** Im Dashboard den Release-Picker nehmen und Metriken über Releases hinweg überlagern.
+- **Bei einem Rollback.** Auch den als Release taggen; du willst beide Übergänge im Chart sehen.
 
-Wenn du keine Releases taggst, ist nichts kaputt. Das Dashboard
-funktioniert auch ohne. Dir entgeht nur die Deploy-Korrelation
-als Abkürzung.
+Wenn du keine Releases taggst, ist nichts kaputt. Das Dashboard funktioniert auch ohne. Dir entgeht nur die Deploy-Korrelation als Abkürzung.
 
 ## Was auf einem Release steht
 
@@ -40,8 +26,7 @@ als Abkürzung.
 | `version`     | string      | Pflicht. Freiform (`v2.4.1`, `2026-05-07`, `git:abcdef0`).                |
 | `released_at` | timestamp   | Optional. Wann der Deploy live ging. Default „jetzt", wenn weggelassen.    |
 
-Mehr ist da nicht. Releases sind mit Absicht minimal; wir wollen
-Korrelation, keine Deploy-Datenbank bauen.
+Mehr ist da nicht. Releases sind mit Absicht minimal; wir wollen Korrelation, keine Deploy-Datenbank bauen.
 
 ## Aus CI/CD taggen
 
@@ -54,30 +39,23 @@ curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
   -d "{ \"version\": \"$DEPLOY_VERSION\", \"released_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" }"
 ```
 
-Nimm, was dein CI als Deploy-Version führt: Git-SHA, Tag,
-Build-Nummer. Egal was, bleib dabei. Sonst zerlegt sich später die
-Sortierung.
+Nimm, was dein CI als Deploy-Version führt: Git-SHA, Tag, Build-Nummer. Egal was, bleib dabei. Sonst zerlegt sich später die Sortierung.
 
 ### Vercel
 
-Deploy-Hook-Command. Die `VERCEL_GIT_COMMIT_SHA`-Env-Var ist
-automatisch befüllt.
+Deploy-Hook-Command. Die `VERCEL_GIT_COMMIT_SHA`-Env-Var ist automatisch befüllt.
 
 ### GitHub Actions
 
-Letzter Schritt im Deploy-Job, mit `${{ github.sha }}` oder
-`${{ github.ref_name }}` als Version.
+Letzter Schritt im Deploy-Job, mit `${{ github.sha }}` oder `${{ github.ref_name }}` als Version.
 
 ### GitLab CI
 
-Eine `release`-Stage nach der Deploy-Stage, mit `$CI_COMMIT_SHA`
-oder `$CI_COMMIT_TAG`.
+Eine `release`-Stage nach der Deploy-Stage, mit `$CI_COMMIT_SHA` oder `$CI_COMMIT_TAG`.
 
 ## Releases vergleichen
 
-`compare_to_release_id` in die Analytics-Query reinpacken. In der
-Antwort liegt dann ein `compare`-Block mit denselben Metriken,
-gerechnet auf dem Fenster *direkt vor* dem Release.
+`compare_to_release_id` in die Analytics-Query reinpacken. In der Antwort liegt dann ein `compare`-Block mit denselben Metriken, gerechnet auf dem Fenster *direkt vor* dem Release.
 
 ```json
 {
@@ -88,47 +66,30 @@ gerechnet auf dem Fenster *direkt vor* dem Release.
 }
 ```
 
-Das „Vorher"-Fenster ist genauso lang wie `time_range` und endet
-beim `released_at` des Releases. Heißt: ein 24-Stunden-Fenster
-„danach" wird gegen die 24 Stunden direkt davor verglichen.
+Das „Vorher"-Fenster ist genauso lang wie `time_range` und endet beim `released_at` des Releases. Heißt: ein 24-Stunden-Fenster „danach" wird gegen die 24 Stunden direkt davor verglichen.
 
 ## Häufige Szenarien
 
 ### Continuous Deploys
 
-Zehn Deploys am Tag? Tagg sie alle. Die Menge ist kein Problem.
-Der Release-Picker zeigt die neuesten zuerst, an ältere kommst du
-per ID jederzeit dran.
+Zehn Deploys am Tag? Tagg sie alle. Die Menge ist kein Problem. Der Release-Picker zeigt die neuesten zuerst, an ältere kommst du per ID jederzeit dran.
 
 ### Lang laufende Release-Branches
 
-Tagge in dem Moment, in dem die neue Version wirklich Traffic
-abbekommt: beim Flippen des Feature-Flags, beim Umschalten des
-Canary, beim Umstellen des Load-Balancers. Nicht „Deploy ist
-durch, gesehen hat's aber noch keiner".
+Tagge in dem Moment, in dem die neue Version wirklich Traffic abbekommt: beim Flippen des Feature-Flags, beim Umschalten des Canary, beim Umstellen des Load-Balancers. Nicht „Deploy ist durch, gesehen hat's aber noch keiner".
 
 ### Rollbacks
 
-Den Rollback als eigenen Release taggen, gerne mit einer Version
-wie `rollback-v2.4.0`. Im Dashboard sollen alle drei Übergänge
-sichtbar sein: der kaputte Release live, die Regression und der
-Rollback, der die Metriken wieder einfängt.
+Den Rollback als eigenen Release taggen, gerne mit einer Version wie `rollback-v2.4.0`. Im Dashboard sollen alle drei Übergänge sichtbar sein: der kaputte Release live, die Regression und der Rollback, der die Metriken wieder einfängt.
 
 ## Häufige Überraschungen
 
-- **`released_at` zählt mehr als `id`.** Sortiert wird nach
-  `released_at`. Wer rückdatiert, riskiert, dass die Reihenfolge
-  später komisch aussieht.
-- **Releases sind pro Site.** In einem Monorepo, das mehrere Sites
-  ausliefert, musst du jede einzeln taggen, auch wenn der
-  Version-String identisch ist.
-- **Ein gelöschter Release lässt `compare_to_release_id`-Requests
-  scheitern.** Der Endpunkt antwortet mit `404`. Schon gerenderte
-  Metriken bleiben unberührt.
+- **`released_at` zählt mehr als `id`.** Sortiert wird nach `released_at`. Wer rückdatiert, riskiert, dass die Reihenfolge später komisch aussieht.
+- **Releases sind pro Site.** In einem Monorepo, das mehrere Sites ausliefert, musst du jede einzeln taggen, auch wenn der Version-String identisch ist.
+- **Ein gelöschter Release lässt `compare_to_release_id`-Requests scheitern.** Der Endpunkt antwortet mit `404`. Schon gerenderte Metriken bleiben unberührt.
 
 ## Verwandt
 
 - [Sites](/de/concepts/sites): Releases liegen unter einer Site.
 - [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to_release_id`.
-- [Releases vergleichen](/de/guides/compare-releases):
-  Schritt-für-Schritt-Guide, um CI/CD anzubinden.
+- [Releases vergleichen](/de/guides/compare-releases): Schritt-für-Schritt-Guide, um CI/CD anzubinden.

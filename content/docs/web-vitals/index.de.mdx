@@ -1,23 +1,15 @@
 ---
 title: Web Vitals
-description: "Die fünf Performance-Metriken, die Fastmon trackt: was sie messen und wie du sie liest."
+description: "Die fünf Performance-Metriken, die fastmon trackt: was sie messen und wie du sie liest."
 ---
 
-**Web Vitals** sind ein Set von Performance-Metriken, die in Zahlen
-fassen, wie sich eine Seite beim Laden und Benutzen anfühlt.
-Definitionen und Schwellen kommen von Google, die APIs vom
-Browser, und unser Tracker sammelt das Ganze direkt bei deinen
-echten Besuchern.
+**Web Vitals** sind ein Set von Performance-Metriken, die in Zahlen fassen, wie sich eine Seite beim Laden und Benutzen anfühlt. Definitionen und Schwellen kommen von Google, die APIs vom Browser, und unser Tracker sammelt das Ganze direkt bei deinen echten Besuchern.
 
-Diese Seite ist nur die Übersicht. Zu jeder Metrik gibt's eine
-eigene Seite mit Schwellen, Debug-Tipps und Anleitung, wie du sie
-in Fastmon abfragst.
+Diese Seite ist nur die Übersicht. Zu jeder Metrik gibt's eine eigene Seite mit Schwellen, Debug-Tipps und Anleitung, wie du sie in fastmon abfragst.
 
 ## Die fünf Metriken
 
-Fastmon trackt die drei Core Web Vitals (die Metriken, die im
-Google-Ranking zählen) plus zwei diagnostische Metriken, die dir
-bei Regressionen helfen.
+Fastmon erfasst die drei Core Web Vitals (die Metriken, die im Google-Ranking zählen) plus zwei diagnostische Metriken, die dir bei Regressionen helfen.
 
 | Metrik                                                    | Was sie misst                                            | Gut (p75)  |
 | --------------------------------------------------------- | -------------------------------------------------------- | ---------- |
@@ -27,55 +19,33 @@ bei Regressionen helfen.
 | [FCP](/de/web-vitals/fcp), First Contentful Paint      | Zeit, bis Text oder Bild erstmals erscheint.             | ≤ 1.800 ms |
 | [TTFB](/de/web-vitals/ttfb), Time to First Byte        | Zeit, bis das erste Response-Byte ankommt.               | ≤ 800 ms   |
 
-Die ersten drei (LCP, INP, CLS) zählt Google fürs Ranking. Die
-beiden anderen (FCP, TTFB) sind diagnostisch, nützlich, wenn du
-herausfinden willst, *warum* dein LCP langsam ist.
+Die ersten drei (LCP, INP, CLS) zählt Google fürs Ranking. Die beiden anderen (FCP, TTFB) sind diagnostisch, nützlich, wenn du herausfinden willst, *warum* dein LCP langsam ist.
 
 ## Perzentile lesen
 
-Web Vitals reportest du üblicherweise auf dem **75. Perzentil**.
-Heißt: über alle Pageviews im Zeitraum hatten 75 % der Besucher
-einen besseren Wert als p75, 25 % einen schlechteren.
+Web Vitals betrachtest du üblicherweise auf dem **75. Perzentil**. Heißt: über alle Pageviews im Zeitraum hatten 75 % der Besucher einen besseren Wert als p75, 25 % einen schlechteren.
 
-Wenn dein LCP bei p75 bei 2.400 ms liegt, dann sieht das
-*schlechteste Viertel deines Traffics* genau diese Zahl. p50 ist
-„was die meisten sehen": bequem, aber als Optimierungsziel
-ungeeignet, wenn dir Besucher mit schwacher Verbindung oder
-älteren Geräten wichtig sind.
+Wenn dein LCP bei p75 bei 2.400 ms liegt, dann sieht das *schlechteste Viertel deines Traffics* genau diese Zahl. p50 ist „was die meisten sehen": bequem, aber als Optimierungsziel ungeeignet, wenn dir Besucher mit schwacher Verbindung oder älteren Geräten wichtig sind.
 
-## Wie Fastmon sie erfasst
+## Wie fastmon sie erfasst
 
-Der Tracker nutzt dieselben Browser-APIs wie die
-[`web-vitals`](https://github.com/GoogleChrome/web-vitals)-Library:
+Der Tracker nutzt dieselben Browser-APIs wie die [`web-vitals`](https://github.com/GoogleChrome/web-vitals)-Library:
 
-- `PerformanceObserver` für `largest-contentful-paint`,
-  `layout-shift`, `paint` und `event`-Einträge.
+- `PerformanceObserver` für `largest-contentful-paint`, `layout-shift`, `paint` und `event`-Einträge.
 - `Navigation Timing` für TTFB.
 - Die browser-eigenen Attribution-Daten für INP.
 
-Jede Metrik wird zu einem anderen Zeitpunkt finalisiert,
-meistens wenn die Seite versteckt wird oder der Besucher
-interagiert. Der Tracker bündelt die Werte und schickt sie über
-den Lebenszyklus des Pageviews verteilt in einigen wenigen
-Beacons. Mehr dazu unter [Der RUM-Beacon](/de/concepts/beacon).
+Jede Metrik wird zu einem anderen Zeitpunkt finalisiert, meistens wenn die Seite versteckt wird oder der Besucher interagiert. Der Tracker bündelt die Werte und schickt sie über den Lebenszyklus des Pageviews verteilt in einigen wenigen Beacons. Mehr dazu unter [Der RUM-Beacon](/de/concepts/beacon).
 
 ## Wo sie im Produkt auftauchen
 
-- **Performance-Dashboard**: p50/p75/p95 pro Metrik, slicebar nach
-  URL, Device, Land und Release.
-- **Experience Score**: eine Zahl von 0–10, die LCP, INP, CLS,
-  FCP, TTFB, Fehlerrate und Page Load Time zusammenfasst. Siehe
-  [Experience Score](/de/web-vitals/experience-score).
-- **Notification Rules**: Alarm, wenn eine Metrik eine Schwelle
-  überschreitet oder sich gegen das Vorfenster verschlechtert.
-- **Analytics-API**: jede Metrik programmatisch abfragen. Siehe die
-  [Analytics-Endpunkte](/en/api/analytics/queryAnalytics).
+- **Performance-Dashboard**: p50/p75/p95 pro Metrik, slicebar nach URL, Device, Land und Release.
+- **Experience Score**: eine Zahl von 0–10, die LCP, INP, CLS, FCP, TTFB, Fehlerrate und Page Load Time zusammenfasst. Siehe [Experience Score](/de/web-vitals/experience-score).
+- **Notification Rules**: Alarm, wenn eine Metrik eine Schwelle überschreitet oder sich gegen das Vorfenster verschlechtert.
+- **Analytics-API**: jede Metrik programmatisch abfragen. Siehe die [Analytics-Endpunkte](/en/api/analytics/queryAnalytics).
 
 ## Nächste Schritte
 
-- Starte mit [LCP](/de/web-vitals/lcp), meist die erste Metrik,
-  die du optimierst.
-- Dann [INP](/de/web-vitals/inp); regrediert oft, wenn du LCP
-  durch zusätzliches JavaScript fixt.
-- Für eine einzelne Zahl über Zeit:
-  [Experience Score](/de/web-vitals/experience-score).
+- Starte mit [LCP](/de/web-vitals/lcp), meist die erste Metrik, die du optimierst.
+- Dann [INP](/de/web-vitals/inp); regrediert oft, wenn du LCP durch zusätzliches JavaScript fixt.
+- Für eine einzelne Zahl über Zeit: [Experience Score](/de/web-vitals/experience-score).

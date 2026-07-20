@@ -1,0 +1,210 @@
+---
+title: Tracker settings
+description: Every per-site tracker setting, what it collects, and a short PII read on each.
+---
+
+Each site carries a set of **tracker settings** that decide what the beacon does in the visitor's browser and what reaches storage. Every behavior is an independent switch, and a [preset](#presets) fills those switches with a sensible starting point.
+
+Settings are per site and switchable at any time. The script cache invalidates automatically; you don't redeploy your site or touch the `<script>` tag. A brand-new site starts on the **Standard** preset: unique-visitor analytics through the edge-derived `stitch`, fetch/XHR and query-key telemetry, and full error frames, all with nothing written to the visitor's device.
+
+This page is the reference the dashboard links into: each setting has its own section and a stable anchor. Every section ends with a **PII** line, a short read on what the setting means for personal data under GDPR and the TDDDG. For the legal picture as a whole, see [Consent and the TDDDG](#consent-and-the-tdddg) below and the [Privacy](/en/privacy) page.
+
+## Presets
+
+A **preset** is a starting point you pick when you create a site. It fills every data-scope switch at once; after that each switch is independent, and changing any one of them just relabels the site as **Custom**. New sites start on **Standard**. (Creating a site directly through the API without naming a preset applies the bare per-field defaults, which match Minimal.)
+
+| Setting | `Minimal` | `Standard` (default) | `Full` |
+| --- | --- | --- | --- |
+| [`store_session`](#store-session) | ✗ | ✗ | ✓ |
+| [`preconsent_level`](#preconsent-level) | `off` | `off` | `configured` |
+| [`store_stitch`](#store-stitch) | ✗ | ✓ | ✓ |
+| [`track_query_keys`](#track-query-keys) | ✗ | ✓ | ✓ |
+| [`store_error_messages`](#store-error-messages) | ✗ | ✗ | ✓ |
+| [`error_frame_detail`](#error-frame-detail) | ✗ | ✓ | ✓ |
+| [`fetch_xhr_enabled`](#fetch-xhr-enabled) | ✗ | ✓ | ✓ |
+| Nothing stored on device | ✓ | ✓ | ✗ (`sessionStorage._fms`) |
+
+- **Minimal** collects core RUM only: Web Vitals, error type and count, device and connection class. No identifiers, no content, no fetch/XHR. Nothing is written to the visitor's device. This is the leanest posture, the opt-down when you want no visitor identifier at all.
+- **Standard** turns on everything that cannot carry personal data: the edge-derived [`stitch`](#store-stitch) visitor signal, [fetch/XHR](#fetch-xhr-enabled) aggregates, query [key names](#track-query-keys), and full [error stack frames](#error-frame-detail). It still keeps no error message text, no query values, and writes no session id. Still nothing on the device. It's the default a new site starts on, because this data (unique visitors, fetch/XHR and error diagnostics) is a substantial analytical gain.
+- **Full** turns everything on: a session id written on load, error messages and full frames, query keys. It is the only preset that writes to the device (`sessionStorage._fms`), so it presumes you have handled consent.
+
+`query_value_keys` and the routing, retention, and site-management settings are not part of a preset; they default independently and you set them per site.
+
+## Consent and the TDDDG
+
+Whatever a site collects, the beacon reads several browser interfaces on the visitor's device:
+
+- the **Performance API** (navigation, paint, layout-shift, event and long-animation-frame timings) for Web Vitals and timing,
+- the **Network Information API** (`navigator.connection`) for the connection class,
+- the **viewport** width (`window.innerWidth`),
+- the **error** and **unhandled-rejection handlers** (error type and count, collected in every configuration).
+
+fastmon sets **no cookies**, in any configuration. In the default Standard setup it writes nothing to the visitor's device; only when [`store_session`](#store-session) is on does it write a single, tab-scoped `sessionStorage` entry (the session id). It stores no long-lived, cross-site, or cross-device identifier, and aggregation happens at the edge.
+
+Which stored fields are and aren't personal data, and where a residual can't be fully ruled out, is laid out in [Privacy → Personal data](/en/privacy#personal-data).
+
+Reading interfaces like these can be consent-relevant under § 25 TDDDG and the ePrivacy Directive. The readings span a range: from permissive (some RUM providers hold that reading these APIs isn't "accessing information on the device" at all, so no consent is needed) to strict (analytics and performance monitoring aren't "strictly necessary", so consent is required). Germany, and the EDPB (Guidelines 2/2023), lean strict, more so than most other EU or non-EU jurisdictions, and in case of doubt the strict reading governs.
+
+fastmon is a German provider, so we assume the strict reading and build and document conservatively. The assessment for your site is not ours to make, though: whether embedding fastmon needs consent is yours to decide, ideally with your data protection officer or legal counsel. It's also always best to run fastmon under your own domain (first-party/1P); see [`collector_mode`](#collector-mode). If you do gate it, categorize fastmon as analytics / performance measurement in your CMP, not as "strictly necessary". Note that § 25 TDDDG (the device access) and the GDPR (the processing that follows) are assessed in parallel; the contractual split sits in our DPA (§ 4) and Terms (§ 7).
+
+When a site writes a session id ([`store_session`](#store-session) on), your CMP switches the on-device write on with a single call after consent:
+
+```js
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
+```
+
+`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands (most consent-management platforms do this for you). The `&&` guards matter because the beacon loads asynchronously: on a fast navigation your consent code can run before the script, when `window.fastmon` doesn't exist yet. Guarded, that early call is a harmless no-op and the write happens once the tracker has loaded; unguarded, the bare call would throw a `TypeError`. Whether the write waits for that call or happens on load is the [`preconsent_level`](#preconsent-level) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
+
+## Session and cross-page linkage
+
+### `store_session` [#store-session]
+
+Writes a session id (`_fms`) to the visitor's `sessionStorage` so pageviews of the same visit link together: cross-page journeys, funnels, entry and exit pages, return-within-session metrics. The id lives in `sessionStorage` and dies when the tab closes. It is the **only** thing the beacon ever writes to the device; with it off, the served bundle never touches `sessionStorage` at all (the storage step is compiled out, not just dropped server-side), and the collector forces the session id empty as a backstop. Off on the Standard preset new sites start on; the Full preset turns it on.
+
+**PII:** the session id is a visitor identifier and its write is the one § 25 (1) TDDDG storage operation the beacon performs, so it is consent-relevant. Leave it off for the leanest posture, or pair it with [`preconsent_level`](#preconsent-level) to write only after opt-in. With it off, a row carries no on-device identifier.
+
+### `preconsent_level` [#preconsent-level]
+
+Decides *when* the session id is written, and only matters when [`store_session`](#store-session) is on. Set to `off` (the dashboard shows this as **Write session ID only after consent**), the write is deferred until your CMP calls `window.fastmon.grantConsent()`; until then beacons still flow, just without a session id. Set to `configured`, the id is written on page load. Reads, observers, and beacons run either way: this switch gates only the on-device write, never collection. Default `off`.
+
+**PII:** this changes the timing and consent posture of the session write, not what categories of data are collected. `off` is the safe default (no device write before consent); `configured` writes on load and presumes you have a lawful basis for that write.
+
+### `store_stitch` [#store-stitch]
+
+Keeps the edge-derived `stitch` signal on the stored row. `stitch` is an `HMAC-SHA256` of the visitor's IP, User-Agent, the site's collector hash, and the domain, computed at the edge under a salt that rotates every 24 hours and never leaves edge memory. It gives you unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time) without anything on the device. With it off, the collector forces `stitch` empty at insert time, leaving a row with no visitor identifier at all. It is a per-site setting (org-level trackers don't carry it). On by default: the Standard preset new sites start on stores it. The full construction (forward secrecy, ≤24 h joinability, per-site scoping) is in [Privacy → the edge-derived `stitch`](/en/privacy#the-edge-derived-stitch-identifier).
+
+**PII:** `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment; joinability is bounded to roughly 24 hours and is forward-secret once the salt rotates. Naming it in your privacy notice is the operator's job.
+
+### `preferred_identity` [#preferred-identity]
+
+Picks which identifier the dashboard counts distinct visitors by, `stitch` or `session`. It is a reporting default only, separate from the collection switches, and the query resolver clamps it to whatever the site actually stores (a per-query override is always available). Default `stitch`. Per-site setting.
+
+**PII:** none of its own. It selects between identifiers already collected under [`store_stitch`](#store-stitch) and [`store_session`](#store-session); it neither collects nor stores anything new.
+
+## URLs and query parameters
+
+### `track_query_keys` [#track-query-keys]
+
+Keeps the **names** of query parameters on the page URL (for example `?page`, `?variant`), so you can break analytics down by parameterized routes. Parameter **values** are always dropped at collection regardless of this switch. Off drops the query string entirely, storing origin plus path only. On by default (part of the Standard preset).
+
+**PII:** low. Only key names are kept, and they rarely carry visitor-specific data; every value is stripped before the URL leaves the browser. To keep a specific value, you have to opt in explicitly via [`query_value_keys`](#query-value-keys).
+
+### `query_value_keys` [#query-value-keys]
+
+An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`track_query_keys`](#track-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset.
+
+**PII:** you own this one. A value is stored only for the exact keys you list, and never "all values". If you list a parameter that carries personal data (an email, a user id, a token), you have chosen to store it, so keep the list to non-personal keys.
+
+## Errors
+
+### `store_error_messages` [#store-error-messages]
+
+Keeps the free-form error message text (`Cannot read property 'x' of undefined`) instead of just the error type and count. Off, the message is dropped server-side and dashboards see aggregates like "5 TypeErrors, 2 ReferenceErrors" plus stack locations. Off by default, including on Standard; the Full preset turns it on.
+
+**PII:** the highest free-text personal-data vector in the beacon, because messages can contain user input. It is consent-relevant (a "consent-only" field). An always-on scrubber replaces URLs, emails, numeric ids, and quoted strings with `*` before transmission even when the message is kept, but that is defense in depth: the operator's obligation not to pass raw user input into thrown errors still stands. Turn it on only where you have handled consent.
+
+### `error_frame_detail` [#error-frame-detail]
+
+Keeps full stack-frame detail (script path plus line and column) for every frame. Off, frames collapse toward host-only, except that your own first-party external scripts always keep path and line/column so own-code bugs stay fixable. On by default (the Standard preset turns it on).
+
+**PII:** a code location identifies the *bug*, not the visitor, and it is identical for everyone who hits it, so first-party own-code detail is treated as always-sendable (sanitized to origin plus path, no query or hash). Full detail for inline and third-party frames is consent-relevant, because line numbers inside server-personalized HTML could in principle shift per visitor, so those stay gated. Paths are the operator's responsibility not to encode identifiers into, the same as page URLs.
+
+## Fetch and XHR
+
+### `fetch_xhr_enabled` [#fetch-xhr-enabled]
+
+Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on).
+
+**PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
+
+## Page type
+
+### `pagetype_ruleset` [#pagetype-ruleset]
+
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page-controller token (for example `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type).
+
+**PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
+
+#### What each ruleset detects [#ruleset-page-types]
+
+Each ruleset maps the framework's page-controller token to one of a fixed set of page types (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Tokens outside this table map to nothing, and the pageview keeps an empty page type. The mapping lives in the collector, so it improves without redeploying the browser-cached tracker.
+
+| Page type    | Shopware 6          | Shopware 5 <sup>1</sup> | OXID eShop                        | Magento                     | WooCommerce                              |
+| ------------ | ------------------- | ----------------------- | --------------------------------- | --------------------------- | ---------------------------------------- |
+| **home**     | `is-ctl-index`      | `is--ctl-index`         | `cl-start`                        | `cms-index-index`           | not typed <sup>2</sup>                   |
+| **product**  | `is-ctl-product`    | `is--ctl-detail`        | `cl-details`                      | `catalog-product-view`      | `single-product`                         |
+| **category** | `is-ctl-navigation` | `is--ctl-listing`       | `cl-alist`                        | `catalog-category-view`     | `post-type-archive-product`, `tax-product_cat` |
+| **cart**     | `is-ctl-checkout` <sup>3</sup> | `is--ctl-checkout` <sup>3</sup> | `cl-basket`             | `checkout-cart-index`       | `woocommerce-cart`                       |
+| **checkout** | folded into cart <sup>3</sup> | folded into cart <sup>3</sup> | `cl-user`, `cl-payment`, `cl-order` | `checkout-index-index` | `woocommerce-checkout`                   |
+| **search**   | `is-ctl-search`     | `is--ctl-search`        | `cl-search`                       | `catalogsearch-result-index` | not typed <sup>2</sup>                  |
+| **account**  | `is-ctl-account`    | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
+
+<sup>1</sup> Shopware 5 markup is provisional and still being verified against production shops. <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
+
+## Ingest and routing
+
+### `enforce_domain_match` [#enforce-domain-match]
+
+When on, the collector drops any beacon whose reported page-URL host is neither the site's `domain` nor a subdomain of it. It closes the gap that [`allowed_origins`](#allowed-origins) can't, because `sendBeacon` often omits the `Origin` header, so a beacon replayed from a foreign page that knows your collector hash would otherwise pass. Off by default, because multi-domain and vanity-domain deployments would lose legitimate traffic. Per-site setting. See [Sites](/en/concepts/sites#enforcing-the-page-domain).
+
+**PII:** none. This is ingest hardening, not a data-collection switch.
+
+### `allowed_origins` [#allowed-origins]
+
+An opt-in allow-list of origins the collector will accept beacons from, checked against the HTTP `Origin` header. Empty (the default) disables the origin check. List each origin explicitly, including your primary domain and any staging or preview hosts; wildcards aren't supported. A beacon from a non-listed origin is silently dropped (the collector still answers `204`). See [Sites → Allowed origins](/en/concepts/sites#allowed-origins).
+
+**PII:** none. It governs which requests are accepted, not what they contain.
+
+### `collector_mode` [#collector-mode]
+
+Where the beacon POSTs its data: `default` (fastmon's shared collector), `custom` (an explicit endpoint you host or route, set in [`collector_endpoint`](#collector-endpoint)), or `relative` (a host-less same-origin `/c/<hash>`, natural when you serve the collector from your own domain). Default `default`.
+
+**PII:** none by itself. It is a routing choice. Note that a same-origin or custom endpoint changes the network path the request takes, which can matter for your own consent and first-party framing, but it doesn't change what the beacon collects.
+
+### `collector_endpoint` [#collector-endpoint]
+
+The absolute collector base URL, used only when [`collector_mode`](#collector-mode) is `custom` (for example `metrics.example.com`). It must be set for `custom` and empty otherwise. Default empty.
+
+**PII:** none. Endpoint configuration only.
+
+### `data_retention_days` [#data-retention-days]
+
+How long raw beacon rows are kept before the storage layer drops them: 30, 60, 90, 180, or 365 days. Default 90. Aggregates computed during the window survive; the raw rows are deleted automatically at expiry.
+
+**PII:** this is your storage-limitation lever. Shorter retention is stricter; pick the shortest window that still lets you compare across your deploy cycles.
+
+## Site management
+
+### `tags` [#tags]
+
+Free-form labels (max 10) for grouping related sites, such as `env:production` or `team:growth`. Labels only today; a cross-site analytics scope that reports on every site carrying a tag is planned. See [Sites → Tags](/en/concepts/sites#tags).
+
+**PII:** none. Site configuration, not visitor data.
+
+### `is_active` [#is-active]
+
+When off, beacons are still accepted but not written to the analytics tables, so you keep the site's history while pausing new ingest. Use it for pauses, not for cutting retention. Default on.
+
+**PII:** none. It gates writes, not data categories.
+
+### `source_version` [#source-version]
+
+Pins the beacon template version the site serves (`v1` is current). Leave it on the current version unless you're deliberately holding a site back during a beacon upgrade.
+
+**PII:** none. It selects which tracker build is served.
+
+## Org-level trackers
+
+An org-level tracker is a single beacon you embed across several domains that aren't each their own site. It carries the same data-scope and routing settings as a site: [`store_session`](#store-session), [`preconsent_level`](#preconsent-level), [`track_query_keys`](#track-query-keys), [`query_value_keys`](#query-value-keys), [`store_error_messages`](#store-error-messages), [`error_frame_detail`](#error-frame-detail), [`fetch_xhr_enabled`](#fetch-xhr-enabled), [`collector_mode`](#collector-mode), and [`collector_endpoint`](#collector-endpoint), and it takes the same [presets](#presets). Three settings stay per site and have no org-tracker equivalent: [`store_stitch`](#store-stitch), [`preferred_identity`](#preferred-identity), and [`enforce_domain_match`](#enforce-domain-match).
+
+## Changing settings
+
+Open the site in fastmon, go to **Settings**, change what you need, and save. The change takes effect when the script cache rolls over: usually within minutes for active visitors, immediately for new sessions. You don't redeploy your site or change the `<script>` tag.
+
+## What's next
+
+- [Privacy: what we don't collect](/en/privacy): the privacy floor that holds under every setting.
+- [The RUM Beacon](/en/concepts/beacon): exactly what the beacon ships.
+- [Sites](/en/concepts/sites): where these settings live and the deployment scenarios.

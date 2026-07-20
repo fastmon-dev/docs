@@ -1,74 +1,68 @@
 ---
 title: Sites
-description: A site is one domain under an application, with its own dashboard, traffic, and a few per-domain overrides.
+description: A site is one property you monitor. Each site has its own beacon hashes and settings.
 ---
 
-A **site** is one domain you monitor. It belongs to exactly one
-[application](/en/concepts/applications), which owns the snippet and
-all collection config; the site is the pure analytics unit — its own
-dashboard, its own traffic, its own `site_id`.
-
-Most applications have one site. Add more when several domains should
-share one snippet and one collection config; each stays a separate
-site with its own dashboard.
+A **site** is the unit of monitoring in fastmon. In practice that maps to a property: usually one origin, one app, or one brand. Beacon URL, settings, dashboard filters: all per site.
 
 ## Why it matters
 
-The **application** owns everything beacon-related: the script you
-embed, the hashes, the [preset](/en/collection-modes), the collector.
-A **site** is where the data for one domain lands, plus a few
-per-domain settings you can tune without touching the application.
+Everything beacon-related lives on the site: the script you embed, the [tracker settings](/en/tracker), retention, allowed origins, the data in the dashboard. New property to monitor = new site.
 
-For one dashboard view across several domains, use **tags** (below)
-and aggregate at query time. There's no site-group concept on
-purpose; tags cover it.
+To organize related properties, attach **tags** (below). A cross-site analytics scope that reports on every site carrying a tag together is planned; today tags are labels for grouping, not an analytics filter.
 
 ## When you'd touch it
 
-- **Adding a domain.** Create a site under the application (or adopt a
-  [suggested domain](/en/concepts/applications#unknown-domains-site_policy)),
-  then embed the application's snippet.
-- **Cutting retention for one domain.** Override `data_retention_days`
-  on the site; otherwise it inherits the application's default.
-- **Dropping the visitor identifier for one domain.** Override
-  `store_stitch` off on the site — genuinely anonymous rows for that
-  domain, at the cost of its unique-visitor counts.
-- **Pausing without deleting.** Toggle `is_active = false` to keep
-  history but stop ingesting new data.
-- **Cross-domain reporting.** Add tags like `env:production` or
-  `team:growth`.
+- **Adding a new property.** Create a site, copy the snippet, embed.
+- **Changing what the beacon collects.** Edit the site's [tracker settings](/en/tracker), or pick a [preset](/en/tracker).
+- **Adding a staging or preview environment.** Add the staging origin to **allowed origins**, or create a separate site for staging if you want isolated data.
+- **Cutting retention.** Default is 90 days. Some sites want shorter for compliance, some want longer.
+- **Pausing without deleting.** Toggle `is_active = false` to keep history but stop ingesting new data.
+- **Tagging to organize sites.** Add tags like `env:production` or `team:growth`.
 
 ## What's on a site
 
-A site is deliberately slim — the embed and collection config live on
-the [application](/en/concepts/applications). Three fields are
-per-domain **overrides**: leave them empty to inherit the
-application's default, or set them to override for this domain.
+| Field                 | Type                                  | Notes                                                                            |
+| --------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `id`                  | UUID v7                               | Stable identifier.                                                               |
+| `organization_id`     | UUID v7                               | The owning organization.                                                         |
+| `name`                | string                                | How the site appears in the UI.                                                  |
+| `domain`              | string                                | Bare hostname, no protocol (e.g. `acme.com`).                                    |
+| `allowed_origins`     | comma-separated string                | Origin allow-list for ingest. Empty disables the origin check entirely.          |
+| `collector_endpoint`  | string · nullable                     | Custom collector hostname for enterprise routing. Defaults to `fastmon.site`.    |
+| `source_hash`         | string                                | Per-site hash used in the script URL (`/s/{source_hash}.js`).                    |
+| `collector_hash`      | string                                | Per-site hash used in the ingest URL (`/c/{collector_hash}`).                    |
+| `data_retention_days` | int                                   | Default `90`. After expiry, rows are dropped at the storage layer. See [`data_retention_days`](/en/tracker#data-retention-days). |
+| `store_stitch`        | bool                                  | Default `false`. When `true`, the edge-derived `stitch` is stored for visitor and session metrics; off keeps a genuinely anonymous row. See [`store_stitch`](/en/tracker#store-stitch). |
+| `store_session`       | bool                                  | Default `false`. When `true`, the stateful bundle writes a `sessionStorage` session id for cross-page linkage; off never touches `sessionStorage`. See [`store_session`](/en/tracker#store-session). |
+| `preconsent_level`    | string                                | Default `off`. `off` defers the session-id write until `grantConsent()`; `configured` writes on load. Only bites when `store_session` is on. See [`preconsent_level`](/en/tracker#preconsent-level). |
+| `store_error_messages`| bool                                  | Default `false`. When `true`, keeps the free-form error message text (through the PII scrubber). See [`store_error_messages`](/en/tracker#store-error-messages). |
+| `error_frame_detail`  | bool                                  | Default `false`. When `true`, keeps full stack-frame detail for every frame. See [`error_frame_detail`](/en/tracker#error-frame-detail). |
+| `track_query_keys`    | bool                                  | Default `false`. When `true`, keeps query-parameter names (values still dropped). See [`track_query_keys`](/en/tracker#track-query-keys). |
+| `query_value_keys`    | list of strings (max 20)              | Default empty. Allow-list of parameter names whose value is additionally kept. Requires `track_query_keys`. See [`query_value_keys`](/en/tracker#query-value-keys). |
+| `fetch_xhr_enabled`   | bool                                  | Default `false`. When `true`, captures fetch/XHR aggregates for your own APIs. See [`fetch_xhr_enabled`](/en/tracker#fetch-xhr-enabled). |
+| `preferred_identity`  | enum                                  | Default `stitch`. Which identity the dashboard counts visitors by (`stitch` or `session`). A reporting default, separate from `store_stitch` / `store_session`, clamped to what the site actually collects. See [Visitors and sessions](/en/concepts/sessions). |
+| `pagetype_ruleset`    | string                                | Default `""` (off, no DOM read). A shop ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) reads the framework's body controller class to classify page type. See [`pagetype_ruleset`](/en/tracker#pagetype-ruleset). |
+| `collector_mode`      | enum                                  | Default `default`. Where the beacon POSTs: `default` (shared collector), `custom` (`collector_endpoint`), or `relative` (same-origin). See [`collector_mode`](/en/tracker#collector-mode). |
+| `enforce_domain_match`| bool                                  | Default `false`. When `true`, drops beacons whose reported page-URL host isn't `domain` or a subdomain of it (see below).             |
+| `source_version`      | string                                | Pins a beacon template version (`v1` is current).                                |
+| `tags`                | list of strings (max 10)              | Free-form labels for organizing sites. Cross-site analytics-by-tag is planned, not yet live. |
+| `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
 
-| Field                 | Type                     | Notes                                                                 |
-| --------------------- | ------------------------ | --------------------------------------------------------------------- |
-| `id`                  | UUID v7                  | Stable identifier (= the ClickHouse `site_id`).                       |
-| `organization_id`     | UUID v7                  | The owning organization.                                              |
-| `application_id`      | UUID v7                  | The application this domain belongs to.                               |
-| `name`                | string                   | How the site appears in the UI.                                       |
-| `domain`              | string                   | Bare hostname, no protocol (e.g. `acme.com`).                         |
-| `data_retention_days` | int · nullable           | Override; `null` inherits the application's default (`90`).           |
-| `store_stitch`        | bool · nullable          | Override; `null` inherits the application's default.                  |
-| `count_visitors_by`   | enum · nullable          | Override (`stitch` / `session`); `null` inherits the application's default. |
-| `tags`                | list of strings (max 10) | Free-form labels for dashboard and analytics filtering.               |
-| `is_active`           | bool                     | When false, beacons are accepted but not written to analytics tables. |
-| `activated_at`        | timestamp · nullable     | When the site first crossed the activation threshold and went live.   |
+Sites created in the dashboard start on the **Standard** preset, which sets `store_stitch`, `track_query_keys`, `error_frame_detail`, and `fetch_xhr_enabled` on.
 
-The embed hashes, preset, collector, `site_policy`, and page-type
-ruleset are **not** here — they're on the application. See
-[Applications](/en/concepts/applications).
+## The two hashes
+
+Each site has two hashes. They look similar but do two different jobs.
+
+- **`source_hash`** sits in the **script URL** and tells us which site's beacon config to ship to the browser.
+- **`collector_hash`** sits in the **ingest URL** and tells us which site an incoming beacon belongs to.
+
+They're separate so the script template can change (for a beacon upgrade or a settings change) without affecting the data pipeline. You only ever copy `source_hash` by hand; `collector_hash` is baked into the script and rides along.
 
 ## Tags
 
-Tags are short labels you attach to a site. The dashboard and
-analytics API let you filter by tag, so they're how you build a
-"production sites" or "marketing sites" view across multiple
-properties.
+Tags are short labels you attach to a site to group related properties (a "production sites" or "marketing sites" grouping). The sidebar's per-site tag filter was removed; a proper cross-site analytics scope that reports on every site carrying a tag together is planned. For now, tags are labels and don't filter analytics.
 
 Conventions that work well:
 
@@ -79,33 +73,28 @@ Conventions that work well:
 
 Max 10 tags per site.
 
-## Restricting which domains send data
+## Allowed origins
 
-The old per-site `allowed_origins` and `enforce_domain_match` are
-gone. Ingest is now governed by the application's
-[`site_policy`](/en/concepts/applications#unknown-domains-site_policy):
-`strict` accepts only exactly-registered domains, `open` (default)
-suggests unknown ones for adoption, and `auto` provisions them. Set it
-on the application.
+`allowed_origins` is an opt-in allow-list. When it's set, the collector only accepts beacons whose `Origin` header matches one of its entries; the site's `domain` is **not** implicitly included, so list it too. When the list is empty (the default), the collector doesn't check the origin at all.
 
-## Per-domain overrides
+A beacon from a non-listed origin is **silently dropped**: the collector still answers `204` so nothing breaks in the browser, but no data lands. If a domain's data is mysteriously missing, this list is the first thing to check.
 
-Two of the application's collection-related defaults can be overridden
-per site, without changing what the beacon collects:
+Add staging and preview hostnames here. Wildcards aren't supported; list each origin explicitly.
 
-- **`store_stitch`** — off drops the edge-derived `stitch` for this
-  domain at insert time, leaving genuinely anonymous rows, at the cost
-  of unique-visitor and session metrics for that site. Per-pageview
-  signals (Web Vitals, errors, third-party, attribution) are
-  unaffected.
-- **`count_visitors_by`** — whether the **visitors** metric counts by
-  `stitch` or `session` in this site's reports. A reporting
-  preference, clamped at query time to what the site actually stores.
+### Enforcing the page domain
 
-Leave either unset to inherit the application. See
-[Privacy → Turning identifiers off entirely](/en/privacy#turning-identifiers-off-entirely)
-for the reasoning, and [Presets](/en/collection-modes) for the
-collection flags themselves.
+`allowed_origins` checks the HTTP `Origin` header — but `sendBeacon` and keepalive POSTs frequently omit `Origin`, so a beacon replayed from a foreign page that knows your `collector_hash` can slip past an origin allow-list. `enforce_domain_match` (opt-in, default off) closes that gap from the other side: when enabled, the collector drops any beacon whose *reported page-URL host* is neither the site's `domain` nor a subdomain of it. The match is label-bounded (`shop.example.com` matches `example.com`; `notexample.com` does not), and a beacon with an empty or unparseable host is dropped while enforcing.
+
+It's off by default because multi-domain and vanity-domain deployments would lose legitimate traffic. Turn it on for a single-domain site that wants ingest locked to its own pages.
+
+## Privacy levers
+
+Two per-site switches control whether any visitor identifier reaches storage, without changing what categories of data the beacon collects. Under the default `Standard` preset `store_stitch` is **on** and `store_session` is **off**; the `Minimal` preset turns both off:
+
+- **`store_stitch`** (default `false`). On stores the edge-derived `stitch` identifier for unique-visitor counts and session metrics (bounce rate, pages per session, dwell time). Off leaves a row with no visitor identifier at all, fully anonymous. Per-pageview signals (Web Vitals, errors, third-party, attribution) are unaffected either way.
+- **`store_session`** (default `false`). On serves the stateful bundle, which writes a `sessionStorage` session id for cross-page linkage; whether that write waits for consent is [`preconsent_level`](/en/tracker#preconsent-level). Off tells the served bundle to never touch `sessionStorage`, and the collector drops `sid` as a backstop.
+
+The two are independent, enable either, both, or neither. See [Tracker settings](/en/tracker) for every switch and [Privacy → Turning identifiers off, or leaving them off](/en/privacy#turning-identifiers-off-or-leaving-them-off) for the reasoning.
 
 ## Common scenarios
 
@@ -113,37 +102,30 @@ collection flags themselves.
 
 Two shapes that work:
 
-- **One application, one site per domain** (`acme.com`,
-  `staging.acme.com`, each preview origin). Same snippet everywhere;
-  each domain gets its own dashboard and can override retention. Use a
-  `dev` [environment](/en/concepts/applications#environment) app to
-  keep throwaway traffic clearly separate.
-- **Separate applications** when staging genuinely needs different
-  collection settings (e.g. `full` on staging, `standard` in prod).
+- **One site, several origins** (`acme.com`, `staging.acme.com`, and each preview origin you care about; no wildcards). All data lands in one bucket; filter by `domain` in the dashboard. Cheaper, less clean.
+- **Three sites** with their own retention and tags. Cleaner data, more setup.
 
-Most teams start with one application and several sites.
+Most teams end up on the second one after a few weeks.
+
+### A new sub-site, same brand
+
+New site. Don't reuse the script tag from another property; the `source_hash` is per site, and the data has to be attributable.
 
 ### Moving to a new domain
 
-Add a site for the new domain under the same application, run both
-during the cutover, and mark the old one inactive once traffic's
-moved over.
+Create a new site for the new domain, run both during the cutover, and mark the old one inactive once traffic's moved over.
 
 ## Common surprises
 
-- **Sites can't move between organizations.** Ping support if you
-  really need it. (Moving a site to another *application* in the same
-  org is fine — see [Applications](/en/concepts/applications#sites-adopt-move-delete).)
-- **`is_active = false` keeps the history.** It just stops new writes.
-- **The snippet is per application, not per site.** Every site under
-  an application embeds the same `source_hash`; a beacon is matched to
-  a site by the page's hostname.
-- **Deleting a site deletes its beacon data.** With a confirmation. No
-  undo.
+- **Sites can't move between organizations.** Ping support if you really need it.
+- **`is_active = false` keeps the history.** It just stops new writes. Use it for pauses, not for cutting retention.
+- **Renaming a site doesn't change its hashes.** Already-embedded scripts keep working.
+- **Deleting a site deletes its beacon data.** With a confirmation step. No undo.
 
 ## Related
 
-- [Applications](/en/concepts/applications): the embed that owns the snippet and config.
-- [Presets](/en/collection-modes): what the beacon collects.
-- [The RUM beacon](/en/concepts/beacon): what the beacon collects on the page.
-- [Releases](/en/concepts/releases): versioned deploy markers.
+- [Tracker settings](/en/tracker): every per-site setting, one by one.
+- [Presets](/en/tracker): the three starting points.
+- [The RUM Beacon](/en/concepts/beacon): what the beacon collects.
+- [Releases](/en/concepts/releases): versioned markers attached to a site.
+- [API: Sites endpoints](/en/api): programmatic site CRUD.

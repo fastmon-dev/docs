@@ -2,14 +2,97 @@
 
 ## [Unreleased]
 
-### Change: The install guide is now the setup flow, prefilled from the app
+### Fix: API reference is uniformly build-generated (no committed `synthetic/` drift)
 
-The app no longer carries a long-form tracking-code panel — it links here instead, so the setup instructions live in one place.
+`synthetic/` was the only auto-generated API folder still tracked in git; the rest are gitignored and re-emitted by `npm run generate:api` on every build. A stale `getSyntheticScreenshot.mdx` therefore lingered after the endpoint left the OpenAPI schema and broke `next build` whenever it ran without regenerating first. `synthetic/` and the newly published `org-trackers/` are now gitignored like the other generated folders, and `synthetic/` was untracked. The reference regenerates from the production document (now `2026.6.58`) on every build, so nothing API-generated needs committing.
 
-- **Snippets render with your real values.** The app deep-links with `?source_hash=…&collector_hash=…&collector_mode=…&collector_host=…&party=…`, and a panel at the top of the guide fills every snippet on the page from them. Arrive without params and you can paste your own values in; they're remembered per browser. Query keys are spelled out so a shared link is readable on its own.
-- **Rewritten for the Application model.** An application owns the snippet, the hashes and the collection settings and serves one or more sites; creating one with a domain creates its first site too. Dropped the stale `Allowed origins` guidance (the field no longer exists) — an unregistered domain now surfaces as a **suggested domain** to adopt, governed by the application's **Unknown domains** setting.
-- **Required first, optional after.** The guide leads with the one required `<script>` tag; the early-error bootstrap and the no-JS pixel follow as clearly marked optional extras, each saying where in the `<head>` it belongs. Consent wiring and the first-party collector options (including the reverse-proxy config) round it out, with same-origin marked as recommended.
-- `## Where the beacons go` carries a stable `[#collector]` id so the app can deep-link it in **both** languages — the auto-generated anchors differ per locale.
+### Change: Changelog sidebar shows months only, with scrollspy
+
+The changelog section's sidebar now lists just the month anchors (the redundant "Changelog" page entry and the "jump to" separator were dropped), and a scrollspy highlights the month currently in view by toggling fumadocs' `data-active` on those links, so it tracks scrolling instead of leaving the page link permanently active. The feed copy was also refined: the shared detail-page/Explorer view is now explicit in the "what's driving it" entry, a third-party product name was removed from the time-range entry, and em-dashes were swept from the entries added since (consistent, non-"AI-tell" punctuation). Feed content extended through frontend `2026.6.41` and backend `2026.6.57`.
+
+### Add: Product changelog section (EN + DE) with area filter, month navigation, and a draft script
+
+A new top-level **Changelog** section at `/changelog`, alongside Docs and API, documenting user-facing product changes derived from the backend, frontend, and tracker repos. It is a hoisted section like the API reference: a third section-switcher tab plus its own route group (`src/app/[lang]/changelog/`), with the page tree split so the changelog is lifted out of the Docs sidebar (`getChangelogTree` in `src/lib/source.ts`, generalizing the existing API split via `isSectionNode`/`isHoistedSection`).
+
+- **Feed.** Entries are a dated, reverse-chronological feed authored with a client `<Changelog>` / `<ChangelogEntry>` component (`src/components/changelog.tsx`), registered in `mdx.tsx`. Each entry carries a type badge (New / Changed / Fixed / Removed) and an area badge; month headings (`June 2026`, `Mai 2026`) are grouped automatically from the entry dates. An area filter (Dashboard / API / Tracker / Platform) is synced to the URL hash, so `/changelog#tracker` opens the feed filtered to the tracker. Fully bilingual; the DE page passes translated chrome via a `labels` object.
+- **Sidebar.** Since a single-page feed has no tree, the section sidebar is filled with "jump to month" anchor links (`content/docs/changelog/meta.{json,de.json}`); the dropdown stays consistent with Docs/API.
+- **Editorial model.** Dashboard / API / platform changes are curated (the changes worth knowing about, not every internal tweak); the **tracker** is documented in full, because it runs in visitors' browsers and any change can affect what is measured.
+- **Draft tooling.** `scripts/draft-changelog.mjs` (`npm run draft:changelog`, `make draft-changelog`) scaffolds draft entries from the backend/frontend `CHANGELOG.md` (versions newer than the last-covered, tracked in `scripts/changelog-sources.json`), every tracker commit (exhaustive), and an OpenAPI endpoint diff (structural signature, so prose-only spec edits do not show as changed). It only drafts; the user-facing rewrite and bilingual translation stay manual.
+- Backfilled May + June 2026 entries (EN + DE), em-dash-free copy, and renamed the German section tab "Doku" to "Dokumentation".
+
+### Fix: "Copy markdown" returned English on German pages
+
+The per-page copy-markdown button (and "view as markdown") served the default-language source regardless of the page's locale: the content URL (`getPageMarkdownUrl`) was built from the locale-independent slug, and the `llms.mdx/docs/[[...slug]]` route resolved `source.getPage(slug)` with no locale, so fumadocs fell back to English. The URL now carries the page locale (`/llms.mdx/docs/<lang>/<slug>/content.md`), the route resolves `source.getPage(slug, lang)`, and `generateStaticParams` emits one content route per (language, page) so both EN and DE are statically exported. Verified against the build output — `…/de/…/content.md` now holds the German source.
+
+### Add: Detect browser language on the bare `/`
+
+The root entry point (`src/app/page.tsx`) now picks `de` or `en` from `navigator.languages` and replaces into the matching docs root, falling back to `en` (plus a `<noscript>` meta-refresh + language links). Only `/` is auto-routed; any explicit `/en/…` or `/de/…` path is left untouched. Done client-side because production is a static export with no server to read `Accept-Language`; the supported-language list is kept inline to avoid pulling the i18n-UI module into the client bundle.
+
+### Change: Quieter work-in-progress banner
+
+The site-wide WIP notice dropped its filled-amber styling and 🚧 emoji for a neutral, theme-token bar (`bg-fd-secondary`, `text-fd-foreground`, thin `border-fd-border`, smaller text) that stays legible in light and dark without dominating the page.
+
+### Add: "Server-Timing headers" guide (EN + DE)
+
+New `guides/server-timing.mdx` + `.de.mdx`, wired into the guides nav (`guides/meta.json` / `meta.de.json`) and the guides index cards, with a cross-link plus a "new feature, dashboards still being tuned" note added to the Fetch/XHR + Server-Timing section of `analytics.mdx` / `analytics.de.mdx`. The guide documents how fastmon reads the **document-response** `Server-Timing` header off the navigation entry (`name` / `dur` / `desc`) and how it normalizes it server-side (the wire is forgeable, so the tracker's filtering is re-applied):
+
+- **Form rules and trust model.** Key/desc charset + length, `0 ≤ dur ≤ 10,000,000 ms`, `tideways.layer.` prefix strip, numeric-`desc` → `dur`, the infrastructure/trace denylist, and the UUID/hex-blob ID guard.
+- **Three-tier model.** Promoted scalars (always) / Tier-2 catalog (uncapped) / ≤ 8 Tier-3 customs, with the 24-key dur-map and 8-key desc-map caps.
+- **Precedence chain.** `fm-*` first-party › your site's mapping › built-in vendor alias (`cf…`) › built-in generic alias — corrected from an earlier draft that collapsed vendor and generic into one rank; the phase tables are now stated to be in precedence order, left to right.
+- **The seven backend phases** (five first-with-`dur`, `cache`/`external` summed) with their recognized aliases; the two-layer cache status (`cdn` / `origin`, CloudFront bare flags, the status enum + Fastly collapse); and the `pageType` promotion.
+- **Emit examples** for Flask, Express, and Symfony.
+
+Authored against the backend `_normalize_server_timing` implementation.
+
+### Fix: German copy-edit — translation-calques + brand-casing across hand-authored DE pages
+
+Surgical, meaning-level fixes (not spelling) across the German docs; code, links, anchors, and frontmatter left untouched, house terms preserved (`fastmon`, beacon, Pageview, "die Leitung ist fälschbar").
+
+- **web-vitals.** `ttfb.de` "schneiden RTT" → "senken die RTT" (mistranslated *cut*) and "Höchste Leverage." → "Der größte Hebel."; "Tracke das 75. Perzentil" → "Beobachte…" (`cls`/`fcp`/`inp`/`ttfb`); "scort/scoren" → "schneidet/schneiden … ab" (`cls`/`experience-score`); `lcp.de` "so reportet Google" → "so weist Google es aus"; `index.de` "reportest du" → "betrachtest du".
+- **guides.** `filter-internal-traffic.de` "verzieht" → "verzerrt" (*skew*), "Beste Mechanik" → "Bester Weg" (*mechanism*), "gate … anhand des UA" → "steuere … über den UA"; `compare-releases.de` "Beacons ingestet" → "empfängt"; `notification-rules.de` "Cadence" → "Takt" and "beißt der Vergleich" → "wird … zum Problem".
+- **concepts / install / architecture.** "monitorst/monitoren" → "überwachst/überwachen" (`concepts/index`, `concepts/sites`); "vor Opt-In minten" → "… vergeben" (`concepts/beacon`); "gescopt" → "begrenzt" (`architecture`); "macht kein Fingerprinting" → "betreibt…" and "Volles Statement" → "Ausführlich dazu" (`install/index`); "stille Drops" → "stille Verwerfungen" (`install/verify`).
+- **Brand casing reconciled.** Restored sentence-initial `Fastmon` where an automated pass had over-lowercased it — per the documented rule (lowercase `fastmon` except at the start of a sentence, heading, or title) — in `web-vitals/index.de`, `architecture.de`, `synthetic.de`, `glossary.de`, `concepts/beacon.de`, and applied the same rule to the new Server-Timing guide (EN + DE).
+
+### Add: Site-wide "work in progress" banner (EN + DE)
+
+A persistent amber notice rendered above every page (home, docs, API) flagging that the docs are still being written and may be incomplete or inaccurate. Added in `src/app/[lang]/layout.tsx` via the fumadocs `Banner` (`variant="normal"` restyled to amber through `tailwind-merge`, so it works in light and dark mode); copy is locale-aware (`en`/`de`). Intentionally not dismissible (no `id`) so the accuracy caveat stays visible.
+
+### Change: House-style sweep — lowercase `fastmon` brand + de-wrapped prose (EN + DE)
+
+Two mechanical, content-preserving passes over every hand-authored doc; the generated `api/**` operation pages (those carrying `_openapi:` frontmatter, emitted by `scripts/generate-api-docs.mjs`) were left untouched. No facts, links, code, or frontmatter keys changed.
+
+- **Brand, terminology, and hyphenation.** The brand is now written lowercase `fastmon` everywhere except where grammar forces a capital — start of a sentence, heading, or title → `Fastmon` (this covers comparison-table headers and frontmatter `description` values too). Standalone English product terms lost their internal hyphens (`Real-User-Monitoring` → `Real User Monitoring`, `Web-Vitals` → `Web Vitals`), while German compounds keep their connecting hyphen (`Web-Vitals-Übersicht`, `RUM-Daten`). The `tracker` (installed client script) vs `beacon` (delivered JS / wire payload) distinction was preserved, not blanket-replaced. The landing pages (`index.mdx` / `index.de.mdx`) additionally picked up the benefit-oriented voice, shorter card descriptions, and the `Shopware` platform mention; `concepts/beacon.de.mdx` had grammar slips fixed. Brand-casing edge cases (mid-sentence after a capitalized lead word, mid-heading, German compounds like `fastmon-Tracker`) were verified by hand after the automated pass.
+- **Prose de-wrapped.** Manual ~55-character hard line breaks in prose and list items were removed — one paragraph (or bullet) is now a single line, matching the convention already used in `index.de.mdx` / `concepts/beacon.de.mdx`. Prettier does not govern MDX prose (`proseWrap` is unset → `preserve`; the `format` script covers `src/`/`scripts/` only), so wrapping is purely an authoring convention. The transform was verified content-preserving per file by two invariants: an identical whitespace-split token sequence before/after, and byte-identical fenced-code regions (64 files changed, 0 invariant failures).
+
+### Fix: Override `@babel/core` to clear OSV advisory GHSA-4x5r-pxfx-6jf8
+
+- `@babel/core` 7.29.0 → 7.29.7 via `overrides` (CVSS 3.2, low; dev-only transitive dep through `eslint-config-next` → `eslint-plugin-react-hooks`). Babel only compiles our own source at build time, so it isn't reachable, but the override keeps the OSV-Scanner CI job green and resolves rather than suppresses. `npm audit` reports 0 vulnerabilities.
+
+### Change: Sync docs with backend `visitors` rename + frontend filter bar / command palette (EN + DE)
+
+Code-verified against backend `2026.6.45` and frontend `2026.6.11`. Scope was P0 (contradictions) + P1 (new features); OAuth app-login held back (see below).
+
+- **`sessions` metric → `visitors` + identity (P0).** The backend replaced the `sessions` analytics metric with `visitors` counted along an identity axis: `stitch` (edge-derived, present in every mode including `anonymous`, the default) or `session` (consent-gated `session_id`). The reporting default is the site's new `preferred_identity` (default `stitch`), clamped to what the site collects.
+  - `concepts/sessions.mdx` retitled to "Visitors and sessions" and reframed around the visitor/identity model (slug kept to preserve inbound links + nav). Field table rebuilt against `VisitorSummaryItem` (`id`, `identity`, `started_at`, `ended_at`, `duration_ms`, `page_count`, `country`, `browser`, `device_type`, `os`, `avg_lcp`, `avg_fcp`, `total_errors`). Per-visitor replay is documented as consent-gated to `identity=session` (explicit `stitch` → `422`).
+  - `analytics.mdx`: "Sessions" section → "Visitors"; "sessions affected" → "visitors affected"; corrected the now-false "explorer stays empty by design" claim for `anonymous` sites (they count `stitch` visitors). `install/verify.mdx`, `privacy.mdx`, and `glossary.mdx` had their vocabulary aligned; glossary gains a **Visitor** entry.
+  - `guides/notification-rules.mdx`: added the `visitors` metric (count-only) and the optional per-rule `identity`.
+  - `concepts/sites.mdx`: added the `preferred_identity` field.
+  - The per-endpoint `api/analytics/*` pages pick this up automatically (prod OpenAPI now serves `/analytics/visitors{,/detail}`; the `sessions` endpoints are gone).
+- **Tag filtering claim corrected (P0).** The frontend removed the sidebar per-site tag filter (it never affected analytics). `concepts/sites.mdx` + `glossary.mdx` now describe tags as labels for organizing sites, with a cross-site analytics-by-tag scope noted as planned, not live.
+- **Auth: removed the false single-token / roadmap claim (P0).** `api/authentication.mdx` no longer asserts "at most one active token at a time" or "multi-token on the enterprise roadmap." OAuth app-login + per-user `app_tokens` are **not** documented yet: those endpoints aren't in the production OpenAPI spec and the flow still carries a "remove before production" wildcard `redirect_uri`. Revisit once it ships.
+- **New features documented (P1).** The ad-hoc filter bar and the `Cmd`/`Ctrl`+`K` command palette (`analytics.mdx`), and the Fetch/XHR + `Server-Timing` telemetry surface (`analytics.mdx` + `concepts/beacon.mdx`, including the `fetch_xhr_update` lifecycle and the `fetch_xhr_enabled` per-site toggle).
+- **DE copy-edit.** Fixed four German grammar slips in the synced pages: `concepts/sessions.de.mdx` (the non-word "heraussingelt" → "herausgreift"; a number-agreement slip and a copula mismatch in the "common surprises" and "related" lists) and `concepts/sites.de.mdx` (the Denglisch "geclamped" → "begrenzt").
+
+### Change: Dependency updates + fumadocs-openapi 10 → 11 migration
+
+- **Routine bumps:** `fumadocs-core`/`fumadocs-ui` 16.9.3 → 16.10.2, `fumadocs-mdx` 15.0.11 → 15.0.12, `next` (+ `eslint-config-next`) 16.2.7 → 16.2.9, `@tailwindcss/postcss` 4.3.0 → 4.3.1, `prettier` 3.8.3 → 3.8.4.
+- **fumadocs-openapi 10.10.3 → 11.0.3 (major, forced by the 16.10 bump).** fumadocs-core 16.10 dropped the `renderTranslation` export that `fumadocs-openapi` 10 imports, so the core/ui bump is only buildable on openapi 11. The v11 API redesign required code changes:
+  - `createAPIPage(openapi, …)` → `createOpenAPIPage(…)`. v11 renders the operation UI as a client component, so the page factory and its render callbacks now live in `api-page.client.tsx` (`"use client"`); `api-page.tsx` is a thin server wrapper that resolves the bundled document (`openapi.getSchema`) and passes it in as the serializable `payload` prop (v11 no longer bakes the server instance into the factory).
+  - `defineClientConfig` removed; its `storageKeyPrefix` folded into the page options.
+  - OpenAPI i18n keys re-mapped in `lib/i18n.ts` (short keys like `send`/`query` → English-source-plus-context keys like `"Send(playground)"`); the v10 schema-constraint labels (`schemaMatch`, `schemaMultipleOf`, …) no longer exist and fall back to fumadocs' built-in copy.
+  - `mdx.tsx` registers the same wrapper under both `APIPage` and `OpenAPIPage` (v11 emits `OpenAPIPage ?? APIPage` in generated MDX).
+  - Tracked `content/docs/api/synthetic/*.mdx` regenerated into the v11 MDX layout format (format-only; operations and titles unchanged, no backend content drift).
+- **`eslint` held at 9.39.4.** ESLint 10 currently breaks under `eslint-config-next@16.2.9` — its bundled plugins (`eslint-plugin-import`/`react`/`jsx-a11y`) still cap their peer range at `^9`, and a lint run crashes with `scopeManager.addGlobals is not a function`. Tracked upstream in vercel/next.js [#91710](https://github.com/vercel/next.js/pull/91710) (open, switches to `eslint-plugin-import-x`). Revisit once a v10-capable `eslint-config-next` ships; note ESLint 9.x EOL is 2026-08-06.
 
 ### Change: Drop legal claims and statute citations from the privacy/collection-modes pages (EN + DE)
 

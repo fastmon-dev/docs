@@ -1,0 +1,584 @@
+---
+title: Changelog
+description: Was es Neues bei fastmon gibt, über Dashboard, API, Plattform und Tracker hinweg. Neueste zuerst.
+full: true
+---
+
+export const labels = {
+  all: "Alle",
+  areas: { dashboard: "Dashboard", api: "API", tracker: "Tracker", platform: "Plattform", extension: "Erweiterung" },
+  types: { new: "Neu", changed: "Geändert", fixed: "Behoben", removed: "Entfernt" },
+  months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+};
+
+Das Neueste von fastmon, über Dashboard, API, Plattform und Tracker hinweg. Den Feed kannst du nach Bereich filtern.
+
+Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpassung. Die Ausnahme ist der **Tracker** (das Skript, das du einbindest): Ihn dokumentieren wir lückenlos, denn er läuft im Browser deiner Besucher, wo schon eine kleine Änderung beeinflussen kann, was gemessen wird.
+
+<Changelog labels={labels}>
+
+<ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: eine DevTools-Erweiterung zum Lesen von Beacons">
+
+Der **Beacon Inspector** ist eine Browser-DevTools-Erweiterung, die die Collector-Beacons deiner Seite liest und live dekodiert. Er gruppiert jeden Beacon nach Pageview, schlüsselt die kurzen Wire-Keys in lesbare Felder auf, verfolgt den Lebenszyklus von `init` bis zum terminalen Beacon und zeigt die Web Vitals, während sie sich einpendeln. Er erfasst sowohl die `fetch`-Beacons, die das Network-Panel ohnehin listet, als auch die `sendBeacon`-Bodies, die es nicht zeigt, du siehst also jede Emission mit vollständigem Payload. Ein Follow-Modus pinnt den neuesten Pageview, Compare stellt zwei nebeneinander, und der Export kopiert einen Beacon als Markdown (optional anonymisiert) für einen Bug-Report. Er ist Open Source und läuft komplett im Browser; keine Beacon-Daten verlassen das Gerät. Siehe [Beacon Inspector](/de/guides/beacon-inspector).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Weniger, besser getimte Beacons pro Pageview">
+
+Die Beacon-Aussendung des Trackers wurde überarbeitet: weniger Requests und genauere Loading-Metriken. `init` feuert jetzt sofort als Marker „dieser Pageview existiert“ (sodass auch ein Bot oder eine abrupt geschlossene Seite registriert wird), und `loaded` wird zurückgehalten, bis der LCP final ist (erste Interaktion, Tab-Wechsel oder ein 10-Sekunden-Deckel), statt beim ersten, oft vorläufigen LCP-Eintrag zu feuern. In den Speicher gelangt jetzt der echte finale LCP. Mid-Pageview-Update-Beacons feuern nur noch bei einem aussagekräftigen Signal (ein neuer First-Party-Endpoint, ein fehlgeschlagener Request oder ein langsamer Aufruf über 500 ms) statt bei jedem fetch oder XHR, sodass First-Party-Prefetch und Third-Party-Analytics-Geplapper keine Flut mehr auslösen: ein typischer Pageview sendet jetzt zwei bis vier Beacons. Terminale Beacons behalten `keepalive`, Beacons der lebenden Seite nicht mehr, sodass das finale Beacon (mit dem endgültigen INP und CLS der Seite) auf Chromium zuverlässig ankommt, statt unter starker Navigation gelegentlich verloren zu gehen. Keine Änderung am Wire-Format oder an deiner Einbindung; siehe [Lifecycle und Stellschrauben des Beacons](/de/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-Navigation-LCP wird auf Chromium jetzt gemessen">
+
+Soft-Navigation-Pageviews (SPA-Routenwechsel) sendeten auf aktuellem Chrome gar keinen LCP, selbst wenn die Route klar ein großes Bild rendert, während FCP und INP normal durchkamen. Eine Formänderung in Chromes `interaction-contentful-paint`-Einträgen führte dazu, dass der Tracker die Interaktions-(Klick-)Zeit statt der Paint-Zeit las, was einen LCP von null ergab, den die Plausibilitätsprüfung dann verwarf. Der Tracker liest jetzt die Paint-Zeit und ordnet jeden Paint über die Interaction-ID seiner Route zu, sodass der SPA-Routen-LCP befüllt wird.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Ein doppelt eingebundenes Tag verdoppelt keinen Pageview mehr">
+
+Wurde das Tracking-Tag auf einer Seite zweimal eingebunden oder ausgeführt (ein häufiger Tag-Manager-Fehler), umschloss jede Kopie die History-API des Browsers erneut und registrierte eigene Listener, sodass ein einzelner SPA-Routenwechsel in jeder Kopie feuerte und doppelte Pageviews und doppelte Beacons erzeugte. Der Tracker sichert sich jetzt gegen eine zweite Ausführung ab und bricht ab, sodass eine zusätzliche Einbindung folgenlos bleibt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Live-Modus für Explorer und Visitors">
+
+Die rohe Requests-Liste des Explorers und die Visitors-Seite bekommen einen echten **Live**-Modus. Eingeschaltet rastet er den Zeitraum auf die letzte Stunde ein (ein Live-Stream über 30 Tage ist sinnlos) und stellt beim Beenden den vorherigen Zeitraum wieder her, heftet sich an die neueste Seite und zeigt brandneue Pageviews, sobald sie eintreffen, statt auf den 30-Sekunden-Count-Cache zu warten (er zeigt „Live · N angezeigt“ ohne exakte Gesamtzahl, zugunsten der Aktualität). Der Live-Umschalter und der Refresh-Button verschmelzen zu einem Control mit Countdown-Rand, der über das Intervall abläuft und bei jedem Refresh neu startet, ob manuell oder automatisch.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Nach Browser-Version filtern und Stitch-Wert eintippen">
+
+Zwei neue Filtermöglichkeiten. **Browser-Version** ist ein numerischer Bereichsfilter auf die Major-Version des Browsers (`Browser-Version ≥ 150`, mit `≥`, `≤` oder einem Bereich, wie bei jedem numerischen Filter); kombiniere ihn mit einem `browser`-Filter, denn eine Versionsnummer bedeutet je Familie etwas anderes. Und du kannst jetzt einen **`stitch`-Wert eintippen oder einfügen**, um auf einen einzelnen Besucher einzuschränken, wo es vorher nur per Klick ging; ein eingefügter Wert wird auf Kleinbuchstaben-Hex normalisiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon-Wire-Keys sind jetzt lesbare Mnemonics">
+
+Die kompakten Wire-Keys des Beacons, früher ein undurchsichtiges Nummernschema (`t1`, `t9`, `t10` und so weiter), sind jetzt kurze Mnemonics: `ttfb`, `lcp`, `inp`, `cls` und der Rest. Vollständig abwärtskompatibel und ohne Zutun deinerseits: Der Collector akzeptiert die alten Keys weiter, eine Seite mit einem älteren gecachten Bundle meldet also unverändert, bis sie sich aktualisiert. Dasselbe Release wirft drei veraltete JSON-Blobs raus, die der Beacon nicht mehr braucht (die alten Third-Party-, Resource- und Long-Animation-Frame-Strings, längst durch strukturierte Felder ersetzt), und spart so ein paar Hundert Bytes pro Pageview. Siehe [Der RUM-Beacon](/de/concepts/beacon#der-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="fixed" area="tracker" title="Keine doppelten Update-Beacons mehr mitten im Pageview">
+
+Auf einer Seite, die sowohl einen Fehler als auch einen fetch/XHR-Aufruf protokollierte, konnte der Tracker zwei Byte-identische Update-Beacons im selben Moment absenden: Der Fehler-Kanal und der fetch/XHR-Kanal führten je einen eigenen Sende-Timer, und keiner wusste, dass der andere den vollen Snapshot bereits verschickt hatte. Da jedes Beacon den kompletten kumulativen Stand trägt, war das zweite reine Dopplung. Der Tracker merkt sich unversendete Aktivität jetzt pro Kanal und überspringt ein Update, sobald der aktuelle Stand schon auf dem Draht ist. Weniger Requests, und kein Datenverlust: Das Update, das rausgeht, trägt weiterhin beide Kanäle.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="„Beacon“ heißt jetzt „Pageview“">
+
+Der Drill-down-Datensatz heißt im ganzen Dashboard jetzt **Pageview** (Beschriftungen, Tooltips, Kopier-Buttons, Leer- und Ladezustände sowie der Markdown-Export) statt „Beacon“, was sich wie Fachjargon las. Seine Deep-Link-Parameter wechseln auf `?pageview=` und `?pvtab=`, alte `?beacon=`-Links lösen also nicht mehr auf. Das Öffnen eines Pageviews aus der rohen Explorer-Liste schreibt ihn jetzt ebenfalls in die URL, sodass ein Neuladen dieselbe Zeile wieder öffnet und der Link teilbar ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Schnelle +/-Filter im Explorer und im Pageview-Drawer">
+
+Jeder filterbare Wert in der Explorer-Tabelle und im Pageview-Drawer bekommt beim Hovern **+ / −**-Buttons, die diesen Wert direkt in die Explorer-Filter aufnehmen oder ausschließen. In der Tabelle schweben sie über dem Ende der Zelle, sodass ihr Einblenden nie eine Spalte verschiebt oder abschneidet; im Drawer sitzen sie in einem reservierten Slot neben Land, Page-Type, Gerät, OS, Browser, Connection, Protokoll, Navigation, Referrer, Kampagne, Cache-Status und Domain (Browser filtert `Chrome`, nicht `Chrome 120`). Das **+** wirkt auch auf den Besucher (Stitch) eines Pageviews und schränkt den Explorer auf genau diesen Besucher ein.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Reicheres Netzwerk- und Server-Timing-Detail im Pageview-Drawer">
+
+Der Pageview-Drawer zeichnet seine Netzwerk-Abschnitte jetzt als proportionale Bar-Lists (Schlimmstes zuerst) statt als flache Zeilen. **Resources** zeigen Anzahl, Größe und Dauer je Initiator-Typ (die Größen und Dauern wurden erfasst, aber nie angezeigt), **Third Parties** teilen sich nach Domain (Blocking-Zeit) und nach Kategorie (Request-Anteil), und **Long Animation Frames** reihen sich nach Blocking-Zeit je Skript. **Server Timing** wird zu einem gestapelten Kompositions-Balken aller Backend-Phasen (die sieben promoteten Metriken plus deine eigenen `Server-Timing`-Keys) mit passender Legende; eigene Keys, die bereits eine promotete Phase speisen, werden dedupliziert, sodass die Summe nicht doppelt zählt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query-Aufbewahrung gilt jetzt auch für fetch/XHR-Endpoint-Pfade">
+
+Der Tracker hat den Query-String bisher von jedem fetch/XHR-Endpoint-Pfad entfernt, sodass ein Front-Controller-Shop, der die Route im Query hält (`/index.php?controller=Search` gegenüber `?controller=Cart`), jeden Request in einen nutzlosen `/index.php`-Bucket zusammenfallen ließ. Diese Pfade beachten jetzt dieselben zwei Site-Einstellungen wie die Seiten-URL: [`query_value_keys`](/de/tracker#query-value-keys) behält die gewählten `key=value`-Paare (sodass `controller` und `action` die Routen trennen), und [`track_query_keys`](/de/tracker#track-query-keys) behält die bloßen Key-Namen. Ist keins von beiden gesetzt, wird der Query weiterhin verworfen, unkonfigurierte Sites ändern sich also nicht und es gibt keine Migration. Die Reduktion läuft im Tracker (der Pfad ist sein Aggregationsschlüssel), und der Collector wendet dieselbe Regel als Absicherung erneut an. Konfigurierte Keys sind auf Buchstaben, Ziffern, `_` und `-` beschränkt, sowohl beim Speichern als auch beim Ausliefern des Skripts, sodass ein Key nie aus dem ausgelieferten Bundle ausbrechen kann.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Analytics nach Besucher filtern (Stitch-ID)">
+
+Die Analytics-Filter enthalten jetzt **`stitch`**: schränke jede Aufschlüsselung, jedes Chart und jeden Drill-down auf einen oder mehrere bestimmte Besucher per Stitch-ID ein. Die Werte sind dieselben 32-stelligen Hex-IDs, die `POST /analytics/beacons` zurückgibt, worauf du filterst, entspricht also dem, was du zurückliest. Ungültige IDs werden ignoriert, und ein Filter nur aus ungültigen IDs trifft nichts. Es ist ein Treffer-Filter (ein Ausschließen per Stitch gibt es nicht).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Reicheres Beacon-Drill-down">
+
+Das Beacon-Drill-down (`POST /analytics/beacons`) liefert mehr Detail je Beacon und lässt sich auf einen einzelnen Fehler einschränken. Ein neues Feld **`error_fingerprint`** gibt nur die Pageviews mit dieser Fehlersignatur zurück, was den „In Explorer öffnen“-Link der Fehler-Seite trägt. Jede Beacon-Zeile führt jetzt außerdem ihre Fehlerklasse (normal oder ad-geblockt), die durchschnittliche Waterfall-Position jedes fetch/XHR-Endpoints, die Third-Party- und Ressourcen-Maps (Anzahl, Größe und Dauer je Kategorie) sowie die Long-Animation-Frame-Attribution je Skript. Die Long-Animation-Frame-Daten brauchen das v2-Beacon-Schema und kommen auf v1 leer zurück.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web-Vitals-Messung an web-vitals v5 angeglichen">
+
+Der Tracker misst die Core Web Vitals jetzt so, wie es Googles web-vitals-v5-Bibliothek und CrUX tun, damit deine Feld-Werte zu dem passen, was die Search Console zeigt. **INP** ist jetzt die CrUX-p98-Schätzung (etwa deine 98.-Perzentil-Interaktion) statt der einzelnen langsamsten Interaktion und liest sich auf interaktionsreichen Seiten daher niedriger: eine Änderung der Methode, keine Regression. **Prerender-Seiten** erzeugen keine Phantom-Pageviews und keine aufgeblähten Zeiten mehr, denn der Tracker startet erst, sobald die Seite aktiviert wird, und rebasiert TTFB, FCP und LCP auf diesen Moment. Eine im **Hintergrund-Tab** geöffnete Seite zählt ihren verzögerten ersten Paint nicht mehr als langsames Laden: Paints, nachdem der Tab zum ersten Mal verborgen war, werden verworfen und der Pageview wird markiert. CLS zählt Layout-Verschiebungen während des Prerenders weiterhin mit, passend zu CrUX.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element-Attribution für LCP, INP und CLS">
+
+Jeder Pageview hält jetzt fest, warum ein Web Vital langsam war und welches Element es verursacht hat. LCP teilt sich in vier Phasen (Time to First Byte, Resource Load Delay, Load Duration, Render Delay), die in Summe den LCP ergeben, INP in drei (Input Delay, Processing, Presentation), und LCP, CLS und INP tragen je einen CSS-Selektor-Pfad zum verantwortlichen Element (bei LCP zusätzlich die Bild-URL). Dynamische IDs wie `#order-98123` dienen nie als Anker: Sie sind schwache personenbezogene Daten und würden die Kardinalität aufblähen, also fällt der Pfad auf einen stabilen Vorfahren zurück. Was verfügbar ist, hängt vom Browser ab: LCP-Phasen brauchen Chrome 77, Firefox 122 oder Safari 26.2; INP-Phasen Chrome 96, Firefox 144 oder Safari 26.2; und CLS-Attribution gibt es nur in Chromium. Auf Apple-Traffic bleiben diese Felder vorerst also leer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web-Vitals-Attribution im Dashboard">
+
+Die Detailseiten der Core Web Vitals zeigen jetzt die neue Attribution je Pageview. LCP und INP bekommen je eine **Phase Breakdown**-Card: die durchschnittliche Metrik als Kaskade in ihre Phasen zerlegt und dieselben Phasen über die Zeit gestapelt. Die Breakdown-Tabellen (langsamste Seiten, nach Seite, Land, Gerät) bekommen eine Spalte **Phases**, die zeigt, welche Phase je Zeile dominiert, und beim Aufklappen einer Zeile kommt eine auf sie beschränkte Phasen-Ansicht hinzu. Ein neues Panel **Element Targets** auf LCP, CLS und INP reiht die CSS-Selektoren, die am häufigsten für das Vital verantwortlich sind, angeführt von einem Hauptverursacher-Callout („verantwortlich für N % der attribuierten Pageviews“); bei LCP kannst du stattdessen die verantwortliche Bild-URL reihen lassen. Der **Explorer** bekommt die Phasen-Metriken und die Dimension INP-Interaktionstyp, und die **Visitors**-Journey samt Beacon-Drawer zeigt je Pageview die Phasenaufteilung, das Element und den Interaktionstyp.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Web-Vitals-Attribution in der API">
+
+Die neue Attribution steht über die API bereit. `POST /analytics/visitors/detail` liefert je Pageview die Phasenaufteilung, die Element-Selektoren und den Interaktionstyp, und die sieben LCP- und INP-Teilmetriken sind in `POST /analytics/query` abfragbar, mit `inp_interaction_type` als gruppierbarer Dimension. Ein neues `POST /analytics/element-targets` reiht die Elemente, die am häufigsten für LCP, CLS oder INP verantwortlich sind (nach Selektor-Pfad, bei LCP auch nach Resource-URL), mit Anteil und Durchschnittswert, site-weit oder pro URL; ein eigener Endpoint, weil die Selektor-Spalten zu hochkardinal sind, um direkt danach zu gruppieren. Wie im Dashboard bleiben diese Felder leer, bis der Browser des Besuchers sie meldet.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Visitors öffnet auf echten Journeys und filtert auf Checkout">
+
+Die **Visitors**-Liste zeigt jetzt standardmäßig Sitzungen mit mindestens drei Seiten statt jedes einzelnen Ein-Seiten-Besuchs, sodass sie auf lesenswerten Journeys öffnet; das Minimum ist einstellbar und bleibt in der URL. Ein neuer Verhaltensfilter **Includes page type** behält nur Besucher, deren Sitzung einen Pageview eines bestimmten Typs enthält, mit einem Ein-Klick-**Checkout** für den häufigen Fall „Sitzungen, die den Checkout erreicht haben“.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-13" type="new" area="dashboard" title="Performance nach Cache-Status">
+
+Network → Cache bekommt ein Raster **Performance by cache status**: die Kennzahlen (LCP, TTFB, FCP, Page Load, p75) mit einer Zeile je CDN- und Origin-Cache-Status, sodass du auf einen Blick siehst, ob ein MISS hier wirklich langsamer ist als ein HIT und um wie viel. Jede Zeile ist nach ihrem Web-Vitals-Schwellenwert eingefärbt und zeigt ihren Anteil an den Pageviews, im selben Document-Navigation-Scope wie die Verteilung darüber. Die umschaltbare **Breakdown**-Card bekommt einen Share-Button auf Panel-Ebene, und die Cache-Chart-Cards bekommen den Hover-Share-Button und Deep-Link-Anker, den die Analytics-Panels schon haben.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer in Charts und Table aufgeteilt">
+
+Der Explorer sind jetzt zwei Seiten, **Charts** und **Table**, die sich Zeitraum, Filterleiste und gespeicherte Queries teilen, sodass ein Wechsel zwischen ihnen deine Query nie verwirft. **Charts** ist eine Multi-Chart-Arbeitsfläche: füge bis zu acht Charts hinzu, jedes mit eigenen Metriken, Gruppierung und Overlays für Vorperiode oder Perzentilbänder, mach sie halb- oder vollbreit und ordne sie per Drag & Drop neu an. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) tauschen den Stapel gegen einen kuratierten Satz, und eine gespeicherte Query hält jetzt das ganze Layout fest. **Table** bekommt über den Zeilen eine Hits-über-Zeit-Linie, damit du siehst, wo der Traffic dahinter entstanden ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Zwei Filtersätze in einem Chart vergleichen">
+
+Die Charts-Seite kann jedem Chart einen **zweiten, unabhängigen Filtersatz** über denselben Zeitraum überlagern, sodass du Chrome gegen Safari oder ein Land gegen ein anderes vergleichst. Zeig Fall B als gestrichelte Zwillingsreihe auf denselben Achsen (Overlay) oder als zwei Charts pro Card mit geteilter Skala (Side by side). Solange ein Vergleich aktiv ist, zeigt das KPI-Raster oben das Delta B-gegen-A.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page-Type in der Besucher-Journey">
+
+Die Besucher-Journey zeigt jetzt den **erkannten Page-Type** als Chip an jedem Pageview (Product, Category, Cart, Checkout und so weiter), neben den Chips für Navigationstyp und Cache-Status, überall dort, wo eine Site einen sendet oder erkennt. Pageviews ohne Page-Type zeigen keinen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page-Type im ganzen Dashboard">
+
+Sobald eine Shop-Ruleset an ist ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), wird **Page-Type** zu einer vollwertigen Dimension im Dashboard. Du setzt die Ruleset pro Site oder domänenübergreifendem Tracker unter Collection, schlüsselst dann nach Page-Type auf und filterst danach, nimmst ihn als Spalte in die Beacon-Liste, stellst mit dem neuen Preset **Page types** den Traffic-Mix und die Web Vitals je Typ als Chart dar und öffnest die eingeordnete Ansicht unter Analytics → Pages. Traffic ohne erkannten Typ erscheint als kein Page-Type.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatischer Page-Type für Shop-Systeme">
+
+Für Shops auf Shopware 5/6, OXID, Magento oder WooCommerce kann fastmon jeden Pageview jetzt ohne Code auf deiner Seite in einen **Page-Type** einordnen (Product, Category, Cart, Checkout und so weiter). Schalte pro Site eine Ruleset ein ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset)), und der Tracker liest nur die Body-Controller-Klasse des Shop-Frameworks aus, um den Typ abzuleiten. Standardmäßig **aus** (gar kein DOM-Read), und ein `Server-Timing: pageType`-Header hat, falls du einen sendest, weiter Vorrang.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load für Soft-Navigationen, und Web Vitals in Kürze">
+
+SPA-Routenwechsel (Soft-Navigationen) erfassten bisher keine Loading-Metriken, LCP und FCP für Single-Page-Apps kamen also nur aus kalten Seitenladungen und lasen sich schlechter als die echte Erfahrung. Der Tracker misst das Soft-Nav-Loading jetzt auf zwei Wegen: **Route Load** (`soft_nav_load`), einen Same-Site-Netzwerk-Proxy in jedem Browser, und echte LCP/FCP auf Chromium, sobald dessen Soft-Navigations-API ausgeliefert wird. Route Load landet im Dashboard als eigene Metrik, getrennt von LCP/FCP und schrittweise ausgerollt. Wenn die nativen LCP/FCP einlaufen, spiegelt der SPA-LCP/FCP-p75 auch In-App-Navigationen wider, eine Änderung der Messmethodik, keine Regression.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Schlankeres Beacon-Wire-Format">
+
+Die Wire-Keys des Beacons wurden kürzer, um pro Request Bytes zu sparen: `lifecycle` heißt jetzt `lcy`, die Kampagnenfelder (`utm_source` & Co., `click_id_param`) werden zu Zwei-Buchstaben-Keys, und leere Kampagnenfelder fallen ganz weg statt als leere Strings mitzureisen (rund 110 bis 130 Bytes pro Beacon). Die Werte bleiben gleich, und alte gecachte Bundles laufen weiter: der Collector akzeptiert alte und neue Keys dauerhaft.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Backend-Performance-Seite für Server-Timing">
+
+Eine neue Seite **Performance → Backend** macht aus deinen `Server-Timing`-Response-Headern Analytics: eine Request-Pfad-Card (Edge, Origin, Backend) mit jedem Cache-Status und wie viel Traffic welche Phase erreicht, Backend-Subphasen (DB, Cache, External, Render) als Share-of-Backend-Balken, ein Phasen-Trend über die Zeit und eine Matrix, die Phasen nach Seite, Seitentyp oder Cache-Status aufschlüsselt. Jeder nicht-promotete `Server-Timing`-Key bekommt zusätzlich einen eigenen gerankten Trend. Siehe [Server-Timing](/de/guides/server-timing).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Metrics-Ansicht im Breakdown-Grid">
+
+Das Breakdown-Grid (auf Metrik-Detailseiten und aufgeklappten Explorer-Zeilen) bekommt einen **Facts / Metrics**-Umschalter. **Metrics** ersetzt die Dimensions-Panels durch je ein kompaktes Panel pro Web Vital (LCP, INP, CLS, FCP, TTFB, Page Load, TBT), auf dieselbe Zeile und dieselben Filter bezogen, sodass du auf einen Blick siehst, ob eine Seite nur bei LCP schlecht ist oder durchweg langsam. Jedes Panel ist der Standard-Perzentil-Trend oder die Verteilung, und die aktive Ansicht bleibt in der URL für teilbare Links.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minuten-Auflösung deckt jetzt bis zu 6 Stunden ab">
+
+**Nach Minute** ist jetzt eine Granularität im Datumswähler für Fenster bis zu 6 Stunden (vorher bei 2 gedeckelt). Kurze Custom-Ranges und relative Spannen wie `3h` wählen automatisch Minuten-Buckets; längere fallen weiter auf Stunden oder Tage zurück.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Besucherverlauf, neu mit key=value-Chips">
+
+Jede Angabe zu einem Pageview im Besucherverlauf ist jetzt ein **key=value-Chip**: Navigationstyp (Soft-Nav, Reload, Back/Forward, Prerender), **CDN- und Origin-Cache-Status** (HIT / MISS, neu), Fehleranzahl und die Web Vitals (FCP, LCP, CLS, INP, TTFB, Load), jeweils nach Schwellenwert eingefärbt. Metriken links, Kontext-Fakten rechts, unter einer schlichten URL-Zeile mit Verweildauer. Chips ohne Wert werden ausgeblendet.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors-Filter bleiben in der URL">
+
+Die Verhaltensfilter auf **Visitors** (Mindestwerte für Fehler, Seiten, Dauer, durchschnittlicher LCP) stehen jetzt in der URL, sodass Neuladen oder Teilen der Seite dieselbe gefilterte Liste behält.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="dashboard" title="Geteilte Stitch-Besucher öffnen korrekt">
+
+Das Teilen oder Neuladen eines aufgeklappten **Stitch**-Besuchers konnte auf „keine Pageviews gefunden" landen: die URL merkte sich nur die Session-Identität, ein Stitch-Wert wurde also in der falschen Spalte gesucht. Die aufgeklappte Zeile merkt sich jetzt ihre Identität in der URL, sodass Neuladen und geteilte Links den richtigen Besucher wieder öffnen. Auch die Verhaltensfilter (`?minErrors=…`) überstehen den Round-Trip.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="tracker" title="Der Beacon sendet weniger Requests und lässt sich feinjustieren">
+
+Der Tracker hält den Request-Umfang jetzt von Haus aus gering: bei einem schnellen Load fassen sich die ersten zwei Beacons zu einem zusammen, frühe Mid-Pageview-Updates warten auf das finale Beacon, und die Update-Beacons einer pollenden Seite werden gedeckelt. Seiten, die daran etwas ändern müssen, setzen ein paar `window`-Globals: `__FASTMON_SAMPLE_RATE`, `__FASTMON_INIT_COALESCE_MS`, `__FASTMON_UPDATE_MIN_AGE_MS` und `__FASTMON_MAX_VERSION`. Die Defaults passen für die meisten Sites. Siehe [Der RUM-Beacon](/de/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="platform" title="Collection Modes sind jetzt Presets und Einstellungen pro Feld">
+
+Die Datenerfassung einer Site ist nicht mehr einer von drei festen Modi. Du wählst beim Anlegen ein **Preset** (Minimal, Standard oder Full) und stellst danach jede Einstellung einzeln: die On-Device-Session-ID und ihr Consent-Timing, das am Edge abgeleitete Besuchersignal, Query-Parameter-Namen, Fehlermessages und Stack-Frame-Detail sowie die Fetch/XHR-Erfassung. Neue Sites starten auf **Standard**, das Unique-Visitor-Zahlen und Diagnose einschaltet und trotzdem nichts auf das Gerät des Besuchers schreibt. Die alten `collection_mode`-Werte laufen als veralteter API-Alias weiter. Siehe [Tracker-Einstellungen](/de/tracker).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors Explorer, mit Stitch als vollwertiger Identität">
+
+Die Sessions-Seite heißt jetzt **Visitors**, unter `/visitors` (alte Links leiten weiter, geteilte Links funktionieren weiter). Stitch und Session sind gleichwertig: der Identitäts-Umschalter startet mit der bevorzugten Identität der Site, und eine Stitch-Zeile klappt in den vollen Pageview-Verlauf dieses Besuchers auf, dasselbe Drill-down wie bei Sessions. Die überflüssige Zähl-Card „Besucher auf dieser Seite" ist weg.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Domainübergreifende Tracker und Site-Anlage per Klick">
+
+Ein domainübergreifender Tracker (ein Embed über mehrere Domains) trägt jetzt denselben Datenumfang wie eine Site, angewandt auf jede Domain, auf der er läuft; nur das Besuchersignal bleibt pro Domain. Beobachtete Domains, die noch keine Site sind, erscheinen als **erkannte Domains**, und **Als Site hinzufügen** legt die Site mit einem Klick an, mit Datenumfang, Collector-Konfiguration und Bundle-Version des Trackers. Siehe [Org-weite Tracker](/de/concepts/org-trackers).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="platform" title="Ein fehlerhafter Wert kippt nicht mehr einen ganzen Beacon-Batch">
+
+Ein einzelnes Beacon mit einem nicht-endlichen oder außerhalb des Bereichs liegenden Connection- oder Timing-Wert ließ bisher den ganzen Batch-Insert scheitern und verwarf jedes andere Beacon im selben Flush. Solche Werte werden jetzt pro Feld auf „unbekannt" gesetzt, sodass ein fehlerhaftes oder bösartiges Beacon den legitimen Traffic drumherum nicht mehr mitreißt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-08" type="changed" area="dashboard" title="Breakdown-Listen: +/- Filter-Aktionen und Anteil am Gesamtwert">
+
+Die Breakdown-Listen auf **Analytics** (Sources, Seiten, Länder, Devices sowie die Top-Listen in Audience und Cache) bekommen die Hover-Aktionen der Metrik-Detailseiten: **+** filtert auf einen Wert, **−** schließt ihn aus. Wo sich eine Dimension nicht ausschließen lässt, ist das **−** mit Tooltip deaktiviert. Jede Zeile zeigt zusätzlich ihren **Anteil am Gesamtwert** neben der Zahl (zum Beispiel `12% · 4.3K`), berechnet über das ganze Fenster, nicht nur die sichtbaren Zeilen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-07" type="changed" area="dashboard" title="Org-weite Navigation: deine Site-Auswahl wandert mit">
+
+Jede Monitoring-Seite liegt jetzt unter einer org-bezogenen URL, und die Site ist ein Filter, der dich wie der Zeitraum von Seite zu Seite begleitet. Ohne ausgewählte Site siehst du die gesamte Organisation aggregiert, und der Umschalter in der Seitenleiste hat einen eigenen Zustand **Alle Sites**. Der Umschalter erlaubt jetzt Mehrfachauswahl: Ein Klick auf eine Site springt zu ihr, per Checkbox (oder Cmd/Strg-Klick) kombinierst du mehrere. Site-Tags grenzen die Daten jetzt wirklich ein, mehrere Tags werden mit UND verknüpft; der alte, wirkungslose Tag-Selektor ist weg. Alte Site-Links funktionieren weiter über eine dauerhafte Weiterleitung, die die Site als Filter übernimmt. In der Cmd+K-Palette schränkt die Eingabe `org:` die Suche auf Organisationen ein.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="new" area="dashboard" title="Farbenblind-freundlicher Modus">
+
+Ein neuer **farbenblind-freundlicher Modus** unter Account, Darstellung stellt die Status- und Diagrammpalette auf ein rot/grün-sicheres Schema um (Blau, Orange, Zinnoberrot), sodass die Bewertungen Gut / Verbesserungswürdig / Schlecht überall im Dashboard, in den Diagrammen, der Geo-Karte und den Heatmaps als Blau, Orange und Rot erscheinen. Status-Indikatoren tragen zusätzlich Symbole, damit die Bedeutung nie allein von der Farbe abhängt. Die Einstellung wird auf deinem Gerät gemerkt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="fixed" area="dashboard" title="KI-Assistent „Ask“ wiederholt seine Antwort nicht mehr">
+
+Der KI-Assistent „Ask“ hat dieselbe Antwort manchmal zweimal gestreamt und doppelt gespeichert, sodass sie doppelt erschien und nach einem Neuladen doppelt blieb. Eine Ausgabeprüfung hat die Antwort neu erzeugt, nachdem sie bereits gesendet war; diese Selbstkorrektur ist entfernt, und die Prüfung protokolliert Auffälligkeiten jetzt nur noch, statt ein erneutes Senden auszulösen. Jede Antwort wird einmal gesendet und einmal gespeichert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache-Monitoring, entlang des Request-Pfads neu geordnet">
+
+Die Cache-Seite ist jetzt entlang der drei Schichten aufgebaut, die ein Request durchläuft, mit einem Umschalter **Browser / CDN / Origin**. Jede Schicht zeigt denselben Panel-Satz: Trefferquote, Status-Verteilung, ein gestapeltes Diagramm „Cache-Status über Zeit“ (mit Umschalter absolut/prozentual und einer Legende, die per Klick einen einzelnen Wert isoliert) sowie die Zuordnung nach Seite. Der Browser-Cache ist auf wiederkehrende Aufrufe umgestellt (Reloads sowie Vor und Zurück), bei denen der Cache warm ist; er trägt keine Gut/Schlecht-Bewertung mehr, da es keinen verbindlichen Zielwert gibt, und eine Kennzahl „Erste Navigationen“ liefert Kontext. CDN und Origin nutzen die nativen Trefferquoten-Metriken und schließen Soft-Navigationen aus, die kein Dokument laden und keinen Cache-Status tragen. Ein neues Panel **Ressourcen nach Typ** schlüsselt den Traffic nach Skript, CSS, Bildern, Schriften und Sonstigem auf, mit Umschalter Anzahl/Bytes. Das Dashboard erhält ein einzelnes kombiniertes Cache-Widget mit demselben Umschalter, und der Menüpunkt Cache ist als **Neu** markiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Release-Marker auf jedem Chart, mit klarerem Hover">
+
+Release-Marker funktionieren jetzt auf jedem Chart gleich. Die Charts der **Analytics**-Seite (Besucher, Seitenaufrufe, Aufrufe pro Besuch) zeigen sie erstmals, und jedes Zeitreihen-Chart zeichnet sie aus einer gemeinsamen Implementierung, sodass App- und Tracker-Marker überall identisch aussehen und sich gleich verhalten. Charts, die einen Release bisher verbargen, wenn er im gewählten Zeitraum, aber außerhalb der geladenen Daten lag (LCP, Cache-Trefferquote, Synthetic, Explorer), zeigen nun jeden Release im Bereich. Auch das Hover ist überarbeitet: Ein Band am oberen Chart-Rand macht die Marker leicht greifbar, dicht beieinanderliegende Marker werden zu einem Ziel mit Zähler zusammengefasst, und der Marker-Tooltip kollidiert nicht mehr mit dem Daten-Tooltip des Charts und wird am Rand nicht mehr abgeschnitten.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Teilbare Metrik-Panel-Ansicht">
+
+Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht) wird jetzt in der URL abgebildet, und das Panel hat einen **Teilen-Button**. Ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen jetzt die Navigation) und scrollen vollständig zum Ziel-Panel.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attributionstabellen zeigen jede Zeile, mit Aggregation je Spalte">
+
+Die langsamsten/schlechtesten Seiten, die Breakdown-Grids sowie die Cache- und Fehler-Attributionstabellen verbergen Zeilen mit wenig Volumen nicht mehr hinter einer Grenze von **≥ 1 % der Seitenaufrufe (mind. 30)**. Jede Zeile wird angezeigt; nach Volumen grenzt du selbst im Explorer ein (zum Beispiel `beacons:ge:N`). Eine reine Zähl-Metrik (Requests / Visitors) neben einer Wert-Metrik zwingt die ganze Tabelle nicht mehr auf **Count**: Jede Spalte nutzt ihre eigene Aggregation, sodass **LCP sein p75** statt einer sinnlosen Zahl zeigt. Für die Explorer-KPI-Kacheln gilt dasselbe.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: Verteilung einer Dimension über die Zeit">
+
+Im Explorer kannst du jetzt nach einer kategorialen Dimension gruppieren, etwa dem CDN- oder Origin-Cache-Status, und als Linie, gestapelte Linie oder gestapeltes Balkendiagramm darstellen, wie sich die einzelnen Werte (HIT, MISS, EXPIRED) **über die Zeit** entwickeln, statt nur die aggregierte Aufschlüsselung zu sehen. Gestapelte Ansichten schalten zwischen **100 %** (Anteil je Wert pro Intervall) und **absoluten** Zahlen um. Eine zweite Metrik wie TTFB lässt sich als gestrichelte Linie auf einer rechten Achse zur Einordnung überlagern. Eine Group-by-Dimension erzwingt nicht mehr das Balkendiagramm: Linie, Stapel und Kreis bleiben erhalten, wo sie sinnvoll sind, und der Diagrammtyp-Auswähler graut Optionen aus, die die aktuelle Abfrage nicht darstellen kann.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="fixed" area="dashboard" title="Prozent-Metriken im Explorer">
+
+Verhältnis-Metriken wie die Cache-Trefferquote werden in den Explorer-Diagrammen und -Tabellen jetzt als echter Prozentwert dargestellt (zum Beispiel **80 %**) statt als „0,8 %“.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Gut/Verbesserungswürdig/Schlecht-Aufteilung auf den Verteilungs-Cards">
+
+Die Verteilungs-Metrik-Cards im Dashboard zeigen jetzt die **Aufteilung Gut / Verbesserungswürdig / Schlecht** als farbcodierte Prozentwerte im Card-Kopf, für jede Metrik mit Schwellwerten (die Core Web Vitals plus FCP, TTFB und Seitenladezeit), während Bewertungs-Badge und Trendpfeil an ihrem Platz bleiben. Das Histogramm der Card ist größer, und seine Balken lassen sich jetzt sowohl für Details überfahren als auch anklicken, um die Metrik-Detailseite zu öffnen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Filtern, ausschließen und Breakdown-Panels verlinken">
+
+Die Zeilen der „Woran es liegt“-Aufschlüsselung haben jetzt Hover-Aktionen **+ / −**, um einen Wert direkt zu filtern oder auszuschließen, passend zu den Grid-Panels je Zeile. Für Dimensionen, die sich nicht ausschließen lassen, etwa Seiten-URLs, wird Ausschließen mit Begründung deaktiviert angezeigt. Jedes Breakdown-Panel hat außerdem einen Teilen-Button, der direkt auf dieses Panel verlinkt; beim Öffnen des Links wird dorthin gescrollt und das Panel kurz hervorgehoben.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Aufgeräumtere Verteilungsdarstellung">
+
+Detailseiten wiederholen die Werteverteilung nicht mehr am Seitenende; sie lebt jetzt nur noch im oberen „Über die Zeit“-Panel. Die Grid-Panels der Aufschlüsselung zeigen den Anteil jedes Werts an den Seitenaufrufen neben der absoluten Zahl, und Teilen-Links stellen die gewählte Diagrammansicht (Über die Zeit, Verteilung oder beides) einer aufgeklappten Zeile wieder her, nicht nur die Zeile selbst. CDN- und Origin-Cache-Aufschlüsselungen enthalten jetzt einen „unbekannt“-Bucket für Antworten ohne Cache-Header, aber nur, wenn mindestens 1 % der Aufrufe einen bekannten Cache-Status haben, sodass eine vollständig ungecachte Seite kein nutzloses „unbekannt 100 %“-Panel mehr zeigt. Auf der Fehler-Seite wurde der „Im Explorer öffnen“-Button oben rechts entfernt; den Drill-down auf Datensatzebene erreichst du jetzt über die Tabellen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="api" title="Anzahl ad-geblockter Tracker-Aufrufe wird jetzt von der API zurückgegeben">
+
+Als ad-geblockt verworfene Tracker-Aufrufe waren bereits aus deiner Fehlerrate ausgeschlossen, aber nirgends ausgewiesen. Die Read-APIs geben diese Zahl jetzt zurück: Die Fetch/XHR-Endpunkt-Aufschlüsselung und das Detail je Beacon enthalten eine `blocked`-Zahl neben `aborts`, und die Fehlertypen-Übersicht liefert ein neues `blocked_count`. Deine Fehlerrate bleibt unverändert; das macht nur sichtbar, wie viele Aufrufe ausgeschlossen wurden, sodass das Dashboard „N als ad-geblockt ausgeschlossen“ anzeigen kann, statt sie still zu verwerfen. Siehe die [API-Referenz](/de/api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metrik-Detailseiten neu gestaltet rund um ein „Über die Zeit“-Panel">
+
+Jede Metrik-Detailseite (LCP, INP, CLS, TBT, Seitengewicht und die Ladezeit-Seiten) beginnt jetzt mit einem einzigen **„Über die Zeit“-Panel**, das du zwischen dem Perzentil-Verlauf, der Werteverteilung oder beidem nebeneinander umschaltest. Die Verteilungs-Buckets und die Gut/Schlecht-Zonen sind klickbar: Sie öffnen den Explorer eingegrenzt auf diesen Wertebereich und übernehmen deinen aktuellen Zeitraum. Kurze Zeitfenster (2 Stunden oder weniger) werden jetzt minutengenau statt stündlich dargestellt, sodass eine Ein-Stunden-Ansicht nicht mehr fast leer ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="„Woran es liegt“-Aufschlüsselung auf den Detailseiten">
+
+Jede Metrik-Detailseite hat jetzt eine Aufschlüsselungs-Tabelle, die du über mehrere Dimensionen umschalten kannst (Seite, Land, Gerät, Browser mit oder ohne Version, Verbindung sowie CDN-/Origin-Cache), mit einer TTFB-Spalte zur Einordnung und einem Umschalter Meistgesehen / Schlechteste / Beste. Klappst du eine Zeile auf, erscheint dasselbe „Über die Zeit“-Panel, eingegrenzt auf diesen Wert, plus ein Raster der übrigen Dimensionen, in dem du direkt auf einen Wert filtern, ihn ausschließen oder im Explorer öffnen kannst. Diese aufklappbare Ansicht ist auf den Detailseiten und im Explorer dieselbe: Eine gruppierte Ergebniszeile im Explorer öffnet genau dasselbe Panel und Raster.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="Schnellfilter Desktop / Mobil">
+
+Ein Schnellfilter **Alle / Desktop / Mobil** sitzt jetzt neben der Zeitauswahl auf den Metrik-Detailseiten, dem Dashboard und in Analytics und setzt denselben Gerätefilter wie die Filterleiste. Die Toolbar (Perzentil · Zeitraum · Gerät · Filter · Aktualisieren) ist über diese Ansichten hinweg jetzt identisch.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Klarere Explorer-Filter, Breadcrumb-Drill-down und fixierte Share-Links">
+
+Die zwei Filterzeilen des Explorers heißen jetzt **Query-Filter** (serverseitig angewandt) und **Ergebnis-Filter** (im Browser angewandt) und stehen auf einer Zeile. Die Statusfarbe Gut/Verbesserungswürdig/Schlecht ist bei Wert-Metriken dauerhaft an, und Anzahl-Metriken (etwa Requests pro URL) klappen jetzt in das Aufschlüsselungs-Raster und einen Verlauf auf statt in eine leere Verteilung. Steigst du von einer Metrik aus ein, erweitert sich der Breadcrumb um die Herkunft (zum Beispiel „Core Web Vitals › LCP › Explorer“), und ein Zurück-Pfeil bringt dich genau dorthin zurück, inklusive der Zeile, die du aufgeklappt hattest. Teilbare Links fixieren jetzt den aktuellen Zeitraum auf absolute Zeitstempel, sodass ein geteilter Link immer dasselbe Zeitfenster öffnet. Die eigenständige **Seiten**-Ansicht wurde zugunsten von **Analytics** abgelöst, das jetzt weiter oben in der Seitenleiste steht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="fixed" area="dashboard" title="Große Datenmengen und Mobil-Layout">
+
+Übertragungsgrößen und Seitengewicht skalieren jetzt bis **GB und TB**, statt bei MB zu deckeln (ein Gesamtwert von ~1 TB liest sich nicht mehr als „1069213.0 MB“), und große Aufrufzahlen von Drittanbietern werden kompakt angezeigt (zum Beispiel „1,1 Mio.“) mit der vollen Zahl beim Überfahren. Auf kleinen Bildschirmen läuft das aufgeklappte Aufschlüsselungs-Raster nicht mehr aus dem Bild, seine Zeilenaktionen sind auf Touch-Geräten immer sichtbar, und die Zeitauswahl ragt nicht mehr über den linken Rand hinaus.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Fehlerrate zählt geblockte Tracker und Seiten-Teardown nicht mehr mit">
+
+Third-Party-Tracker, die von einem Ad-Blocker oder Tracking-Schutz geblockt werden (Bing UET, Meta Pixel, Google Tag Manager und Ähnliche), zählen nicht mehr als Fehler, ebenso wenig Requests, die der Browser abbricht, wenn ein Besucher die Seite verlässt. Sie werden markiert und behalten, nicht verworfen, sodass deine Fehlerrate echte, behebbare Probleme abbildet. Ein reales Dashboard fiel von rund 60 % Fehlerrate, die fast vollständig von einem geblockten `bat.bing.com` verursacht war.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="tracker" title="Tracker zählt Seiten-Teardown nicht mehr als Fehler">
+
+Wenn ein Besucher die Seite verlässt oder den Tab schließt, bricht der Browser laufende Requests ab und kann ausgeführte Skripte unterbrechen. Der Tracker erkennt den Teardown jetzt (über `pagehide` und `visibilitychange`) und zählt solche Netzwerkfehler als Abbrüche statt als Fehler; außerdem verwirft er die während des Teardowns geworfenen JavaScript-Ausnahmen. So bläht beides die Fehleranzahl nicht mehr auf.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="new" area="platform" title="Passwortloser Login mit Passkeys">
+
+Melde dich mit einem Geräte-Passkey in einem einzigen Schritt an, ganz ohne Passwort und ohne separaten 2FA-Code. Passkeys verwaltest du unter Konto → Sicherheit (hinzufügen, benennen, umbenennen, entfernen). Sensible Aktionen (API-Key neu generieren, 2FA umschalten, E-Mail ändern, App verbinden, Konto löschen) erfordern jetzt eine erneute Authentifizierung („Step-up") mit deinem stärksten hinterlegten Faktor: einem Passkey oder TOTP.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="new" area="dashboard" title="Cache-Hit-Sichtbarkeit">
+
+Neue Spalten für CDN- und Origin-Cache (`HIT`/`MISS`) sowie ein Cache-Status-Filter im Beacon-Explorer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="fixed" area="platform" title="Fehler-Drilldown der KI-Funktion „Ask“">
+
+Der Fehler-Drilldown der KI-Funktion „Ask" liefert seine Zusammenfassung und Zeitreihe jetzt korrekt, statt bei jedem Aufruf fehlzuschlagen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Domain-übergreifende Tracker">
+
+Betreibe einen einzigen Tracker über mehrere Domains derselben Codebasis (z. B. `shop.de` und `shop.fr`); Beacons werden automatisch der passenden Site je Domain zugeordnet, sodass Analytics und Zugriffsrechte pro Site erhalten bleiben. Anlegen, Bearbeiten, Hashes rotieren und Löschen erledigst du auf der Sites-Seite der Organisation, inklusive einer Liste „erkannter Domains", die nicht registrierte Hosts als neue Site vorschlägt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Partner-Self-Service">
+
+Als Partner markierte Organisationen können Kunden-Organisationen anlegen und verwalten: einen Kunden erstellen (auf Wunsch mit Owner-Einladung per E-Mail), verwaltete Kunden auflisten, die aggregierte Beacon-Nutzung einsehen und einen Kunden wieder ablösen. Unter Organisation → Team werden zudem die Partner aufgeführt, die deine Organisation verwalten dürfen; Owner können diesen Zugriff widerrufen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="changed" area="dashboard" title="Collector-Modi">
+
+Der bisher binäre Umschalter fastmon / First-Party ist jetzt dreistufig, jeweils mit einem First-Party-/Third-Party-Badge: Default (fastmons Collector), Custom (eine URL, die du selbst kontrollierst) und Relative (ein Same-Origin-Endpoint `/c/<hash>`). (API: ein neues Feld `collector_mode` an Sites und Trackern.)
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="fixed" area="platform" title="Löschen einer Site scheitert nicht mehr an abhängigen Datensätzen">
+
+`DELETE /sites/{id}` schlägt nicht mehr fehl, wenn zur Site Releases, Wochenübersichten oder Feedback gehören.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="platform" title="IDN- und Punkt-am-Ende-Domains verlieren keinen Traffic mehr">
+
+Internationalisierte Hostnamen (z. B. `münchen.de`) und FQDNs mit Punkt am Ende wurden bei der Aufnahme abgewiesen oder verworfen; Hostnamen werden jetzt bei Registrierung und Aufnahme einheitlich normalisiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Aufschlüsselung pro Domain bei Multi-Domain-Setups">
+
+Beacons speichern jetzt den Host, den der Tracker tatsächlich gemeldet hat, statt der konfigurierten Site-Domain. So stimmt die Aufschlüsselung pro Domain wieder. Bestehende Zeilen behalten ihren alten Wert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Resource-Load-Fehler werden getrennt gruppiert">
+
+Im Anonymous-Modus fallen unterschiedliche defekte First-Party-Ressourcen auf demselben Host nicht mehr zu einem einzigen Fehler zusammen (gilt für neue Beacons).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="new" area="api" title="Mehr Beacon-Felder und -Spalten">
+
+Neues Feld `browser_version` in der Visitors-Liste und fünf neue wählbare Spalten für `/analytics/beacons` (`version`, `tracker_version`, `site_id`, `lifecycle`, `delivery_method`). Siehe die [API-Referenz](/de/api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="changed" area="api" title="Genauere Web-Vitals-Perzentile">
+
+Median- und Perzentilwerte für Web Vitals in der Langzeitauswertung werden genauer berechnet; das korrigiert eine systematische Unterschätzung des Medians.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="changed" area="dashboard" title="Überarbeitete Zeitraum-Auswahl">
+
+Die überarbeitete Auswahl beginnt mit einem absoluten Bereich, der auch relative Eingaben akzeptiert (`now-6h` oder Kurzformen wie `4h` / `30d`); relative Bereiche bleiben gegenüber „now" live, mit einer „Now"-Schaltfläche und dem Tastenkürzel `r` zum Aktualisieren. Metrik-Schwellen lassen sich jetzt in natürlichen Einheiten eingeben, z. B. `lcp >= 2.5s` oder `total_byte_weight < 512kb`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="fixed" area="dashboard" title="Absturz beim Filtern der Visitors-Liste">
+
+Das Filtern der Visitors-Liste nach Gerätetyp, Browser, Land oder Betriebssystem löst keinen Fehler mehr aus.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="dashboard" title="Aus „Sessions“ werden „Visitors“, entlang einer Identitäts-Achse">
+
+Die Metrik `sessions` ist überall durch `visitors` ersetzt: in Charts, der Metrik-Auswahl und den Alert-Regeln. Ein Visitor wird über eine Identität gezählt: `stitch` (am Edge abgeleitet, einwilligungsfrei, der Standard) oder `session` (einwilligungspflichtig). Der Explorer hat einen Umschalter zwischen Stitch und Session samt Identitäts-Badge je Zeile bekommen, und jede Site hat eine neue Einstellung für die Standard-Identität von Visitors. Siehe [Visitors und Sessions](/de/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="new" area="platform" title="Verbundene Apps (OAuth)">
+
+fastmon kann First-Party-App-Integrationen autorisieren: ein In-App-Zustimmungsdialog und der Tab „Verbundene Apps" in den Kontoeinstellungen, in dem du autorisierte Apps einsehen und trennen kannst.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="platform" title="Marke kleingeschrieben zu „fastmon“">
+
+Die Marke wird jetzt überall kleingeschrieben: in der App, bei der Authentifizierung, in E-Mails und in den SEO-Metadaten.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="fixed" area="platform" title="Eingeladene Nutzer landen in ihrer Organisation">
+
+Das Annehmen einer Einladung wirft dich nicht mehr in eine zweite, leere Organisation, auch nicht bei der Anmeldung über Google oder GitHub.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="changed" area="tracker" title="Vollständige Stack-Frame-Pfade für die De-Minifizierung">
+
+Der Tracker behält den vollständigen minifizierten Stack-Frame-Pfad, damit JavaScript-Fehler auf die korrekte Quellposition zurückgeführt (de-minifiziert) werden können.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="fixed" area="tracker" title="Fetch/XHR-Aufrufe schon während des Pageviews gemeldet">
+
+Der Tracker meldet jetzt jeden Fetch/XHR-Aufruf bereits während eines Pageviews, nicht nur langsame Ausreißer. So ist die Fetch/XHR-Ansicht vollständig.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="new" area="dashboard" title="Werteverteilungen und teilbare Deep-Links">
+
+Die Detailseiten für Core Web Vitals und Performance/Network zeigen die Verteilung der Metrik mit Zonen für Gut / Verbesserungswürdig / Schlecht und Markern bei p50/p75/p90; jede Zeile einer Seite klappt zu ihrer eigenen Verteilung auf. Über Teilen-Schaltflächen öffnest du exakt diese Seite oder Zeile wieder; gleichzeitig kamen die Fehler-Aufschlüsselung pro Seite sowie Filter mit mehreren Werten und Ausschluss-Filter (`≠`) hinzu.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="tracker" title="Soft-Navigationen als nav_type=softnav markiert">
+
+Der Tracker markiert client-seitige Routenwechsel als `nav_type=softnav`, sodass Navigationen in Single-Page-Apps in der Auswertung von vollständigen Seitenladungen unterschieden werden.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="dashboard" title="Fetch/XHR-Monitoring (AJAX)">
+
+Eine eigene Seite unter Network analysiert die Fetch/XHR-Aufrufe deiner App: p75/p95-Latenz (Tail), ein Filter für blockierende Aufrufe, Abbrüche getrennt von Fehlern, die Antwortgröße, ein Mini-Wasserfalldiagramm der Backend-Phasen je Aufruf sowie ein Umschalter zwischen First-Party, Third-Party und allen Aufrufen. Die Erfassung steuerst du je Site über den Schalter „Subrequests speichern". Siehe [Analytics](/de/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-15" type="new" area="dashboard" title="Gerätetyp-Aufschlüsselung, Auto-Theme, ausführlicheres Beacon-Detail">
+
+Ein Tab für den Gerätetyp (Desktop / Mobil / Tablet), ein „Auto"-Theme, das der Hell-/Dunkel-Einstellung des Betriebssystems folgt, und ein deutlich ausführlicheres Detail-Panel je Beacon (Server-Timing-Phasen, Cache-Status, aufgerufene Endpoints, Attribution).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="new" area="dashboard" title="Befehlspalette (⌘K)">
+
+Ein durchsuchbares Menü steuert die ganze App: zu jeder Seite springen, Organisation oder Site wechseln, Zeitraum und Granularität ändern, Filter setzen oder entfernen. Die Filtersteuerung ist zudem in den Header gewandert, neben die Zeitraum-Auswahl, mit einem Zähler-Badge für aktive Filter.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="removed" area="dashboard" title="Tag-Filter pro Site in der Sidebar">
+
+Der Tag-Filter in der Sidebar schränkte nur die Site-Liste ein und beeinflusste die Analytics nie; deshalb wurde er entfernt. Tags sollen als echte site-übergreifende Auswertung zurückkehren. Siehe [Sites](/de/concepts/sites).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-28" type="changed" area="platform" title="„API-Tokens“ heißen jetzt „API-Keys“">
+
+Der persönliche Zugriffstoken heißt jetzt durchgängig **API-Key**: in der API, den SDK-Beispielen und den Kontoeinstellungen. Anmeldedaten und Verhalten bleiben gleich, nur der Name hat sich geändert (passend zum Backend). Siehe [Authentifizierung](/de/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-27" type="fixed" area="dashboard" title="URL-Drilldown ließ Zeilen weg bei Sites mit voller Erfassung">
+
+Bei Sites im Full-Collection-Modus ließ der Drilldown pro URL unbemerkt Zeilen weg; er liefert jetzt die vollständige Aufschlüsselung.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-26" type="new" area="dashboard" title="Minuten-genaue Granularität">
+
+Analytics-Abfragen über kurze Zeitfenster lassen sich jetzt minutenweise aggregieren (zusätzlich zu Stunde und Tag), sodass ganz aktueller Traffic und Vorfälle in der richtigen Auflösung sichtbar werden.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="platform" title="Roh-IP, User-Agent und Referrer erreichen das Backend nicht mehr">
+
+Ein datenschutzorientierter Umbau am Edge: Der Edge leitet alles ab, was fastmon benötigt (Land, Gerät, Referrer-Quelle), und das Backend erhält die rohe IP-Adresse, den User-Agent-String und die vollständige Referrer-URL nie. So werden bewusst weniger personenbezogene Daten gespeichert. Siehe [Datenschutz](/de/privacy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="platform" title="Stitch: ein einwilligungsfreier seitenübergreifender Identifier">
+
+Ein neuer, am Edge abgeleiteter Identifier mit begrenzter Lebensdauer (`stitch`) verknüpft Pageviews desselben Besuchers ohne Cookies und ohne Einwilligung. Er wurde später zur Standard-Identität für Visitors. Siehe [Visitors und Sessions](/de/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="dashboard" title="Kampagnen-Attribution (UTM + Click-IDs)">
+
+Traffic trägt jetzt `utm_*`-Parameter und Click-IDs von Werbeplattformen, sodass du Analytics nach Kampagnen-Quelle, -Medium und -Kampagne aufschlüsseln kannst (Plausible-konform).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="dashboard" title="Referrer in Quelle und Medium neu klassifiziert">
+
+Statt einer rohen Referrer-URL werden Referrer in eine normalisierte **Quelle** und ein **Medium** einsortiert (Snowplow-Stil), sodass die Referrer-Aufschlüsselung sauber und gruppierbar ist.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="removed" area="tracker" title="Fünf wenig aussagekräftige Felder aus dem Beacon entfernt">
+
+Der Tracker erfasst `device_memory`, `hw_concurrency`, `save_data`, `prefers_dark` und `prefers_reduced_motion` nicht mehr: eine Datenminimierung, die die übertragene Datenmenge und die pro Besucher gespeicherten Daten verringert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="tracker" title="Tracker verschlankt">
+
+Der Tracker liest `document.referrer` und `matchMedia` nicht mehr und wertet den User-Agent nicht mehr aus (das übernimmt jetzt der Edge), wodurch das eingebundene Skript kleiner wird und weniger Daten sendet.
+
+</ChangelogEntry>
+
+</Changelog>

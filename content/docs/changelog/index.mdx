@@ -1,0 +1,579 @@
+---
+title: Changelog
+description: What's new in fastmon, covering the dashboard, the API, the platform, and the tracker. Newest first.
+full: true
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The latest from fastmon, across the dashboard, API, platform, and tracker. You can filter the feed by area.
+
+We cover the changes you should know about, not every internal tweak. The exception is the **tracker** (the script you embed on your site): we document it in full, because it runs in your visitors' browsers, where even a small change can affect what your pages measure.
+
+<Changelog>
+
+<ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: a DevTools extension for reading beacons">
+
+The **Beacon Inspector** is a browser DevTools extension that reads the collector beacons your page sends and decodes them live. It groups every beacon by pageview, unpacks the short wire keys into readable fields, tracks the lifecycle from `init` to the terminal beacon, and shows the Web Vitals as they settle. It captures both the `fetch` beacons the Network panel already lists and the `sendBeacon` bodies it can't, so you see every emission with its full payload. A Follow mode pins the newest pageview, Compare puts two side by side, and export copies a beacon as Markdown (optionally anonymized) for a bug report. It's open source and runs entirely in your browser; no beacon data leaves the device. See [Beacon Inspector](/en/guides/beacon-inspector).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Fewer, better-timed beacons per pageview">
+
+The tracker's beacon emission is reworked to send fewer requests and record more accurate loading metrics. `init` now fires immediately as a pageview-exists marker (so a bot or a page that closes abruptly still registers), and `loaded` is held back until LCP is final (the first interaction, the tab hiding, or a 10-second cap) rather than firing on the first, often provisional, LCP entry. The metric that reaches storage is now the real final LCP. Mid-pageview update beacons fire only on a meaningful signal (a new first-party endpoint, a failed request, or a slow call over 500 ms) instead of on every fetch or XHR, so first-party prefetch and third-party analytics chatter no longer drive a flood: a typical pageview now sends two to four beacons. Terminal beacons keep `keepalive` while live-page beacons no longer do, so the final beacon (with the page's final INP and CLS) is reliably delivered on Chromium instead of occasionally being dropped under heavy navigation. No change to the wire format or your setup; see [the beacon's lifecycle and knobs](/en/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="Soft-navigation LCP is now measured on Chromium">
+
+Soft-navigation (SPA route change) pageviews shipped no LCP at all on current Chrome, even when the route clearly rendered a large image, while FCP and INP came through fine. A shape change in Chrome's `interaction-contentful-paint` entries meant the tracker was reading the interaction (click) time instead of the paint time, giving an LCP of zero that the sanity guard then dropped. The tracker now reads the paint time and matches each paint to its route by interaction id, so SPA route LCP is populated.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="fixed" area="tracker" title="A tag included twice no longer doubles a pageview">
+
+If the tracking tag was included or executed twice on a page (a common tag-manager mistake), each copy wrapped the browser's history API again and registered its own listeners, so a single SPA route change fired in every copy and produced duplicate pageviews and doubled beacons. The tracker now guards against a second execution and bails out, so an extra inclusion is harmless.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Live mode for the Explorer and Visitors">
+
+The Explorer's raw requests list and the Visitors page get a proper **Live** mode. Turning it on snaps the range to the last hour (a live stream over 30 days is pointless) and restores your previous range when you stop, pins to the newest page, and surfaces brand-new pageviews as they arrive rather than waiting on the 30-second count cache (it shows "Live · showing N" without an exact total, for freshness). The Live toggle and the Refresh button fuse into one control with a countdown border that depletes over the interval and restarts on every refresh, manual or automatic.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-16" type="new" area="dashboard" title="Filter by browser version, and type a stitch value">
+
+Two new ways to filter. **Browser version** is a numeric range filter on the browser's major version (`Browser version ≥ 150`, with `≥`, `≤`, or a range, like any numeric filter); pair it with a `browser` filter, since a version number means different things across families. And you can now **type or paste a `stitch` value** into the filter bar to scope to a single visitor, where before it was click-only; a pasted value is normalised to lowercase hex.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="changed" area="tracker" title="Beacon wire keys are now readable mnemonics">
+
+The beacon's compact wire keys, previously an opaque numbered scheme (`t1`, `t9`, `t10`, and so on), are now short mnemonics: `ttfb`, `lcp`, `inp`, `cls`, and the rest. It is fully backward-compatible and needs nothing from you: the collector still accepts the old keys, so a page running an older cached bundle keeps reporting until it refreshes. The same release drops three legacy JSON blobs the beacon no longer needs (the old third-party, resource, and Long Animation Frame strings, long since replaced by structured fields), trimming a few hundred bytes off each pageview. See [The RUM Beacon](/en/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-15" type="fixed" area="tracker" title="No duplicate mid-pageview update beacons">
+
+On a page that logged both an error and a fetch/XHR call, the tracker could fire two byte-identical update beacons at the same instant: the error channel and the fetch/XHR channel each tracked their own send timer, and neither knew the other had already shipped the full snapshot. Because every beacon carries the complete cumulative state, the second one was pure duplication. The tracker now tracks unsent activity per channel and skips an update once the current state is already on the wire. Fewer requests, and no data lost: the update that does go out still carries both channels.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="'Beacon' is now 'Pageview'">
+
+The drill-down record is called a **Pageview** throughout the dashboard now (labels, tooltips, copy buttons, the empty and loading states, and the Markdown export) instead of "Beacon", which read as jargon. Its deep-link parameters change to `?pageview=` and `?pvtab=`, so old `?beacon=` links no longer resolve. Opening a pageview from the raw Explorer list also writes it to the URL now, so a refresh reopens the same row and the link is shareable.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Quick +/- filters in the Explorer and pageview drawer">
+
+Every filterable value in the Explorer table and the pageview drawer gains hover **+ / −** buttons that filter to or exclude that value straight into the Explorer filters. In the table they float over the end of the cell, so revealing them never shifts or truncates a column; in the drawer they sit in a reserved slot beside Country, Page type, Device, OS, Browser, connection, protocol, navigation, referrer, campaign, cache status, and domain (Browser filters `Chrome`, not `Chrome 120`). The **+** also works on a pageview's visitor (stitch), scoping the Explorer to that one visitor.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Richer network and server-timing detail in the pageview drawer">
+
+The pageview drawer now draws its network sections as proportional, worst-first bar lists instead of flat rows. **Resources** show count, size, and duration per initiator type (the sizes and durations were collected but never shown before), **third parties** split by domain (blocking time) and by category (request share), and **Long Animation Frames** rank by per-script blocking time. **Server timing** becomes one stacked composition bar of every backend phase (the seven promoted metrics plus your custom `Server-Timing` keys) with a matching legend; custom keys that already feed a promoted phase are de-duplicated, so the total is not double-counted.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query retention now applies to fetch/XHR endpoint paths">
+
+The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#query-value-keys) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#track-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Filter analytics by visitor (stitch ID)">
+
+Analytics filters now include **`stitch`**: narrow any breakdown, chart, or drill-down to one or more specific visitors by their stitch ID. The values are the same 32-character hex ids that `POST /analytics/beacons` returns, so what you filter by matches what you read back. Ids that aren't valid are ignored, and a filter made only of invalid ids matches nothing. It is a match filter (there is no exclude-by-stitch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Richer beacon drill-down">
+
+The beacon drill-down (`POST /analytics/beacons`) returns more per-beacon detail and can be scoped to a single error. A new **`error_fingerprint`** field returns only the pageviews carrying that error signature, which is what backs the Errors page's "open in Explorer" link. Each beacon row now also carries its error class (normal or ad-blocked), the average waterfall position of each fetch/XHR endpoint, the third-party and resource maps (counts, sizes, and durations by category), and per-script long-animation-frame attribution. The long-animation-frame data needs the v2 beacon schema and comes back empty on v1.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web Vitals measurement aligned with web-vitals v5">
+
+The tracker now measures the Core Web Vitals the way Google's web-vitals v5 library and CrUX do, so your field numbers line up with what Search Console shows. **INP** is now the CrUX p98 estimate (roughly your 98th-percentile interaction) rather than the single worst interaction, so it reads lower on interaction-heavy pages: a change in method, not a regression. **Prerendered pages** no longer create phantom pageviews or inflated timings, because the tracker arms itself only once the page is activated and rebases TTFB, FCP and LCP to that moment. A page opened in a **background tab** no longer counts its delayed first paint as slow loading: paints from after the tab was first hidden are dropped and the pageview is flagged. CLS still counts layout shifts during prerender, matching CrUX.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element attribution for LCP, INP, and CLS">
+
+Each pageview now records why a Web Vital was slow and which element caused it. LCP splits into four phases (time to first byte, resource load delay, load duration, render delay) that add up to the LCP, INP into three (input delay, processing, presentation), and LCP, CLS, and INP each carry a CSS-selector path to the element responsible (plus the image URL for LCP). Dynamic ids such as `#order-98123` are never used as the anchor: they are weak personal data and would inflate cardinality, so the path falls back to a stable parent. What's available depends on the browser: LCP phases need Chrome 77, Firefox 122, or Safari 26.2; INP phases need Chrome 96, Firefox 144, or Safari 26.2; and CLS attribution is Chromium-only, so expect these fields to be empty on Apple traffic for now.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web Vitals attribution in the dashboard">
+
+The Core Web Vitals detail pages now surface the new per-pageview attribution. LCP and INP each get a **Phase Breakdown** card: the average metric split into its phases as a cascade, and the same phases stacked over time. The breakdown tables (slowest pages, by page, country, device) gain a **Phases** column showing which phase dominates each row, and expanding a row adds a phases view scoped to it. A new **Element Targets** panel on LCP, CLS, and INP ranks the CSS selectors most often responsible for the vital, led by a main-culprit callout ("responsible for N% of attributed pageviews"); on LCP you can switch it to rank the responsible image URL instead. The **Explorer** picks up the phase metrics and the INP interaction-type dimension, and the **Visitors** journey and beacon drawer show each pageview's phase split, element, and interaction type.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="new" area="api" title="Web Vitals attribution in the API">
+
+The new attribution is available over the API. `POST /analytics/visitors/detail` returns the phase split, element selectors, and interaction type for each pageview, and the seven LCP and INP subpart metrics are queryable in `POST /analytics/query`, with `inp_interaction_type` as a groupable dimension. A new `POST /analytics/element-targets` ranks the elements most responsible for LCP, CLS, or INP (by selector path, or by resource URL for LCP) with each one's share and average value, site-wide or per URL; it is a dedicated endpoint because the selector columns are too high-cardinality to group on directly. As in the dashboard, these fields stay empty until the visitor's browser reports them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-14" type="changed" area="dashboard" title="Visitors opens on real journeys, and filters to checkout">
+
+The **Visitors** list now defaults to sessions of at least three pages instead of every single-page visit, so it opens on journeys worth reading; the minimum is adjustable and kept in the URL. A new behaviour filter, **Includes page type**, keeps only visitors whose session contains a pageview of a given type, with a one-click **Checkout** option for the common "sessions that reached checkout" case.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-13" type="new" area="dashboard" title="Performance by cache status">
+
+Network → Cache gains a **Performance by cache status** grid: the headline metrics (LCP, TTFB, FCP, Page Load, p75) with one row per CDN and origin cache status, so you can see at a glance whether a MISS is really slower than a HIT and by how much. Each row is coloured by its Web Vitals threshold and shows its share of pageviews, over the same document-navigation scope as the distribution above. The switchable **Breakdown** card gains a panel-level share button, and the cache chart cards get the hover share button and deep-link anchor that the Analytics panels already have.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Explorer split into Charts and Table">
+
+The Explorer is now two pages, **Charts** and **Table**, that share one time range, filter bar, and set of saved queries, so switching between them never loses your query. **Charts** is a multi-chart workspace: add up to eight charts, each with its own metrics, grouping, and previous-period or percentile-band overlays, size them half or full width, and rearrange them by drag and drop. Presets (Core Web Vitals, Loading, Traffic, Errors, Cache, Backend) swap the stack for a curated set, and a saved query now stores the whole layout. **Table** gains a hits-over-time line above the rows, so you can see where the traffic behind them happened.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Compare two filter sets on one chart">
+
+The Charts page can overlay a **second, independent filter set** on every chart over the same period, so you can compare Chrome against Safari, or one country against another. Show case B as a dashed twin series on the same axes (Overlay) or as two charts per card with a shared scale (Side by side). While a comparison is active, the KPI grid at the top switches to the B-vs-A delta.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page type in the visitor journey">
+
+The Visitors journey now shows the **detected page type** as a chip on each page-view (product, category, cart, checkout, and so on), next to the navigation-type and cache-status chips, wherever a site sends or detects one. Page-views with no page type show none.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="dashboard" title="Page type across the dashboard">
+
+Once a shop ruleset is on ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset)), **page type** becomes a first-class dimension across the dashboard. You set the ruleset per site or cross-domain tracker under Collection, then break down and filter by page type, add it as a column in the beacons list, chart the traffic mix and Web Vitals per type with the new **Page types** preset, and open the classified view under Analytics → Pages. Traffic with no detected type shows as no page type.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-12" type="new" area="tracker" title="Automatic page type for shop systems">
+
+For shops on Shopware 5/6, OXID, Magento, or WooCommerce, fastmon can now classify each pageview into a **page type** (product, category, cart, checkout, and so on) with no code on your side. Turn on a ruleset per site ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset)) and the tracker reads just the shop framework's body controller class to infer the type. It's **off by default** (no DOM read at all), and a `Server-Timing: pageType` header, if you send one, still takes priority.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="tracker" title="Route Load for soft navigations, and Web Vitals to come">
+
+SPA route changes (soft navigations) used to record no loading metrics, so LCP and FCP for single-page apps came only from cold page loads and read worse than the real experience. The tracker now measures soft-navigation loading two ways: **Route Load** (`soft_nav_load`), a same-site network proxy on every browser, and real LCP/FCP on Chromium once its Soft Navigations API ships. Route Load lands in the dashboard as its own metric, kept separate from LCP/FCP and rolling out gradually. When native LCP/FCP arrive, SPA LCP/FCP p75 will start reflecting in-app navigations, a methodology change rather than a regression.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="changed" area="tracker" title="Leaner beacon wire format">
+
+The beacon's wire keys got shorter to shave bytes off every request: `lifecycle` is now `lcy`, the campaign fields (`utm_source` and friends, `click_id_param`) collapse to two-letter keys, and empty campaign fields are dropped entirely instead of riding along as empty strings (around 110 to 130 bytes per beacon). The values are unchanged, and old cached bundles keep working: the collector accepts both the old and new keys permanently.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Backend performance page for Server-Timing">
+
+A new **Performance → Backend** page turns your `Server-Timing` response headers into analytics: a request-path card (Edge, Origin, Backend) showing each cache status and how much traffic reaches each phase, backend sub-phases (DB, cache, external, render) as share-of-backend bars, a phase trend over time, and a matrix breaking phases down by page, page type, or cache status. Every non-promoted `Server-Timing` key also gets its own ranked trend. See [Server-Timing](/en/guides/server-timing).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-11" type="new" area="dashboard" title="Metrics view in the breakdown grid">
+
+The breakdown grid (on metric detail pages and expanded Explorer rows) gets a **Facts / Metrics** switch. **Metrics** replaces the dimension panels with a compact panel per Web Vital (LCP, INP, CLS, FCP, TTFB, Page Load, TBT) scoped to the same row and filters, so you can tell at a glance whether a page is bad only at LCP or slow across the board. Each panel is the standard percentile trend or distribution, and the active view persists in the URL for shareable links.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Minute-resolution charts now cover up to 6 hours">
+
+**By minute** is now a date-picker granularity for windows up to 6 hours (it used to cap at 2). Short custom ranges and relative spans like `3h` pick minute buckets automatically; longer spans still fall back to hourly or daily.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitor journey, redesigned around key=value chips">
+
+Each fact on a page-view in the Visitors journey is now a **key=value chip**: navigation type (soft-nav, reload, back/forward, prerender), **CDN and origin cache status** (HIT / MISS, new), error count, and the Web Vitals (FCP, LCP, CLS, INP, TTFB, load), each tinted by its threshold. Metrics sit on the left, context facts on the right, under a plain URL line with time on page. Chips with no value are hidden.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors filters stay in the URL">
+
+The behavior filters on **Visitors** (minimum errors, pages, duration, average LCP) are now kept in the URL, so reloading or sharing the page keeps the same filtered list.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="dashboard" title="Shared stitch visitors open correctly">
+
+Sharing or reloading an expanded **stitch** visitor could land on "no page visits found": the URL only recorded the session identity, so a stitch id was looked up in the wrong column. The expanded row now pins its identity into the URL, so reloads and shared links reopen the right visitor. Behavior filters (`?minErrors=…`) survive the round-trip too.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="tracker" title="The beacon sends fewer requests, and you can fine-tune it">
+
+The tracker now keeps request volume low out of the box: on a fast load the first two beacons coalesce into one, early mid-page-view updates wait for the final beacon, and a polling page's update beacons are capped. Pages that need to change any of it can set a few `window` globals: `__FASTMON_SAMPLE_RATE`, `__FASTMON_INIT_COALESCE_MS`, `__FASTMON_UPDATE_MIN_AGE_MS`, and `__FASTMON_MAX_VERSION`. The defaults suit most sites. See [The RUM Beacon](/en/concepts/beacon#fine-tuning).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="platform" title="Collection modes are now presets and per-setting configuration">
+
+A site's data collection is no longer one of three fixed modes. You pick a **preset** (Minimal, Standard, or Full) when you create a site, then tune each setting on its own: the on-device session id and its consent timing, the edge-derived visitor signal, query-parameter names, error messages and stack-frame detail, and fetch/XHR capture. New sites start on **Standard**, which turns on unique-visitor counts and diagnostics while still writing nothing to the visitor's device. The old `collection_mode` values keep working as a deprecated API alias. See [Tracker settings](/en/tracker).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Visitors Explorer, with stitch as a first-class identity">
+
+The Sessions page is now **Visitors**, at `/visitors` (old links redirect, shared links keep working). Stitch and session are treated as equals: the identity toggle defaults to the site's preferred identity, and a stitch row expands into that visitor's full page-view journey, the same drill-down sessions already had. The stray "visitors on this page" count card is gone.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Cross-domain trackers, and one-click site provisioning">
+
+A cross-domain tracker (one embed across several domains) now carries the same data scope as a site, applied to every domain it runs on; only the visitor signal stays per domain. Domains it observes that aren't sites yet appear as **detected domains**, and **Add as site** creates the site in one click, inheriting the tracker's data scope, collector config, and bundle version. See [Org-level trackers](/en/concepts/org-trackers).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-10" type="fixed" area="platform" title="One bad value no longer drops a batch of beacons">
+
+A single beacon carrying a non-finite or out-of-range connection or timing value used to fail the whole batch insert, dropping every other beacon in that flush. Such values are now coerced to "unknown" per field, so one malformed or hostile beacon can't take down the legitimate traffic around it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-08" type="changed" area="dashboard" title="Breakdown lists: +/- filter actions and share of total">
+
+The breakdown lists on **Analytics** (Sources, Pages, Countries, Devices, and the Audience and Cache top lists) gain the hover actions from the metric detail pages: **+** filters to a value, **−** excludes it. Where a dimension can't be excluded, the **−** is disabled with a tooltip. Each row also shows its **share of the total** next to the count (for example `12% · 4.3K`), computed across the whole window, not just the visible rows.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-07" type="changed" area="dashboard" title="Org-scoped navigation: your site selection follows you">
+
+Every monitoring page now lives under an org-scoped URL, and the site is a filter that follows you from page to page like the time range. With no site selected you see the whole org aggregated, and the sidebar switcher has an explicit **All sites** state. The switcher is now multi-select: click a site to jump to it, or use its checkbox (or Cmd/Ctrl-click) to combine several. Site tags now actually scope the data, with multiple tags combining as AND; the old tag selector that had no effect is gone. Old per-site links keep working through a permanent redirect that carries the site over as the filter. Typing `org:` in the Cmd+K palette narrows the search to organizations.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="new" area="dashboard" title="Colorblind-friendly mode">
+
+A new **Colorblind-friendly mode** under Account, Appearance swaps the status and chart palette to a red/green-safe scheme (blue, orange, vermillion), so the Good / Needs-improvement / Poor ratings read as blue, orange, and red across the dashboard, its charts, the geo map, and the heatmaps. Status indicators also carry icons, so meaning never depends on colour alone. The setting is remembered on your device.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="fixed" area="dashboard" title="AI Ask no longer repeats its answer">
+
+The AI Ask assistant sometimes streamed the same answer twice and stored two copies, so the reply showed up doubled and stayed doubled after a reload. An output check was regenerating the answer after it had already been sent; that self-correction is gone, and the check now only logs issues instead of triggering a resend. Each answer is sent and stored once.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache monitoring, reorganised around the request path">
+
+The Cache page is now built around the three layers a request passes through, with a **Browser / CDN / Origin** switcher. Each layer shows the same panels: hit rate, status distribution, a stacked cache-status-over-time chart (with an absolute/percent toggle and a click-to-isolate legend), and page attribution. Browser cache is reframed around returning views (reloads and back/forward navigations), where the cache is warm; it no longer carries a Good/Poor rating, since there is no authoritative target, and a “First navigations” figure gives context. CDN and Origin read native hit-rate metrics and exclude soft navigations, which fetch no document and carry no cache status. A new **Resources by type** panel splits traffic into script, CSS, images, fonts, and other, with a count/bytes toggle. The dashboard gets a single combined cache widget with the same switcher, and the Cache nav item is marked **New**.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Release markers on every chart, with a clearer hover">
+
+Release markers now work the same on every chart. The **Analytics** page charts (visitors, pageviews, views per visit) show them for the first time, and every time-series chart draws them from one shared implementation, so app and tracker markers look and behave identically. Charts that used to hide a release falling inside your selected window but outside the loaded data (LCP, cache hit rate, synthetic, Explorer) now show every release in range. The hover is reworked too: a band along the top of the chart makes markers easy to grab, close-together markers group into one target with a count, and the marker tooltip no longer collides with the chart's data tooltip or clips at the edge.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Shareable metric-panel view">
+
+The **Over time / Distribution / Both** toggle on the metric detail pages (LCP, FCP, CLS, INP, TTFB, Page Weight) is now reflected in the URL, and the panel has a **share-link button**. A copied link reopens the exact view with the time range pinned. Shared links to a panel view or a breakdown sub-panel keep their view (the `view`, `pview`, and `panel` params now survive navigation) and scroll all the way to the target panel.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="changed" area="dashboard" title="Attribution tables show every row, with per-column aggregation">
+
+The slowest/worst pages, the breakdown grids, and the Cache and Errors attribution tables no longer hide low-volume rows behind a **≥1%-of-pageviews (min. 30)** floor. Every row is shown; narrow by volume yourself in the Explorer (for example `beacons:ge:N`). A count-only metric (Requests / Visitors) next to a value metric no longer forces the whole table to **Count**: each column uses its own aggregation, so **LCP shows its p75** rather than a meaningless count. The Explorer KPI tiles behave the same way.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Explorer: distribution of a dimension over time">
+
+In the Explorer you can now group by a categorical dimension, such as CDN or origin cache status, and chart how each of its values (HIT, MISS, EXPIRED) develops **over time** with a Line, Stacked Line, or Stacked Bar view, rather than only the aggregate breakdown. Stacked views toggle between **100%** (each value's share per interval) and **absolute** counts. You can overlay a second metric, such as TTFB, as a dashed line on a right-hand axis for context. Choosing a Group-by dimension no longer forces the chart to Bar: Line, Stacked, and Pie are kept where they make sense, and the chart-type picker greys out options that can't render the current query.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-30" type="fixed" area="dashboard" title="Percentage metrics in the Explorer">
+
+Ratio metrics such as cache hit rate now render as a real percentage (for example **80%**) in the Explorer charts and tables, instead of showing “0.8%”.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Good / Needs-improvement / Poor split on the distribution cards">
+
+The dashboard's distribution metric cards now show the **Good / Needs-improvement / Poor split** as colour-coded percentages in the card header, for every metric with thresholds (the Core Web Vitals plus FCP, TTFB, and Page Load), while the rating badge and trend arrow stay in place. The card histogram is larger, and its bars are now both hoverable for detail and clickable to open the metric detail page.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="new" area="dashboard" title="Filter, exclude, and deep-link breakdown panels">
+
+The “What's driving it” breakdown rows now carry hover **+ / −** actions to filter to or exclude a value in place, matching the per-row grid panels. For dimensions that can't be excluded, such as page URLs, exclude is shown disabled with a reason. Each breakdown panel also has a share button that deep-links straight to that panel; opening the link scrolls to it and briefly highlights it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Cleaner distribution presentation">
+
+Detail pages no longer repeat the value distribution at the bottom of the page; it now lives only in the top “Over time” panel. Breakdown grid panels show each value's share of pageviews next to the absolute count, and share links restore the chosen chart view (Over time, Distribution, or both) of an expanded row, not only the row itself. CDN and origin cache breakdowns now include an “unknown” bucket for responses with no cache header, but only when at least 1% of views have a known cache status, so an all-uncached site no longer shows a useless “unknown 100%” panel. On the Errors page, the top-right “Open in Explorer” button has been removed; record-level drill-down is reached from the tables instead.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="api" title="Ad-blocked tracker count is now returned by the API">
+
+Tracker calls dropped as ad-blocked were already excluded from your error rate, but not reported anywhere. The read APIs now return that count: the fetch/XHR endpoint breakdown and the per-beacon detail include a `blocked` count alongside `aborts`, and the error-types overview returns a new `blocked_count`. Your error rate is unchanged; this only surfaces how many calls were excluded, so the dashboard can show “N excluded as ad-blocked” rather than silently dropping them. See the [API reference](/en/api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metric detail pages redesigned around one “Over time” panel">
+
+Each metric detail page (LCP, INP, CLS, TBT, Page Weight, and the load-timing pages) now leads with a single **“Over time” panel** that you switch between the percentile trend, the value distribution, or both side by side. The distribution buckets and the Good/Poor zones are clickable: they open the Explorer scoped to that value range, carrying over your current time range. Short windows (2 hours or less) now chart by the minute instead of by the hour, so a one-hour view is no longer nearly empty.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="“What’s driving it” breakdown on the detail pages">
+
+Every metric detail page now has a breakdown table you can switch across dimensions (Page, Country, Device, Browser with or without version, Connection, and CDN/Origin cache), with a TTFB column for context and a Most viewed / Worst / Best toggle. Expanding a row reveals the same over-time panel scoped to that value, plus a grid of the other dimensions where you can filter to or exclude a value in place, or open it in the Explorer. This expandable view is the same on the metric detail pages and in the Explorer: a grouped Explorer result row opens the exact same panel and grid.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="new" area="dashboard" title="Desktop / Mobile quick filter">
+
+An **All / Desktop / Mobile** quick filter now sits next to the time picker on the metric detail pages, the Dashboard, and Analytics, applying the same device filter as the filter bar. The toolbar (percentile · time range · device · filters · refresh) is now identical across these views.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Clearer Explorer filters, breadcrumb drill-down, and pinned share links">
+
+The Explorer’s two filter rows are now labelled **Query filters** (applied on the server) and **Result filters** (applied in your browser), on a single line. The Good/Needs-improvement/Poor status colour is always on for value metrics, and count metrics (such as requests by URL) now expand to the breakdown grid and a trend instead of an empty distribution. Drilling in from a metric extends the breadcrumb with where you came from (for example “Core Web Vitals › LCP › Explorer”), and a back arrow returns you to the exact spot, including the row you had expanded. Shareable links now pin the current time range to absolute timestamps, so a shared link always opens the same window. The standalone **Pages** view has been retired in favour of **Analytics**, which now sits higher in the sidebar.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="fixed" area="dashboard" title="Large data volumes and mobile layout">
+
+Transfer-size and page-weight values now scale up to **GB and TB** instead of capping at MB (a ~1 TB total no longer reads as “1069213.0 MB”), and large third-party call counts show in compact form (for example “1.1M”) with the full number on hover. On small screens, the expanded breakdown grid no longer overflows off-screen, its row actions are always visible on touch, and the time picker no longer runs off the left edge.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Error rate no longer counts ad-blocked trackers or page-teardown noise">
+
+Third-party trackers blocked by an ad-blocker or tracking protection (Bing UET, Meta Pixel, Google Tag Manager, and similar) no longer count as errors, and neither do requests the browser cancels when a visitor leaves the page. They are tagged and kept, not dropped, so your error rate reflects real, fixable problems. One real dashboard fell from a ~60% error rate that was driven almost entirely by a blocked `bat.bing.com`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-26" type="changed" area="tracker" title="Tracker stops reporting page-teardown failures as errors">
+
+When a visitor navigates away or closes the tab, the browser cancels in-flight requests and can interrupt running scripts. The tracker now detects teardown (via `pagehide` and `visibilitychange`) and counts those network failures as aborts rather than errors, and drops the JavaScript exceptions thrown during teardown, so neither inflates your error count.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="new" area="platform" title="Passwordless login with passkeys">
+
+Sign in with a device passkey in one step, with no password and no separate 2FA code. Manage passkeys under Account → Security (add, name, rename, remove). Sensitive actions (regenerating your API key, toggling 2FA, changing your email, connecting an app, deleting your account) now ask for fresh re-authentication ("step-up") with your strongest enrolled factor, a passkey or TOTP.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="new" area="dashboard" title="Cache-hit visibility">
+
+New CDN Cache and Origin Cache (`HIT`/`MISS`) columns and a cache-status filter in the beacon explorer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-25" type="fixed" area="platform" title="AI “Ask” error drill-down">
+
+The AI Ask error drill-down returns its summary and time-series correctly instead of erroring on every call.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Cross-domain trackers">
+
+Run a single tracker across several domains of the same codebase (for example `shop.de` and `shop.fr`); beacons are routed to the correct per-domain site automatically, so per-site analytics and access control are preserved. Create, edit, rotate hashes, and delete them on the organization's Sites page, with a "detected domains" list that suggests unregistered hosts to add as sites.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="new" area="platform" title="Partner self-service">
+
+Organizations flagged as partners can provision and manage client organizations: create a client (optionally emailing an owner invite), list managed clients, view aggregated beacon usage, and detach a client. Organization → Team also lists partners that can manage your org and lets owners revoke that access.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="changed" area="dashboard" title="Collector modes">
+
+The binary fastmon / first-party collector toggle is now three modes, each shown with a first-party / third-party badge: Default (fastmon's collector), Custom (a URL you control), and Relative (a same-origin `/c/<hash>` endpoint). (API: a new `collector_mode` field on sites and trackers.)
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-24" type="fixed" area="platform" title="Deleting a site no longer fails on child rows">
+
+`DELETE /sites/{id}` no longer errors when the site has releases, weekly summaries, or feedback.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="platform" title="IDN and trailing-dot domains no longer lose traffic">
+
+Internationalized hostnames (e.g. `münchen.de`) and trailing-dot FQDNs were rejected or dropped at ingest; hostnames are now canonicalized consistently at registration and ingest.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Per-domain breakdown on multi-domain setups">
+
+Beacons now record the host the tracker actually reported instead of the configured site domain, so the per-domain breakdown is correct again. Historical rows keep their old value.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-23" type="fixed" area="dashboard" title="Resource-load errors group separately">
+
+In anonymous mode, distinct broken first-party resources on the same host no longer collapse into a single error (applies to new beacons).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="new" area="api" title="More beacon fields and columns">
+
+New `browser_version` field on the visitors list, and five new projectable columns on `/analytics/beacons` (`version`, `tracker_version`, `site_id`, `lifecycle`, `delivery_method`). See the [API reference](/en/api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-22" type="changed" area="api" title="More accurate web-vitals percentiles">
+
+Median and percentile values for web vitals in long-range analytics are computed more accurately, correcting a systematic underestimate of the median.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="changed" area="dashboard" title="Rebuilt time-range picker">
+
+The picker now leads with an absolute range that also accepts relative input (`now-6h`, or shorthand like `4h` / `30d`); relative ranges stay live against "now", with a "Now" pin and an `r` keyboard shortcut to refresh. Metric thresholds can now be typed in natural units, e.g. `lcp >= 2.5s` or `total_byte_weight < 512kb`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-21" type="fixed" area="dashboard" title="Visitors-list filter crash">
+
+Filtering the visitors list by device type, browser, country, or OS no longer errors.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="dashboard" title="“Sessions” is now “Visitors”, along an identity axis">
+
+The `sessions` metric is replaced by `visitors` everywhere: charts, the metric picker, and alert rules. A visitor is counted by identity: `stitch` (edge-derived, consent-free, the default) or `session` (consent-gated). The explorer gained a Stitch/Session switch with a per-row identity badge, and each site has a new default-visitor-identity setting. See [Visitors and sessions](/en/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="new" area="platform" title="Connected apps (OAuth)">
+
+fastmon can authorize first-party app integrations: an in-app consent screen, and a "Connected apps" tab in account settings where you can review and disconnect authorized apps.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="changed" area="platform" title="Brand lowercased to “fastmon”">
+
+The brand is now written lowercase across the app, authentication, emails, and SEO metadata.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-20" type="fixed" area="platform" title="Invited users land in their organization">
+
+Accepting an invite no longer drops you into a second empty organization, including Google/GitHub sign-up.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="changed" area="tracker" title="Full stack-frame paths kept for de-minification">
+
+The tracker keeps the complete minified stack-frame path so JavaScript errors de-minify to the correct source location.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="fixed" area="tracker" title="Fetch/XHR calls flushed mid-pageview">
+
+The tracker now reports every fetch/XHR call during a pageview, not just slow outliers, so the Fetch/XHR view is complete.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-17" type="new" area="dashboard" title="Value distributions and shareable deep links">
+
+Core Web Vitals and performance/network detail pages show the metric's distribution with Good / Needs-improvement / Poor zones and p50/p75/p90 markers; each page row expands to its own distribution. Share buttons reopen the exact page or row, and the per-page error breakdown plus multi-value and exclude (`≠`) filters arrived alongside.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="tracker" title="Soft navigations marked as nav_type=softnav">
+
+The tracker marks client-side route changes as `nav_type=softnav`, so single-page-app navigations are distinguished from full page loads in analytics.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-16" type="new" area="dashboard" title="Fetch/XHR (AJAX) monitoring">
+
+A dedicated page under Network analyzes your app's fetch/XHR calls: p75/p95 tail latency, a blocking-call filter, aborts counted apart from errors, response size, a per-call backend-phase mini-waterfall, and a first-party / third-party scope toggle. Capture is controlled per site by a "Store subrequests" toggle. See [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-15" type="new" area="dashboard" title="Device-type breakdown, auto theme, richer beacon detail">
+
+A device-type tab (desktop / mobile / tablet), an "Auto" theme that follows your OS preference, and a far richer per-beacon detail panel (server-timing phases, cache status, called endpoints, attribution).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="new" area="dashboard" title="Command palette (⌘K)">
+
+One searchable menu drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add or clear filters. The filter control also moved to the header, next to the time picker, with an active-filter count badge.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-06-14" type="removed" area="dashboard" title="Per-site tag filter in the sidebar">
+
+The sidebar tag filter only narrowed the site list and never affected analytics, so it was removed; tags are planned to return as a real cross-site analytics scope. See [Sites](/en/concepts/sites).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-28" type="changed" area="platform" title="API tokens are now “API keys”">
+
+The personal access token is now called an **API key** consistently across the API, the SDK examples, and account settings. Same credential and behavior; only the name changed, to match the backend. See [Authentication](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-27" type="fixed" area="dashboard" title="URL drill-down dropped rows on full-collection sites">
+
+On sites in full collection mode, the per-URL drill-down silently dropped some rows; it now returns the complete breakdown.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-26" type="new" area="dashboard" title="Minute-level granularity">
+
+Analytics queries over short windows can now bucket by the minute (in addition to hour/day), so very recent traffic and incidents show up at the right resolution.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="platform" title="Raw IP, User-Agent, and referrer no longer reach the backend">
+
+A privacy-focused edge cutover: the edge derives everything fastmon needs (country, device, referrer source) and the backend never receives the raw IP address, User-Agent string, or full referrer URL. Less personal data is stored, by design. See [Privacy](/en/privacy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="platform" title="Stitch: a consent-free cross-pageview identifier">
+
+A new edge-derived, bounded-lifetime identifier (`stitch`) links pageviews from the same visitor without cookies or consent. It later became the default visitor identity. See [Visitors and sessions](/en/concepts/sessions).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="new" area="dashboard" title="Campaign attribution (UTM + click IDs)">
+
+Traffic now carries `utm_*` parameters and ad-platform click IDs, so you can break analytics down by campaign source, medium, and campaign (Plausible-aligned).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="dashboard" title="Referrer reclassified into source and medium">
+
+Instead of a raw referrer URL, referrers are bucketed into a normalized **source** and **medium** (Snowplow-style), so the referrer breakdown is clean and groupable.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="removed" area="tracker" title="Five low-value fields retired from the beacon">
+
+The tracker no longer collects `device_memory`, `hw_concurrency`, `save_data`, `prefers_dark`, or `prefers_reduced_motion`: a data-minimization pass that shrinks the payload and the data stored about each visitor.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-05-21" type="changed" area="tracker" title="Tracker slimmed down">
+
+The tracker no longer reads `document.referrer`, `matchMedia`, or User-Agent buckets (the edge derives those now), making the embedded script smaller and the data it sends leaner.
+
+</ChangelogEntry>
+
+</Changelog>

@@ -10,36 +10,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  checks:
+    runs-on: [self-hosted, linux, X64]
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 26
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run lint:prose
       - run: npm run format:check
-
-  typecheck:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
+      # `if: always()` so the typecheck still runs (and reports) even when an
+      # earlier check fails — we want both signals from a single run rather
+      # than fail-fast hiding the type errors behind a lint error.
       - run: npm run types:check
+        if: always()
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v6
         with:
           node-version: 26

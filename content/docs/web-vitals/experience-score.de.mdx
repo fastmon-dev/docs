@@ -3,15 +3,9 @@ title: Experience Score
 description: "Eine einzelne 0–10-Zahl aus Core Web Vitals, Page Load Time und Fehlerrate: die Headline-Metrik fürs UX-Tracking über Zeit."
 ---
 
-**Experience Score** ist eine Composite-Metrik. Sie verdichtet
-LCP, INP, CLS, FCP, TTFB, Page Load Time und Fehlerrate zu einer
-einzigen Zahl von 0–10 mit einem Buchstaben-Grade. Praktisch ist
-das die Zahl fürs Dashboard, fürs Status-Reporting und für den
-Moment, in dem du Performance jemandem erklärst, der keinen
-Engineering-Hintergrund hat.
+**Experience Score** ist eine Composite-Metrik. Sie verdichtet LCP, INP, CLS, FCP, TTFB, Page Load Time und Fehlerrate zu einer einzigen Zahl von 0–10 mit einem Buchstaben-Grade. Praktisch ist das die Zahl fürs Dashboard, fürs Status-Reporting und für den Moment, in dem du Performance jemandem erklärst, der keinen Engineering-Hintergrund hat.
 
-Die Schwellen folgen Googles „gut"-/„schlecht"-Grenzen für die Web
-Vitals; den Score rechnen wir aus deinen Real-User-Daten.
+Die Schwellen folgen Googles „gut"-/„schlecht"-Grenzen für die Web Vitals; den Score rechnen wir aus deinen Real-User-Daten.
 
 ## Was ist ein guter Score?
 
@@ -26,15 +20,11 @@ Scores werden auf eine Nachkommastelle gerundet. Buchstaben-Grades:
 | ≥ 5,0   | D     |
 | < 5,0   | F     |
 
-Score 10 heißt: jede Metrik liegt für den Großteil deines Traffics
-auf oder unter ihrer „gut"-Schwelle. Score 5 heißt: die Metriken
-liegen im Schnitt um die „schlecht"-Grenze. Darunter sind mehrere
-Metriken klar im roten Bereich.
+Score 10 heißt: jede Metrik liegt für den Großteil deines Traffics auf oder unter ihrer „gut"-Schwelle. Score 5 heißt: die Metriken liegen im Schnitt um die „schlecht"-Grenze. Darunter sind mehrere Metriken klar im roten Bereich.
 
 ## Wie der Score berechnet wird
 
-Jede Metrik wird per linearer Interpolation gegen ihre Gut-/Schlecht-Schwellen
-auf einen 0–10-Sub-Score abgebildet:
+Jede Metrik wird per linearer Interpolation gegen ihre Gut-/Schlecht-Schwellen auf einen 0–10-Sub-Score abgebildet:
 
 - Wert ≤ **gut** → 10
 - Wert bei **schlecht** → 5
@@ -50,75 +40,40 @@ auf einen 0–10-Sub-Score abgebildet:
 | CLS            | ≤ 0,1      | > 0,25     | 10 %    |
 | TTFB           | ≤ 800 ms   | > 1.800 ms | 10 %    |
 
-Die gewichtete Summe der Sub-Scores ist der Experience Score. Fehlt
-für ein Segment ein Wert (z. B. INP, wenn niemand interagiert
-hat), wird das Gewicht anteilig auf die vorhandenen Metriken
-verteilt.
+Die gewichtete Summe der Sub-Scores ist der Experience Score. Fehlt für ein Segment ein Wert (z. B. INP, wenn niemand interagiert hat), wird das Gewicht anteilig auf die vorhandenen Metriken verteilt.
 
 ## Wann der Score berechnet wird
 
-Pro Pageview, beim Verstecken der Seite. Das ist derselbe Trigger, der die
-zugrundeliegenden Metriken finalisiert. Die Aggregat-Scores im
-Dashboard sind Durchschnitte über den gewählten Zeitraum.
+Pro Pageview, beim Verstecken der Seite. Das ist derselbe Trigger, der die zugrundeliegenden Metriken finalisiert. Die Aggregat-Scores im Dashboard sind Durchschnitte über den gewählten Zeitraum.
 
-## Experience Score in Fastmon ansehen
+## Experience Score in fastmon ansehen
 
-Die Headline-Zahl steht auf dem **Performance**-Dashboard.
-Darunter siehst du den Breakdown (welcher Sub-Score den Gesamtscore
-nach unten zieht) und einen Trend-Chart über das gewählte Fenster.
+Die Headline-Zahl steht auf dem **Performance**-Dashboard. Darunter siehst du den Breakdown (welcher Sub-Score den Gesamtscore nach unten zieht) und einen Trend-Chart über das gewählte Fenster.
 
 Nützliche Slices:
 
-- **Nach URL**: Group by URL. Welche Seiten dominieren den
-  Durchschnitt?
-- **Nach Release**: `compare_to_release_id`. Das beste Einzelsignal
-  dafür, ob ein Deploy die UX verschlechtert hat.
-- **Nach Land / Device**: Group by `country` oder `device_type`.
-  Regionale oder Device-Klassen-Regressionen sind im globalen Score
-  meist unsichtbar.
+- **Nach URL**: Group by URL. Welche Seiten dominieren den Durchschnitt?
+- **Nach Release**: `compare_to_release_id`. Das beste Einzelsignal dafür, ob ein Deploy die UX verschlechtert hat.
+- **Nach Land / Device**: Group by `country` oder `device_type`. Regionale oder Device-Klassen-Regressionen sind im globalen Score meist unsichtbar.
 
 ## Niedrigen Score verbessern
 
 Der Composite ist nur so gesund wie sein schwächster Bestandteil:
 
-1. Den Breakdown öffnen und den **schlechtesten Sub-Score**
-   identifizieren.
-2. Die zugehörige Metrik-Seite lesen ([LCP](/de/web-vitals/lcp),
-   [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls),
-   [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb)) und den
-   Fix mit der höchsten Leverage anwenden.
-3. Nach dem Release nachprüfen. `compare_to_release_id` für ein
-   sauberes Vorher/Nachher.
+1. Den Breakdown öffnen und den **schlechtesten Sub-Score** identifizieren.
+2. Die zugehörige Metrik-Seite lesen ([LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb)) und den Fix mit dem größten Hebel anwenden.
+3. Nach dem Release nachprüfen. `compare_to_release_id` für ein sauberes Vorher/Nachher.
 
-Nicht versuchen, alles gleichzeitig zu optimieren. Die
-Verbesserungen beißen sich oft: LCP-Fix mit mehr JS
-kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach
-hinten schieben.
+Nicht versuchen, alles gleichzeitig zu optimieren. Die Verbesserungen beißen sich oft: LCP-Fix mit mehr JS kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach hinten schieben.
 
 ## Häufige Überraschungen
 
-- **Der Score kann fallen, ohne dass eine einzelne Metrik eine
-  Schwelle reißt.** Eine kleine Regression in zwei Metriken kann
-  den Composite um einen halben Punkt bewegen, während jede
-  Metrik einzeln noch „Gut" sagt.
-- **Ein einzelner Deploy kann eine permanente Score-Lücke
-  erzeugen.** Sobald eine Regression live ist, trägt jeder folgende
-  Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des
-  Deploys zu erwischen, zählt.
-- **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.**
-  Wenn Besucher nie interagieren, fällt INP weg; der Score
-  reflektiert dann nur LCP und CLS, was meist leichter ist.
-- **Interner vs. externer Traffic verzerrt den Composite.**
-  Office-Traffic auf warmen Caches und schnellen Laptops scort
-  super; echte Besucher auf Mobile in einem Tunnel scoren
-  schlechter. Internen Traffic an der Quelle ausfiltern, damit die
-  Zahl ehrlich bleibt; siehe
-  [Internen Traffic filtern](/de/guides/filter-internal-traffic).
+- **Der Score kann fallen, ohne dass eine einzelne Metrik eine Schwelle reißt.** Eine kleine Regression in zwei Metriken kann den Composite um einen halben Punkt bewegen, während jede Metrik einzeln noch „Gut" sagt.
+- **Ein einzelner Deploy kann eine permanente Score-Lücke erzeugen.** Sobald eine Regression live ist, trägt jeder folgende Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des Deploys zu erwischen, zählt.
+- **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.** Wenn Besucher nie interagieren, fällt INP weg; der Score reflektiert dann nur LCP und CLS, was meist leichter ist.
+- **Interner vs. externer Traffic verzerrt den Composite.** Office-Traffic auf warmen Caches und schnellen Laptops schneidet super ab; echte Besucher auf Mobile in einem Tunnel schneiden schlechter ab. Internen Traffic an der Quelle ausfiltern, damit die Zahl ehrlich bleibt; siehe [Internen Traffic filtern](/de/guides/filter-internal-traffic).
 
 ## Nächste Schritte
 
-- [LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp),
-  [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp),
-  [TTFB](/de/web-vitals/ttfb): die beitragenden Metriken.
-- [Web-Vitals-Übersicht](/de/web-vitals): das vollständige Set
-  inklusive diagnostischer Metriken.
+- [LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb): die beitragenden Metriken.
+- [Web-Vitals-Übersicht](/de/web-vitals): das vollständige Set inklusive diagnostischer Metriken.

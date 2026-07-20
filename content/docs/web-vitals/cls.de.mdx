@@ -3,19 +3,13 @@ title: Cumulative Layout Shift (CLS)
 description: Was CLS misst, was ein guter CLS ist und wie du das springende Element findest.
 ---
 
-**CLS** misst, wie oft sichtbare Elemente auf der Seite plötzlich
-ihre Position ändern. Das ist die Metrik für den klassischen
-„die-Seite-ist-mir-grad-weggehüpft"-Effekt: der Bug, bei dem
-jemand den Button verfehlt oder die Zeile verliert, die gerade
-gelesen wurde.
+**CLS** misst, wie oft sichtbare Elemente auf der Seite plötzlich ihre Position ändern. Das ist die Metrik für den klassischen „die-Seite-ist-mir-grad-weggehüpft"-Effekt: der Bug, bei dem jemand den Button verfehlt oder die Zeile verliert, die gerade gelesen wurde.
 
-CLS gehört zu den [Core Web Vitals](/de/web-vitals) und zählt fürs
-Suchranking.
+CLS gehört zu den [Core Web Vitals](/de/web-vitals) und zählt fürs Suchranking.
 
 ## Was ist ein guter CLS?
 
-CLS ist einheitenlos, eine Summe von Layout-Shift-Scores. Tracke das
-**75. Perzentil**.
+CLS ist einheitenlos, eine Summe von Layout-Shift-Scores. Beobachte das **75. Perzentil**.
 
 | CLS bei p75     | Rating              |
 | --------------- | ------------------- |
@@ -23,111 +17,64 @@ CLS ist einheitenlos, eine Summe von Layout-Shift-Scores. Tracke das
 | ≤ 0,25          | Verbesserungswürdig |
 | > 0,25          | Schlecht            |
 
-Score 0 heißt: nichts Sichtbares hat sich bewegt. Score 0,1 ist
-ungefähr so viel wie „ein kleiner Banner oben schiebt in einem
-1080-Pixel-Viewport einmal alles nach unten." Der Score klettert
-schnell, sobald sich Shifts wiederholen.
+Score 0 heißt: nichts Sichtbares hat sich bewegt. Score 0,1 ist ungefähr so viel wie „ein kleiner Banner oben schiebt in einem 1080-Pixel-Viewport einmal alles nach unten." Der Score klettert schnell, sobald sich Shifts wiederholen.
 
 ## Was als Layout-Shift zählt
 
-Der Browser meldet einen Layout-Shift-Eintrag, wenn ein Element, das
-im Viewport sichtbar war, zwischen zwei Frames seine Position ändert,
-*ohne* dass der Besucher es ausgelöst hat. Score pro Shift:
+Der Browser meldet einen Layout-Shift-Eintrag, wenn ein Element, das im Viewport sichtbar war, zwischen zwei Frames seine Position ändert, *ohne* dass der Besucher es ausgelöst hat. Score pro Shift:
 
 ```
 score = impact_fraction × distance_fraction
 ```
 
-- **Impact Fraction**: die Vereinigung von „wo das Element war" und
-  „wo es jetzt ist", als Anteil des Viewports.
-- **Distance Fraction**: wie weit es sich bewegt hat, als Anteil der
-  größeren Viewport-Dimension.
+- **Impact Fraction**: die Vereinigung von „wo das Element war" und „wo es jetzt ist", als Anteil des Viewports.
+- **Distance Fraction**: wie weit es sich bewegt hat, als Anteil der größeren Viewport-Dimension.
 
-Shifts innerhalb von 500 ms nach einem Besucher-Input sind ausgenommen;
-das sind „erwartete" Shifts aus Besucheraktion.
+Shifts innerhalb von 500 ms nach einem Besucher-Input sind ausgenommen; das sind „erwartete" Shifts aus Besucheraktion.
 
-CLS ist die **Summe aller unerwarteten Shifts** über die
-Page-Lifetime, gebündelt in „Session-Windows" (1 s Lücke oder 5 s
-Gesamt resetten das Fenster; das schlechteste Fenster gewinnt).
+CLS ist die **Summe aller unerwarteten Shifts** über die Page-Lifetime, gebündelt in „Session-Windows" (1 s Lücke oder 5 s Gesamt resetten das Fenster; das schlechteste Fenster gewinnt).
 
 ## Wann CLS reportet wird
 
-CLS wird finalisiert, wenn die Seite versteckt wird. Bis dahin
-summieren sich alle Shifts in das laufende Session-Fenster.
+CLS wird finalisiert, wenn die Seite versteckt wird. Bis dahin summieren sich alle Shifts in das laufende Session-Fenster.
 
 ## Beispiele
 
-**Web-Font, der spät einspringt.** Der Fallback-Font hat andere
-Metriken; wenn der Web-Font lädt, reflowt jede Textzeile. Jeder
-sichtbare Textblock liefert einen Shift, oft in einem Schwung über
-0,1. Fix: `font-display: optional` oder self-hosted mit
-`size-adjust`.
+**Web-Font, der spät einspringt.** Der Fallback-Font hat andere Metriken; wenn der Web-Font lädt, reflowt jede Textzeile. Jeder sichtbare Textblock liefert einen Shift, oft in einem Schwung über 0,1. Fix: `font-display: optional` oder self-hosted mit `size-adjust`.
 
-**Bild ohne explizite Dimensionen.** Der Browser reserviert null
-Höhe, bis das Bild lädt, dann fügt er die volle Höhe ein. Alles
-darunter wird verschoben. Fix: `width`- und `height`-Attribute
-oder Aspect-Ratio setzen.
+**Bild ohne explizite Dimensionen.** Der Browser reserviert null Höhe, bis das Bild lädt, dann fügt er die volle Höhe ein. Alles darunter wird verschoben. Fix: `width`- und `height`-Attribute oder Aspect-Ratio setzen.
 
-**Spät ladender Consent-Banner.** Der Banner wird nach dem ersten
-Paint oben eingefügt und schiebt alles nach unten. Entweder Platz
-reservieren oder als Overlay rendern (`position: fixed`).
+**Spät ladender Consent-Banner.** Der Banner wird nach dem ersten Paint oben eingefügt und schiebt alles nach unten. Entweder Platz reservieren oder als Overlay rendern (`position: fixed`).
 
-**Ad-Slot, der nach Fetch seine Größe ändert.** Selbes Muster. Fixe
-Höhe für den Slot reservieren, auch wenn die Anzeige kürzer ist.
+**Ad-Slot, der nach Fetch seine Größe ändert.** Selbes Muster. Fixe Höhe für den Slot reservieren, auch wenn die Anzeige kürzer ist.
 
-## CLS in Fastmon ansehen
+## CLS in fastmon ansehen
 
 Der **Performance**-Bereich zeigt CLS bei p50, p75, p95.
 
-- **Nach URL**: Group by URL. Seiten mit Ads, spät ladenden Widgets
-  oder Consent-Bannern führen fast immer.
-- **Nach Device**: Group by `device_type`. Mobile-CLS ist meist
-  schlechter, weil Viewports schmaler und Shifts dadurch sichtbarer
-  sind.
-- **Nach Release**: `compare_to_release_id`. Ein Deploy, der einen
-  Font geswappt oder ein Layout geändert hat, fällt sofort auf.
+- **Nach URL**: Group by URL. Seiten mit Ads, spät ladenden Widgets oder Consent-Bannern führen fast immer.
+- **Nach Device**: Group by `device_type`. Mobile-CLS ist meist schlechter, weil Viewports schmaler und Shifts dadurch sichtbarer sind.
+- **Nach Release**: `compare_to_release_id`. Ein Deploy, der einen Font geswappt oder ein Layout geändert hat, fällt sofort auf.
 
 ## Hohen CLS verbessern
 
-1. **Explizite Dimensionen für jedes Bild und Video.** `width`-
-   und `height`-Attribute (Browser lesen sie als Aspect-Ratio, auch
-   wenn CSS responsiv skaliert).
-2. **Platz für asynchrone Inhalte reservieren.** Banner, Ad-Slots,
-   Embeds: Min-Height vor dem Laden setzen.
-3. **Keinen Content über existierendem Content einfügen.** Drunter
-   einfügen oder overlayen. Wenn drüber sein muss, in Reaktion auf
-   Besucher-Input; dann zählt es nicht.
-4. **Fonts stabilisieren.** `font-display: optional` oder
-   `font-display: swap` mit `size-adjust`/`ascent-override`, um die
-   Metriken des Fallbacks anzugleichen.
-5. **Beim Laden keine Layout-Properties (`top`, `left`, `margin`)
-   animieren.** Animierte Entrances, die Elemente nach dem ersten
-   Paint bewegen, zählen als Shifts. Auf Besucherinteraktion warten
-   oder stattdessen mit `transform: translate` animieren; Transforms
-   triggern kein Layout und zählen nicht als Shift.
+1. **Explizite Dimensionen für jedes Bild und Video.** `width`- und `height`-Attribute (Browser lesen sie als Aspect-Ratio, auch wenn CSS responsiv skaliert).
+2. **Platz für asynchrone Inhalte reservieren.** Banner, Ad-Slots, Embeds: Min-Height vor dem Laden setzen.
+3. **Keinen Content über existierendem Content einfügen.** Drunter einfügen oder overlayen. Wenn drüber sein muss, in Reaktion auf Besucher-Input; dann zählt es nicht.
+4. **Fonts stabilisieren.** `font-display: optional` oder `font-display: swap` mit `size-adjust`/`ascent-override`, um die Metriken des Fallbacks anzugleichen.
+5. **Beim Laden keine Layout-Properties (`top`, `left`, `margin`) animieren.** Animierte Entrances, die Elemente nach dem ersten Paint bewegen, zählen als Shifts. Auf Besucherinteraktion warten oder stattdessen mit `transform: translate` animieren; Transforms triggern kein Layout und zählen nicht als Shift.
 
-Tieferer Walkthrough: [Optimize CLS](https://web.dev/articles/optimize-cls)
-auf web.dev.
+Tieferer Walkthrough: [Optimize CLS](https://web.dev/articles/optimize-cls) auf web.dev.
 
 ## Häufige Überraschungen
 
-- **CLS bestraft denselben Shift auf jeder Seite.** Ein site-weiter
-  Font-Swap oder ein dauernder Banner-Einblender heißt: jeder
-  Pageview scort schlecht, nicht nur der erste.
-- **Score 0 heißt nicht „perfekt".** Es heißt nur „kein Shift hat
-  den sichtbaren Viewport berührt." Ein winziger Shift below the
-  fold bewegt CLS kein Stück, der Besucher merkt ihn aber
-  trotzdem.
-- **Animationen können zählen.** CSS-Transitions auf `width`,
-  `height`, `top`, `left`, `margin` schieben den Inhalt drumrum
-  weg und zählen mit. Lieber `transform` nehmen.
-- **Ein CLS-Fix ändert selten die Ladezeit.** Platz reservieren
-  ist meistens reines HTML/CSS; du kannst eine deutliche
-  Verbesserung ausliefern, ohne ein einziges JS-Byte anzufassen.
+- **CLS bestraft denselben Shift auf jeder Seite.** Ein site-weiter Font-Swap oder ein dauernder Banner-Einblender heißt: jeder Pageview schneidet schlecht ab, nicht nur der erste.
+- **Score 0 heißt nicht „perfekt".** Es heißt nur „kein Shift hat den sichtbaren Viewport berührt." Ein winziger Shift below the fold bewegt CLS kein Stück, der Besucher merkt ihn aber trotzdem.
+- **Animationen können zählen.** CSS-Transitions auf `width`, `height`, `top`, `left`, `margin` schieben den Inhalt drumrum weg und zählen mit. Lieber `transform` nehmen.
+- **Ein CLS-Fix ändert selten die Ladezeit.** Platz reservieren ist meistens reines HTML/CSS; du kannst eine deutliche Verbesserung ausliefern, ohne ein einziges JS-Byte anzufassen.
 
 ## Nächste Schritte
 
 - [LCP](/de/web-vitals/lcp): Lade-Geschwindigkeit.
 - [INP](/de/web-vitals/inp): Runtime-Responsiveness.
-- [Experience Score](/de/web-vitals/experience-score): eine Zahl
-  von 0–10, die alle obigen Metriken zusammenfasst.
+- [Experience Score](/de/web-vitals/experience-score): eine Zahl von 0–10, die alle obigen Metriken zusammenfasst.

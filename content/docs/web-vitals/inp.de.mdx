@@ -1,21 +1,15 @@
 ---
 title: Interaction to Next Paint (INP)
-description: "Was INP misst, was ein guter INP ist und wie du eine träge Seite debuggst, mit Fastmon-Daten."
+description: "Was INP misst, was ein guter INP ist und wie du eine träge Seite debuggst, mit fastmon-Daten."
 ---
 
-**INP** misst, wie lange die schlechteste Besucherinteraktion auf der
-Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die
-Metrik für „die Seite fühlt sich beim Klicken träge an". Während
-LCP die Lade-Responsiveness misst, geht es bei INP um die
-*Runtime-Responsiveness* über die ganze Zeit, in der jemand auf
-der Seite ist.
+**INP** misst, wie lange die schlechteste Besucherinteraktion auf der Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die Metrik für „die Seite fühlt sich beim Klicken träge an". Während LCP die Lade-Responsiveness misst, geht es bei INP um die *Runtime-Responsiveness* über die ganze Zeit, in der jemand auf der Seite ist.
 
-INP hat im März 2024 FID als Core Web Vital abgelöst und zählt
-fürs Suchranking.
+INP hat im März 2024 FID als Core Web Vital abgelöst und zählt fürs Suchranking.
 
 ## Was ist ein guter INP?
 
-INP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
+INP wird in Millisekunden gemessen. Beobachte das **75. Perzentil**.
 
 | INP bei p75     | Rating              |
 | --------------- | ------------------- |
@@ -23,9 +17,7 @@ INP wird in Millisekunden gemessen. Tracke das **75. Perzentil**.
 | ≤ 500 ms        | Verbesserungswürdig |
 | > 500 ms        | Schlecht            |
 
-200 ms ist ungefähr die Obergrenze dafür, dass sich was für einen
-Menschen noch „sofort" anfühlt. Über 500 ms wirkt jede Interaktion
-spürbar verzögert.
+200 ms ist ungefähr die Obergrenze dafür, dass sich was für einen Menschen noch „sofort" anfühlt. Über 500 ms wirkt jede Interaktion spürbar verzögert.
 
 ## Was als Interaktion zählt
 
@@ -35,98 +27,52 @@ INP misst drei Event-Typen:
 - Tap (`pointerdown` → `pointerup` → `click`)
 - Tastatur (`keydown` → `keyup`)
 
-Scrollen, Hovern und kontinuierliche Events (`mousemove`) zählen
-nicht.
+Scrollen, Hovern und kontinuierliche Events (`mousemove`) zählen nicht.
 
-Pro Interaktion ist INP die Zeit vom Input bis zum **nächsten Paint,
-der das Ergebnis visuell reflektiert**. Wenn dein Click-Handler 80 ms
-läuft und der Browser dann nochmal 120 ms braucht, um das Ergebnis
-zu rendern, ist dein INP 200 ms.
+Pro Interaktion ist INP die Zeit vom Input bis zum **nächsten Paint, der das Ergebnis visuell reflektiert**. Wenn dein Click-Handler 80 ms läuft und der Browser dann nochmal 120 ms braucht, um das Ergebnis zu rendern, ist dein INP 200 ms.
 
 ## Wann INP reportet wird
 
-INP wird finalisiert, wenn die Seite versteckt wird. Der Wert ist
-grob die schlechteste Interaktion über die Page-Lifetime
-(technisch ein Hoch-Perzentil-Interaktions-Wert, korrigiert um die
-Gesamtanzahl an Interaktionen, damit ein einzelner 800-ms-Ausreißer
-auf einer Seite mit 100 Interaktionen nicht dominiert).
+INP wird finalisiert, wenn die Seite versteckt wird. Der Wert ist grob die schlechteste Interaktion über die Page-Lifetime (technisch ein Hoch-Perzentil-Interaktions-Wert, korrigiert um die Gesamtanzahl an Interaktionen, damit ein einzelner 800-ms-Ausreißer auf einer Seite mit 100 Interaktionen nicht dominiert).
 
 Wenn der Besucher nie interagiert, hat der Pageview kein INP.
 
 ## Beispiele
 
-**Search-as-you-type-Input.** Jeder Tastendruck triggert einen
-Handler. Macht der Handler synchron Layout-Arbeit, liefert dir
-jeder Tastendruck einen INP-Kandidaten, und der schlechteste
-gewinnt. Was hilft: Debounce, Arbeit in `requestIdleCallback`
-schieben, oder auf einen Worker auslagern.
+**Search-as-you-type-Input.** Jeder Tastendruck triggert einen Handler. Macht der Handler synchron Layout-Arbeit, liefert dir jeder Tastendruck einen INP-Kandidaten, und der schlechteste gewinnt. Was hilft: Debounce, Arbeit in `requestIdleCallback` schieben, oder auf einen Worker auslagern.
 
-**„Details anzeigen"-Disclosure auf einer Produktseite.** Beim
-Öffnen läuft eine Height-Transition. Die Animation selbst zählt
-nicht, aber das synchrone JS davor, das die Content-Höhe misst,
-schon. Triggert diese Messung Layout, schlägt das auf INP durch.
+**„Details anzeigen"-Disclosure auf einer Produktseite.** Beim Öffnen läuft eine Height-Transition. Die Animation selbst zählt nicht, aber das synchrone JS davor, das die Content-Höhe misst, schon. Triggert diese Messung Layout, schlägt das auf INP durch.
 
-**SPA-Route-Wechsel.** Ein Klick auf einen Link triggert deinen
-Router, der gerne mal einen großen Baum komplett neu rendert. INP
-misst Klick → erster Paint der neuen Route. Wer Route-Chunks nicht
-lazy-loadet, läuft hier in einen schlechten INP rein.
+**SPA-Route-Wechsel.** Ein Klick auf einen Link triggert deinen Router, der gerne mal einen großen Baum komplett neu rendert. INP misst Klick → erster Paint der neuen Route. Wer Route-Chunks nicht lazy-loadet, läuft hier in einen schlechten INP rein.
 
-## INP in Fastmon ansehen
+## INP in fastmon ansehen
 
-Der **Performance**-Bereich zeigt INP bei p50, p75, p95. Besonders
-nützliche Slices:
+Der **Performance**-Bereich zeigt INP bei p50, p75, p95. Besonders nützliche Slices:
 
-- **Nach URL**: Group by URL. Interaktive Seiten (Suche,
-  Konfigurator, Dashboard) dominieren meist.
-- **Nach Device**: Group by `device_type`. INP ist auf günstigem
-  Mobile deutlich härter.
-- **Nach Browser**: Group by `browser`. Firefox und Safari zeigen
-  manchmal andere INP-Profile als Chromium.
+- **Nach URL**: Group by URL. Interaktive Seiten (Suche, Konfigurator, Dashboard) dominieren meist.
+- **Nach Device**: Group by `device_type`. INP ist auf günstigem Mobile deutlich härter.
+- **Nach Browser**: Group by `browser`. Firefox und Safari zeigen manchmal andere INP-Profile als Chromium.
 
 ## Schlechten INP verbessern
 
-INP-Regressionen lassen sich fast immer auf eine dieser Ursachen
-zurückführen:
+INP-Regressionen lassen sich fast immer auf eine dieser Ursachen zurückführen:
 
-1. **Long Task im Main-Thread.** Ein Click-Handler, ein Effect oder
-   ein Re-Render, der >50 ms läuft, blockiert den Paint. Mit dem
-   Performance-Tab in DevTools den Long Task finden, mit
-   `await new Promise(r => setTimeout(r, 0))` oder
-   `scheduler.yield()` aufbrechen.
-2. **Synchrone DOM-Arbeit im Handler.** Layout-Properties
-   (`offsetHeight`, `getBoundingClientRect`) direkt nach DOM-Writes
-   lesen erzwingt einen synchronen Reflow. Reads vor Writes batchen.
-3. **Schwere Framework-Arbeit pro Change.** Tausende Nodes pro
-   Tastendruck rerendern. Memoisiere, virtualisiere oder wechsle
-   zu uncontrolled Inputs.
-4. **Third-Party-Scripts.** Tag-Manager, A/B-Test-Frameworks,
-   Chat-Widgets: viele laufen auf jedem Event. Deinen
-   [Third-Party-Impact](/en/api/analytics/queryAnalytics) auditieren und
-   entfernen oder deferren, was du nicht brauchst.
+1. **Long Task im Main-Thread.** Ein Click-Handler, ein Effect oder ein Re-Render, der >50 ms läuft, blockiert den Paint. Mit dem Performance-Tab in DevTools den Long Task finden, mit `await new Promise(r => setTimeout(r, 0))` oder `scheduler.yield()` aufbrechen.
+2. **Synchrone DOM-Arbeit im Handler.** Layout-Properties (`offsetHeight`, `getBoundingClientRect`) direkt nach DOM-Writes lesen erzwingt einen synchronen Reflow. Reads vor Writes batchen.
+3. **Schwere Framework-Arbeit pro Change.** Tausende Nodes pro Tastendruck rerendern. Memoisiere, virtualisiere oder wechsle zu uncontrolled Inputs.
+4. **Third-Party-Scripts.** Tag-Manager, A/B-Test-Frameworks, Chat-Widgets: viele laufen auf jedem Event. Deinen [Third-Party-Impact](/en/api/analytics/queryAnalytics) auditieren und entfernen oder deferren, was du nicht brauchst.
 
-Tieferer Walkthrough: [Optimize INP](https://web.dev/articles/optimize-inp)
-auf web.dev.
+Tieferer Walkthrough: [Optimize INP](https://web.dev/articles/optimize-inp) auf web.dev.
 
 ## Häufige Überraschungen
 
-- **Eine Seite kann tollen LCP und schlechten INP haben.** Beides
-  misst was anderes. Versprich nicht „schnell ladend", wenn du
-  Responsiveness nicht auch gemessen hast.
-- **INP kann sich verschlechtern, wenn LCP besser wird.**
-  Lazy-Loading und Hydration schieben Arbeit *nach* dem ersten
-  Paint: gut für LCP, doof für INP. Immer beides zusammen
-  anschauen.
-- **INP schwankt stark je nach Interaktion.** Der erste Klick auf
-  einer frischen Seite ist meistens der schlimmste (kalter Cache,
-  Code noch nicht warm). Lass dir die Daten pro Interaktion zeigen,
-  nicht nur den Durchschnitt.
-- **Server-gerenderte Seiten sind nicht immun.** SSR hilft LCP,
-  bringt für INP aber nichts; Hydration ist JavaScript im
-  Main-Thread.
+- **Eine Seite kann tollen LCP und schlechten INP haben.** Beides misst was anderes. Versprich nicht „schnell ladend", wenn du Responsiveness nicht auch gemessen hast.
+- **INP kann sich verschlechtern, wenn LCP besser wird.** Lazy-Loading und Hydration schieben Arbeit *nach* dem ersten Paint: gut für LCP, doof für INP. Immer beides zusammen anschauen.
+- **INP schwankt stark je nach Interaktion.** Der erste Klick auf einer frischen Seite ist meistens der schlimmste (kalter Cache, Code noch nicht warm). Lass dir die Daten pro Interaktion zeigen, nicht nur den Durchschnitt.
+- **Server-gerenderte Seiten sind nicht immun.** SSR hilft LCP, bringt für INP aber nichts; Hydration ist JavaScript im Main-Thread.
 
 ## Nächste Schritte
 
 - [LCP](/de/web-vitals/lcp): Lade-Geschwindigkeit.
 - [CLS](/de/web-vitals/cls): visuelle Stabilität.
-- [Experience Score](/de/web-vitals/experience-score): eine Zahl
-  von 0–10, die alle obigen Metriken zusammenfasst.
+- [Experience Score](/de/web-vitals/experience-score): eine Zahl von 0–10, die alle obigen Metriken zusammenfasst.

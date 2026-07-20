@@ -16,8 +16,9 @@ export default async function ApiLayout({ children, params }: LayoutProps<"/[lan
     <DocsLayout
       tree={getApiTree(lang)}
       tabs={[
-        { title: lang === "de" ? "Doku" : "Docs", url: `/${lang}` },
+        { title: lang === "de" ? "Dokumentation" : "Docs", url: `/${lang}` },
         { title: "API Reference", url: "/en/api" },
+        { title: "Changelog", url: `/${lang}/changelog` },
       ]}
       // Force-disable the language switcher: fumadocs auto-enables it when
       // multiple locales are registered with RootProvider, even without

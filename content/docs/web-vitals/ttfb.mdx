@@ -3,14 +3,9 @@ title: Time to First Byte (TTFB)
 description: "How long the server took to send the first byte, and why it's the floor every other metric sits on."
 ---
 
-**TTFB** measures the time from navigation start to the first
-byte of response landing in the browser. It's the floor every
-other metric sits on: nothing visual can happen before the first
-byte arrives.
+**TTFB** measures the time from navigation start to the first byte of response landing in the browser. It's the floor every other metric sits on: nothing visual can happen before the first byte arrives.
 
-TTFB is **not** a Core Web Vital. A diagnostic metric, but the
-single most important one when you're trying to take apart a
-slow [LCP](/en/web-vitals/lcp) or [FCP](/en/web-vitals/fcp).
+TTFB is **not** a Core Web Vital. A diagnostic metric, but the single most important one when you're trying to take apart a slow [LCP](/en/web-vitals/lcp) or [FCP](/en/web-vitals/fcp).
 
 ## What's a good TTFB?
 
@@ -22,10 +17,7 @@ TTFB is reported in milliseconds. Track the **75th percentile**.
 | ≤ 1,800 ms      | Needs improvement   |
 | > 1,800 ms      | Poor                |
 
-The thresholds already bake in the realistic costs of cold-cache
-visitors on typical mobile networks. TTFB under 200 ms (warm
-cache, close PoP) is excellent. Over 1 s feels to the visitor
-like a page that just won't get going.
+The thresholds already bake in the realistic costs of cold-cache visitors on typical mobile networks. TTFB under 200 ms (warm cache, close PoP) is excellent. Over 1 s feels to the visitor like a page that just won't get going.
 
 ## What goes into TTFB
 
@@ -33,66 +25,37 @@ TTFB is the sum of:
 
 1. **Redirects.** Each `301`/`302` is a separate roundtrip.
 2. **DNS lookup.** First request to your origin per session.
-3. **TCP + TLS handshake.** One roundtrip each on a fresh connection
-   (HTTP/2 reuses connections; HTTP/3 collapses them further).
-4. **Request → server processing → response.** The time the server
-   spends thinking before it can start streaming.
+3. **TCP + TLS handshake.** One roundtrip each on a fresh connection (HTTP/2 reuses connections; HTTP/3 collapses them further).
+4. **Request → server processing → response.** The time the server spends thinking before it can start streaming.
 5. **First byte arrival.** Network propagation from server to client.
 
-If your TTFB is dominated by step 4, the fix is in your application.
-If it's dominated by 1–3 or 5, the fix is in your network and edge
-posture.
+If your TTFB is dominated by step 4, the fix is in your application. If it's dominated by 1–3 or 5, the fix is in your network and edge posture.
 
 ## When TTFB is reported
 
-TTFB is captured from the Navigation Timing API as `responseStart -
-fetchStart`. The tracker includes it with every page-view that has a
-new navigation entry.
+TTFB is captured from the Navigation Timing API as `responseStart - fetchStart`. The tracker includes it with every page-view that has a new navigation entry.
 
-## How to see TTFB in Fastmon
+## How to see TTFB in fastmon
 
 The dashboard's **Performance** section shows TTFB at p50, p75, p95.
 
-- **By country**: group by `country`. RTT to your origin is the
-  dominant factor for cold connections, and it's lopsided by region.
-  If your origin is in Frankfurt, TTFB to São Paulo will be bad
-  regardless of your server.
-- **By URL**: group by URL. If a single page has a much worse TTFB,
-  the application is doing per-page work (DB query, third-party
-  fetch) that the others aren't.
-- **By release**: `compare_to_release_id`. A backend deploy that
-  added a synchronous external call usually shows up here first.
+- **By country**: group by `country`. RTT to your origin is the dominant factor for cold connections, and it's lopsided by region. If your origin is in Frankfurt, TTFB to São Paulo will be bad regardless of your server.
+- **By URL**: group by URL. If a single page has a much worse TTFB, the application is doing per-page work (DB query, third-party fetch) that the others aren't.
+- **By release**: `compare_to_release_id`. A backend deploy that added a synchronous external call usually shows up here first.
 
 ## How to improve a slow TTFB
 
-1. **Cache HTML at the edge.** A static or near-static page should be
-   served from a CDN cache, not your origin. This is the highest-
-   leverage change you can make.
-2. **Move closer to your visitors.** Multi-region origins or a
-   well-distributed edge layer cut RTT for everyone outside your
-   primary region.
-3. **Profile the server response.** Use APM, server logs, or a
-   server-timing header to find what's slow. Common culprits: a slow
-   database query, a synchronous third-party call, or
-   server-rendered React hydration that traverses too much data.
-4. **Reduce redirect chains.** Every redirect adds a full roundtrip.
-   `http://` → `https://` → `www.` → final URL is three roundtrips
-   before the browser even gets the HTML.
-5. **Use HTTP/2 or HTTP/3.** Most modern stacks already do, but
-   double-check; older origins still negotiate HTTP/1.1.
+1. **Cache HTML at the edge.** A static or near-static page should be served from a CDN cache, not your origin. This is the highest- leverage change you can make.
+2. **Move closer to your visitors.** Multi-region origins or a well-distributed edge layer cut RTT for everyone outside your primary region.
+3. **Profile the server response.** Use APM, server logs, or a server-timing header to find what's slow. Common culprits: a slow database query, a synchronous third-party call, or server-rendered React hydration that traverses too much data.
+4. **Reduce redirect chains.** Every redirect adds a full roundtrip. `http://` → `https://` → `www.` → final URL is three roundtrips before the browser even gets the HTML.
+5. **Use HTTP/2 or HTTP/3.** Most modern stacks already do, but double-check; older origins still negotiate HTTP/1.1.
 
 ## Common surprises
 
-- **A fast TTFB on Vercel/Netlify can hide a slow origin.** The edge
-  caches the response; cache misses might be 10× slower. Check your
-  cache hit rate alongside TTFB.
-- **TTFB doesn't include client-side render time.** A page with a
-  fast TTFB and a slow LCP is shipping a lot of work to the
-  browser, not the server. SSR doesn't help if hydration is the
-  bottleneck.
-- **Service-worker caches affect TTFB the visitor experiences.** If
-  your service worker serves the navigation, TTFB can be near zero
-  on repeat visits.
+- **A fast TTFB on Vercel/Netlify can hide a slow origin.** The edge caches the response; cache misses might be 10× slower. Check your cache hit rate alongside TTFB.
+- **TTFB doesn't include client-side render time.** A page with a fast TTFB and a slow LCP is shipping a lot of work to the browser, not the server. SSR doesn't help if hydration is the bottleneck.
+- **Service-worker caches affect TTFB the visitor experiences.** If your service worker serves the navigation, TTFB can be near zero on repeat visits.
 
 ## What's next
 

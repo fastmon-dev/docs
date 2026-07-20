@@ -3,18 +3,13 @@ title: Cumulative Layout Shift (CLS)
 description: What CLS measures, what's a good CLS, and how to track down the element that's jumping.
 ---
 
-**CLS** measures how often visible elements move around
-unexpectedly. It's the metric for the classic "the page jumped
-while I was reading it": the bug that makes someone mistap a
-button or lose the line they were reading.
+**CLS** measures how often visible elements move around unexpectedly. It's the metric for the classic "the page jumped while I was reading it": the bug that makes someone mistap a button or lose the line they were reading.
 
-CLS is part of [Core Web Vitals](/en/web-vitals) and counts
-toward search ranking.
+CLS is part of [Core Web Vitals](/en/web-vitals) and counts toward search ranking.
 
 ## What's a good CLS?
 
-CLS is unitless; it's a sum of layout-shift scores. Track the
-**75th percentile**.
+CLS is unitless; it's a sum of layout-shift scores. Track the **75th percentile**.
 
 | CLS at p75      | Rating              |
 | --------------- | ------------------- |
@@ -22,109 +17,64 @@ CLS is unitless; it's a sum of layout-shift scores. Track the
 | ≤ 0.25          | Needs improvement   |
 | > 0.25          | Poor                |
 
-A score of 0 means nothing visible moved. A score of 0.1 is
-roughly "a small banner at the top of a 1080-pixel-tall viewport
-shoved everything down once." CLS climbs fast as soon as shifts
-start repeating.
+A score of 0 means nothing visible moved. A score of 0.1 is roughly "a small banner at the top of a 1080-pixel-tall viewport shoved everything down once." CLS climbs fast as soon as shifts start repeating.
 
 ## What counts as a layout shift
 
-The browser reports a layout-shift entry when an element that was
-visible in the viewport changes position between two frames *without*
-the visitor causing it. The score per shift is:
+The browser reports a layout-shift entry when an element that was visible in the viewport changes position between two frames *without* the visitor causing it. The score per shift is:
 
 ```
 score = impact_fraction × distance_fraction
 ```
 
-- **Impact fraction**: the union of where the element was and where it
-  ended up, as a share of the viewport.
-- **Distance fraction**: how far it moved, as a share of the
-  viewport's largest dimension.
+- **Impact fraction**: the union of where the element was and where it ended up, as a share of the viewport.
+- **Distance fraction**: how far it moved, as a share of the viewport's largest dimension.
 
-Shifts that happen within 500 ms of a visitor input are excluded;
-those are "expected" shifts caused by user action.
+Shifts that happen within 500 ms of a visitor input are excluded; those are "expected" shifts caused by user action.
 
-CLS is the **sum of all unexpected shifts** across the page's life,
-clustered into "session windows" (a 1 s gap or 5 s total resets the
-window; the worst window wins).
+CLS is the **sum of all unexpected shifts** across the page's life, clustered into "session windows" (a 1 s gap or 5 s total resets the window; the worst window wins).
 
 ## When CLS is reported
 
-CLS is finalized when the page becomes hidden. Until then, every shift
-is being summed into the running session window.
+CLS is finalized when the page becomes hidden. Until then, every shift is being summed into the running session window.
 
 ## Examples
 
-**A web font that swaps in late.** The fallback font has different
-metrics; when the web font loads, every line of text reflows. Every
-visible text block contributes a layout shift, often pushing CLS over
-0.1 in one event. Fix: `font-display: optional` or self-host with
-`size-adjust`.
+**A web font that swaps in late.** The fallback font has different metrics; when the web font loads, every line of text reflows. Every visible text block contributes a layout shift, often pushing CLS over 0.1 in one event. Fix: `font-display: optional` or self-host with `size-adjust`.
 
-**An image without explicit dimensions.** The browser reserves zero
-height until the image loads, then suddenly inserts the full height.
-Everything below pushes down. Fix: set `width` and `height` attributes
-or aspect-ratio.
+**An image without explicit dimensions.** The browser reserves zero height until the image loads, then suddenly inserts the full height. Everything below pushes down. Fix: set `width` and `height` attributes or aspect-ratio.
 
-**A late-loading consent banner.** The banner injects at the top of
-the page after first paint, pushing all content down. Either reserve
-the space, or render the banner as an overlay (`position: fixed`).
+**A late-loading consent banner.** The banner injects at the top of the page after first paint, pushing all content down. Either reserve the space, or render the banner as an overlay (`position: fixed`).
 
-**An ad slot that resizes after fetching.** Same pattern. Reserve a
-fixed height for the slot, even if the ad is shorter.
+**An ad slot that resizes after fetching.** Same pattern. Reserve a fixed height for the slot, even if the ad is shorter.
 
-## How to see CLS in Fastmon
+## How to see CLS in fastmon
 
 The dashboard's **Performance** section shows CLS at p50, p75, p95.
 
-- **By URL**: group by URL. Pages with ads, late-loading widgets,
-  or consent banners almost always lead.
-- **By device**: group by `device_type`. Mobile CLS is usually worse
-  because viewports are narrower and shifts are more visible.
-- **By release**: `compare_to_release_id`. A deploy that swapped a
-  font or changed a layout often shows up immediately.
+- **By URL**: group by URL. Pages with ads, late-loading widgets, or consent banners almost always lead.
+- **By device**: group by `device_type`. Mobile CLS is usually worse because viewports are narrower and shifts are more visible.
+- **By release**: `compare_to_release_id`. A deploy that swapped a font or changed a layout often shows up immediately.
 
 ## How to improve a high CLS
 
-1. **Set explicit dimensions on every image and video.** Use `width`
-   and `height` attributes (the browser reads them as aspect-ratio
-   even when CSS sizes the element responsively).
-2. **Reserve space for asynchronous content.** Banners, ad slots,
-   embeds: give them a min-height before they load.
-3. **Don't insert content above existing content.** Inject below or
-   overlay. If you must inject above, do it in response to user
-   action so the browser excludes it.
-4. **Stabilize fonts.** Use `font-display: optional` or
-   `font-display: swap` with `size-adjust`/`ascent-override` to match
-   the fallback's metrics.
-5. **Don't animate layout properties (`top`, `left`, `margin`)
-   during load.** Animated entrances that move elements after the
-   first paint count as shifts. Wait for user interaction, or
-   animate with `transform: translate` instead; transforms don't
-   trigger layout and don't count as shifts.
+1. **Set explicit dimensions on every image and video.** Use `width` and `height` attributes (the browser reads them as aspect-ratio even when CSS sizes the element responsively).
+2. **Reserve space for asynchronous content.** Banners, ad slots, embeds: give them a min-height before they load.
+3. **Don't insert content above existing content.** Inject below or overlay. If you must inject above, do it in response to user action so the browser excludes it.
+4. **Stabilize fonts.** Use `font-display: optional` or `font-display: swap` with `size-adjust`/`ascent-override` to match the fallback's metrics.
+5. **Don't animate layout properties (`top`, `left`, `margin`) during load.** Animated entrances that move elements after the first paint count as shifts. Wait for user interaction, or animate with `transform: translate` instead; transforms don't trigger layout and don't count as shifts.
 
-For a deeper walkthrough, see web.dev's
-[Optimize CLS](https://web.dev/articles/optimize-cls).
+For a deeper walkthrough, see web.dev's [Optimize CLS](https://web.dev/articles/optimize-cls).
 
 ## Common surprises
 
-- **CLS punishes you for the same shift on every page.** A
-  site-wide font swap or banner pattern means every single
-  page-view scores badly, not just the first.
-- **A score of 0 isn't perfect.** It just means "no shift
-  touched the visible viewport." A tiny shift below the fold
-  won't move CLS at all, but visitors can still notice it.
-- **Animations can count.** CSS transitions on `width`,
-  `height`, `top`, `left`, `margin` push surrounding content
-  around and count as shifts. Use `transform` instead.
-- **Fixing CLS rarely changes load time.** Reserving space is
-  mostly HTML/CSS; you can ship a big CLS improvement without
-  touching a line of JS.
+- **CLS punishes you for the same shift on every page.** A site-wide font swap or banner pattern means every single page-view scores badly, not just the first.
+- **A score of 0 isn't perfect.** It just means "no shift touched the visible viewport." A tiny shift below the fold won't move CLS at all, but visitors can still notice it.
+- **Animations can count.** CSS transitions on `width`, `height`, `top`, `left`, `margin` push surrounding content around and count as shifts. Use `transform` instead.
+- **Fixing CLS rarely changes load time.** Reserving space is mostly HTML/CSS; you can ship a big CLS improvement without touching a line of JS.
 
 ## What's next
 
 - [LCP](/en/web-vitals/lcp): load speed.
 - [INP](/en/web-vitals/inp): runtime responsiveness.
-- [Experience Score](/en/web-vitals/experience-score): a 0–10
-  composite combining all the metrics above.
+- [Experience Score](/en/web-vitals/experience-score): a 0–10 composite combining all the metrics above.

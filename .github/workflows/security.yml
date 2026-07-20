@@ -14,9 +14,9 @@ permissions:
 
 jobs:
   npm-audit:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
@@ -35,9 +35,9 @@ jobs:
     # package-lock.json + GitHub Actions SHAs in a single pass. Runs alongside
     # (not instead of) npm audit: broader advisory coverage at the cost of
     # more noise. Severity is not filtered; ignores live in osv-scanner.toml.
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
         with:
           scan-args: |-

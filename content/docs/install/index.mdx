@@ -1,60 +1,36 @@
 ---
-title: Implement Fastmon
-description: Drop the Fastmon beacon into your site with a single script tag.
+title: Implement fastmon
+description: Drop the fastmon beacon into your site with a single script tag.
 ---
 
-Fastmon is a hosted service. There's nothing to install on your
-servers; you add a single `<script>` tag to your site and point it at
-your Fastmon application. About five minutes of work.
+Fastmon is a hosted service. There's nothing to install on your servers; you add a single `<script>` tag to your site and point it at your fastmon site. About five minutes of work.
 
-A single tag in `<head>` works on any site you control: static HTML,
-Next.js, WordPress, Hugo, or via a tag manager.
+A single tag in `<head>` works on any site you control: static HTML, Next.js, WordPress, Hugo, or via a tag manager.
 
 <Cards>
-  <Card title="Install the tracking code" href="/en/install/html" description="The full walkthrough: create an application, add the tag, deploy, verify. Plus consent, no-JS fallback and first-party collectors." />
-  <Card title="Verify it works" href="/en/install/verify" description="A five-second check in DevTools and the dashboard when data isn't showing up." />
+  <Card title="HTML" href="/en/install/html" description="Any website you control. Works on static sites, Hugo, Jekyll, plain HTML, and any framework via its head/script primitive." />
 </Cards>
 
-## How it fits together
+## After you've added the tag
 
-- An **application** is one tracking snippet. It owns the collection
-  settings and the hashes that identify the snippet.
-- A **site** is one domain under that application, with its own
-  dashboard and traffic.
-
-Most people need exactly one application with one site, and Fastmon
-creates both for you when you add your first domain. Reach for a second
-site on the same application when you run several domains off one
-snippet, and for a second application only when a domain genuinely needs
-different collection settings.
+- [Verify it's working](/en/install/verify): a five-second check in DevTools and the dashboard.
+- [Pick a preset](/en/tracker): new sites start on Standard; choose Minimal for the leanest posture or Full for session analytics. Or tune the [individual settings](/en/tracker).
+- [Read what we don't collect](/en/privacy), handy when legal asks.
 
 ## What every setup has in common
 
-The script you embed is the same byte-for-byte file, no matter how you
-load it:
+The script you embed is the same byte-for-byte file, no matter how you load it:
 
-<InstallSnippet kind="script" />
+```html
+<script src="https://fastmon.site/s/{source_hash}.js" defer></script>
+```
 
-`source_hash` identifies your application's snippet. You'll find it,
-along with `collector_hash`, on the application's card under
-**··· → IDs & hashes**. Open this page from the app's **Set up** button
-and both are filled in above automatically; otherwise the
-[install guide](/en/install/html) lets you paste them in.
+`{source_hash}` is the per-site hash fastmon generates when you create the site. Copy it from the site's settings page.
 
 The tracker:
 
 - registers `PerformanceObserver` for Web Vitals,
 - buffers events in memory, and
-- POSTs batched payloads to `/c/{collector_hash}` over the page view's
-  lifecycle: on load, on `pagehide`, `visibilitychange → hidden`, and
-  periodic flushes.
+- POSTs batched payloads to `/c/{collector_hash}` over the page view's lifecycle: on load, on `pagehide`, `visibilitychange → hidden`, and periodic flushes.
 
-It doesn't set cookies, store IPs, or fingerprint the visitor; see
-[Privacy](/en/privacy) for the full statement.
-
-## After you've added the tag
-
-- [Verify it's working](/en/install/verify): a five-second check in
-  DevTools and the dashboard.
-- [Pick what gets collected](/en/collection-modes).
-- [Read what we don't collect](/en/privacy), handy when legal asks.
+It doesn't set cookies, store IPs, or fingerprint the visitor; see [Privacy](/en/privacy) for the full statement.

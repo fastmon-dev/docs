@@ -1,4 +1,4 @@
 {
   "title": "Guides",
-  "pages": ["index", "compare-releases", "filter-internal-traffic", "notification-rules"]
+  "pages": ["index", "beacon-inspector", "compare-releases", "filter-internal-traffic", "notification-rules", "server-timing"]
 }

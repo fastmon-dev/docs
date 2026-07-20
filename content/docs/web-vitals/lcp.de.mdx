@@ -1,22 +1,15 @@
 ---
 title: Largest Contentful Paint (LCP)
-description: "Was LCP ist, was ein guter LCP ist und wie du einen schlechten debuggst, mit Fastmon-Daten."
+description: "Was LCP ist, was ein guter LCP ist und wie du einen schlechten debuggst, mit fastmon-Daten."
 ---
 
-**LCP** misst, wie lange es dauert, bis das größte sichtbare
-Element einer Seite tatsächlich da ist. Wenn jemand sagt „die Seite
-hat sich beim Laden langsam angefühlt", geht es meistens um LCP:
-den Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
+**LCP** misst, wie lange es dauert, bis das größte sichtbare Element einer Seite tatsächlich da ist. Wenn jemand sagt „die Seite hat sich beim Laden langsam angefühlt", geht es meistens um LCP: den Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
 
-LCP gehört zu den [Core Web Vitals](/de/web-vitals), Googles
-Standard-Set für Besuchererlebnis, und zählt fürs Suchranking.
+LCP gehört zu den [Core Web Vitals](/de/web-vitals), Googles Standard-Set für Besuchererlebnis, und zählt fürs Suchranking.
 
 ## Was ist ein guter LCP?
 
-LCP wird in Millisekunden gemessen und in drei Kategorien eingeteilt.
-Die zu trackende Schwelle ist das **75. Perzentil** über alle
-Pageviews; so reportet es Google, und das ist die Zahl, gegen die du
-optimierst.
+LCP wird in Millisekunden gemessen und in drei Kategorien eingeteilt. Die zu beobachtende Schwelle ist das **75. Perzentil** über alle Pageviews; so weist Google es aus, und das ist die Zahl, gegen die du optimierst.
 
 | LCP bei p75     | Rating              |
 | --------------- | ------------------- |
@@ -24,27 +17,20 @@ optimierst.
 | ≤ 4.000 ms      | Verbesserungswürdig |
 | > 4.000 ms      | Schlecht            |
 
-Liegt dein p75 bei oder unter 2.500 ms, hatten drei von vier
-Besuchern ein Lade-Erlebnis, das Google „gut" findet. Bei 4.000 ms
-oder mehr saß einer von vier länger als vier Sekunden vor einer
-Seite, die sich noch nicht fertig anfühlte.
+Liegt dein p75 bei oder unter 2.500 ms, hatten drei von vier Besuchern ein Lade-Erlebnis, das Google „gut" findet. Bei 4.000 ms oder mehr saß einer von vier länger als vier Sekunden vor einer Seite, die sich noch nicht fertig anfühlte.
 
 ## Was als „größtes inhaltliches Element" zählt
 
-Der Browser verfolgt das größte Element, das im sichtbaren Viewport
-fertig gerendert ist. Infrage kommen:
+Der Browser verfolgt das größte Element, das im sichtbaren Viewport fertig gerendert ist. Infrage kommen:
 
 - `<img>` und `<image>` innerhalb von `<svg>`
 - `<video>` (der Poster-Frame)
 - Ein Element mit einer per CSS gesetzten `background-image`
 - Block-Level-Textknoten
 
-Die „Größe" ist die gerenderte Fläche am Schirm, geschnitten mit dem
-Viewport. Off-Screen-Inhalt zählt nicht, auch wenn er größer wäre.
+Die „Größe" ist die gerenderte Fläche am Schirm, geschnitten mit dem Viewport. Off-Screen-Inhalt zählt nicht, auch wenn er größer wäre.
 
-Das „größte" kann sich beim Laden ändern. Der Browser emittiert
-LCP-Einträge, bis der Besucher interagiert (Klick, Scroll, Taste). Der
-**letzte Eintrag vor dieser Interaktion** ist der LCP-Wert.
+Das „größte" kann sich beim Laden ändern. Der Browser emittiert LCP-Einträge, bis der Besucher interagiert (Klick, Scroll, Taste). Der **letzte Eintrag vor dieser Interaktion** ist der LCP-Wert.
 
 ## Wann LCP reportet wird
 
@@ -53,37 +39,24 @@ LCP wird finalisiert:
 - wenn der Besucher scrollt, klickt oder eine Taste drückt (was zuerst kommt), oder
 - wenn die Seite versteckt wird (`visibilitychange`).
 
-Der Fastmon-Tracker greift den finalen LCP in genau diesem Moment
-ab und packt ihn in den nächsten gebündelten Payload.
+Der fastmon-Tracker greift den finalen LCP in genau diesem Moment ab und packt ihn in den nächsten gebündelten Payload.
 
 ## Beispiele
 
-**Marketing-Seite mit Hero-Bild.** LCP ist fast immer das
-Hero-`<img>`. Liegt das Bild below the fold oder ist lazy-loaded,
-wird stattdessen ein Textblock zum LCP, meistens schneller.
+**Marketing-Seite mit Hero-Bild.** LCP ist fast immer das Hero-`<img>`. Liegt das Bild below the fold oder ist lazy-loaded, wird stattdessen ein Textblock zum LCP, meistens schneller.
 
-**SaaS-Dashboard mit Skeleton-Loader.** LCP ist erst der
-Skeleton-Container, dann, sobald echter Content rendert, springt's
-auf das größte Daten-Element. Pass auf falsch-„schnelle" LCPs auf,
-die nur kommen, weil eine fette Skeleton-Box davor stand.
+**SaaS-Dashboard mit Skeleton-Loader.** LCP ist erst der Skeleton-Container, dann, sobald echter Content rendert, springt's auf das größte Daten-Element. Pass auf falsch-„schnelle" LCPs auf, die nur kommen, weil eine fette Skeleton-Box davor stand.
 
-**Artikel mit eingebettetem Video.** LCP ist das Video-Poster,
-nicht der Text. Wenn du das Poster-Bild optimierst, verbesserst du
-den LCP, auch wenn der Besucher hinterher den Body liest.
+**Artikel mit eingebettetem Video.** LCP ist das Video-Poster, nicht der Text. Wenn du das Poster-Bild optimierst, verbesserst du den LCP, auch wenn der Besucher hinterher den Body liest.
 
-## LCP in Fastmon ansehen
+## LCP in fastmon ansehen
 
-Der Bereich **Performance** im Dashboard zeigt LCP bei p50, p75 und
-p95 von Haus aus. Für Breakdowns:
+Der Bereich **Performance** im Dashboard zeigt LCP bei p50, p75 und p95 von Haus aus. Für Breakdowns:
 
-- **Nach URL**: Performance → Group by URL. Erst die schlimmsten
-  Seiten suchen.
-- **Nach Device**: Group by `device_type`. Mobile-LCP ist fast immer
-  schlechter als Desktop.
+- **Nach URL**: Performance → Group by URL. Erst die schlimmsten Seiten suchen.
+- **Nach Device**: Group by `device_type`. Mobile-LCP ist fast immer schlechter als Desktop.
 - **Nach Land**: Group by `country`. RTT zu deinem Origin zählt.
-- **Nach Release**: `compare_to_release_id` in der
-  [Analytics-API](/en/api/analytics/queryAnalytics) setzen, um zu sehen, ob ein
-  Deploy LCP verschlechtert hat.
+- **Nach Release**: `compare_to_release_id` in der [Analytics-API](/en/api/analytics/queryAnalytics) setzen, um zu sehen, ob ein Deploy LCP verschlechtert hat.
 
 Programmatisch:
 
@@ -101,46 +74,24 @@ curl https://api.fastmon.eu/v1/organizations/$ORG/analytics/query \
 
 ## Schlechten LCP verbessern
 
-LCP zerfällt in vier Beiträge, von denen meist einer dominiert.
-Das Fastmon-Dashboard zeigt jeden; fang mit dem größten Anteil an.
+LCP zerfällt in vier Beiträge, von denen meist einer dominiert. Das fastmon-Dashboard zeigt jeden; fang mit dem größten Anteil an.
 
-1. **TTFB.** Wenn dein Time-to-First-Byte schon >1.500 ms ist,
-   rettet keine Frontend-Optimierung deinen LCP. HTML am Edge
-   cachen, oder statisch rendern.
-2. **Resource Load Delay.** Das LCP-Bild wird zu spät angefordert.
-   Preload (`<link rel="preload" as="image">`) oder im HTML weiter
-   nach oben.
-3. **Resource Load Duration.** Das LCP-Bild ist zu groß oder zu
-   langsam ausgeliefert. Moderne Formate (AVIF/WebP), responsive
-   Größen via `srcset`, CDN nahe deinen Besuchern.
-4. **Element Render Delay.** Der Browser hat die Bytes, ist aber
-   durch render-blocking CSS oder JavaScript blockiert. Critical CSS
-   inlinen, unkritische Scripts deferren.
+1. **TTFB.** Wenn dein Time-to-First-Byte schon >1.500 ms ist, rettet keine Frontend-Optimierung deinen LCP. HTML am Edge cachen, oder statisch rendern.
+2. **Resource Load Delay.** Das LCP-Bild wird zu spät angefordert. Preload (`<link rel="preload" as="image">`) oder im HTML weiter nach oben.
+3. **Resource Load Duration.** Das LCP-Bild ist zu groß oder zu langsam ausgeliefert. Moderne Formate (AVIF/WebP), responsive Größen via `srcset`, CDN nahe deinen Besuchern.
+4. **Element Render Delay.** Der Browser hat die Bytes, ist aber durch render-blocking CSS oder JavaScript blockiert. Critical CSS inlinen, unkritische Scripts deferren.
 
-Für einen tieferen Walkthrough siehe
-[Optimize LCP](https://web.dev/articles/optimize-lcp) auf web.dev; die
-Optimierungs-Logik ist überall dieselbe, egal welches RUM-Tool du
-nutzt.
+Für einen tieferen Walkthrough siehe [Optimize LCP](https://web.dev/articles/optimize-lcp) auf web.dev; die Optimierungs-Logik ist überall dieselbe, egal welches RUM-Tool du nutzt.
 
 ## Häufige Überraschungen
 
-- **LCP ist meistens ein Bild, kein Text.** Wenn du nur an Fonts
-  rumschraubst, verschiebst du deinen LCP wahrscheinlich kein Stück.
-- **SPAs starten LCP bei Route-Change nicht neu.** LCP ist eine
-  Navigations-Metrik; Route-Wechsel innerhalb der App erzeugen
-  keinen neuen LCP-Wert.
-- **Den Hero lazy-loaden ruiniert dir LCP.** Klassischer
-  Copy-Paste-Fehler. Above the fold gehört nichts ins
-  Lazy-Loading.
-- **`background-image` zählt mit.** Wenn dein „Hero" ein
-  CSS-Hintergrund ist, misst der Browser den trotzdem als LCP.
+- **LCP ist meistens ein Bild, kein Text.** Wenn du nur an Fonts rumschraubst, verschiebst du deinen LCP wahrscheinlich kein Stück.
+- **SPAs starten LCP bei Route-Change nicht neu.** LCP ist eine Navigations-Metrik; Route-Wechsel innerhalb der App erzeugen keinen neuen LCP-Wert.
+- **Den Hero lazy-loaden ruiniert dir LCP.** Klassischer Copy-Paste-Fehler. Above the fold gehört nichts ins Lazy-Loading.
+- **`background-image` zählt mit.** Wenn dein „Hero" ein CSS-Hintergrund ist, misst der Browser den trotzdem als LCP.
 
 ## Nächste Schritte
 
-- [Interaction to Next Paint (INP)](/de/web-vitals/inp): die
-  Responsiveness-Metrik, die häufig regrediert, wenn du LCP durch
-  zusätzliches JavaScript optimierst.
-- [Cumulative Layout Shift (CLS)](/de/web-vitals/cls): die
-  Visual-Stability-Metrik.
-- [Web-Vitals-Übersicht](/de/web-vitals): alle fünf Metriken und
-  ihre Schwellen.
+- [Interaction to Next Paint (INP)](/de/web-vitals/inp): die Responsiveness-Metrik, die häufig regrediert, wenn du LCP durch zusätzliches JavaScript optimierst.
+- [Cumulative Layout Shift (CLS)](/de/web-vitals/cls): die Visual-Stability-Metrik.
+- [Web-Vitals-Übersicht](/de/web-vitals): alle fünf Metriken und ihre Schwellen.

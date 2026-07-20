@@ -1,4 +1,4 @@
-# Production Caddyfile for Fastmon docs.
+# Production Caddyfile for fastmon docs.
 # Serves the static export from `out/` after `npm run build`.
 #
 # Deploy: rsync -av --delete ./out/ user@host:/var/www/fastmon-docs/

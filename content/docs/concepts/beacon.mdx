@@ -1,42 +1,30 @@
 ---
 title: The RUM Beacon
-description: The small JavaScript file Fastmon ships to your visitors. What it observes, when it sends, and what it never does.
+description: The small JavaScript file fastmon ships to your visitors. What it observes, when it sends, and what it never does.
 ---
 
-The **beacon** is the JavaScript file Fastmon serves at
-`https://fastmon.site/s/{source_hash}.js`. That's the only
-client-side code we ship, and the only thing your visitors load
-from us.
+The **beacon** is the JavaScript file fastmon serves at `https://fastmon.site/s/{source_hash}.js`. That's the only client-side code we ship, and the only thing your visitors load from us.
 
-This page is the technical reference. For setup, head to
-[Implementation](/en/install); for the privacy posture, see
-[Privacy: what we don't collect](/en/privacy).
+This page is the technical reference. For setup, head to [Implementation](/en/install); for the privacy posture, see [Privacy: what we don't collect](/en/privacy).
 
-## Two builds, one URL
+## One bundle, two builds
 
-The `<script>` tag always points at the same URL, but the bytes
-underneath are one of two builds, chosen by the application's
-`collect_sessions` setting:
+There's a single beacon (`standard.js`). The server compiles it per site into one of two builds, decided by the [`store_session`](/en/tracker#store-session) setting:
 
-| Build | When | On-device storage |
+| Build | When | Storage on device |
 |---|---|:---:|
-| `stateless.js` | `collect_sessions` off (`minimal`, `standard`) | None — the session-id code is compiled out entirely |
-| `stateful.js` | `collect_sessions` on (`full`) | One `sessionStorage` entry (`_fms`), no cookies |
+| Stateless | `store_session` off | None; the `sessionStorage` write is compiled out entirely |
+| Stateful | `store_session` on | `sessionStorage._fms` only (the session id) |
 
-You don't pick the build in the `<script>` tag; the server resolves
-it from the application's config and ships the right one. Neither
-build sets a cookie — the only difference is whether the
-`sessionStorage` session-id code is present at all. Changing the
-[preset](/en/collection-modes) rolls the script cache automatically.
+fastmon sets **no cookies at all**, in either build. By default nothing is written to the device: only the `Full` preset (or turning on [`store_session`](/en/tracker#store-session)) writes the `sessionStorage._fms` session id. Whether that write lands on page load or waits for consent is the [`preconsent_level`](/en/tracker#preconsent-level) setting.
+
+You don't pick the build in the `<script>` tag; the server resolves it from the site's settings and ships the right one. A change to a setting that affects the served bundle rolls the script cache automatically.
 
 ## Why it matters
 
-The beacon is the boundary between Fastmon and the visitor.
-Whatever happens here (what's measured, when it flushes, which
-identifiers get minted) the browser sees, and anyone reading the
-script can see it too. So we keep the surface small on purpose:
-small means auditable, quick to load, and easy to defend in a
-privacy review.
+The beacon is the boundary between fastmon and the visitor: what it measures, when it flushes, and which identifiers it mints all happen in the browser. We keep that surface small and document it in full on this page, and the wire shape is enforced server-side, so what the beacon can and can't do stays auditable and easy to defend in a privacy review, independent of the script itself.
+
+The shipped script is minified and obfuscated on purpose, not to hide what it does (that's all on this page) but so content and ad blockers can't pattern-match it by name and silently block it, which would leave holes in your monitoring.
 
 ## What the beacon observes
 
@@ -45,84 +33,56 @@ privacy review.
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, paint entries, long animation frames, layout shifts.       |
 | `Navigation Timing`        | TTFB, redirect count, navigation type (`navigate`, `reload`, `back_forward`).  |
 | `Resource Timing`          | Per-resource size, duration, and category. Aggregated to per-domain rollups.   |
-| `error` event              | Type, count, and stack-frame hosts in every preset. `standard` / `full` add each frame's path + line/column (`collect_error_frames`); `full` also keeps the error message (`collect_error_messages`), after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
+| `error` event              | Type, count, and stack-frame hosts always; the path + line/column of your own first-party script frames too. The message, and the detail of inline / third-party frames, only when [`store_error_messages`](/en/tracker#store-error-messages) / [`error_frame_detail`](/en/tracker#error-frame-detail) are on, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
-| Document & Window          | Page URL (sanitized per [preset](/en/collection-modes)), referrer, viewport size class. |
+| `fetch` / `XMLHttpRequest` | Per-endpoint Fetch/XHR aggregates: call counts, durations, duration buckets, and a status-error distribution, templated per endpoint (method + host + path, no query strings). Server-controlled per site ([`fetch_xhr_enabled`](/en/tracker#fetch-xhr-enabled), default off). |
+| `Server-Timing`            | The `Server-Timing` metrics your own backend reports (name and duration), first-party by construction.                  |
+| Document & Window          | Page URL (sanitized to origin + path), referrer, viewport size class.          |
 
-Geo data (the country) is **not** read in the browser. The
-edge derives it from the request IP and forwards a country code as
-a `FM-Country` header; the IP itself never reaches the application.
-Same for the bucketed browser / OS / device family, forwarded as
-`FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device` — these
-are added at the edge, not sent by the beacon. The edge also
-computes a one-way `FM-Stitch` header
-(`HMAC-SHA256(rotating-24h-salt, IP | UA | collector_hash)`
-truncated to 128 bits) that the backend uses for bounded
-cross-pageview joins (whenever `store_stitch` is on). See
-[Privacy → The edge-derived `stitch` identifier](/en/privacy#the-edge-derived-stitch-identifier)
-for the legal framing. The beacon itself never asks for
-geolocation.
+Geo data (the country) is **not** read in the browser. The edge derives it from the request IP and forwards a country code as a `FM-Country` header; the IP itself never reaches the application. Same for the bucketed browser / OS / device family, forwarded as `FM-Browser` / `FM-Browser-Version` / `FM-OS` / `FM-Device`. The edge also computes a one-way `FM-Stitch` header (`HMAC-SHA256(rotating-24h-salt, IP | UA | collector_hash | domain)` truncated to 128 bits) that the backend uses for bounded cross-pageview joins (stored only when [`store_stitch`](/en/tracker#store-stitch) is on). See [Privacy → The edge-derived `stitch` identifier](/en/privacy#the-edge-derived-stitch-identifier) for the legal framing. The beacon itself never asks for geolocation.
 
 ## What the beacon does not do
 
-- Read or write `localStorage` / `IndexedDB` / `Cache Storage` in
-  either build.
-- Set cookies — ever, in either build. The only device write is the
-  `sessionStorage` session id, and only under `full`.
-- Read URL query values or hash fragments (it keeps bare query key
-  names only when `collect_query_keys` is on).
-- Touch DOM content (no scroll-replay, no session-replay, no form
-  capture).
+- Read or write `localStorage` / `IndexedDB` / `Cache Storage`, ever.
+- Set cookies. fastmon sets no cookies at all, in any configuration.
+- Touch DOM content (no scroll-replay, no session-replay, no form capture). The one carve-out is opt-in [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), which reads a single body controller-class token to classify the page type, nothing else.
 - Read the visitor's media devices, sensors, or geolocation.
-- Mint a cross-pageview identifier on the device unless `full`
-  stores a session id. The per-pageview `pvid` exists always and
-  dies with the pageview; the `stitch` is computed server-side at
-  the edge, never on the device.
+- Mint an on-device identifier that links page-views together, unless [`store_session`](/en/tracker#store-session) is on (then the tab-scoped session id). The per-pageview `pvid` exists in every configuration and dies with the pageview.
 
 ## The lifecycle of a pageview
 
 ```
 page loads
-  ├── beacon script downloads (defer, cached, ETag-validated)
+  ├── beacon script downloads (async, cached, ETag-validated)
   ├── tracker registers PerformanceObserver and event listeners
   ├── visitor uses the page
-  │     └── tracker accumulates the pageview snapshot in memory
-  └── flush triggers (init, loaded, visibilitychange→hidden, pagehide,
-      soft-nav, error/fetch-xhr update, or terminate) POST to
-      /c/{collector_hash} with a versioned cumulative snapshot
+  │     └── tracker buffers events in memory
+  └── flush triggers (visibilitychange→hidden, pagehide, soft-nav,
+      error update, or terminate) cause a POST to /c/{collector_hash}
+      with a versioned payload (lifecycle marks each emission)
 ```
 
-Each beacon carries the **full cumulative snapshot** of the pageview
-so far (not a batch of discrete events), tagged with a monotonic
-`ver`; the server keeps the highest `ver` per `pvid`. The flush uses
-`navigator.sendBeacon()` when it's available, so the request
-survives even if the page is unloading. If `sendBeacon` isn't
-available, the tracker falls back to `fetch` with `keepalive: true`.
-If *both* fail (legacy browsers, very aggressive extension
-blocking), it falls back to a GET pixel at
-`/c/{collector_hash}.gif?…`. That URL serializes a safe subset of
-fields into the query string. Sensitive payloads (`sid`, referrer,
-errors, the large third-party / resource-breakdown / LoAF JSON
-blobs) are excluded from the pixel fallback by name (`PIXEL_SKIP_KEYS`),
-so they never travel through any access-log surface.
+The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party, resource, and Long Animation Frame breakdowns) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
 
 ## The wire payload
 
-The payload is JSON with deliberately short keys to keep the wire
-size down. The body is capped at 8 KiB. All fields are optional;
-a representative envelope looks like:
+The payload is JSON with deliberately short keys to keep the wire size down. The body is capped at 8 KiB. All fields are optional; a representative envelope looks like:
 
 ```json
 {
   "sid":  "01HZX...",
   "pvid": "01HZY...",
   "ver":  3,
-  "lcy":  "hidden",
+  "lcy": "hidden",
   "pst":  1746604800000,
   "cst":  1746604803456,
   "u":    "https://acme.com/pricing",
   "r":    "https://google.com/",
+  "b":    "Chrome",
+  "v":    "120",
+  "d":    "desktop",
+  "o":    "macOS",
   "vc":   "wide",
   "c":    "4g",
   "ttfb": 320,
@@ -136,161 +96,87 @@ a representative envelope looks like:
 }
 ```
 
-You don't usually need to read this; the dashboard and the
-[Analytics API](/en/api/analytics/queryAnalytics) unpack it for you. It's
-documented here for transparency.
+You don't usually need to read this; the dashboard and the [Analytics API](/en/api/analytics/queryAnalytics) unpack it for you. It's documented here for transparency.
 
 Key abbreviations:
 
-- `sid`: session id. Lives in `sessionStorage` under `_fms`. Only
-  present under `full` (or a custom preset with `collect_sessions`
-  on).
+- `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`store_session`](/en/tracker#store-session) is on (on load, or after `grantConsent()`, per [`preconsent_level`](/en/tracker#preconsent-level)).
 - `pvid`: per-pageview id. New on every pageview, not persisted.
-- `ver`: monotonic version of this pageview's cumulative snapshot.
-- `lcy`: lifecycle marker — one of `init`, `loaded`, `error_update`,
-  `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`.
+- `ver`: monotonic version of this pageview's payload.
+- `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
-- `cst`: client-sent-at timestamp, visitor wall-clock at flush.
-  Used server-side to detect clock skew against receive time.
-- `u`, `r`: page URL and referrer, both pre-sanitized at the
-  tracker to origin + pathname (query values and hash dropped; bare
-  query key names kept when `collect_query_keys` is on). `r` is
-  classified server-side into bucketed source + medium and the
-  raw value is dropped before any logging path. It never
-  persists, in any preset.
-- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`,
-  `utm_content`, `click_id_param`: campaign attribution
-  extracted from `window.location.search`. Each capped at 64
-  chars. `click_id_param` is the platform *label* only
-  (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped
-  by the tracker. Emitted in all presets.
-- `vc`, `c`: viewport class and connection type, read in the
-  browser. `rtt` / `dl` join the connection group as real-time RTT
-  and downlink estimates. Browser / OS / device family are **not**
-  in the wire payload — the edge adds them from `FM-*` request
-  headers.
-- `pre`, `ad`, `vd`: prerender flag (Speculation Rules API),
-  activation delta (ms, prerendered pages only), and
-  visibility-dirty (was the tab backgrounded during the
-  pageview).
-- `ttfb`, `fcp`, `lcp`, `inp`, `cls`, `tbt`, …: mnemonic timing
-  keys (Web Vitals, cache hit rate, resource breakdowns, LoAF
-  aggregates). Older bundles used `tNN` slots; the collector still
-  accepts those as aliases.
-- `errs`: error entries (`t` type, `n` count, `m` message, `fr`
-  frames). `t` and `n` ship in every preset, and so does each
-  frame's host. `standard` / `full` add each frame's path and
-  line/column (`collect_error_frames`); the message `m` is
-  `full`-only (`collect_error_messages`) and even then runs through
-  a scrubber that masks URLs, emails, IDs, and quoted strings.
+- `cst`: client-sent-at timestamp, visitor wall-clock at flush. Used server-side to detect clock skew against receive time.
+- `u`, `r`: page URL and referrer, both pre-sanitized at the tracker to origin + pathname (query and hash dropped). `r` is classified server-side into bucketed source + medium and the raw value is dropped before any logging path. It never persists, in any mode.
+- `us`, `um`, `uc`, `ut`, `un`, `ci`: campaign attribution (utm source / medium / campaign / term / content, and the click-ID platform label) extracted from `window.location.search`. Each capped at 64 chars. `ci` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration, and omitted entirely when empty.
+- `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
+- `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
+- Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. They were previously opaque numbered slots (`t1`…`t36`); cached older bundles still send those names, which the collector maps onto the same fields.
+- `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`store_error_messages`](/en/tracker#store-error-messages), and the path/line/column of inline and third-party frames via [`error_frame_detail`](/en/tracker#error-frame-detail); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
+- `snl`: **Route Load** for soft navigations (`soft_nav_load`) — the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
-- `dlv`: delivery method — `"b"` on the `sendBeacon` path; absent on
-  the `fetch` and pixel paths (the server infers those).
+- `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
+- Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs.
+
+Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `lcp`/`fcp` keys and attributed to the route.
 
 ## Cache and rollouts
 
-The script is served with strong caching and an `ETag`. Two things
-invalidate the cache automatically:
+The script is served with strong caching and an `ETag`. Two things invalidate the cache automatically:
 
-- **Config change.** Switching an application's [preset](/en/collection-modes)
-  (or a flag that flips the `stateful`/`stateless` build) ships a
-  new template version.
-- **Beacon upgrade.** Fastmon ships beacon versions
-  (`source_version`); changing an application's pinned version rolls
-  the cache.
+- **Setting change.** Changing a setting that affects the served bundle (for example [`store_session`](/en/tracker#store-session)) ships a new template version.
+- **Beacon upgrade.** Fastmon ships beacon versions (`source_version`); changing a site's pinned version rolls the cache.
 
-You don't need to redeploy your site to take a beacon upgrade.
-The browser picks up the new version on its next cache check.
+You don't need to redeploy your site to take a beacon upgrade. The browser picks up the new version on its next cache check.
 
 ## Customer-facing JS API
 
-Two integration points, both namespace-stable across bundle
-versions:
+The tracker reads a few namespace-stable globals off `window`.
 
-### Sample rate (both builds)
+### Grant consent
 
-```js
-// 10% of pageviews are tracked (default 1.0 = 100%)
-window.__FASTMON_SAMPLE_RATE = 0.1;
-```
-
-Read once per pageview when the tracker resets. Decisions are
-per-pageview, not per-beacon: a sampled pageview emits all its
-lifecycle beacons; an unsampled one emits none. Allowed range is
-`[0, 1]`; out-of-range values are clamped silently. Set this before
-the script tag if you want the very first beacon respected.
-
-### Consent — release the session id (`stateful` build)
+When [`store_session`](/en/tracker#store-session) is on with [`preconsent_level`](/en/tracker#preconsent-level) left at `off`, the session-id write is deferred until your CMP grants consent:
 
 ```js
-window.fastmon.grantConsent();   // consent granted: write the session id
+// In your cookie banner's "Accept" callback, and on every page load
+// while consent is granted (most consent managers do this for you):
+window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-Only relevant when the application defers the session-id write
-(`session_consent = deferred` with `collect_sessions` on). It writes
-the `sessionStorage` session id that was held back until now; it is
-write-only and idempotent, with **no revoke** (nothing was stored
-before consent, so there's nothing to clear). It gates only the
-on-device write, never collection — beacons still flow before
-consent, with an empty `sid`. `window.__fastmon_consent(true)` is a
-deprecated alias. See
-[Presets → Gating the session id behind consent](/en/collection-modes#gating-the-session-id-behind-consent).
+`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. It's idempotent, and there's no mid-session revoke: the id lives in `sessionStorage` and dies with the tab, so declining just means the write never happens.
 
-## Presets
+### Fine-tuning [#fine-tuning]
 
-The beacon's runtime behavior depends on the application's
-[preset](/en/collection-modes):
+By default the tracker keeps request volume low: `init` fires immediately as a pageview-exists marker, `loaded` follows once LCP is final, mid-page-view updates fire only on a meaningful signal (a new first-party endpoint, a failure, or a slow call), and a polling page's update beacons are capped. A typical pageview sends two to four beacons. For pages that need to change any of that, it reads a few `window` globals. Most sites never touch them; set a value **before** the `<script>` tag so the first beacon respects it.
 
-- `minimal`: observes and sends with no visitor identifier at all —
-  no `sid`, no stored `stitch`, error type + count only.
-- `standard` (default): adds the edge-derived `stitch` (unique
-  visitors, no device storage), full error stack frames, fetch/XHR
-  timing, and query key names. Still no `sid`.
-- `full`: adds the `sessionStorage` session id (`sid`) and the error
-  message.
+| Global | Default | Effect |
+| --- | --- | --- |
+| `__FASTMON_SAMPLE_RATE` | `1` | Fraction of page-views that send beacons (0 to 1). `0` skips a page-view entirely. The decision is per page-view; a sampled page-view still sends all of its lifecycle beacons. |
+| `__FASTMON_INIT_COALESCE_MS` | `0` | Delay before the `init` beacon. At `0` (the default) `init` fires immediately, so a pageview that dies before any other beacon (a bot, a crash, an abrupt close) still registers. A positive value re-delays it. |
+| `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | How long the tracker waits for LCP to settle before it sends `loaded`, when no interaction or tab-hide has finalized LCP first. `0` disables the cap. |
+| `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Holds mid-page-view update beacons (errors, fetch/XHR) until the page is at least this old; a shorter visit ships them on the final beacon instead. `0` fires them immediately. |
+| `__FASTMON_MAX_VERSION` | `20` | Caps mid-page-view update beacons per page-view, so a polling page can't fire thousands. Lifecycle beacons are never capped, and the cumulative aggregates still land on the final beacon. `0` removes the cap. |
 
-The edge-derived `stitch` header is computed for every preset that
-keeps it (`store_stitch` on — i.e. not `minimal`); see
-[Privacy](/en/privacy#the-edge-derived-stitch-identifier). Preconsent
-(`session_consent`) only gates *when* the `sid` is written, never the
-rest of the payload. In every preset, the guarantees in
-[Privacy](/en/privacy) hold.
+## Tracker settings
+
+What the beacon does is controlled per site by its [tracker settings](/en/tracker): whether a session id, error message, error frame detail, query keys, fetch/XHR telemetry, or the edge `stitch` are present. The three starting points are the [presets](/en/tracker) (Minimal, Standard, Full). The privacy guarantees in [Privacy](/en/privacy) hold under every configuration.
 
 ## Rate limiting
 
-The collector rate-limits per `(collector_hash, client_ip)`. The IP
-is read at the edge for that bucket only; the application sees a
-pre-derived bucket key, not the raw IP, and the IP is not written
-to disk. It's defensive: a broken page or a synthetic load test
-shouldn't saturate ingestion for other tenants. Real traffic
-basically never hits it.
+The collector rate-limits per `(collector_hash, client_ip)`. The IP is read at the edge for that bucket only; the application sees a pre-derived bucket key, not the raw IP, and the IP is not written to disk. It's defensive: a broken page or a synthetic load test shouldn't saturate ingestion for other tenants. Real traffic basically never hits it.
 
-A rate-limited beacon gets a `429`. The browser drops its buffer
-and carries on; nothing else breaks.
+A rate-limited beacon gets a `429`. The browser drops its buffer and carries on; nothing else breaks.
 
-Payloads larger than 8 KiB return `413`. If `cst` is more than 5
-minutes off the server clock, the server falls back to its own
-receive time instead of rejecting; the beacon is still accepted.
+Payloads larger than 8 KiB return `413`. If `cst` is more than 5 minutes off the server clock, the server falls back to its own receive time instead of rejecting; the beacon is still accepted.
 
 ## Things worth knowing
 
-- **SPA route changes start a new pageview.** The script stays
-  loaded, but soft-navs (patched `history.pushState` + `popstate`)
-  mint a new `pvid`, reset the Web-Vitals observers, and flush a
-  `softnav` beacon for the previous pageview. So one tab can emit
-  many pageviews.
-- **Multiple flushes per pageview.** The snapshot flushes on
-  lifecycle triggers (`init`, `loaded`, `error_update`,
-  `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`),
-  not just on tab switch. Expect more than one `POST /c/` per visit.
-- **`sendBeacon` doesn't show up under "Fetch/XHR" in DevTools.**
-  Filter Network on `c/` (or use the "All" tab); sendBeacon
-  requests appear under "Other".
+- **SPA route changes start a new pageview.** The script stays loaded, but soft-navs (patched `history.pushState` + `popstate`) mint a new `pvid`, reset the Web Vitals observers, and flush a `softnav` beacon for the previous pageview. So one tab can emit many pageviews.
+- **Multiple flushes per pageview.** The buffer flushes on lifecycle triggers (`init`, `loaded`, `error_update`, `softnav`, `hidden`, `frozen`, `terminated`), not just on tab switch. Expect more than one `POST /c/` per visit.
 
 ## Related
 
 - [Implementation](/en/install): how to embed the beacon.
-- [Presets](/en/collection-modes): runtime behavior.
-- [Privacy: what we don't collect](/en/privacy): what we
-  guarantee.
+- [Tracker settings](/en/tracker): what the beacon collects, per setting.
+- [Presets](/en/tracker): the three starting points.
+- [Privacy: what we don't collect](/en/privacy): what we guarantee.
 - [Architecture](/en/architecture): what happens after the POST.

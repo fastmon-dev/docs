@@ -5,20 +5,12 @@ description: Base URL, authentication, response envelopes — and the auto-gener
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The Fastmon REST API is the same surface the dashboard uses. The
-endpoint reference is **auto-generated from the backend's OpenAPI
-document** on every docs build, so it never drifts from the running
-service.
+The fastmon REST API is the same surface the dashboard uses. The endpoint reference is **auto-generated from the backend's OpenAPI document** on every docs build, so it never drifts from the running service.
 
 <Callout type="warn" title="The API is not production-ready">
-  Endpoints, request shapes, response shapes, field names, and
-  error formats can change at any time without notice. There is
-  no deprecation window and no compatibility guarantee yet.
+  Endpoints, request shapes, response shapes, field names, and error formats can change at any time without notice. There is no deprecation window and no compatibility guarantee yet.
 
-  Use the API for prototypes, internal tooling, and exploration.
-  Don't build production systems against it. We'll cut a stable
-  contract and announce a deprecation policy before recommending
-  it for production use.
+  Use the API for prototypes, internal tooling, and exploration. Don't build production systems against it. We'll cut a stable contract and announce a deprecation policy before recommending it for production use.
 </Callout>
 
 ## Cross-cutting topics
@@ -31,14 +23,12 @@ service.
 
 ## Endpoints
 
-Pages are auto-generated per OpenAPI tag. Each operation has its own
-page with split-layout schema, language tabs (curl, JS, Python, Go,
-Java, C#), and a Try-it playground.
+Pages are auto-generated per OpenAPI tag. Each operation has its own page with split-layout schema, language tabs (curl, JS, Python, Go, Java, C#), and a Try-it playground.
 
 <Cards>
   <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container — members, plans, billing." />
   <Card title="Members" href="/en/api/members/listOrganizationMembers" description="Organization membership: list, remove, transfer ownership." />
-  <Card title="Sites" href="/en/api/sites/listSites" description="Domains you monitor, each under an application, with per-site overrides." />
+  <Card title="Sites" href="/en/api/sites/listSites" description="Properties you monitor. Beacon hashes, tracker settings." />
   <Card title="Releases" href="/en/api/releases/listReleases" description="Versioned markers on a site, used for before/after comparisons." />
   <Card title="Analytics" href="/en/api/analytics/queryAnalytics" description="Web Vitals, sessions, errors, third-party impact queries." />
   <Card title="Synthetic" href="/en/api/synthetic/listSyntheticPages" description="Lighthouse lab tests: pages, runs, results, lab-vs-field." />
@@ -52,9 +42,7 @@ Java, C#), and a Try-it playground.
 https://api.fastmon.eu/v1
 ```
 
-Public ingest endpoints (`POST /c/{collector_hash}` and
-`GET /s/{source_hash}.js`) live **outside** the `/v1/` prefix and have
-their own contract.
+Public ingest endpoints (`POST /c/{collector_hash}` and `GET /s/{source_hash}.js`) live **outside** the `/v1/` prefix and have their own contract.
 
 ## Quick example
 
@@ -75,18 +63,11 @@ curl https://api.fastmon.eu/v1/organizations \
 ## Conventions
 
 - **IDs are UUID v7** strings — sortable by creation time.
-- **Timestamps are ISO-8601 UTC with `Z`** —
-  `2026-04-18T12:34:56.123456Z`.
-- **Single resources** are returned raw; **lists** wrap with
-  `data` + `meta`; **errors** wrap with `error`. See
-  [Errors](/en/api/errors).
+- **Timestamps are ISO-8601 UTC with `Z`** — `2026-04-18T12:34:56.123456Z`.
+- **Single resources** are returned raw; **lists** wrap with `data` + `meta`; **errors** wrap with `error`. See [Errors](/en/api/errors).
 - **Default limit** is 50; max is 100 on every list endpoint.
-- **`X-Request-ID`** is on every response. Mirror it back when
-  reporting issues.
+- **`X-Request-ID`** is on every response. Mirror it back when reporting issues.
 
 ## Schema document
 
-The raw OpenAPI document lives at
-[`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json).
-Drop it into your favorite generator (`openapi-typescript`,
-`oapi-codegen`, …) for a typed client.
+The raw OpenAPI document lives at [`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`, …) for a typed client.

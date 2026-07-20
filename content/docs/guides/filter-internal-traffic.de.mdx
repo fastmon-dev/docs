@@ -3,62 +3,42 @@ title: Internen Traffic filtern
 description: Office-, Staff- und synthetischen Traffic aus deinen Real-User-Metriken raushalten.
 ---
 
-Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte
-Checks) verzieht dir jede Metrik. Office-Maschinen mit warmem Cache
-und schnellem Netz sehen super aus; Mobile-Besucher im Tunnel sehen
-mies aus; und der Durchschnitt von beidem sagt am Ende nichts mehr.
+Interner Traffic (eigene Team-Besuche, Office-IPs, automatisierte Checks) verzerrt dir jede Metrik. Office-Maschinen mit warmem Cache und schnellem Netz sehen super aus; Mobile-Besucher im Tunnel sehen mies aus; und der Durchschnitt von beidem sagt am Ende nichts mehr.
 
-Einen „meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir
-speichern keine IPs, siehe [Datenschutz](/de/privacy). Was du
-ausschließen willst, entscheidet, welcher Weg passt.
+Einen „meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir speichern keine IPs, siehe [Privacy](/de/privacy). Was du ausschließen willst, entscheidet, welcher Weg passt.
 
 ## Wähle die passende Option
 
-| Du willst ausschließen…             | Beste Methode                                     |
+| Du willst ausschließen…             | Bester Weg                                        |
 | ----------------------------------- | ------------------------------------------------- |
-| Dev/Staging-Umgebung                | Separate Application (als `dev` markieren, um sie abzutrennen) |
+| Dev/Staging-Umgebung                | Separate Site (oder `allowed_origins`-Disziplin)  |
 | Office-Traffic deines Teams         | Beacon-Script bei internen Sessions weglassen     |
 | CI / synthetische Monitore          | Beacon-Script per User-Agent weglassen            |
 | Allen Nicht-Production-Traffic      | Per-Site `is_active`-Toggle                       |
 
-## Option 1: Eine separate Application für Non-Production
+## Option 1: Separate Sites für Non-Production
 
-Die sauberste Lösung für Staging, Preview und Dev.
+Saubere Antwort für Staging, Preview, Dev.
 
-1. Leg eine zweite Application in Fastmon an, z. B.
-   `acme-marketing-staging`, und setz ihre
-   [Environment](/de/concepts/applications#environment) optional auf
-   `dev`, um sie klar von Production zu trennen.
-2. Nutze **deren** `source_hash` im Staging-Deploy — eine separate
-   Application hat ihr eigenes Snippet und eigene Hashes.
-3. Ignorier die Staging-Application in Dashboards oder nutze sie
-   absichtlich; Staging-Metriken sind nützlich, um Regressionen vor
-   Production abzufangen.
+1. Leg eine zweite Site in fastmon an, z. B. `acme-marketing-staging`.
+2. Nutze **deren** `source_hash` im Staging-Deploy.
+3. Ignorier die Staging-Site in Dashboards oder nutze sie absichtlich; Staging-Metriken sind nützlich, um Regressionen vor Production zu fangen.
 
-Kostet dich nichts: keine Client-Logik, keine Flags, kein Risiko,
-dass Production-Daten in Staging landen oder umgekehrt. (Willst du nur
-ein separates Dashboard pro Domain, aber dasselbe Snippet, füg die
-Domain stattdessen als weitere **Site** unter derselben Application
-hinzu.)
+Kostet dich nichts: keine Client-Logik, keine Flags, kein Risiko, dass Production-Daten in Staging landen oder umgekehrt.
 
 ## Option 2: Beacon bei internen Sessions weglassen
 
-Nützlich für Office-Traffic, wenn der Besucher Zugang zum Backend
-oder Admin-UI hat und du ihn dort als „intern" markieren kannst.
+Nützlich für Office-Traffic, wenn der Besucher Zugang zum Backend oder Admin-UI hat und du ihn dort als „intern" markieren kannst.
 
-Am einfachsten: das Beacon-`<script>` gar nicht erst rendern, wenn
-der Request aus einer internen Session kommt. Serverseitig
-entscheiden anhand des Signals, das du eh schon hast: Session-Cookie,
-JWT-Claim, Admin-Login.
+Einfachster Weg: das Beacon-`<script>` einfach nicht rendern, wenn der Request aus einer internen Session kommt. Serverseitig entscheiden anhand des Signals, das du eh schon hast: Session-Cookie, JWT-Claim, Admin-Login.
 
 ```html
 {% if not request.session.is_staff %}
-  <script defer src="https://fastmon.site/s/{source_hash}.js"></script>
+  <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 {% endif %}
 ```
 
-Reine Client-Variante geht auch: Script-Tag nur einfügen, wenn das
-Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
+Reine Client-Variante geht auch: Script-Tag nur einfügen, wenn das Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
 
 ```html
 <script>
@@ -73,63 +53,41 @@ Cookie fehlt, das du einmal auf einer `/staff`-Route setzt:
 
 ## Option 3: Site komplett pausieren
 
-Für Wartungsfenster, eine Untersuchung oder eine
-Nicht-Production-Umgebung, die permanent laut ist:
+Für Wartungsfenster, eine Investigation oder eine Nicht-Production-Umgebung, die permanent laut ist:
 
-1. Öffne in Fastmon die Site und geh auf **Einstellungen**.
+1. Öffne in fastmon die Site und geh auf **Einstellungen**.
 2. Schalte **Active** ab.
 
-Beacons kommen weiter an, werden aber nicht in Analytics-Tabellen
-geschrieben. Wieder einschalten, wenn du Daten willst. Historie aus
-der aktiven Phase bleibt erhalten.
+Beacons kommen weiter an, werden aber nicht in Analytics-Tabellen geschrieben. Wieder einschalten, wenn du Daten willst. Historie aus der aktiven Phase bleibt erhalten.
 
 ## Option 4: Beacon für synthetische Monitore weglassen
 
-Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar
-nicht erst laden. Die meisten Monitore setzen einen erkennbaren
-`User-Agent`; Tag serverseitig ausschließen:
+Für Pingdom, UptimeRobot, eigene E2E-Suiten etc.: das Script gar nicht erst laden. Die meisten Monitore setzen einen erkennbaren `User-Agent`; Script-Tag serverseitig weglassen:
 
 ```html
 {% if request.user_agent.is_synthetic %}
-  <!-- skip Fastmon for synthetic checks -->
+  <!-- Fastmon für synthetische Checks weglassen -->
 {% else %}
-  <script defer src="https://fastmon.site/s/{source_hash}.js"></script>
+  <script src="https://fastmon.site/s/{source_hash}.js" defer></script>
 {% endif %}
 ```
 
-Wenn dein Stack keinen einfachen „ist Bot"-Check hat, mach das
-Script-Tag im Template von einem UA-Test abhängig; gleiches Prinzip.
+Wenn dein Stack keinen einfachen „ist Bot"-Check hat, steuere das Script-Tag direkt im Template über den UA; gleiches Prinzip.
 
 ## Filter verifizieren
 
-Site als interner Besucher öffnen. DevTools → Network → `c/`
-filtern. Du solltest **keinen** Request an
-`https://fastmon.site/c/...` sehen. Wenn doch, wird das Script-Tag
-weiter gerendert; Gate-Bedingung auf dem Server (oder den
-Cookie-Check im Inline-Snippet) prüfen.
+Site als interner Besucher öffnen. DevTools → Network → `c/` filtern. Du solltest **keinen** Request an `https://fastmon.site/c/...` sehen. Wenn doch, wird das Script-Tag weiter gerendert; Gate-Bedingung auf dem Server (oder den Cookie-Check im Inline-Snippet) prüfen.
 
-In Fastmon nach dem Umschalten: Der Traffic aus dem Land deines
-Office-Standorts sollte deutlich zurückgehen (das Land ist die
-einzige Geo-Dimension, die wir speichern). Wenn nicht, fängt der
-Filter die internen Besuche nicht.
+In fastmon nach dem Umschalten: Der Traffic aus dem Land deines Office-Standorts sollte deutlich kleiner werden (das Land ist die einzige Geo-Dimension, die wir speichern). Wenn nicht, fängt der Filter die internen Besuche nicht.
 
 ## Häufige Stolperfallen
 
-- **Nachträglich filtern geht nicht.** Wir speichern keine IPs
-  (siehe [Datenschutz](/de/privacy)). Sobald ein Beacon drin ist,
-  können wir nicht mehr sagen, ob der aus deinem Office kam. Also:
-  an der Quelle filtern.
-- **Das Gate läuft pro Seite.** Auf jeder Seite weglassen, die du
-  ausschließen willst, nicht nur beim ersten Aufruf.
-- **Länderfilter helfen nicht.** Dein Office sitzt im gleichen
-  Land wie die meisten echten Besucher. Was funktioniert: an der
-  Quelle filtern, wo der echte Kontext (Besucher, Cookie, UA) noch da
-  ist.
+- **Nachträglich filtern geht nicht.** Wir speichern keine IPs (siehe [Privacy](/de/privacy)). Sobald ein Beacon drin ist, können wir nicht mehr sagen, ob der aus deinem Office kam. Also: an der Quelle filtern.
+- **Das Gate läuft pro Seite.** Auf jeder Seite weglassen, die du ausschließen willst, nicht nur beim ersten Load.
+- **Country-Filter helfen nicht.** Dein Office sitzt im gleichen Land wie die meisten echten Besucher. Was funktioniert: an der Quelle filtern, wo der echte Kontext (Besucher, Cookie, UA) noch da ist.
 
 ## Verwandt
 
-- [Applications](/de/concepts/applications): separate Apps (und die `dev`-Environment) für Non-Production.
-- [Presets](/de/collection-modes): Runtime-Steuerung des
-  Beacons.
-- [Datenschutz: was wir nicht sammeln](/de/privacy): warum es keinen
-  serverseitigen IP-Filter gibt.
+- [Sites](/de/concepts/sites): separate Sites für Umgebungen.
+- [Tracker-Einstellungen](/de/tracker): was der Beacon erfasst.
+- [Privacy: was wir nicht sammeln](/de/privacy): warum es keinen serverseitigen IP-Filter gibt.

@@ -1,161 +1,93 @@
 ---
 title: Glossar
-description: Begriffe aus Fastmon, dem Dashboard und dieser Dokumentation.
+description: Begriffe aus fastmon, dem Dashboard und dieser Dokumentation.
 ---
 
-Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen
-Begriff.
+Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 ## Web Vitals
 
-**LCP**: *Largest Contentful Paint.* Zeit, bis das größte
-sichtbare Element rendert. Die Lade-Metrik. Gut ≤ 2.500 ms bei
-p75. Siehe [LCP](/de/web-vitals/lcp).
+**LCP**: *Largest Contentful Paint.* Zeit, bis das größte sichtbare Element rendert. Die Lade-Metrik. Gut ≤ 2.500 ms bei p75. Siehe [LCP](/de/web-vitals/lcp).
 
-**INP**: *Interaction to Next Paint.* Worst-Case-Latenz zwischen
-Interaktion und nächstem Paint. Die Responsiveness-Metrik. Gut
-≤ 200 ms bei p75. Hat im März 2024 FID abgelöst. Siehe
-[INP](/de/web-vitals/inp).
+**INP**: *Interaction to Next Paint.* Worst-Case-Latenz zwischen Interaktion und nächstem Paint. Die Responsiveness-Metrik. Gut ≤ 200 ms bei p75. Hat im März 2024 FID abgelöst. Siehe [INP](/de/web-vitals/inp).
 
-**CLS**: *Cumulative Layout Shift.* Summe unerwarteter
-Layout-Verschiebungen. Einheitenlos. Die Visual-Stability-Metrik.
-Gut ≤ 0,1 bei p75. Siehe [CLS](/de/web-vitals/cls).
+**CLS**: *Cumulative Layout Shift.* Summe unerwarteter Layout-Verschiebungen. Einheitenlos. Die Visual-Stability-Metrik. Gut ≤ 0,1 bei p75. Siehe [CLS](/de/web-vitals/cls).
 
-**FCP**: *First Contentful Paint.* Zeit, bis Text oder Bild
-erstmals rendert. Diagnostisch; erklärt langsamen LCP. Siehe
-[FCP](/de/web-vitals/fcp).
+**FCP**: *First Contentful Paint.* Zeit, bis Text oder Bild erstmals rendert. Diagnostisch; erklärt langsamen LCP. Siehe [FCP](/de/web-vitals/fcp).
 
-**TTFB**: *Time to First Byte.* Zeit, bis das erste Response-Byte
-ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe
-[TTFB](/de/web-vitals/ttfb).
+**TTFB**: *Time to First Byte.* Zeit, bis das erste Response-Byte ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe [TTFB](/de/web-vitals/ttfb).
 
-**Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP,
-INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate. Gemappt auf
-Schulnoten A+ bis F. Siehe
-[Experience Score](/de/web-vitals/experience-score).
+**Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP, INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate. Gemappt auf Schulnoten A+ bis F. Siehe [Experience Score](/de/web-vitals/experience-score).
 
-**Core Web Vitals**: Googles Drei-Metrik-Set: LCP, INP, CLS. Die
-Metriken, die das Suchranking beeinflussen.
+**Core Web Vitals**: Googles Drei-Metrik-Set: LCP, INP, CLS. Die Metriken, die das Suchranking beeinflussen.
 
 ## Beacon und Ingestion
 
-**Beacon**: Eine einzelne gebündelte Payload, die der Tracker an
-`/c/{collector_hash}` POSTet. Auch Kurzname für das Script unter
-`/s/{source_hash}.js`, das sie erzeugt. Siehe
-[Der RUM-Beacon](/de/concepts/beacon).
+**Beacon**: Eine einzelne gebündelte Payload, die der Tracker an `/c/{collector_hash}` POSTet. Auch Kurzname für das Script unter `/s/{source_hash}.js`, das sie erzeugt. Siehe [Der RUM-Beacon](/de/concepts/beacon).
 
-**Tracker**: Der laufende JavaScript-Agent, den das Beacon-Script
-im Browser des Besuchers startet. Er registriert die Observer,
-puffert Werte, bereinigt URLs und sendet die Beacons.
+**Tracker**: Der laufende JavaScript-Agent, den das Beacon-Script im Browser des Besuchers startet. Er registriert die Observer, puffert Werte, bereinigt URLs und sendet die Beacons.
 
-**Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`,
-der Beacons empfängt, validiert und in den Analytics-Store
-schreibt.
+**Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`, der Beacons empfängt, validiert und in den Analytics-Store schreibt.
 
-**`source_hash`**: Per-Site-Hash in der Script-URL. Stabil über
-Beacon-Upgrades.
+**`source_hash`**: Per-Site-Hash in der Script-URL. Stabil über Beacon-Upgrades.
 
-**`collector_hash`**: Per-Site-Hash in der Ingest-URL. Getrennt
-vom `source_hash`, damit das Script-Template sich ändern kann,
-ohne Daten zu invalidieren.
+**`collector_hash`**: Per-Site-Hash in der Ingest-URL. Getrennt vom `source_hash`, damit das Script-Template sich ändern kann, ohne Daten zu invalidieren.
 
-**Preset**: Erfassungseinstellung pro Application: `minimal`,
-`standard`, `full`. Siehe [Presets](/de/collection-modes).
+**Preset**: Ausgangspunkt, den du beim Anlegen einer Site wählst: `Minimal`, `Standard` (Default), `Full`. Es setzt die [Tracker-Einstellungen](/de/tracker) pro Site auf einmal; danach ist jede Einstellung unabhängig. Siehe [Presets](/de/tracker).
+**Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker clientseitig erzeugt. Nicht persistiert.
 
-**Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker
-clientseitig erzeugt. Nicht persistiert.
-
-**`pst` / `cst`**: Page-Started-Timestamp / Client-Sent-At-Timestamp.
-Beide auf der Besucher-Uhr, in Millisekunden seit Epoch. Das
-Intervall `cst - pst` misst die Pageview-Dauer bis zum Flush
-unabhängig von Clock-Skew.
+**`pst` / `cst`**: Page-Started-Timestamp / Client-Sent-At-Timestamp. Beide auf der Besucher-Uhr, in Millisekunden seit Epoch. Das Intervall `cst - pst` misst die Pageview-Dauer bis zum Flush unabhängig von Clock-Skew.
 
 ## Ressourcen und Accounts
 
-**Organisation**: Top-Level-Account-Container. Besitzt Sites,
-Mitglieder, Notification Rules, API-Tokens. Siehe
-[Organisationen](/de/concepts/organizations).
+**Organisation**: Top-Level-Account-Container. Besitzt Sites, Mitglieder, Notification Rules, API-Tokens. Siehe [Organisationen](/de/concepts/organizations).
 
-**Plan**: Organisations-Tier: `beta`, `starter`, `pro`, `partner`,
-`enterprise`. Steuert Features und Quotas.
+**Plan**: Organisations-Tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Steuert Features und Quotas.
 
-**Site**: Eine überwachte Property. Hat eigene Beacon-Hashes und
-Einstellungen. Siehe [Sites](/de/concepts/sites).
+**Site**: Eine überwachte Property. Hat eigene Beacon-Hashes und Einstellungen. Siehe [Sites](/de/concepts/sites).
 
-**Session**: 30-Minuten-Fenster von Pageviews desselben Browsers.
-Anonym per Konstruktion. Siehe
-[Sessions](/de/concepts/sessions).
+**Visitor**: Ein eindeutiger Besucher, gezählt entlang einer Identitätsachse: `stitch` (am Edge abgeleitet, in jedem Modus vorhanden, der Standard) oder `session` (consent-gated). Anonym per Konstruktion. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
-**Release**: Versionierter Marker auf einer Site. Wird von
-Analytics über `compare_to_release_id` für Vorher/Nachher genutzt.
-Siehe [Releases](/de/concepts/releases).
+**Session**: 30-Minuten-Fenster von Pageviews desselben Browsers, gruppiert über `session_id`. Eine der beiden Besucher-Identitäten, und consent-gated. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
-**Tag**: Freies Label auf einer Site (max. 10) für
-Dashboard-Filter. Konventionen: `env:production`, `team:growth`
-etc.
+**Release**: Versionierter Marker auf einer Site. Wird von Analytics über `compare_to_release_id` für Vorher/Nachher genutzt. Siehe [Releases](/de/concepts/releases).
 
-**Member**: User in einer Organisation mit Rolle
-(`owner` / `member`).
+**Tag**: Freies Label auf einer Site (max. 10) zum Organisieren von Sites. Ein Cross-Site-Analytics-Scope per Tag ist geplant; Tags filtern Analytics noch nicht. Konventionen: `env:production`, `team:growth` etc.
 
-**Invite**: Ausstehende Mitgliedschaft, wartet auf Annahme.
+**Member**: User in einer Organisation mit Rolle (`owner` / `member`).
 
-**API-Token**: Bearer-Token mit Präfix `fm_…` für programmatischen
-Zugriff. Server-seitig gehasht; verlorene Tokens nicht
-wiederherstellbar.
+**Invite**: Schwebende Mitgliedschaft, wartet auf Annahme.
+
+**API-Token**: Bearer-Token mit Präfix `fm_…` für programmatischen Zugriff. Server-seitig gehasht; verlorene Tokens nicht wiederherstellbar.
 
 ## Storage und Infrastruktur
 
-**Config-DB**: Relationaler Store für User, Organisationen, Sites,
-Einstellungen.
+**Config-DB**: Relationaler Store für User, Organisationen, Sites, Einstellungen.
 
-**Analytics-Store**: Columnar-Store für Beacon-Events und
-aggregierte Metriken.
+**Analytics-Store**: Columnar-Store für Beacon-Events und aggregierte Metriken.
 
-**Session-Store**: In-Memory-Store für Sessions, Rate-Limits,
-kurzlebige Caches.
+**Session-Store**: In-Memory-Store für Sessions, Rate-Limits, kurzlebige Caches.
 
-**Partner-Client**: Sub-Organisation, die von einer
-`partner`-Plan-Org für jemand anderen betrieben wird.
+**Partner-Client**: Sub-Organisation, die von einer `partner`-Plan-Org für jemand anderen betrieben wird.
 
 ## API
 
-**Envelope**: Wrapper um den Response-Body. Einzelne Ressource =
-direkt; Liste = `data` + `meta`; Fehler = `error`. Siehe
-[API-Übersicht](/de/api).
+**Envelope**: Wrapper um den Response-Body. Einzelne Ressource = direkt; Liste = `data` + `meta`; Fehler = `error`. Siehe [API-Übersicht](/de/api).
 
-**Cursor-Pagination**: High-Volume-Endpunkte liefern
-`meta.next_cursor`; Client sendet zurück als `?cursor=…`. Siehe
-[Pagination](/de/api/pagination).
+**Cursor-Pagination**: High-Volume-Endpunkte liefern `meta.next_cursor`; Client sendet zurück als `?cursor=…`. Siehe [Pagination](/de/api/pagination).
 
-**Offset-Pagination**: Default. `?limit` und `?offset`, Response
-mit `meta.total` und `meta.has_more`.
+**Offset-Pagination**: Default. `?limit` und `?offset`, Response mit `meta.total` und `meta.has_more`.
 
-**`X-Request-ID`**: Header auf jeder Response. Bei Fehlern in
-`error.request_id` gespiegelt. Beim Melden von Problemen immer mitschicken.
+**`X-Request-ID`**: Header auf jeder Response. Bei Fehlern in `error.request_id` gespiegelt. Beim Reporting immer mitsenden.
 
-**UUID v7**: Zeitlich sortierbares UUID-Format für alle
-Ressourcen-IDs.
+**UUID v7**: Zeitlich sortierbares UUID-Format für alle Ressourcen-IDs.
 
 ## Sonstiges
 
-**RUM**: *Real User Monitoring.* Performance-Messung aus echten
-Besucher-Browsern, im Gegensatz zu synthetischen Lab-Tests.
+**RUM**: *Real User Monitoring.* Performance-Messung aus echten Besucher-Browsern, im Gegensatz zu synthetischen Lab-Tests.
 
-**LoAF**: *Long Animation Frame.* Browser-API für Frames, die
-länger als 50 ms dauerten; meist die Ursache eines schlechten INP.
+**LoAF**: *Long Animation Frame.* Browser-API für Frames, die länger als 50 ms dauerten; meist die Ursache eines schlechten INP.
 
-**Third-Party**: Request an eine andere Domain als die der Site
-selbst. Fastmon gruppiert nach Domain und Kategorie für
-Impact-Analyse. Siehe `/analytics/third-party`.
+**Third-Party**: Request an eine andere Domain als die der Site selbst. Fastmon gruppiert nach Domain und Kategorie für Impact-Analyse. Siehe `/analytics/third-party`.
 
-**`window.fastmon.grantConsent()`**: Die Funktion, die dein CMP
-aufruft, um die Session-ID freizugeben, sobald Consent erteilt ist —
-auf einer Application, die sie zurückhält (`session_consent = deferred`).
-Schreibt nur, kein Widerruf; `window.__fastmon_consent(true)` ist ein
-deprecated Alias. Siehe
-[Presets → Die Session-ID hinter Consent gaten](/de/collection-modes#die-session-id-hinter-consent-gaten).
-
-**`__FASTMON_SAMPLE_RATE`**: Window-Variable (0–1), die der Tracker
-beim Laden der Seite liest, um zu entscheiden, ob dieser Pageview
-Beacons sendet. Vor dem Script-Tag auf `0` setzen, und der Pageview
-sendet gar nicht.
+**`window.fastmon.grantConsent()`**: Die Funktion, die dein CMP nach Consent aufruft, um den Gerät-Schreibvorgang der Session-ID freizuschalten (wenn [`store_session`](/de/tracker#store-session) an ist). Es gibt keinen Widerruf mitten in der Session: die Session-ID ist tab-gebunden, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert. Siehe [Consent und TDDDG](/de/tracker#consent-and-the-tdddg).
