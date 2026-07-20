@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+### Change: Docs rewritten for the `Org → Application → Site` model
+
+Follows the backend unifying per-site embeds and org-trackers into one `applications` table. The tracking embed is now an **application**: it owns both hashes, every tracker setting and the collector, and serves one or more **sites** (domains). New `concepts/applications` page (EN + DE) in the Concepts nav, `concepts/sites` slimmed to a domain plus three per-domain overrides, and `concepts/org-trackers` retired with its inbound links repointed. `tracker.mdx` moved to the current API field names including the anchors: `store_session` is now `collect_sessions`, `preconsent_level` is now `session_consent` (`deferred` / `immediate`), and the error, query and fetch/XHR switches gained a `collect_` prefix. `allowed_origins` and `enforce_domain_match` are replaced by `site_policy` (`open` / `auto` / `strict`), and `environment` is documented. Concepts index, glossary and the `filter-internal-traffic` guide follow the same model; the guide's "separate site" advice was wrong, since sites share their application's snippet.
+
+**Note for the dashboard:** the per-setting deep links still point at the old anchors (`tracker#store-session`), so they need updating alongside the backend release.
+
+### Add: Install values reach the whole documentation, and can be set anywhere
+
+The hashes and collector mode already applied to every page, since they live in `localStorage`, but only the install guide could show or change them. A reader who had just arrived from the app still saw `{collector_hash}` on `/install/verify`. `<InstallValue of="…">` now renders a single resolved value inline and a `verify-beacon` snippet covers the DevTools block, both falling back to the placeholders so a reader without a deep link sees exactly what they saw before. A launcher in the sidebar footer opens the existing panel from any page, and a reset restores the placeholders and clears the stored copy. The editable fields are described once in a registry, so adding a value no longer means touching the URL parser and the form separately.
+
+### Add: Same-origin collector on Smoxy
+
+The relative collector mode only had an nginx example. Smoxy needs no config file: add fastmon under **Backends** ("Origin hinzufügen", `https` / `fastmon.site` / `443`), then a Conditional Rule whose condition is **URI Entspricht** `^/(s|c)/` and which selects that origin under **Routing** in its settings tab. EN + DE, with the UI terms taken from docs.smoxy.eu.
+
+### Add: Theme can follow the operating system
+
+Fumadocs' theme switch defaults to a two-way light/dark toggle, which forces an explicit choice. The third state ships with the component, so `themeSwitch: { mode: "light-dark-system" }` in `baseOptions()` is enough; next-themes already treats "system" as its default.
+
+### Chore: Cap static-generation workers at four
+
+Next defaults to cores minus one (11 on a 12-core machine) and pins every core for the roughly 11-second generation phase. Measured: 11 workers gave 37 s wall, 4 workers 34 to 40 s across runs, so no difference outside single-run noise, because `generate:api` and the Next compile do not use these workers at all. Keeps the machine usable while a build runs and behaves better on a shared CI runner.
+
 ### Fix: API reference is uniformly build-generated (no committed `synthetic/` drift)
 
 `synthetic/` was the only auto-generated API folder still tracked in git; the rest are gitignored and re-emitted by `npm run generate:api` on every build. A stale `getSyntheticScreenshot.mdx` therefore lingered after the endpoint left the OpenAPI schema and broke `next build` whenever it ran without regenerating first. `synthetic/` and the newly published `org-trackers/` are now gitignored like the other generated folders, and `synthetic/` was untracked. The reference regenerates from the production document (now `2026.6.58`) on every build, so nothing API-generated needs committing.
