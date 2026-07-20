@@ -84,7 +84,10 @@ function initFromEnvironment() {
   if (initialized) return;
   initialized = true;
 
-  let next: InstallConfig = EMPTY;
+  // A copy, never EMPTY itself: the URL params below are assigned in place, and
+  // aliasing the module constant would both corrupt it and make the
+  // change-detection below compare `state` against itself.
+  let next: InstallConfig = { ...EMPTY };
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) next = { ...next, ...(JSON.parse(stored) as Partial<InstallConfig>) };
