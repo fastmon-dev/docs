@@ -2,6 +2,7 @@ import type { HTMLAttributes } from "react";
 import { Suspense } from "react";
 import { getApiTree } from "@/lib/source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { InstallConfigLauncher } from "@/components/install-config";
 import { baseOptions } from "@/lib/layout.shared";
 import { ApiI18nGuard, EnglishOnlyBanner } from "@/components/api-i18n-guard";
 
@@ -14,6 +15,9 @@ export default async function ApiLayout({ children, params }: LayoutProps<"/[lan
   const { i18n: _i18n, ...rest } = baseOptions(lang);
   return (
     <DocsLayout
+      // The install values apply on every page, so the control that sets
+      // them lives in the sidebar footer rather than only in the guide.
+      sidebar={{ footer: <InstallConfigLauncher /> }}
       tree={getApiTree(lang)}
       tabs={[
         { title: lang === "de" ? "Dokumentation" : "Docs", url: `/${lang}` },

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+import { SlidersHorizontal } from "lucide-react";
 import { DynamicCodeBlock } from "fumadocs-ui/components/dynamic-codeblock";
 import { cn } from "@/lib/cn";
 
@@ -163,6 +164,8 @@ const STRINGS = {
     partyThirdHint:
       "Script and beacons come from another domain, so a strict content blocker can block them and undercount visits.",
     whereFrom: "Find both hashes in the app under Applications → ··· → IDs & hashes.",
+    launcher: "Your install values",
+    close: "Close",
   },
   de: {
     title: "Dein Snippet",
@@ -182,6 +185,8 @@ const STRINGS = {
     partyThirdHint:
       "Script und Beacons kommen von einer anderen Domain, ein strikter Content-Blocker kann sie also blockieren und Besuche untererfassen.",
     whereFrom: "Beide Hashes findest du in der App unter Applications → ··· → IDs & Hashes.",
+    launcher: "Deine Install-Werte",
+    close: "Schließen",
   },
 } as const;
 
@@ -192,7 +197,8 @@ function useStrings() {
 
 /* ------------------------------- snippets ------------------------------- */
 
-export type SnippetKind = "script" | "noscript" | "bootstrap" | "consent" | "nginx";
+export type SnippetKind =
+  "script" | "noscript" | "bootstrap" | "consent" | "nginx" | "verify-beacon";
 
 // Shiki grammar per snippet, so each block is highlighted like the rest of the
 // docs. Lazy-loaded by fumadocs' highlighter; all of these ship with shiki.
@@ -202,6 +208,7 @@ const SNIPPET_LANG: Record<SnippetKind, string> = {
   bootstrap: "html",
   consent: "js",
   nginx: "nginx",
+  "verify-beacon": "http",
 };
 
 export function snippetFor(kind: SnippetKind, config: InstallConfig): string {
@@ -236,7 +243,38 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();`
     proxy_set_header X-Forwarded-For $remote_addr;
 }`;
     }
+    // What the reader should find in DevTools → Network, not something to copy.
+    case "verify-beacon":
+      return `POST ${base}/c/${collectorOf(config)}     204`;
   }
+}
+
+/* ------------------------------ inline values ---------------------------- */
+
+/** A single resolved value for use mid-sentence, where a whole snippet would
+ *  be too much. Falls back to the `{source_hash}` style placeholders, so a
+ *  reader who arrives without a deep link sees exactly what they saw before. */
+export type InstallValueOf = "script-url" | "collector-url" | "source-hash" | "collector-hash";
+
+export function installValue(of: InstallValueOf, config: InstallConfig): string {
+  const base = snippetBase(config);
+  switch (of) {
+    case "script-url":
+      return `${base}/s/${sourceOf(config)}.js`;
+    case "collector-url":
+      return `${base}/c/${collectorOf(config)}`;
+    case "source-hash":
+      return sourceOf(config);
+    case "collector-hash":
+      return collectorOf(config);
+  }
+}
+
+/** Inline `<code>` carrying the reader's own value. Use in prose; for a whole
+ *  block use <InstallSnippet>. */
+export function InstallValue({ of }: { of: InstallValueOf }) {
+  const config = useInstallConfig();
+  return <code>{installValue(of, config)}</code>;
 }
 
 /**
@@ -348,5 +386,73 @@ export function InstallConfigPanel() {
 
       <p className="mt-3 text-xs text-fd-muted-foreground">{s.whereFrom}</p>
     </div>
+  );
+}
+
+/* ------------------------------ sidebar launcher ------------------------- */
+
+/**
+ * Sidebar-footer entry that opens the config in a dialog. The values apply to
+ * every page that renders <InstallSnippet> / <InstallValue>, so the control to
+ * change them has to be reachable from every page too, not just the install
+ * guide that happens to embed the panel.
+ */
+export function InstallConfigLauncher() {
+  const config = useInstallConfig();
+  const s = useStrings();
+  const [open, setOpen] = useState(false);
+  const hasValues = Boolean(config.sourceHash.trim() || config.collectorHash.trim());
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-2 inline-flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-xs text-fd-muted-foreground transition-colors hover:bg-fd-accent hover:text-fd-accent-foreground"
+      >
+        <SlidersHorizontal className="size-4 shrink-0" />
+        <span className="truncate">{s.launcher}</span>
+        {hasValues && (
+          <span className="ms-auto size-1.5 shrink-0 rounded-full bg-fd-primary" aria-hidden />
+        )}
+      </button>
+
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={s.title}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* A real button, so dismissing by backdrop is keyboard- and
+              screen-reader-reachable rather than a click-only <div>. */}
+          <button
+            type="button"
+            aria-label={s.close}
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 cursor-default bg-black/50"
+          />
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg bg-fd-popover p-4 shadow-lg">
+            <InstallConfigPanel />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-2 w-full rounded-md border border-fd-border px-3 py-1.5 text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+            >
+              {s.close}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

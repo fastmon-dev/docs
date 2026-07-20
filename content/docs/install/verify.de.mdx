@@ -17,9 +17,7 @@ oder mehrere `POST`-Requests sehen (der Tracker schickt über den
 Lebenszyklus eines Pageviews mehrere Beacons; mehr als einer ist
 normal):
 
-```
-POST https://fastmon.site/c/{collector_hash}     204
-```
+<InstallSnippet kind="verify-beacon" />
 
 Ein `204 No Content` bedeutet, der Beacon wurde akzeptiert. Das war's:
 deine Implementierung läuft.
@@ -44,7 +42,7 @@ Traffic baut sich auf, sobald Besucher die Seite öffnen.
 
 **Prüfen, ob das Script geladen wurde.** DevTools → Network, nach `s/`
 filtern. Du solltest einen Request an
-`https://fastmon.site/s/{source_hash}.js` mit Status `200` sehen.
+<InstallValue of="script-url" /> mit Status `200` sehen.
 Ein `404` heißt, der `source_hash` passt zu keiner Site: entweder
 vertippt oder die Site wurde gelöscht.
 

@@ -2,7 +2,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import { APIPage } from "@/components/api-page";
 import { Changelog, ChangelogEntry } from "@/components/changelog";
-import { InstallConfigPanel, InstallSnippet } from "@/components/install-config";
+import { InstallConfigPanel, InstallSnippet, InstallValue } from "@/components/install-config";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -17,6 +17,7 @@ export function getMDXComponents(components?: MDXComponents) {
     // Install snippet + config panel, prefilled from the app's deep link.
     InstallConfigPanel,
     InstallSnippet,
+    InstallValue,
     ...components,
   } satisfies MDXComponents;
 }

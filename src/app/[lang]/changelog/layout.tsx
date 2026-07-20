@@ -1,5 +1,6 @@
 import { getChangelogTree } from "@/lib/source";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { InstallConfigLauncher } from "@/components/install-config";
 import { baseOptions } from "@/lib/layout.shared";
 
 // Changelog is its own hoisted section (like the API reference) with its own
@@ -13,6 +14,9 @@ export default async function ChangelogLayout({
   const { lang } = await params;
   return (
     <DocsLayout
+      // The install values apply on every page, so the control that sets
+      // them lives in the sidebar footer rather than only in the guide.
+      sidebar={{ footer: <InstallConfigLauncher /> }}
       tree={getChangelogTree(lang)}
       // The changelog is a single rolling feed. The sidebar tree is populated
       // (via the section `meta.json`) with "jump to month" anchor links into

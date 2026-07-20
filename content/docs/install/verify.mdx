@@ -15,9 +15,7 @@ Now switch to another tab, then come back. You should see one or
 more `POST` requests (the tracker sends several beacons over a
 page view's lifecycle; more than one is normal):
 
-```
-POST https://fastmon.site/c/{collector_hash}     204
-```
+<InstallSnippet kind="verify-beacon" />
 
 A `204 No Content` response means the beacon was accepted. That's
 it; you're up.
@@ -42,7 +40,7 @@ fine; real traffic builds up as visitors load pages.
 
 **Check the script loaded.** In DevTools → Network, filter for `s/`.
 You should see a request to
-`https://fastmon.site/s/{source_hash}.js` with a `200` status. A
+<InstallValue of="script-url" /> with a `200` status. A
 `404` means the `source_hash` in your tag doesn't match a site:
 either the hash was mistyped, or the site was deleted in fastmon.
 
