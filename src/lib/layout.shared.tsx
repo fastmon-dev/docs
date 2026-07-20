@@ -17,6 +17,10 @@ export function baseOptions(_locale: string): BaseLayoutProps {
         </span>
       ),
     },
+    // Three-way theme switch. Fumadocs defaults to `light-dark`, which forces
+    // an explicit choice; `light-dark-system` adds the option to follow the
+    // operating system, which is what next-themes already defaults to.
+    themeSwitch: { mode: "light-dark-system" },
     // Outbound links to the marketing site and the SPA. Rendered as icon
     // buttons in the sidebar footer row next to the theme switch.
     links: [
