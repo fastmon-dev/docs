@@ -90,4 +90,4 @@ Compact definitions. For depth, follow the link on each term.
 
 **Third-party**: A request to a domain different from the site's own. Fastmon groups these by domain and category for impact analysis. See `/analytics/third-party`.
 
-**`window.fastmon.grantConsent()`**: The function your CMP calls after consent to switch on the on-device session-id write (when [`store_session`](/en/tracker#store-session) is on). There is no mid-session revoke: the session id is tab-scoped, so declining just means the write never happens. See [Consent and the TDDDG](/en/tracker#consent-and-the-tdddg).
+**`window.fastmon.grantConsent()`**: The function your CMP calls after consent to switch on the on-device session-id write (when [`collect_sessions`](/en/tracker#collect-sessions) is on). There is no mid-session revoke: the session id is tab-scoped, so declining just means the write never happens. See [Consent and the TDDDG](/en/tracker#consent-and-the-tdddg).

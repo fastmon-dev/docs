@@ -80,7 +80,7 @@ The pageview drawer now draws its network sections as proportional, worst-first 
 
 <ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query retention now applies to fetch/XHR endpoint paths">
 
-The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#query-value-keys) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#track-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
+The tracker used to strip the query string from every fetch/XHR endpoint path, so a front-controller shop that keeps the route in the query (`/index.php?controller=Search` versus `?controller=Cart`) collapsed every request into one useless `/index.php` bucket. Those paths now honour the same two per-site settings as the page URL: [`query_value_keys`](/en/tracker#collect-query-values-for) keeps the chosen `key=value` pairs (so `controller` and `action` separate the routes), and [`track_query_keys`](/en/tracker#collect-query-keys) keeps the bare key names. With neither set the query is still dropped, so unconfigured sites see no change and there is no migration. The reduction runs in the tracker (the path is its aggregation key), and the collector re-applies the same policy as a backstop. Configured keys are limited to letters, digits, `_`, and `-`, both when you save them and again when the script is served, so a key can never break out of the served bundle.
 
 </ChangelogEntry>
 
@@ -230,7 +230,7 @@ The Sessions page is now **Visitors**, at `/visitors` (old links redirect, share
 
 <ChangelogEntry date="2026-07-10" type="changed" area="dashboard" title="Cross-domain trackers, and one-click site provisioning">
 
-A cross-domain tracker (one embed across several domains) now carries the same data scope as a site, applied to every domain it runs on; only the visitor signal stays per domain. Domains it observes that aren't sites yet appear as **detected domains**, and **Add as site** creates the site in one click, inheriting the tracker's data scope, collector config, and bundle version. See [Org-level trackers](/en/concepts/org-trackers).
+A cross-domain tracker (one embed across several domains) now carries the same data scope as a site, applied to every domain it runs on; only the visitor signal stays per domain. Domains it observes that aren't sites yet appear as **detected domains**, and **Add as site** creates the site in one click, inheriting the tracker's data scope, collector config, and bundle version. See [Applications](/en/concepts/applications).
 
 </ChangelogEntry>
 

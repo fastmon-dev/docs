@@ -6,9 +6,9 @@ description: Wie fastmon Besucher zählt, ohne sie zu identifizieren, und was ei
 Fastmon zählt **Besucher**, keine Personen. Ein Besucher ist eine Zählung entlang einer **Identitätsachse**, und davon gibt es zwei:
 
 - **`stitch`** (der Standard): ein am Edge abgeleiteter Identifier, der vorhanden ist, wenn [`store_stitch`](/de/tracker#store-stitch) an ist (die Presets `Standard` und `Full`). Er ist von begrenzter Lebensdauer und forward-secret (siehe [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier)), also zählt das Dashboard damit eindeutige Besucher ohne Cookie und ohne gespeicherte personenbezogene Daten. Unter dem Default-Preset `Standard` ist er an, eindeutige Besucher werden also von Anfang an gezählt; das Preset `Minimal` ist das Opt-down, das keinen Identifier speichert, dann gibt es keine Besucherzählung.
-- **`session`**: die clientseitig vergebene `session_id` (`sid` auf der Leitung), nur vorhanden, wenn [`store_session`](/de/tracker#store-session) an ist (das Preset `Full`, oder nachdem dein CMP `grantConsent()` aufruft). Sie gruppiert einen kurzen Schub Pageviews desselben Browsers zu einem **Besuch** mit einer 30-Minuten-Grenze, auf der die besuchsbezogenen Views aufbauen.
+- **`session`**: die clientseitig vergebene `session_id` (`sid` auf der Leitung), nur vorhanden, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist (das Preset `Full`, oder nachdem dein CMP `grantConsent()` aufruft). Sie gruppiert einen kurzen Schub Pageviews desselben Browsers zu einem **Besuch** mit einer 30-Minuten-Grenze, auf der die besuchsbezogenen Views aufbauen.
 
-Wonach das Dashboard standardmäßig zählt, legt die Site-Einstellung **`preferred_identity`** fest (Standard `stitch`). Das ist eine Reporting-Entscheidung, getrennt davon, was die Site erfasst: Erfasst eine Site die gewählte Identität nicht, fällt die Zählung auf das zurück, was sie erfasst, und auf nichts, wenn sie keine von beiden erfasst.
+Wonach das Dashboard standardmäßig zählt, legt die Site-Einstellung **`count_visitors_by`** fest (Standard `stitch`). Das ist eine Reporting-Entscheidung, getrennt davon, was die Site erfasst: Erfasst eine Site die gewählte Identität nicht, fällt die Zählung auf das zurück, was sie erfasst, und auf nichts, wenn sie keine von beiden erfasst.
 
 ## Was der `stitch` dir ermöglicht
 
@@ -19,7 +19,7 @@ Mit gespeichertem `stitch` (das Default-Preset `Standard`), ohne Cookie und ohne
 - **Drill-down je Besucher.** Verfolge den Pageview-Pfad eines einzelnen Besuchers über die Site, um seine tatsächliche Erfahrung zu debuggen, insbesondere wie die Performance über die Zeit ist.
 - **Besucher-Aggregate:** Pageview-Anzahl, Verweildauer, durchschnittlicher LCP / FCP und Fehler insgesamt je Besucher (der [Besucher-View](#was-auf-einem-besucher-steht) unten).
 
-Was er bewusst nicht liefert: eine Langzeit-Identität (er rotiert), keine domain- oder betreiberübergreifende Verknüpfung (die Domain steckt im Input, er ist also auf jeder Domain anders) und nicht die harte 30-Minuten-**Besuchs**grenze. Diese Grenze und die darauf aufbauenden Per-Besuch-Metriken (Seiten pro Besuch, Bounce Rate) liefert die `session`-Identität ([`store_session`](/de/tracker#store-session)).
+Was er bewusst nicht liefert: eine Langzeit-Identität (er rotiert), keine domain- oder betreiberübergreifende Verknüpfung (die Domain steckt im Input, er ist also auf jeder Domain anders) und nicht die harte 30-Minuten-**Besuchs**grenze. Diese Grenze und die darauf aufbauenden Per-Besuch-Metriken (Seiten pro Besuch, Bounce Rate) liefert die `session`-Identität ([`collect_sessions`](/de/tracker#collect-sessions)).
 
 ## Warum zwei Identitäten
 
@@ -29,17 +29,17 @@ Was er bewusst nicht liefert: eine Langzeit-Identität (er rotiert), keine domai
 - „Kam der Fehler auf der Checkout-Stufe nach einem langsamen Pageload?" (die Antwort steht in den früheren Pageviews desselben Besuchs).
 - „Wie verteilen sich die Seiten pro Besuch je Entry-Pfad?"
 
-Die erste Frage funktioniert auf jeder Site, die `stitch` speichert. Der Rest braucht `session` und füllt sich erst, wenn eine Site `sid` erfasst ([`store_session`](/de/tracker#store-session) an).
+Die erste Frage funktioniert auf jeder Site, die `stitch` speichert. Der Rest braucht `session` und füllt sich erst, wenn eine Site `sid` erfasst ([`collect_sessions`](/de/tracker#collect-sessions) an).
 
 ## Was eine Session ausmacht
 
 Eine Session enthält Pageviews, die **alles** Folgende teilen:
 
 - dieselbe `site_id`,
-- dieselbe `session_id` (`sid` auf der Leitung), clientseitig pro Session vergeben und nur gesendet, wenn [`store_session`](/de/tracker#store-session) an ist,
+- dieselbe `session_id` (`sid` auf der Leitung), clientseitig pro Session vergeben und nur gesendet, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist,
 - eine Lücke von **weniger als 30 Minuten** zwischen aufeinanderfolgenden Pageviews.
 
-Ohne `store_session` (und vor `grantConsent()` auf einer aufgeschobenen Site) wird keine `sid` geschrieben; diese Pageviews tragen also keine Session. Als Besucher zählen sie über `stitch` trotzdem, wenn er gespeichert wird.
+Ohne `collect_sessions` (und vor `grantConsent()` auf einer aufgeschobenen Site) wird keine `sid` geschrieben; diese Pageviews tragen also keine Session. Als Besucher zählen sie über `stitch` trotzdem, wenn er gespeichert wird.
 
 Die Session endet, wenn:
 
@@ -78,11 +78,11 @@ Die Analytics-API bietet zwei Endpunkte:
 - `POST /analytics/visitors`: paginierte Liste der Besucher in einem Zeitraum, gruppiert nach der aufgelösten `identity`, mit Filtern. Cursor-paginiert für hohe Volumina.
 - `POST /analytics/visitors/detail`: der vollständige Pageview-Pfad eines Besuchers (das „Replay"). Er akzeptiert `identity=session` oder `stitch` (je nachdem, was die Besucherliste genutzt hat; Default `session`); eine unbekannte Identität wird mit `422` abgelehnt. Im Preset `Minimal` erfasst die Site keinen der beiden Identifier, es gibt also keine Besucher zum Reinzoomen.
 
-Übergib `identity` explizit, um den Site-Standard zu überschreiben, oder lass es null, um `preferred_identity` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/listAnalyticsVisitors).
+Übergib `identity` explizit, um den Site-Standard zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/listAnalyticsVisitors).
 
 ## Häufige Überraschungen
 
-- **Besucherzahlen folgen `store_stitch`, nicht dem Consent.** Wenn `stitch` gespeichert wird (das Default-Preset `Standard`, und `Full`), bekommst du eindeutige Besucherzahlen ohne Cookie und ohne Einwilligung. Das Preset `Minimal` speichert keinen Identifier, hat also weder Besucherzahlen noch Sessions. `store_session` anzuschalten ergänzt die *session*-Identität, die die 30-Minuten-Besuchsgrenze zieht, auf der die session-only-Views (Seiten pro Besuch, Bounce) aufbauen.
+- **Besucherzahlen folgen `store_stitch`, nicht dem Consent.** Wenn `stitch` gespeichert wird (das Default-Preset `Standard`, und `Full`), bekommst du eindeutige Besucherzahlen ohne Cookie und ohne Einwilligung. Das Preset `Minimal` speichert keinen Identifier, hat also weder Besucherzahlen noch Sessions. `collect_sessions` anzuschalten ergänzt die *session*-Identität, die die 30-Minuten-Besuchsgrenze zieht, auf der die session-only-Views (Seiten pro Besuch, Bounce) aufbauen.
 - **Eine „Session" in fastmon ist kürzer als bei manchen anderen Tools.** Wer ein 1- oder 2-Jahre-Cookie setzt, klebt jeden Wiederbesuch an die alte Session. Wir haben das Cookie nicht, und damit ist die 30-Minuten-Lücke die harte Grenze.
 - **Derselbe Besucher an zwei Tagen ergibt zwei Sessions** und kann auch zwei `stitch`-Besucher sein: der `stitch`-Wert rotiert auf dem Salt-Zeitplan (siehe Privacy), ist also auch keine Langzeit-Identität.
 - **Kein „Users"-Konzept.** Über dem Besucher gibt es nichts. Wir speichern nicht, wer jemand ist, und damit eben auch nicht, ob das dieselbe Person ist wie letzten Monat.

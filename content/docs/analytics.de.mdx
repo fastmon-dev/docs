@@ -42,13 +42,13 @@ Die Fehleransicht verfolgt JavaScript-Fehler über die ganze Site:
 - **Fehlertypen**: Fehler gruppiert nach Fingerprint (Typ + Meldung + Stack-Form), sortiert nach Häufigkeit.
 - **Detailansicht**: pro Fingerprint: Gesamtzahl, betroffene Besucher, erstes/letztes Auftreten, eine Zeitreihe, Breakdowns nach URL, Browser, Gerät, Betriebssystem und Land sowie Beispiel-Pageviews mit Stack-Frames.
 
-Wie viel Detail du siehst, hängt von den [Tracker-Einstellungen](/de/tracker) der Site ab: **Fehlertyp und Anzahl** kommen immer. Die Fehler-**Message** braucht [`store_error_messages`](/de/tracker#store-error-messages), volle **Stack-Frames** brauchen [`error_frame_detail`](/de/tracker#error-frame-detail).
+Wie viel Detail du siehst, hängt von den [Tracker-Einstellungen](/de/tracker) der Site ab: **Fehlertyp und Anzahl** kommen immer. Die Fehler-**Message** braucht [`collect_error_messages`](/de/tracker#collect-error-messages), volle **Stack-Frames** brauchen [`collect_error_frames`](/de/tracker#collect-error-frames).
 
 ## Besucher
 
 Der Besucher-Explorer listet eindeutige Besucher (Start- und Endzeit, Dauer, Seitenanzahl, Geräteinfo, durchschnittliches LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web Vitals und Fehlern.
 
-Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (vorhanden, wenn [`store_stitch`](/de/tracker#store-stitch) an ist) oder `session` (die seitenübergreifende `session_id`, vorhanden, wenn [`store_session`](/de/tracker#store-session) an ist). Die `preferred_identity` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert, der Besucher-Explorer funktioniert also von Anfang an; das Preset `Minimal` speichert keine der beiden Identitäten und lässt ihn leer. Das Replay je Besucher braucht die `session`-Identität. Das ganze Modell steht unter [Besucher und Sessions](/de/concepts/sessions).
+Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (vorhanden, wenn [`store_stitch`](/de/tracker#store-stitch) an ist) oder `session` (die seitenübergreifende `session_id`, vorhanden, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist). Die `count_visitors_by` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert, der Besucher-Explorer funktioniert also von Anfang an; das Preset `Minimal` speichert keine der beiden Identitäten und lässt ihn leer. Das Replay je Besucher braucht die `session`-Identität. Das ganze Modell steht unter [Besucher und Sessions](/de/concepts/sessions).
 
 ## Fetch/XHR und Server-Timing
 

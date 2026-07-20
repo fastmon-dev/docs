@@ -1,45 +1,45 @@
 ---
 title: Tracker-Einstellungen
-description: Jede Tracker-Einstellung pro Site, was sie erhebt, und eine kurze PII-Einschätzung.
+description: Jede Tracker-Einstellung einer Application, was sie erhebt, und eine kurze PII-Einschätzung.
 ---
 
-Jede Site hat eigene **Tracker-Einstellungen**: Sie legen fest, was das Beacon im Browser des Besuchers tut und was gespeichert wird. Jedes Verhalten ist ein einzelner Schalter, und ein [Preset](#presets) setzt diese Schalter auf einen sinnvollen Ausgangspunkt.
+Jede Application hat eigene **Tracker-Einstellungen**: Sie legen fest, was das Beacon im Browser des Besuchers tut und was gespeichert wird. Jedes Verhalten ist ein einzelner Schalter, und ein [Preset](#presets) setzt diese Schalter auf einen sinnvollen Ausgangspunkt.
 
-Die Einstellungen gelten pro Site und sind jederzeit umschaltbar. Der Script-Cache wird automatisch invalidiert; du deployst deine Website nicht neu und fasst das `<script>`-Tag nicht an. Eine ganz neue Site startet auf dem Preset **Standard**: Unique-Visitor-Analytics über den am Edge abgeleiteten `stitch`, Fetch/XHR- und Query-Key-Telemetrie und volle Fehler-Frames, und dabei nichts auf das Gerät des Besuchers geschrieben.
+Die Einstellungen liegen an der Application und sind jederzeit umschaltbar. Der Script-Cache wird automatisch invalidiert; du deployst deine Website nicht neu und fasst das `<script>`-Tag nicht an. Eine ganz neue Application startet auf dem Preset **Standard**: Unique-Visitor-Analytics über den am Edge abgeleiteten `stitch`, Fetch/XHR- und Query-Key-Telemetrie und volle Fehler-Frames, und dabei nichts auf das Gerät des Besuchers geschrieben.
 
 Diese Seite ist die Referenz, auf die das Dashboard verlinkt: jede Einstellung hat einen eigenen Abschnitt und einen stabilen Anker. Jeder Abschnitt endet mit einer **PII**-Zeile, einer kurzen Einschätzung, was die Einstellung für personenbezogene Daten nach DSGVO und TDDDG bedeutet. Das rechtliche Gesamtbild steht unter [Consent und TDDDG](#consent-and-the-tdddg) und auf der [Privacy](/de/privacy)-Seite.
 
 ## Presets [#presets]
 
-Ein **Preset** ist ein Ausgangspunkt, den du beim Anlegen einer Site wählst. Es setzt alle Datenschalter auf einmal; danach ist jeder Schalter unabhängig, und sobald du einen davon änderst, gilt die Site als **Custom**. Neue Sites starten auf **Standard**. (Legst du eine Site direkt über die API ohne Preset an, greifen die nackten Feld-Defaults, die Minimal entsprechen.)
+Ein **Preset** ist ein Ausgangspunkt, den du beim Anlegen einer Application wählst. Es setzt alle Datenschalter auf einmal; danach ist jeder Schalter unabhängig, und sobald du einen davon änderst, gilt sie als **Custom**. Neue Applications starten auf **Standard**. (Legst du eine Application direkt über die API ohne Preset an, greifen die nackten Feld-Defaults, die Minimal entsprechen.)
 
 | Einstellung | `Minimal` | `Standard` (Default) | `Full` |
 | --- | --- | --- | --- |
-| [`store_session`](#store-session) | ✗ | ✗ | ✓ |
-| [`preconsent_level`](#preconsent-level) | `off` | `off` | `configured` |
+| [`collect_sessions`](#collect-sessions) | ✗ | ✗ | ✓ |
+| [`session_consent`](#session-consent) | `deferred` | `deferred` | `immediate` |
 | [`store_stitch`](#store-stitch) | ✗ | ✓ | ✓ |
-| [`track_query_keys`](#track-query-keys) | ✗ | ✓ | ✓ |
-| [`store_error_messages`](#store-error-messages) | ✗ | ✗ | ✓ |
-| [`error_frame_detail`](#error-frame-detail) | ✗ | ✓ | ✓ |
-| [`fetch_xhr_enabled`](#fetch-xhr-enabled) | ✗ | ✓ | ✓ |
+| [`collect_query_keys`](#collect-query-keys) | ✗ | ✓ | ✓ |
+| [`collect_error_messages`](#collect-error-messages) | ✗ | ✗ | ✓ |
+| [`collect_error_frames`](#collect-error-frames) | ✗ | ✓ | ✓ |
+| [`collect_fetch_xhr`](#collect-fetch-xhr) | ✗ | ✓ | ✓ |
 | Nichts auf dem Gerät gespeichert | ✓ | ✓ | ✗ (`sessionStorage._fms`) |
 
 - **Minimal** erhebt nur Core-RUM: Web Vitals, Fehlertyp und -Count, Device- und Connection-Klasse. Keine Identifier, kein Content, kein Fetch/XHR. Nichts wird auf das Gerät des Besuchers geschrieben. Das ist die schlankste Position, das Opt-down, wenn du gar keinen Besucher-Identifier willst.
-- **Standard** schaltet alles ein, was keine personenbezogenen Daten enthalten kann: das am Edge abgeleitete [`stitch`](#store-stitch)-Besuchersignal, [Fetch/XHR](#fetch-xhr-enabled)-Aggregate, Query-[Schlüsselnamen](#track-query-keys) und volle [Fehler-Stack-Frames](#error-frame-detail). Weiterhin kein Fehlermessage-Text, keine Query-Werte, keine geschriebene Session-ID. Immer noch nichts auf dem Gerät. Darauf startet eine neue Site, denn diese Daten (eindeutige Besucher, Fetch/XHR- und Fehler-Diagnose) bringen einen erheblichen analytischen Mehrwert.
+- **Standard** schaltet alles ein, was keine personenbezogenen Daten enthalten kann: das am Edge abgeleitete [`stitch`](#store-stitch)-Besuchersignal, [Fetch/XHR](#collect-fetch-xhr)-Aggregate, Query-[Schlüsselnamen](#collect-query-keys) und volle [Fehler-Stack-Frames](#collect-error-frames). Weiterhin kein Fehlermessage-Text, keine Query-Werte, keine geschriebene Session-ID. Immer noch nichts auf dem Gerät. Darauf startet eine neue Application, denn diese Daten (eindeutige Besucher, Fetch/XHR- und Fehler-Diagnose) bringen einen erheblichen analytischen Mehrwert.
 - **Full** schaltet alles ein: eine beim Load geschriebene Session-ID, Fehlermessages und volle Frames, Query-Keys. Es ist das einzige Preset, das auf das Gerät schreibt (`sessionStorage._fms`), setzt also voraus, dass du Consent geklärt hast.
 
-`query_value_keys` sowie die Routing-, Retention- und Verwaltungseinstellungen gehören zu keinem Preset; sie haben eigene Defaults und werden pro Site gesetzt.
+`collect_query_values_for` sowie die Routing-, Retention- und Verwaltungseinstellungen gehören zu keinem Preset; sie haben eigene Defaults und werden an der Application gesetzt.
 
 ## Consent und TDDDG [#consent-and-the-tdddg]
 
-Egal was eine Site erhebt: das Beacon greift auf dem Gerät des Besuchers lesend auf mehrere Browser-Schnittstellen zu:
+Egal was eine Application erhebt: das Beacon greift auf dem Gerät des Besuchers lesend auf mehrere Browser-Schnittstellen zu:
 
 - die **Performance API** (Navigation, Paint, Layout-Shift, Event- und Long-Animation-Frame-Timings) für Web Vitals und Timing,
 - die **Network Information API** (`navigator.connection`) für die Connection-Klasse,
 - die **Viewport**-Breite (`window.innerWidth`),
 - die **Error-** und **Unhandled-Rejection-Handler** (Fehlertyp und -Count, in jeder Konfiguration erhoben).
 
-fastmon setzt **keine Cookies**, in keiner Konfiguration. In der Standard-Konfiguration schreibt es nichts auf das Gerät des Besuchers; nur wenn [`store_session`](#store-session) an ist, schreibt es einen einzigen, tab-gebundenen `sessionStorage`-Eintrag (die Session-ID). Es speichert keinen langlebigen, seiten- oder geräteübergreifenden Identifikator; die Aggregation erfolgt am Edge.
+fastmon setzt **keine Cookies**, in keiner Konfiguration. In der Standard-Konfiguration schreibt es nichts auf das Gerät des Besuchers; nur wenn [`collect_sessions`](#collect-sessions) an ist, schreibt es einen einzigen, tab-gebundenen `sessionStorage`-Eintrag (die Session-ID). Es speichert keinen langlebigen, seiten- oder geräteübergreifenden Identifikator; die Aggregation erfolgt am Edge.
 
 Welche gespeicherten Felder personenbezogen sind und welche nicht, und wo sich ein Rest nicht vollständig ausschließen lässt, steht unter [Privacy → Personenbezogene Daten](/de/privacy#personal-data).
 
@@ -47,7 +47,7 @@ Das Auslesen solcher Schnittstellen kann nach § 25 TDDDG und der ePrivacy-Richt
 
 fastmon ist ein deutscher Anbieter, also gehen wir von der strengen Auslegung aus und bauen und dokumentieren konservativ. Die Einschätzung für deine Site ist aber nicht unsere: ob das Einbinden von fastmon eine Einwilligung erfordert, entscheidest du, am besten mit deinem Datenschutzbeauftragten oder deiner Rechtsberatung. Am besten betreibst du fastmon ohnehin unter deiner eigenen Domain (First-Party/1P); siehe [`collector_mode`](#collector-mode). Wenn du es hinter Consent legst, kategorisiere fastmon in deinem CMP als Analyse / Performance-Messung, nicht als „unbedingt erforderlich". Beachte: § 25 TDDDG (der Gerätezugriff) und die DSGVO (die anschließende Verarbeitung) werden parallel geprüft; die vertragliche Aufteilung steht in unserem AVV (§ 4) und den AGB (§ 7).
 
-Wenn eine Site eine Session-ID schreibt ([`store_session`](#store-session) an), schaltet dein CMP den Gerät-Schreibvorgang nach Consent mit einem einzelnen Call frei:
+Wenn eine Application eine Session-ID schreibt ([`collect_sessions`](#collect-sessions) an), schaltet dein CMP den Gerät-Schreibvorgang nach Consent mit einem einzelnen Call frei:
 
 ```js
 // In your cookie banner's "Accept" callback, and on every page load
@@ -55,57 +55,57 @@ Wenn eine Site eine Session-ID schreibt ([`store_session`](#store-session) an), 
 window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-`grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Ruf ihn bei jedem Seitenload auf, solange Consent besteht (die meisten Consent-Management-Plattformen tun das für dich). Die `&&`-Guards sind wichtig, weil das Beacon asynchron lädt: bei einer schnellen Navigation kann dein Consent-Code vor dem Skript laufen, wenn `window.fastmon` noch gar nicht existiert. Geguarded ist dieser frühe Aufruf ein harmloses No-op, und der Schreibvorgang passiert, sobald der Tracker geladen ist; ohne Guard würde der bare Aufruf einen `TypeError` werfen. Ob der Schreibvorgang auf diesen Call wartet oder beim Load passiert, entscheidet der Schalter [`preconsent_level`](#preconsent-level). Es gibt keinen Widerruf mitten in der Session: die Session-ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.
+`grantConsent()` vergibt die `sessionStorage._fms`-Session-ID und schaltet ab da die seitenübergreifende Verknüpfung frei. Ruf ihn bei jedem Seitenload auf, solange Consent besteht (die meisten Consent-Management-Plattformen tun das für dich). Die `&&`-Guards sind wichtig, weil das Beacon asynchron lädt: bei einer schnellen Navigation kann dein Consent-Code vor dem Skript laufen, wenn `window.fastmon` noch gar nicht existiert. Geguarded ist dieser frühe Aufruf ein harmloses No-op, und der Schreibvorgang passiert, sobald der Tracker geladen ist; ohne Guard würde der bare Aufruf einen `TypeError` werfen. Ob der Schreibvorgang auf diesen Call wartet oder beim Load passiert, entscheidet der Schalter [`session_consent`](#session-consent). Es gibt keinen Widerruf mitten in der Session: die Session-ID liegt im `sessionStorage` und stirbt mit dem Tab, Ablehnen heißt also schlicht, dass der Schreibvorgang nie passiert.
 
 ## Session und seitenübergreifende Verknüpfung
 
-### `store_session` [#store-session]
+### `collect_sessions` [#collect-sessions]
 
-Schreibt eine Session-ID (`_fms`) in den `sessionStorage` des Besuchers, sodass Pageviews desselben Besuchs verknüpfbar werden: seitenübergreifende Journeys, Funnels, Einstiegs- und Ausstiegsseiten, Wiederkehr innerhalb der Session. Die ID liegt im `sessionStorage` und stirbt beim Schließen des Tabs. Sie ist das **Einzige**, was das Beacon je auf das Gerät schreibt; aus rührt das ausgelieferte Bundle den `sessionStorage` gar nicht erst an (der Schreibschritt wird herauskompiliert, nicht nur serverseitig verworfen), und der Collector erzwingt zur Absicherung eine leere Session-ID. Aus auf dem Standard-Preset, mit dem neue Sites starten; das Preset Full schaltet sie an.
+Schreibt eine Session-ID (`_fms`) in den `sessionStorage` des Besuchers, sodass Pageviews desselben Besuchs verknüpfbar werden: seitenübergreifende Journeys, Funnels, Einstiegs- und Ausstiegsseiten, Wiederkehr innerhalb der Session. Die ID liegt im `sessionStorage` und stirbt beim Schließen des Tabs. Sie ist das **Einzige**, was das Beacon je auf das Gerät schreibt; aus rührt das ausgelieferte Bundle den `sessionStorage` gar nicht erst an (der Schreibschritt wird herauskompiliert, nicht nur serverseitig verworfen), und der Collector erzwingt zur Absicherung eine leere Session-ID. Aus auf dem Standard-Preset, mit dem neue Applications starten; das Preset Full schaltet sie an.
 
-**PII:** die Session-ID ist ein Besucher-Identifier, und ihr Schreiben ist der eine § 25 Abs. 1 TDDDG Speichervorgang, den das Beacon ausführt, also einwilligungsrelevant. Für die schlankste Position aus lassen, oder mit [`preconsent_level`](#preconsent-level) kombinieren, um erst nach Opt-In zu schreiben. Aus getragen enthält eine Zeile keinen Identifier auf dem Gerät.
+**PII:** die Session-ID ist ein Besucher-Identifier, und ihr Schreiben ist der eine § 25 Abs. 1 TDDDG Speichervorgang, den das Beacon ausführt, also einwilligungsrelevant. Für die schlankste Position aus lassen, oder mit [`session_consent`](#session-consent) kombinieren, um erst nach Opt-In zu schreiben. Aus getragen enthält eine Zeile keinen Identifier auf dem Gerät.
 
-### `preconsent_level` [#preconsent-level]
+### `session_consent` [#session-consent]
 
-Entscheidet, *wann* die Session-ID geschrieben wird, und ist nur relevant, wenn [`store_session`](#store-session) an ist. Auf `off` (das Dashboard zeigt das als **Session-ID erst nach Consent schreiben**) wird der Schreibvorgang aufgeschoben, bis dein CMP `window.fastmon.grantConsent()` aufruft; bis dahin fließen Beacons weiter, nur ohne Session-ID. Auf `configured` wird die ID beim Pageload geschrieben. Reads, Observer und Beacons laufen in beiden Fällen: dieser Schalter gatet nur den Gerät-Schreibvorgang, nie die Erhebung. Default `off`.
+Entscheidet, *wann* die Session-ID geschrieben wird, und ist nur relevant, wenn [`collect_sessions`](#collect-sessions) an ist. Auf `deferred` (das Dashboard zeigt das als **Session-ID erst nach Consent schreiben**) wird der Schreibvorgang aufgeschoben, bis dein CMP `window.fastmon.grantConsent()` aufruft; bis dahin fließen Beacons weiter, nur ohne Session-ID. Auf `immediate` wird die ID beim Pageload geschrieben. Reads, Observer und Beacons laufen in beiden Fällen: dieser Schalter gatet nur den Gerät-Schreibvorgang, nie die Erhebung. Default `deferred`.
 
-**PII:** das ändert Zeitpunkt und Consent-Posture des Session-Schreibens, nicht die erhobenen Datenkategorien. `off` ist der sichere Default (kein Gerät-Schreiben vor Consent); `configured` schreibt beim Load und setzt voraus, dass du dafür eine Rechtsgrundlage hast.
+**PII:** das ändert Zeitpunkt und Consent-Posture des Session-Schreibens, nicht die erhobenen Datenkategorien. `deferred` ist der sichere Default (kein Gerät-Schreiben vor Consent); `immediate` schreibt beim Load und setzt voraus, dass du dafür eine Rechtsgrundlage hast.
 
 ### `store_stitch` [#store-stitch]
 
-Behält das am Edge abgeleitete `stitch`-Signal auf der gespeicherten Zeile. `stitch` ist ein `HMAC-SHA256` aus IP, User-Agent, dem Collector-Hash der Site und der Domain, am Edge berechnet unter einem Salt, das alle 24 Stunden rotiert und den Edge-Speicher nie verlässt. Es liefert dir Unique-Visitor-Counts und besucherbezogene Metriken (Bounce Rate, Seiten pro Besuch, Verweildauer), ohne dass etwas auf dem Gerät liegt. Aus erzwingt der Collector `stitch` beim Insert leer, sodass die Zeile gar keinen Besucher-Identifier trägt. Einstellung pro Site (org-weite Tracker haben sie nicht). An per Default: das Standard-Preset, mit dem neue Sites starten, speichert es. Die vollständige Konstruktion (Forward Secrecy, ≤24 h Verknüpfbarkeit, Scope pro Site) steht unter [Privacy → der am Edge abgeleitete `stitch`](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+Behält das am Edge abgeleitete `stitch`-Signal auf der gespeicherten Zeile. `stitch` ist ein `HMAC-SHA256` aus IP, User-Agent, dem Collector-Hash der Application und der Domain, am Edge berechnet unter einem Salt, das alle 24 Stunden rotiert und den Edge-Speicher nie verlässt. Es liefert dir Unique-Visitor-Counts und besucherbezogene Metriken (Bounce Rate, Seiten pro Besuch, Verweildauer), ohne dass etwas auf dem Gerät liegt. Aus erzwingt der Collector `stitch` beim Insert leer, sodass die Zeile gar keinen Besucher-Identifier trägt. Per-Domain-Default: Eine Site erbt den Wert der Application, solange sie keinen eigenen setzt. An per Default: das Standard-Preset, mit dem neue Applications starten, speichert es. Die vollständige Konstruktion (Forward Secrecy, ≤24 h Verknüpfbarkeit, Scope pro Application) steht unter [Privacy → der am Edge abgeleitete `stitch`](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
 
 **PII:** `stitch` ist ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung; die Verknüpfbarkeit ist auf rund 24 Stunden begrenzt und nach Salt-Rotation forward-secret. Ihn in deiner Datenschutzerklärung zu benennen, ist Sache des Betreibers.
 
-### `preferred_identity` [#preferred-identity]
+### `count_visitors_by` [#count-visitors-by]
 
-Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitch` oder `session`. Reine Reporting-Vorgabe, getrennt von den Erhebungsschaltern, und der Query-Resolver klemmt sie auf das, was die Site tatsächlich speichert (ein Override pro Query ist immer möglich). Default `stitch`. Einstellung pro Site.
+Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitch` oder `session`. Reine Reporting-Vorgabe, getrennt von den Erhebungsschaltern, und der Query-Resolver klemmt sie auf das, was die Site tatsächlich speichert (ein Override pro Query ist immer möglich). Default `stitch`. Per-Domain-Default; eine Site kann ihn überschreiben.
 
-**PII:** keine eigene. Sie wählt zwischen bereits über [`store_stitch`](#store-stitch) und [`store_session`](#store-session) erhobenen Identifiern; sie erhebt und speichert nichts Neues.
+**PII:** keine eigene. Sie wählt zwischen bereits über [`store_stitch`](#store-stitch) und [`collect_sessions`](#collect-sessions) erhobenen Identifiern; sie erhebt und speichert nichts Neues.
 
 ## URLs und Query-Parameter
 
-### `track_query_keys` [#track-query-keys]
+### `collect_query_keys` [#collect-query-keys]
 
 Behält die **Namen** der Query-Parameter der Seiten-URL (etwa `?page`, `?variant`), sodass du Analytics nach parametrisierten Routen aufschlüsseln kannst. Parameter-**Werte** werden bei der Erhebung immer verworfen, unabhängig von diesem Schalter. Aus verwirft die Query-Strings komplett und speichert nur Origin plus Pfad. An per Default (Teil des Standard-Presets).
 
-**PII:** gering. Nur Schlüsselnamen bleiben, und die tragen selten besucherspezifische Daten; jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Um einen konkreten Wert zu behalten, musst du ihn explizit über [`query_value_keys`](#query-value-keys) freigeben.
+**PII:** gering. Nur Schlüsselnamen bleiben, und die tragen selten besucherspezifische Daten; jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Um einen konkreten Wert zu behalten, musst du ihn explizit über [`collect_query_values_for`](#collect-query-values-for) freigeben.
 
-### `query_value_keys` [#query-value-keys]
+### `collect_query_values_for` [#collect-query-values-for]
 
-Eine Opt-in-Allow-List (max. 20 Einträge) von Parameternamen, deren **Wert** zusätzlich behalten wird, längenbegrenzt. Alles, was nicht auf der Liste steht, verliert seinen Wert weiterhin. Setzt [`track_query_keys`](#track-query-keys) voraus. Typische Einträge sind nicht-personenbezogene Routing- oder Kampagnenparameter wie `page`, `variant`, `utm_campaign`. Default leer. Nicht Teil eines Presets.
+Eine Opt-in-Allow-List (max. 20 Einträge) von Parameternamen, deren **Wert** zusätzlich behalten wird, längenbegrenzt. Alles, was nicht auf der Liste steht, verliert seinen Wert weiterhin. Setzt [`collect_query_keys`](#collect-query-keys) voraus. Typische Einträge sind nicht-personenbezogene Routing- oder Kampagnenparameter wie `page`, `variant`, `utm_campaign`. Default leer. Nicht Teil eines Presets.
 
 **PII:** die trägst du. Ein Wert wird nur für exakt die Schlüssel gespeichert, die du auflistest, und nie „alle Werte". Wenn du einen Parameter auflistest, der personenbezogene Daten trägt (eine E-Mail, eine User-ID, ein Token), hast du dich entschieden, ihn zu speichern, halte die Liste also auf nicht-personenbezogene Schlüssel.
 
 ## Fehler
 
-### `store_error_messages` [#store-error-messages]
+### `collect_error_messages` [#collect-error-messages]
 
 Behält den freien Fehlermessage-Text (`Cannot read property 'x' of undefined`) statt nur Fehlertyp und -Count. Aus wird die Message serverseitig verworfen, und Dashboards sehen Aggregate wie „5 TypeErrors, 2 ReferenceErrors" plus Stack-Positionen. Aus per Default, auch auf Standard; das Preset Full schaltet es an.
 
 **PII:** der höchste Freitext-Vektor für personenbezogene Daten im Beacon, weil Messages Nutzereingaben enthalten können. Einwilligungsrelevant (ein „consent-only"-Feld). Ein stets aktiver Scrubber ersetzt URLs, E-Mails, numerische IDs und Strings in Anführungszeichen durch `*` vor dem Versand, auch wenn die Message behalten wird, aber das ist Defense-in-Depth: die Betreiberpflicht, keine rohen Nutzereingaben in geworfene Fehler zu geben, bleibt bestehen. Nur dort einschalten, wo du Consent geklärt hast.
 
-### `error_frame_detail` [#error-frame-detail]
+### `collect_error_frames` [#collect-error-frames]
 
 Behält volles Stack-Frame-Detail (Script-Pfad plus Zeile und Spalte) für jeden Frame. Aus fallen Frames auf host-only zusammen, außer deine eigenen First-Party-External-Scripts behalten immer Pfad und Zeile/Spalte, damit Bugs im eigenen Code fixbar bleiben. An per Default (das Preset Standard schaltet es an).
 
@@ -113,7 +113,7 @@ Behält volles Stack-Frame-Detail (Script-Pfad plus Zeile und Spalte) für jeden
 
 ## Fetch und XHR
 
-### `fetch_xhr_enabled` [#fetch-xhr-enabled]
+### `collect_fetch_xhr` [#collect-fetch-xhr]
 
 Erfasst aggregierte Fetch/XHR-Telemetrie: Aufruf-Counts pro Endpunkt, Dauern, Fehler-Statuscodes und die langsamsten Ausreißer, sodass du siehst, welche deiner eigenen APIs langsam sind oder fehlschlagen. Wird beim Rendern ins ausgelieferte Bundle gebacken. Aus unterdrückt die Fetch/XHR-Erhebung komplett, inklusive des Wrappers. An per Default (das Preset Standard schaltet es an).
 
@@ -145,17 +145,13 @@ Jede Ruleset mappt den Page-Controller-Token des Frameworks auf einen aus einem 
 
 ## Ingest und Routing
 
-### `enforce_domain_match` [#enforce-domain-match]
+### `site_policy` [#site-policy]
 
-An verwirft der Collector jedes Beacon, dessen gemeldeter Seiten-URL-Host weder der `domain` der Site noch eine Subdomain davon ist. Es schließt die Lücke, die [`allowed_origins`](#allowed-origins) nicht kann, denn `sendBeacon` lässt den `Origin`-Header oft weg, sodass ein von einer fremden Seite mit Kenntnis deines Collector-Hash abgespieltes Beacon sonst durchkäme. Standardmäßig aus, weil Multi-Domain- und Vanity-Domain-Setups sonst legitimen Traffic verlören. Einstellung pro Site. Siehe [Sites](/de/concepts/sites#seiten-domain-erzwingen).
+Entscheidet, was passiert, wenn ein Beacon von einem Hostnamen kommt, der keine registrierte [Site](/de/concepts/sites) dieser Application ist. `open` (der Default) verwirft das Beacon, vermerkt den Hostnamen aber als **vorgeschlagene Domain**, die du mit einem Klick adoptierst; `auto` legt dafür eine Site an und behält ihren Traffic ab dann; `strict` verwirft ohne Vorschlag und ohne Auto-Provisioning, sodass nur exakt registrierte Domains bedient werden. Wird an der Application gesetzt.
+
+Das ersetzt die frühere `allowed_origins`-Allow-List und den per-Site-Schalter `enforce_domain_match`, die es beide nicht mehr gibt: Abgeglichen wird jetzt der gemeldete Seiten-URL-Host statt des `Origin`-Headers, den `sendBeacon` oft weglässt. Mit `strict` nagelst du den Ingest auf explizit registrierte Domains fest.
 
 **PII:** keine. Das ist Ingest-Härtung, kein Datenerhebungsschalter.
-
-### `allowed_origins` [#allowed-origins]
-
-Eine Opt-in-Allow-List von Origins, von denen der Collector Beacons annimmt, geprüft gegen den HTTP-`Origin`-Header. Leer (der Default) schaltet die Origin-Prüfung ab. Liste jeden Origin explizit auf, auch deine Hauptdomain sowie Staging- oder Preview-Hosts; Wildcards werden nicht unterstützt. Ein Beacon von einem nicht gelisteten Origin wird still verworfen (der Collector antwortet trotzdem `204`). Siehe [Sites → Allowed Origins](/de/concepts/sites#allowed-origins).
-
-**PII:** keine. Sie steuert, welche Requests angenommen werden, nicht deren Inhalt.
 
 ### `collector_mode` [#collector-mode]
 
@@ -189,15 +185,23 @@ Aus werden Beacons weiterhin angenommen, aber nicht in die Analytics-Tabellen ge
 
 **PII:** keine. Es gatet Schreibvorgänge, nicht Datenkategorien.
 
+### `environment` [#environment]
+
+Markiert die Application als `prod` oder `dev`. Default `prod`. Nutze `dev`, um Staging-, Preview- oder Wegwerf-Applications klar von deinem Produktions-Traffic zu trennen.
+
+**PII:** keine. Es beschriftet die Application und erhebt nichts.
+
 ### `source_version` [#source-version]
 
-Pinnt die Beacon-Template-Version, die die Site ausliefert (`v1` ist aktuell). Auf der aktuellen Version lassen, außer du hältst eine Site während eines Beacon-Upgrades bewusst zurück.
+Pinnt die Beacon-Template-Version, die die Application ausliefert (`v1` ist aktuell). Auf der aktuellen Version lassen, außer du hältst eine Application während eines Beacon-Upgrades bewusst zurück.
 
 **PII:** keine. Es wählt, welcher Tracker-Build ausgeliefert wird.
 
-## Org-weite Tracker
+## Applications und Sites
 
-Ein org-weiter Tracker ist ein einzelnes Beacon, das du über mehrere Domains einbindest, die nicht jede eine eigene Site sind. Er trägt dieselben Daten- und Routing-Einstellungen wie eine Site: [`store_session`](#store-session), [`preconsent_level`](#preconsent-level), [`track_query_keys`](#track-query-keys), [`query_value_keys`](#query-value-keys), [`store_error_messages`](#store-error-messages), [`error_frame_detail`](#error-frame-detail), [`fetch_xhr_enabled`](#fetch-xhr-enabled), [`collector_mode`](#collector-mode) und [`collector_endpoint`](#collector-endpoint), und er nimmt dieselben [Presets](#presets). Drei Einstellungen bleiben pro Site und haben kein org-Tracker-Pendant: [`store_stitch`](#store-stitch), [`preferred_identity`](#preferred-identity) und [`enforce_domain_match`](#enforce-domain-match).
+Diese Einstellungen liegen an der **Application**, also am Tracking-Embed selbst, nicht an einer einzelnen Domain. Eine Application besitzt das ausgelieferte Bundle, die zwei Hashes und jeden Schalter auf dieser Seite, und sie bedient eine Domain oder zwanzig: Jede Domain ist eine [Site](/de/concepts/sites) mit eigenem Dashboard und eigenem Traffic. Einen separaten „org-weiten Tracker" gibt es nicht mehr; eine Application mit mehreren Sites *ist* genau das. Siehe [Applications](/de/concepts/applications).
+
+Drei Einstellungen sind Per-Domain-**Defaults** statt fester Application-Werte: [`data_retention_days`](#data-retention-days), [`store_stitch`](#store-stitch) und [`count_visitors_by`](#count-visitors-by). Eine Site erbt den Wert der Application, solange sie keinen eigenen setzt.
 
 ## Einstellungen ändern
 
@@ -205,6 +209,7 @@ Site in fastmon öffnen, auf **Einstellungen**, ändern, was du brauchst, und sp
 
 ## Nächste Schritte
 
+- [Applications](/de/concepts/applications): der Embed, an dem diese Einstellungen liegen, und wie er zu Sites steht.
 - [Privacy: Was wir nicht sammeln](/de/privacy): die Datenschutz-Untergrenze, die unter jeder Einstellung gilt.
 - [Der RUM-Beacon](/de/concepts/beacon): was das Beacon genau schickt.
-- [Sites](/de/concepts/sites): wo diese Einstellungen liegen und die Deployment-Szenarien.
+- [Sites](/de/concepts/sites): die Domains unter einer Application und ihre Per-Domain-Overrides.

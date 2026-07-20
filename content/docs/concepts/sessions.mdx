@@ -6,9 +6,9 @@ description: How fastmon counts visitors without identifying them, and what a se
 Fastmon counts **visitors**, not people. A visitor is a count along an **identity axis**, and there are two:
 
 - **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or any stored personal data. It's on under the default `Standard` preset, so unique-visitor counts work out of the box; the `Minimal` preset is the opt-down that stores no identifier, and then there are no visitor counts.
-- **`session`**: the client-minted `session_id` (`sid` on the wire), present only when [`store_session`](/en/tracker#store-session) is on (the `Full` preset, or after your CMP calls `grantConsent()`). It groups a short burst of page-views from the same browser into a **visit** with a 30-minute boundary, which the visit-level views build on.
+- **`session`**: the client-minted `session_id` (`sid` on the wire), present only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the `Full` preset, or after your CMP calls `grantConsent()`). It groups a short burst of page-views from the same browser into a **visit** with a 30-minute boundary, which the visit-level views build on.
 
-Which one the dashboard counts by default is the site's **`preferred_identity`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
+Which one the dashboard counts by default is the site's **`count_visitors_by`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
 
 ## What the `stitch` lets you do
 
@@ -19,7 +19,7 @@ With `stitch` stored (the default `Standard` preset), and no cookie or consent n
 - **Per-visitor drill-down.** Follow one visitor's page-view path across the site to debug their actual experience, in particular how performance holds up over time.
 - **Visitor-level aggregates:** page count, dwell time, average LCP / FCP and total errors per visitor (the [Visitors view](#whats-on-a-visitor) below).
 
-What it deliberately doesn't give you: a long-term identity (it rotates), any cross-domain or cross-operator link (the domain is in its input, so it differs on every domain), or the strict 30-minute **visit** boundary. That boundary, and the per-visit metrics built on it (pages per visit, bounce rate), come from the `session` identity ([`store_session`](/en/tracker#store-session)).
+What it deliberately doesn't give you: a long-term identity (it rotates), any cross-domain or cross-operator link (the domain is in its input, so it differs on every domain), or the strict 30-minute **visit** boundary. That boundary, and the per-visit metrics built on it (pages per visit, bounce rate), come from the `session` identity ([`collect_sessions`](/en/tracker#collect-sessions)).
 
 ## Why two identities
 
@@ -29,17 +29,17 @@ What it deliberately doesn't give you: a long-term identity (it rotates), any cr
 - "Did the error on the checkout step come after a slow page load?" (the answer is in the earlier page-views of the same visit).
 - "What's the distribution of pages per visit on each entry path?"
 
-The first question works on any site that stores `stitch`. The rest need `session`, so they only fill in once a site collects `sid` ([`store_session`](/en/tracker#store-session) on).
+The first question works on any site that stores `stitch`. The rest need `session`, so they only fill in once a site collects `sid` ([`collect_sessions`](/en/tracker#collect-sessions) on).
 
 ## What counts as one session
 
 A session contains the page-views that share **all** of these:
 
 - the same `site_id`,
-- the same `session_id` (`sid` on the wire), minted client-side per session and only sent when [`store_session`](/en/tracker#store-session) is on,
+- the same `session_id` (`sid` on the wire), minted client-side per session and only sent when [`collect_sessions`](/en/tracker#collect-sessions) is on,
 - a gap of **less than 30 minutes** between consecutive page-views.
 
-Without `store_session` (and before `grantConsent()` on a deferred site) no `sid` is written, so those page-views carry no session. They still count as visitors under `stitch` when it's stored.
+Without `collect_sessions` (and before `grantConsent()` on a deferred site) no `sid` is written, so those page-views carry no session. They still count as visitors under `stitch` when it's stored.
 
 The session ends when:
 
@@ -78,11 +78,11 @@ The Analytics API exposes two endpoints:
 - `POST /analytics/visitors`: paginated list of visitors in a time range, grouped by the resolved `identity`, with filters. Cursor-paginated for high volumes.
 - `POST /analytics/visitors/detail`: the full page-view path for one visitor (the "replay"). It accepts `identity=session` or `stitch` (whichever the visitor list used; default `session`); an unknown identity is rejected with `422`. On the `Minimal` preset the site collects neither identifier, so there are no visitors to drill into.
 
-Pass `identity` explicitly to override the site default, or leave it null to use `preferred_identity`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
+Pass `identity` explicitly to override the site default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
 
 ## Common surprises
 
-- **Visitor counts follow `store_stitch`, not consent.** When `stitch` is stored (the default `Standard` preset, and `Full`) you get unique-visitor counts without a cookie or consent. The `Minimal` preset stores no identifier, so it has neither visitor counts nor sessions. Turning on `store_session` adds the *session* identity, which draws the 30-minute visit boundary the session-only views (pages per visit, bounce) build on.
+- **Visitor counts follow `store_stitch`, not consent.** When `stitch` is stored (the default `Standard` preset, and `Full`) you get unique-visitor counts without a cookie or consent. The `Minimal` preset stores no identifier, so it has neither visitor counts nor sessions. Turning on `collect_sessions` adds the *session* identity, which draws the 30-minute visit boundary the session-only views (pages per visit, bounce) build on.
 - **A session in fastmon is shorter than in some other tools.** Tools that set a 1- or 2-year cookie glue any return visit onto the previous session. We don't have that cookie, so a 30-minute gap is the hard boundary.
 - **One visitor across two days is two sessions**, and may also be two `stitch` visitors: the `stitch` value rotates on the salt schedule (see Privacy), so it is not a long-term identity either.
 - **No "users" concept.** There's nothing above the visitor. We don't store who someone is, and that includes "is this the same person who showed up last month?"

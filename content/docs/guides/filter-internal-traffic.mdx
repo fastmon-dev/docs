@@ -11,18 +11,18 @@ There's no "ignore my IP" toggle, on purpose; we don't store IPs (see [Privacy](
 
 | You want to exclude…              | Best mechanism                                   |
 | --------------------------------- | ------------------------------------------------ |
-| Your dev / staging environment    | Separate site (or `allowed_origins` discipline)  |
+| Your dev / staging environment    | A separate application (mark it `dev`)           |
 | Your team's office traffic        | Skip the beacon script for internal sessions     |
 | Your CI / synthetic monitors      | Skip the beacon script by User-Agent             |
 | All non-production traffic        | Per-site `is_active` toggle                      |
 
-## Option 1: Separate sites for non-production
+## Option 1: A separate application for non-production
 
 The cleanest answer for staging, preview, and dev environments.
 
-1. Create a second site in fastmon called e.g. `acme-marketing-staging`.
-2. Use **its** `source_hash` in your staging deploy.
-3. Either ignore the staging site in dashboards, or use it intentionally; staging metrics are useful for catching regressions before production.
+1. Create a second application in fastmon called e.g. `acme-marketing-staging`, and set its [`environment`](/en/tracker#environment) to `dev` to keep it clearly apart from production.
+2. Use **its** `source_hash` in your staging deploy. A separate application has its own snippet and hashes; adding the domain as another site under the *same* application would reuse the production snippet instead.
+3. Either ignore the staging application in dashboards, or use it intentionally; staging metrics are useful for catching regressions before production.
 
 Costs you nothing: no client-side logic, no flags, no risk of leaking production data into staging or the other way around.
 

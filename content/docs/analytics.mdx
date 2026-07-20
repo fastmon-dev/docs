@@ -43,13 +43,13 @@ The Errors view tracks JavaScript errors across the site:
   + stack shape), ranked by count.
 - **Detail drill-down**: for one fingerprint: total count, visitors affected, first/last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames.
 
-How much detail you see depends on the site's [tracker settings](/en/tracker): error **type and count** arrive always. The error **message** needs [`store_error_messages`](/en/tracker#store-error-messages), and full **stack frames** need [`error_frame_detail`](/en/tracker#error-frame-detail).
+How much detail you see depends on the site's [tracker settings](/en/tracker): error **type and count** arrive always. The error **message** needs [`collect_error_messages`](/en/tracker#collect-error-messages), and full **stack frames** need [`collect_error_frames`](/en/tracker#collect-error-frames).
 
 ## Visitors
 
 The Visitors explorer lists distinct visitors (start and end time, duration, page count, device info, average LCP/FCP, error count) with filters, and a per-visitor detail view showing every pageview in order, each with its Web Vitals and errors.
 
-A visitor is counted along an identity axis: `stitch` (present when [`store_stitch`](/en/tracker#store-stitch) is on) or `session` (the cross-page `session_id`, present when [`store_session`](/en/tracker#store-session) is on). The site's `preferred_identity` sets the default. New sites start on `Standard`, which stores `stitch`, so the visitor explorer works out of the box; the `Minimal` preset stores neither identity and leaves it empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions) for the full model.
+A visitor is counted along an identity axis: `stitch` (present when [`store_stitch`](/en/tracker#store-stitch) is on) or `session` (the cross-page `session_id`, present when [`collect_sessions`](/en/tracker#collect-sessions) is on). The site's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`, so the visitor explorer works out of the box; the `Minimal` preset stores neither identity and leaves it empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions) for the full model.
 
 ## Fetch/XHR and Server-Timing
 

@@ -9,14 +9,14 @@ This page is the technical reference. For setup, head to [Implementation](/en/in
 
 ## One bundle, two builds
 
-There's a single beacon (`standard.js`). The server compiles it per site into one of two builds, decided by the [`store_session`](/en/tracker#store-session) setting:
+There's a single beacon (`standard.js`). The server compiles it per site into one of two builds, decided by the [`collect_sessions`](/en/tracker#collect-sessions) setting:
 
 | Build | When | Storage on device |
 |---|---|:---:|
-| Stateless | `store_session` off | None; the `sessionStorage` write is compiled out entirely |
-| Stateful | `store_session` on | `sessionStorage._fms` only (the session id) |
+| Stateless | `collect_sessions` off | None; the `sessionStorage` write is compiled out entirely |
+| Stateful | `collect_sessions` on | `sessionStorage._fms` only (the session id) |
 
-fastmon sets **no cookies at all**, in either build. By default nothing is written to the device: only the `Full` preset (or turning on [`store_session`](/en/tracker#store-session)) writes the `sessionStorage._fms` session id. Whether that write lands on page load or waits for consent is the [`preconsent_level`](/en/tracker#preconsent-level) setting.
+fastmon sets **no cookies at all**, in either build. By default nothing is written to the device: only the `Full` preset (or turning on [`collect_sessions`](/en/tracker#collect-sessions)) writes the `sessionStorage._fms` session id. Whether that write lands on page load or waits for consent is the [`session_consent`](/en/tracker#session-consent) setting.
 
 You don't pick the build in the `<script>` tag; the server resolves it from the site's settings and ships the right one. A change to a setting that affects the served bundle rolls the script cache automatically.
 
@@ -33,10 +33,10 @@ The shipped script is minified and obfuscated on purpose, not to hide what it do
 | `PerformanceObserver`      | LCP, INP, CLS, FCP, paint entries, long animation frames, layout shifts.       |
 | `Navigation Timing`        | TTFB, redirect count, navigation type (`navigate`, `reload`, `back_forward`).  |
 | `Resource Timing`          | Per-resource size, duration, and category. Aggregated to per-domain rollups.   |
-| `error` event              | Type, count, and stack-frame hosts always; the path + line/column of your own first-party script frames too. The message, and the detail of inline / third-party frames, only when [`store_error_messages`](/en/tracker#store-error-messages) / [`error_frame_detail`](/en/tracker#error-frame-detail) are on, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
+| `error` event              | Type, count, and stack-frame hosts always; the path + line/column of your own first-party script frames too. The message, and the detail of inline / third-party frames, only when [`collect_error_messages`](/en/tracker#collect-error-messages) / [`collect_error_frames`](/en/tracker#collect-error-frames) are on, and only after an always-on PII scrubber masks URLs, emails, IDs, and quoted strings. |
 | `unhandledrejection`       | Same shape as `error`.                                                         |
 | `Page Visibility API`      | Time-to-hidden, total visible time.                                            |
-| `fetch` / `XMLHttpRequest` | Per-endpoint Fetch/XHR aggregates: call counts, durations, duration buckets, and a status-error distribution, templated per endpoint (method + host + path, no query strings). Server-controlled per site ([`fetch_xhr_enabled`](/en/tracker#fetch-xhr-enabled), default off). |
+| `fetch` / `XMLHttpRequest` | Per-endpoint Fetch/XHR aggregates: call counts, durations, duration buckets, and a status-error distribution, templated per endpoint (method + host + path, no query strings). Server-controlled per site ([`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr), default off). |
 | `Server-Timing`            | The `Server-Timing` metrics your own backend reports (name and duration), first-party by construction.                  |
 | Document & Window          | Page URL (sanitized to origin + path), referrer, viewport size class.          |
 
@@ -48,7 +48,7 @@ Geo data (the country) is **not** read in the browser. The edge derives it from 
 - Set cookies. fastmon sets no cookies at all, in any configuration.
 - Touch DOM content (no scroll-replay, no session-replay, no form capture). The one carve-out is opt-in [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), which reads a single body controller-class token to classify the page type, nothing else.
 - Read the visitor's media devices, sensors, or geolocation.
-- Mint an on-device identifier that links page-views together, unless [`store_session`](/en/tracker#store-session) is on (then the tab-scoped session id). The per-pageview `pvid` exists in every configuration and dies with the pageview.
+- Mint an on-device identifier that links page-views together, unless [`collect_sessions`](/en/tracker#collect-sessions) is on (then the tab-scoped session id). The per-pageview `pvid` exists in every configuration and dies with the pageview.
 
 ## The lifecycle of a pageview
 
@@ -100,7 +100,7 @@ You don't usually need to read this; the dashboard and the [Analytics API](/en/a
 
 Key abbreviations:
 
-- `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`store_session`](/en/tracker#store-session) is on (on load, or after `grantConsent()`, per [`preconsent_level`](/en/tracker#preconsent-level)).
+- `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`collect_sessions`](/en/tracker#collect-sessions) is on (on load, or after `grantConsent()`, per [`session_consent`](/en/tracker#session-consent)).
 - `pvid`: per-pageview id. New on every pageview, not persisted.
 - `ver`: monotonic version of this pageview's payload.
 - `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
@@ -111,7 +111,7 @@ Key abbreviations:
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
 - Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. They were previously opaque numbered slots (`t1`…`t36`); cached older bundles still send those names, which the collector maps onto the same fields.
-- `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`store_error_messages`](/en/tracker#store-error-messages), and the path/line/column of inline and third-party frames via [`error_frame_detail`](/en/tracker#error-frame-detail); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
+- `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host — plus the path and line/column for frames in your own first-party external scripts. The message `m` is opt-in via [`collect_error_messages`](/en/tracker#collect-error-messages), and the path/line/column of inline and third-party frames via [`collect_error_frames`](/en/tracker#collect-error-frames); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
 - `snl`: **Route Load** for soft navigations (`soft_nav_load`) — the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
@@ -123,7 +123,7 @@ Soft navigations (SPA route changes) produce no native paint or navigation-timin
 
 The script is served with strong caching and an `ETag`. Two things invalidate the cache automatically:
 
-- **Setting change.** Changing a setting that affects the served bundle (for example [`store_session`](/en/tracker#store-session)) ships a new template version.
+- **Setting change.** Changing a setting that affects the served bundle (for example [`collect_sessions`](/en/tracker#collect-sessions)) ships a new template version.
 - **Beacon upgrade.** Fastmon ships beacon versions (`source_version`); changing a site's pinned version rolls the cache.
 
 You don't need to redeploy your site to take a beacon upgrade. The browser picks up the new version on its next cache check.
@@ -134,7 +134,7 @@ The tracker reads a few namespace-stable globals off `window`.
 
 ### Grant consent
 
-When [`store_session`](/en/tracker#store-session) is on with [`preconsent_level`](/en/tracker#preconsent-level) left at `off`, the session-id write is deferred until your CMP grants consent:
+When [`collect_sessions`](/en/tracker#collect-sessions) is on with [`session_consent`](/en/tracker#session-consent) left at `off`, the session-id write is deferred until your CMP grants consent:
 
 ```js
 // In your cookie banner's "Accept" callback, and on every page load

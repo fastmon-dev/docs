@@ -39,10 +39,10 @@ Rotating them regenerates both and invalidates the served script.
 ## What gets collected: presets
 
 The collection config lives on the application: a
-[preset](/en/collection-modes) (`minimal` / `standard` / `full`,
+[preset](/en/tracker) (`minimal` / `standard` / `full`,
 default `standard`) that expands into individual flags — sessions,
 the visitor `stitch`, error detail, query keys, fetch/XHR. All of it
-is baked into the served bundle. See [Presets](/en/collection-modes)
+is baked into the served bundle. See [Presets](/en/tracker)
 for the full breakdown.
 
 ## Where beacons go: the collector
@@ -119,7 +119,7 @@ A site inherits these unless it sets its own value. See
 | `environment`         | enum                 | `prod` or `dev`. Default `prod`. Marks non-production apps.            |
 | `source_hash`         | string               | Globally unique; in the script URL (`/s/{source_hash}.js`).           |
 | `collector_hash`      | string               | Globally unique; in the ingest URL (`/c/{collector_hash}`).           |
-| preset flags          | —                    | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. See [Presets](/en/collection-modes). |
+| preset flags          | —                    | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. See [Presets](/en/tracker). |
 | `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
 | `collector_endpoint`  | string · nullable    | Custom collector host (only for `custom`).                            |
 | `pagetype_ruleset`    | enum · optional      | Shop-system ruleset for page-type detection, or empty (off).          |
@@ -143,6 +143,6 @@ A site inherits these unless it sets its own value. See
 ## Related
 
 - [Sites](/en/concepts/sites): the per-domain unit under an application.
-- [Presets](/en/collection-modes): what the beacon collects.
+- [Presets](/en/tracker): what the beacon collects.
 - [Implementation](/en/install): create an application and embed the snippet.
 - [The RUM beacon](/en/concepts/beacon): what the served script does.

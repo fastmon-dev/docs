@@ -17,32 +17,32 @@ These rules hold regardless of how the site is configured:
 | **Cross-site identifiers**            | We mint nothing that survives a navigation across domains. A session on `acme.com` cannot be linked to one on `other.com`. |
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
 | **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. The one carve-out is opt-in [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), which reads a single body controller-class token to classify the page type; off by default. |
-| **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`track_query_keys`](/en/tracker#track-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`query_value_keys`](/en/tracker#query-value-keys). |
+| **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`collect_query_keys`](/en/tracker#collect-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`collect_query_values_for`](/en/tracker#collect-query-values-for). |
 | **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
 
 ### A note on cookies and storage
 
-fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`store_session`](/en/tracker#store-session) is on. By default it writes nothing: the Standard preset new sites start on stores no session id, so no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
+fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`collect_sessions`](/en/tracker#collect-sessions) is on. By default it writes nothing: the Standard preset new sites start on stores no session id, so no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
 
 Storage-free is about what the beacon keeps on the device, not about whether consent applies: reading the browser's performance APIs can be consent-relevant regardless. See [Consent and the TDDDG](#consent-and-the-tdddg).
 
-When `store_session` is on, whether the session id is written on page load or deferred until your CMP grants consent is the [`preconsent_level`](/en/tracker#preconsent-level) switch. The id lives in `sessionStorage` and is gone when the tab closes. There is no persistent identifier and no cross-page cookie anywhere in the design.
+When `collect_sessions` is on, whether the session id is written on page load or deferred until your CMP grants consent is the [`session_consent`](/en/tracker#session-consent) switch. The id lives in `sessionStorage` and is gone when the tab closes. There is no persistent identifier and no cross-page cookie anywhere in the design.
 
 ## What we collect
 
 Just enough to compute Web Vitals and per-page performance breakdowns. The exact field-by-field list is in [The RUM Beacon](/en/concepts/beacon); the categories:
 
-- **Page URL**: origin + pathname, plus query-parameter names when [`track_query_keys`](/en/tracker#track-query-keys) is on (the default Standard preset). The hash fragment and query values are dropped at the tracker; a value is kept only for keys you allow-list ([`query_value_keys`](/en/tracker#query-value-keys)).
+- **Page URL**: origin + pathname, plus query-parameter names when [`collect_query_keys`](/en/tracker#collect-query-keys) is on (the default Standard preset). The hash fragment and query values are dropped at the tracker; a value is kept only for keys you allow-list ([`collect_query_values_for`](/en/tracker#collect-query-values-for)).
 - **Web Vitals**: LCP, INP, CLS, FCP, TTFB, and related timings.
 - **Navigation timing**: nav type, TTFB, page-load timing.
 - **Resource timing**: per-category byte sizes and counts (script, css, img, font, other).
-- **Errors**: type and count always. Keeping the error **message** is opt-in ([`store_error_messages`](/en/tracker#store-error-messages)) and even then runs through an always-on scrubber that masks URLs, emails, numeric IDs, and quoted strings with `*` before transmission. Stack-frame detail is opt-in ([`error_frame_detail`](/en/tracker#error-frame-detail)); with it off, frames collapse toward host-only, except your own first-party external scripts, which always keep the path and line/column so an own-code bug stays locatable. That location is identical for every visitor who hits the bug, so it identifies the error, not the person.
+- **Errors**: type and count always. Keeping the error **message** is opt-in ([`collect_error_messages`](/en/tracker#collect-error-messages)) and even then runs through an always-on scrubber that masks URLs, emails, numeric IDs, and quoted strings with `*` before transmission. Stack-frame detail is opt-in ([`collect_error_frames`](/en/tracker#collect-error-frames)); with it off, frames collapse toward host-only, except your own first-party external scripts, which always keep the path and line/column so an own-code bug stays locatable. That location is identical for every visitor who hits the bug, so it identifies the error, not the person.
 - **Environment**: allowlisted browser family, OS family, device class (`mobile`/`tablet`/`desktop`), viewport class, effective connection type, network round-trip and downlink estimates. The network values are real-time measurements the browser computes on read, not stored device or OS state. We don't read `navigator.deviceMemory`, `navigator.hardwareConcurrency`, the `saveData` flag, `prefers-color-scheme`, or `prefers-reduced-motion` at all.
 - **Geo**: country only (2-letter ISO). Derived at the edge from the IP and forwarded as a request header; the IP itself never reaches the application.
 - **Campaign attribution**: `utm_source` / `utm_medium` / `utm_campaign` / `utm_term` / `utm_content` and an ad-platform-label `click_id_param` (e.g. `"gclid"`) extracted from the page URL. Each capped at 64 chars. The click-ID *value* (`Cj0KCQabc...`) is intentionally discarded; only the label of which platform sent the click is stored. These are marketer-set tags on the customer's own outbound URLs, not visitor-derived state.
 - **LCP image URL, LoAF script paths, third-party domain map**: collected in every configuration, sanitized to origin + pathname at collection. These describe the customer's own page composition (see [Site metadata vs. visitor data](#site-metadata-vs-visitor-data)), not the visitor.
-- **Fetch/XHR aggregates**: opt-in ([`fetch_xhr_enabled`](/en/tracker#fetch-xhr-enabled)). Per-endpoint call counts, durations, and error codes for your own APIs. Paths are sanitized harder than page URLs (query, fragment, and id-like segments removed).
-- **Session ID**: only when [`store_session`](/en/tracker#store-session) is on (the Full preset, or after your CMP calls `grantConsent()`). Lives in `sessionStorage`, groups pageviews of the same session together, dies with the tab.
+- **Fetch/XHR aggregates**: opt-in ([`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr)). Per-endpoint call counts, durations, and error codes for your own APIs. Paths are sanitized harder than page URLs (query, fragment, and id-like segments removed).
+- **Session ID**: only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the Full preset, or after your CMP calls `grantConsent()`). Lives in `sessionStorage`, groups pageviews of the same session together, dies with the tab.
 
 That's the whole payload. There's no opt-in we can offer to "unlock" more. We didn't build the more.
 
@@ -58,16 +58,16 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 
 - **Forward secrecy by construction.** The salt is a 32-byte `crypto/rand` value held only in the active edge's RAM and rotated every 24 hours. It is never persisted, never distributed, never logged. An attacker who later gains row access cannot reverse `stitch` back to (IP, UA): the salt that produced it is gone.
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
-- **Per-domain, never cross-site.** Both `collector_hash` and the page `domain` are in the HMAC input, so the same (IP, UA) yields a different `stitch` on every domain, including across the domains served by a single [org-level tracker](/en/concepts/org-trackers). Nothing links a visitor across domains or across sites; the "no cross-site identifier" row above is unchanged.
+- **Per-domain, never cross-site.** Both `collector_hash` and the page `domain` are in the HMAC input, so the same (IP, UA) yields a different `stitch` on every domain, including across the domains served by a single [application](/en/concepts/applications). Nothing links a visitor across domains or across sites; the "no cross-site identifier" row above is unchanged.
 
 Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
 
 ### Turning identifiers off, or leaving them off
 
-Two per-site switches decide whether any visitor identifier reaches storage. Under the default Standard preset `store_stitch` is **on** and `store_session` is **off**; the Minimal preset turns both off.
+Two per-site switches decide whether any visitor identifier reaches storage. Under the default Standard preset `store_stitch` is **on** and `collect_sessions` is **off**; the Minimal preset turns both off.
 
 - **[`store_stitch`](/en/tracker#store-stitch).** On stores the edge-derived `stitch` for unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time). Off leaves a row with no visitor identifier at all, fully anonymous. Every per-pageview signal (Web Vitals, errors, third-party, attribution) is unaffected either way.
-- **[`store_session`](/en/tracker#store-session).** On writes the tab-scoped `sessionStorage` session id for cross-page journeys and funnels. Off means the served bundle never touches `sessionStorage` at all: the on-device write is skipped, not merely dropped server-side.
+- **[`collect_sessions`](/en/tracker#collect-sessions).** On writes the tab-scoped `sessionStorage` session id for cross-page journeys and funnels. Off means the served bundle never touches `sessionStorage` at all: the on-device write is skipped, not merely dropped server-side.
 
 The two are independent: enable either, both, or neither.
 
@@ -80,7 +80,7 @@ That makes them site configuration, not visitor data. We still treat them carefu
 ## Personal data: what's ruled out, and what isn't [#personal-data]
 
 - **No personal data, in every configuration.** Web Vitals and all timing, resource / LoAF / third-party metadata, device / connection / viewport buckets, the 2-letter country, and error type + count. No IP, no raw User-Agent, no fingerprint is ever stored. On the Minimal preset the stored row carries no visitor identifier at all.
-- **Can't be fully ruled out; we minimize, and the residual is yours to control.** The edge-derived [`stitch`](#the-edge-derived-stitch-identifier) (on under the Standard preset) is pseudonymous personal data by design. URL and fetch/XHR **paths** are sanitized (query, fragment and values stripped), but a segment you build from personal data (`/orders/jane-doe`) survives. Error **messages** ([`store_error_messages`](/en/tracker#store-error-messages)) run through a scrubber that masks patterned PII but can't catch every free-text leak. And anything you opt into: an allow-listed [`query_value_keys`](/en/tracker#query-value-keys) value, or the [`store_session`](/en/tracker#store-session) id. These last cases are covered by [your responsibilities](#your-responsibilities) below.
+- **Can't be fully ruled out; we minimize, and the residual is yours to control.** The edge-derived [`stitch`](#the-edge-derived-stitch-identifier) (on under the Standard preset) is pseudonymous personal data by design. URL and fetch/XHR **paths** are sanitized (query, fragment and values stripped), but a segment you build from personal data (`/orders/jane-doe`) survives. Error **messages** ([`collect_error_messages`](/en/tracker#collect-error-messages)) run through a scrubber that masks patterned PII but can't catch every free-text leak. And anything you opt into: an allow-listed [`collect_query_values_for`](/en/tracker#collect-query-values-for) value, or the [`collect_sessions`](/en/tracker#collect-sessions) id. These last cases are covered by [your responsibilities](#your-responsibilities) below.
 
 ## What your settings change
 
@@ -119,14 +119,14 @@ The tracker enforces the wire shape. Two things sit on your side of the line:
 
 - **No PII in URL paths.** Query strings and hash fragments are stripped, but the pathname is preserved. `/orders/jane.doe@x.com` would carry the email into our pipeline. Use opaque IDs (UUIDs, numeric DB IDs) or put PII into query parameters that get stripped.
 - **No PII in UTM parameters.** UTM tags and click-ID labels land in the database verbatim from the marketer's outbound URLs. Don't embed visitor PII. Never construct campaign URLs like `?utm_term=jane@example.com&utm_content=user-12345` for per-recipient tracking. Each field is server-side capped at 64 chars, but the value is not pattern-scrubbed. Ad-platform click-ID *values* are dropped by the tracker, so the per-recipient join risk applies only to the UTM fields.
-- **Don't pass raw user input to `throw`.** The always-on scrubber catches patterned PII (URLs, emails, IDs), but free-form text (names, custom phrases) can slip through. Type the failure instead: `throw new EmailDeliveryError({ code: "..." })` rather than `throw new Error("Failed to send to " + email)`. Only matters when [`store_error_messages`](/en/tracker#store-error-messages) is on; otherwise the entire message is dropped.
+- **Don't pass raw user input to `throw`.** The always-on scrubber catches patterned PII (URLs, emails, IDs), but free-form text (names, custom phrases) can slip through. Type the failure instead: `throw new EmailDeliveryError({ code: "..." })` rather than `throw new Error("Failed to send to " + email)`. Only matters when [`collect_error_messages`](/en/tracker#collect-error-messages) is on; otherwise the entire message is dropped.
 
 ## What this means for you
 
 - **Consent is the operator's call, whatever the settings.** Whether reading the browser's performance APIs needs consent depends on your deployment and your own assessment (see [Consent and the TDDDG](#consent-and-the-tdddg)); if it does, you gate the beacon behind your CMP.
 - **Your data never leaves the EU.** No US transfer to reason about in the first place.
 - **You can hand your team a one-page answer**: point them at this page and our DPA, done.
-- **Want explicit opt-in before any session linkage?** Turn on [`store_session`](/en/tracker#store-session) with [`preconsent_level`](/en/tracker#preconsent-level) left at `off`, so the session id is written only after your CMP calls `grantConsent()`.
+- **Want explicit opt-in before any session linkage?** Turn on [`collect_sessions`](/en/tracker#collect-sessions) with [`session_consent`](/en/tracker#session-consent) left at `off`, so the session id is written only after your CMP calls `grantConsent()`.
 
 ## What's next
 

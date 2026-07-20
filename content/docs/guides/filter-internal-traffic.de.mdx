@@ -11,18 +11,18 @@ Einen „meine IP ignorieren"-Toggle haben wir mit Absicht nicht; wir speichern 
 
 | Du willst ausschließen…             | Bester Weg                                        |
 | ----------------------------------- | ------------------------------------------------- |
-| Dev/Staging-Umgebung                | Separate Site (oder `allowed_origins`-Disziplin)  |
+| Dev/Staging-Umgebung                | Eine separate Application (als `dev` markieren)   |
 | Office-Traffic deines Teams         | Beacon-Script bei internen Sessions weglassen     |
 | CI / synthetische Monitore          | Beacon-Script per User-Agent weglassen            |
 | Allen Nicht-Production-Traffic      | Per-Site `is_active`-Toggle                       |
 
-## Option 1: Separate Sites für Non-Production
+## Option 1: Eine separate Application für Non-Production
 
 Saubere Antwort für Staging, Preview, Dev.
 
-1. Leg eine zweite Site in fastmon an, z. B. `acme-marketing-staging`.
-2. Nutze **deren** `source_hash` im Staging-Deploy.
-3. Ignorier die Staging-Site in Dashboards oder nutze sie absichtlich; Staging-Metriken sind nützlich, um Regressionen vor Production zu fangen.
+1. Leg eine zweite Application in fastmon an, z. B. `acme-marketing-staging`, und setz ihre [`environment`](/de/tracker#environment) auf `dev`, um sie klar von Production zu trennen.
+2. Nutze **deren** `source_hash` im Staging-Deploy. Eine separate Application hat ihr eigenes Snippet und eigene Hashes; die Domain als weitere Site unter *derselben* Application hinzuzufügen, würde das Production-Snippet wiederverwenden.
+3. Ignorier die Staging-Application in Dashboards oder nutze sie absichtlich; Staging-Metriken sind nützlich, um Regressionen vor Production zu fangen.
 
 Kostet dich nichts: keine Client-Logik, keine Flags, kein Risiko, dass Production-Daten in Staging landen oder umgekehrt.
 
