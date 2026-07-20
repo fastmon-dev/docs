@@ -186,6 +186,24 @@ proxyst du die beiden Pfad-Präfixe zu fastmon. Für nginx:
 Jeder Reverse-Proxy oder CDN funktioniert genauso: `/s/` und `/c/` an
 `https://fastmon.site` weiterleiten und den Client-IP-Header beibehalten.
 
+#### Smoxy [#smoxy]
+
+Läuft deine Site hinter [Smoxy](https://docs.smoxy.eu), sind es zwei
+Schritte im Dashboard, ganz ohne Config-Datei.
+
+1. **fastmon als Origin anlegen.** Unter **Backends** in deiner
+   Organisation auf **Origin hinzufügen** klicken und ausfüllen:
+   **Name** `fastmon`, **Protokoll** `https`, **Adresse** `fastmon.site`,
+   **Port** `443`.
+2. **Die beiden Präfixe dorthin routen.** Unter **Regeln** eine
+   *Conditional Rule* anlegen, deren Bedingung **URI** **Entspricht**
+   `^/(s|c)/` lautet, dann im Tab **Einstellungen** der Regel unter
+   **Routing** den Origin `fastmon` auswählen.
+
+Alles andere an der Zone behält seinen normalen Origin; nur `/s/` und
+`/c/` gehen zu fastmon. Passende Regeln stapeln sich, setz `stop` also
+nur, wenn du die nachfolgenden Regeln bewusst überspringen willst.
+
 ### Eigene Domain
 
 Derselbe First-Party-Vorteil, aber das Snippet zeigt auf einen

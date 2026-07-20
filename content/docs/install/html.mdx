@@ -176,6 +176,23 @@ fastmon. For nginx:
 Any reverse proxy or CDN works the same way: forward `/s/` and `/c/` to
 `https://fastmon.site` and preserve the client IP header.
 
+#### Smoxy [#smoxy]
+
+If your site runs behind [Smoxy](https://docs.smoxy.eu), it's two steps
+in the dashboard, no config file.
+
+1. **Add fastmon as an origin.** Under **Backends** in your organization,
+   click **Origin hinzufügen** and fill in: **Name** `fastmon`,
+   **Protokoll** `https`, **Adresse** `fastmon.site`, **Port** `443`.
+2. **Route the two prefixes to it.** Under **Regeln**, create a
+   *Conditional Rule* whose condition is **URI** **Entspricht**
+   `^/(s|c)/`, then open the rule's **Einstellungen** tab and pick the
+   `fastmon` origin under **Routing**.
+
+Everything else on the zone keeps its normal origin; only `/s/` and
+`/c/` go to fastmon. Matching rules stack, so set `stop` only if you
+deliberately want to skip the rules after this one.
+
 ### Custom domain
 
 Same first-party benefit, but you point the snippet at a collector host
