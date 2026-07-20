@@ -10,7 +10,8 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const here = path.dirname(fileURLToPath(import.meta.url));
+const selfPath = fileURLToPath(import.meta.url);
+const here = path.dirname(selfPath);
 const root = path.resolve(here, "..");
 const outDir = path.join(root, "content/docs/api");
 // Hand-written narrative pages we want to preserve when the script wipes
@@ -221,22 +222,20 @@ const apiMeta = {
     "errors",
     "pagination",
     "---Endpoints---",
-    "auth",
-    "account",
+    // Curated order, not alphabetic: account scope first, then the tracking
+    // model (an application owns the embed, its sites are the domains it runs
+    // on), then what you read back off it. Kept in sync with the generated tag
+    // folders by the guard at the bottom of this script.
     "organizations",
     "members",
-    "invites",
+    "applications",
     "sites",
     "releases",
     "analytics",
     "synthetic",
     "notifications",
     "partners",
-    "weekly-summary",
-    "waitlist",
-    "ai-ask",
     "collector",
-    "uncategorized",
   ],
 };
 await writeFile(path.join(outDir, "meta.json"), JSON.stringify(apiMeta, null, 2) + "\n");
@@ -303,3 +302,45 @@ for await (const file of walkMdx(outDir)) {
   }
 }
 console.log(`Post-processed ${touched} MDX file(s) — description rendered in-layout.`);
+
+/* ---------------------------------------------------------------------------
+ * Guard: the hand-curated sidebar above must match the generated tag folders.
+ *
+ * fumadocs' `pages` list has no rest operator, so anything not listed is
+ * excluded from the tree. A new OpenAPI tag therefore generates and builds
+ * fine while nothing links to it — the pages are reachable only by guessing
+ * the URL. That is how api/applications sat orphaned. A stale entry is the
+ * same bug in reverse: the sidebar promises a section the API no longer has.
+ *
+ * Both are silent, so fail the run rather than warn.
+ * ------------------------------------------------------------------------ */
+const SEPARATOR = /^---.*---$/;
+// Hand-written narrative pages; they have no generated folder by design.
+const NARRATIVE = new Set(["index", "authentication", "errors", "pagination"]);
+
+const generatedTags = (await rd(outDir, { withFileTypes: true }))
+  .filter((e) => e.isDirectory())
+  .map((e) => e.name)
+  .sort();
+const listedTags = apiMeta.pages.filter((p) => !SEPARATOR.test(p) && !NARRATIVE.has(p));
+
+const orphaned = generatedTags.filter((t) => !listedTags.includes(t));
+const stale = listedTags.filter((t) => !generatedTags.includes(t));
+
+if (orphaned.length || stale.length) {
+  console.error("\nSidebar is out of sync with the generated API tags.\n");
+  if (orphaned.length) {
+    console.error(
+      `  Generated but not in the sidebar (unreachable pages): ${orphaned.join(", ")}\n` +
+        `  Add them to apiMeta.pages in ${path.relative(root, selfPath)}.\n`
+    );
+  }
+  if (stale.length) {
+    console.error(
+      `  In the sidebar but no longer generated: ${stale.join(", ")}\n` +
+        `  The API dropped these tags. Remove them from apiMeta.pages.\n`
+    );
+  }
+  process.exit(1);
+}
+console.log(`Sidebar covers all ${generatedTags.length} generated tag(s).`);

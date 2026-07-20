@@ -7,21 +7,15 @@
     "errors",
     "pagination",
     "---Endpoints---",
-    "auth",
-    "account",
     "organizations",
     "members",
-    "invites",
+    "applications",
     "sites",
     "releases",
     "analytics",
     "synthetic",
     "notifications",
     "partners",
-    "weekly-summary",
-    "waitlist",
-    "ai-ask",
-    "collector",
-    "uncategorized"
+    "collector"
   ]
 }
