@@ -76,6 +76,26 @@ export function setInstallConfig(patch: Partial<InstallConfig>) {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Back to placeholders. Clearing the stored copy too, otherwise the values
+ * would come back on the next page load — the whole point of the reset is that
+ * someone else's hashes stop following you around this browser.
+ */
+export function resetInstallConfig() {
+  state = { ...EMPTY };
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* private mode / storage disabled — in-memory reset still works */
+  }
+  listeners.forEach((l) => l());
+}
+
+/** True when anything has been filled in, i.e. there is something to reset. */
+export function hasInstallConfig(config: InstallConfig): boolean {
+  return JSON.stringify(config) !== JSON.stringify(EMPTY);
+}
+
 let initialized = false;
 function initFromEnvironment() {
   if (initialized) return;
@@ -163,6 +183,7 @@ const STRINGS = {
     whereFrom: "Find both hashes in the app under Applications → ··· → IDs & hashes.",
     launcher: "Your install values",
     close: "Close",
+    reset: "Reset",
   },
   de: {
     title: "Dein Snippet",
@@ -184,6 +205,7 @@ const STRINGS = {
     whereFrom: "Beide Hashes findest du in der App unter Applications → ··· → IDs & Hashes.",
     launcher: "Deine Install-Werte",
     close: "Schließen",
+    reset: "Zurücksetzen",
   },
 } as const;
 
@@ -426,7 +448,20 @@ export function InstallConfigPanel() {
         </p>
       )}
 
-      <p className="mt-3 text-xs text-fd-muted-foreground">{s.whereFrom}</p>
+      <div className="mt-3 flex items-start justify-between gap-4">
+        <p className="text-xs text-fd-muted-foreground">{s.whereFrom}</p>
+        {/* Only offered once there is something to clear, so it isn't a dead
+            control on a first visit. */}
+        {hasInstallConfig(config) && (
+          <button
+            type="button"
+            onClick={resetInstallConfig}
+            className="shrink-0 rounded-md border border-fd-border px-2 py-1 text-xs text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+          >
+            {s.reset}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
