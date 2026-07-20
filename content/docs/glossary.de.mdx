@@ -29,28 +29,31 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`, der Beacons empfängt, validiert und in den Analytics-Store schreibt.
 
-**`source_hash`**: Per-Site-Hash in der Script-URL. Stabil über Beacon-Upgrades.
+**`source_hash`**: Per-Application-Hash in der Script-URL. Stabil über Beacon-Upgrades.
 
-**`collector_hash`**: Per-Site-Hash in der Ingest-URL. Getrennt vom `source_hash`, damit das Script-Template sich ändern kann, ohne Daten zu invalidieren.
+**`collector_hash`**: Per-Application-Hash in der Ingest-URL. Getrennt vom `source_hash`, damit das Script-Template sich ändern kann, ohne Daten zu invalidieren.
 
-**Preset**: Ausgangspunkt, den du beim Anlegen einer Site wählst: `Minimal`, `Standard` (Default), `Full`. Es setzt die [Tracker-Einstellungen](/de/tracker) pro Site auf einmal; danach ist jede Einstellung unabhängig. Siehe [Presets](/de/tracker).
+**Preset**: Ausgangspunkt, den du beim Anlegen einer Application wählst: `Minimal`, `Standard` (Default), `Full`. Es setzt die [Tracker-Einstellungen](/de/tracker) der Application auf einmal; danach ist jede Einstellung unabhängig. Siehe [Presets](/de/tracker#presets).
+
 **Page-View-ID (`pvid`)**: Per-Pageview-ID, vom Tracker clientseitig erzeugt. Nicht persistiert.
 
 **`pst` / `cst`**: Page-Started-Timestamp / Client-Sent-At-Timestamp. Beide auf der Besucher-Uhr, in Millisekunden seit Epoch. Das Intervall `cst - pst` misst die Pageview-Dauer bis zum Flush unabhängig von Clock-Skew.
 
 ## Ressourcen und Accounts
 
-**Organisation**: Top-Level-Account-Container. Besitzt Sites, Mitglieder, Notification Rules, API-Tokens. Siehe [Organisationen](/de/concepts/organizations).
+**Organisation**: Top-Level-Account-Container. Besitzt Applications, Mitglieder, Notification Rules, API-Tokens. Siehe [Organisationen](/de/concepts/organizations).
+
+**Application**: Ein Tracking-Snippet. Ihr gehören das ausgelieferte Bundle, beide Hashes und jede [Tracker-Einstellung](/de/tracker); sie bedient eine oder mehrere Sites. Siehe [Applications](/de/concepts/applications).
 
 **Plan**: Organisations-Tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Steuert Features und Quotas.
 
-**Site**: Eine überwachte Property. Hat eigene Beacon-Hashes und Einstellungen. Siehe [Sites](/de/concepts/sites).
+**Site**: Eine Domain unter einer Application, mit eigenem Dashboard und eigenem Traffic. Hashes und Erfassungseinstellungen liegen an der Application; eine Site trägt nur Per-Domain-Overrides. Siehe [Sites](/de/concepts/sites).
 
 **Visitor**: Ein eindeutiger Besucher, gezählt entlang einer Identitätsachse: `stitch` (am Edge abgeleitet, in jedem Modus vorhanden, der Standard) oder `session` (consent-gated). Anonym per Konstruktion. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
 **Session**: 30-Minuten-Fenster von Pageviews desselben Browsers, gruppiert über `session_id`. Eine der beiden Besucher-Identitäten, und consent-gated. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
-**Release**: Versionierter Marker auf einer Site. Wird von Analytics über `compare_to_release_id` für Vorher/Nachher genutzt. Siehe [Releases](/de/concepts/releases).
+**Release**: Versionierter Deploy-Marker, an eine Application gebunden. Wird von Analytics über `compare_to_release_id` für Vorher/Nachher genutzt. Siehe [Releases](/de/concepts/releases).
 
 **Tag**: Freies Label auf einer Site (max. 10) zum Organisieren von Sites. Ein Cross-Site-Analytics-Scope per Tag ist geplant; Tags filtern Analytics noch nicht. Konventionen: `env:production`, `team:growth` etc.
 

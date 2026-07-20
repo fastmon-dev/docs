@@ -29,28 +29,31 @@ Compact definitions. For depth, follow the link on each term.
 
 **Collector**: The server endpoint at `/c/{collector_hash}` that receives beacons, validates them, and writes them to the analytics store.
 
-**`source_hash`**: Per-site hash in the script URL. Stable across beacon upgrades.
+**`source_hash`**: Per-application hash in the script URL. Stable across beacon upgrades.
 
-**`collector_hash`**: Per-site hash in the ingest URL. Distinct from `source_hash` so the script template can change without invalidating data.
+**`collector_hash`**: Per-application hash in the ingest URL. Distinct from `source_hash` so the script template can change without invalidating data.
 
-**Preset**: A starting point picked when you create a site: `Minimal`, `Standard` (default), `Full`. It fills the per-site [tracker settings](/en/tracker) at once; after that each setting is independent. See [Presets](/en/tracker).
+**Preset**: A starting point picked when you create an application: `Minimal`, `Standard` (default), `Full`. It fills the application's [tracker settings](/en/tracker) at once; after that each setting is independent. See [Presets](/en/tracker#presets).
+
 **Page-view ID (`pvid`)**: Per-page-view identifier the tracker generates client-side. Not persisted.
 
 **`pst` / `cst`**: Page-started timestamp / client-sent-at timestamp. Both visitor wall-clock, in milliseconds since epoch. The interval `cst - pst` is the reliable clock-skew-free measure of how long the page-view took before flushing.
 
 ## Resources and accounts
 
-**Organization**: Top-level account container. Owns sites, members, notification rules, API tokens. See [Organizations](/en/concepts/organizations).
+**Organization**: Top-level account container. Owns applications, members, notification rules, API tokens. See [Organizations](/en/concepts/organizations).
+
+**Application**: One tracking snippet. Owns the served bundle, both hashes, and every [tracker setting](/en/tracker), and serves one or more sites. See [Applications](/en/concepts/applications).
 
 **Plan**: Organization tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Gates features and quotas.
 
-**Site**: A monitored property. Has its own beacon hashes and settings. See [Sites](/en/concepts/sites).
+**Site**: One domain under an application, with its own dashboard and traffic. The hashes and collection settings live on the application; a site carries only per-domain overrides. See [Sites](/en/concepts/sites).
 
 **Visitor**: A distinct visitor, counted along an identity axis: `stitch` (edge-derived, present in every mode, the default) or `session` (consent-gated). Anonymous by construction. See [Visitors and sessions](/en/concepts/sessions).
 
 **Session**: A 30-minute window of page-views from the same browser, grouped by `session_id`. One of the two visitor identities, and consent-gated. See [Visitors and sessions](/en/concepts/sessions).
 
-**Release**: Versioned marker on a site. Used by analytics `compare_to_release_id` for before/after comparisons. See [Releases](/en/concepts/releases).
+**Release**: Versioned deploy marker, scoped to an application. Used by analytics `compare_to_release_id` for before/after comparisons. See [Releases](/en/concepts/releases).
 
 **Tag**: Free-form label on a site (max 10) for organizing sites. Cross-site analytics scoping by tag is planned; tags don't filter analytics yet. Conventions: `env:production`, `team:growth`, etc.
 

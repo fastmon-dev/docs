@@ -3,13 +3,14 @@ title: Konzepte
 description: Die Handvoll Ressourcen, auf denen fastmons Datenmodell aufbaut.
 ---
 
-Fastmons Datenmodell ist klein gehalten, mit Absicht. Wer fünf Ressourcen kennt, kennt das ganze Produkt.
+Fastmons Datenmodell ist klein gehalten, mit Absicht. Wer diese Ressourcen kennt, kennt das ganze Produkt.
 
 <Cards>
-  <Card title="Organisationen" href="/de/concepts/organizations" description="Top-Level-Account-Container. Besitzt Sites, Mitglieder, Tokens." />
-  <Card title="Sites" href="/de/concepts/sites" description="Eine überwachte Property. Hat eigene Beacon-Hashes und Einstellungen." />
+  <Card title="Organisationen" href="/de/concepts/organizations" description="Top-Level-Account-Container. Besitzt Applications, Mitglieder, Tokens." />
+  <Card title="Applications" href="/de/concepts/applications" description="Ein Tracking-Snippet: seine Hashes, Einstellungen und die Sites, die es bedient." />
+  <Card title="Sites" href="/de/concepts/sites" description="Eine Domain unter einer Application, mit eigenem Dashboard und Overrides." />
   <Card title="Sessions" href="/de/concepts/sessions" description="Ein kurzes Fenster von Pageviews desselben Browsers. Anonym per Konstruktion." />
-  <Card title="Releases" href="/de/concepts/releases" description="Versionierter Marker auf einer Site. Für Vorher/Nachher-Vergleiche." />
+  <Card title="Releases" href="/de/concepts/releases" description="Versionierter Deploy-Marker. Für Vorher/Nachher-Vergleiche." />
   <Card title="Tracker-Einstellungen" href="/de/tracker" description="Presets und die Konfiguration pro Einstellung: was der Beacon im Browser tut." />
 </Cards>
 
@@ -20,11 +21,14 @@ Organisation
  ├── Mitglieder (mit Rollen)
  ├── API-Tokens
  ├── Notification Rules
- └── Sites
-      ├── Einstellungen (Preset, Retention, Allowed Origins)
-      ├── source_hash + collector_hash  (Beacon-URLs)
+ └── Applications
+      ├── source_hash + collector_hash   (Beacon-URLs)
+      ├── Tracker-Einstellungen (Preset, Collector, site_policy)
       ├── Releases
-      └── Tags
+      └── Sites (Domains)
+           ├── domain
+           ├── Per-Domain-Overrides (Retention, store_stitch, …)
+           └── Tags
 ```
 
 Beacon-Daten gehen vom Browser direkt in unseren Analytics-Store und sind dann fürs Dashboard oder die API abfragbar.
@@ -34,7 +38,8 @@ Beacon-Daten gehen vom Browser direkt in unseren Analytics-Store und sind dann f
 Wenn du neu bist, in dieser Reihenfolge:
 
 1. [Organisationen](/de/concepts/organizations): was ein Account eigentlich ist.
-2. [Sites](/de/concepts/sites): was du überwachst.
-3. [Tracker-Einstellungen](/de/tracker): was der Beacon pro Site tut.
-4. [Sessions](/de/concepts/sessions): wie Pageviews gruppiert werden.
-5. [Releases](/de/concepts/releases): für Vorher/Nachher-Deploys.
+2. [Applications](/de/concepts/applications): das Tracking-Snippet und alles, was dazugehört.
+3. [Sites](/de/concepts/sites): die Domains unter einer Application.
+4. [Tracker-Einstellungen](/de/tracker): was der Beacon im Browser tut.
+5. [Sessions](/de/concepts/sessions): wie Pageviews gruppiert werden.
+6. [Releases](/de/concepts/releases): für Vorher/Nachher-Deploys.
