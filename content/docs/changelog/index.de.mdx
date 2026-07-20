@@ -23,33 +23,9 @@ Sites und domainübergreifende Tracker werden durch **Applications** ersetzt. Ei
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-19" type="changed" area="platform" title="Setup liegt jetzt in der Doku, vorausgefüllt mit deinen Werten">
-
-Das Tracking-Code-Panel in der App ist durch einen **Set up**-Link in diese Dokumentation ersetzt. Die App gibt deine Hashes und den Collector-Modus mit, jedes Snippet im [Install-Guide](/de/install/html) ist also copy-paste-fertig statt mit `{source_hash}`-Platzhaltern. Kommst du ohne diese Werte, kannst du sie oben im Guide selbst eintragen; sie werden pro Browser gemerkt. Der Guide führt jetzt mit dem einen erforderlichen `<script>`-Tag und markiert den Early-Error-Bootstrap und das No-JS-Pixel klar als optionale Ergänzungen, jeweils mit ihrem Platz im `<head>`; danach folgen die Consent-Anbindung und die First-Party-Collector-Optionen. Der **Set up**-Button bleibt hervorgehoben, bis die Application tatsächlich ihren ersten Beacon erhalten hat, eine halbfertige Einbindung sieht man also auf einen Blick.
-
-</ChangelogEntry>
-
 <ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Spalten im Explorer umsortieren, in der Breite ändern und ausblenden">
 
 Die Rohdaten-Tabelle im Explorer lässt dich jetzt **Spalten am Titel greifen und umsortieren**, **die Breite an der rechten Kante des Headers ziehen** und über ein „…"-Menü pro Spalte filtern oder die Spalte entfernen. Alle drei Einstellungen bleiben pro Browser erhalten. Auch die Seiten-Spalte (URL) ist jetzt breitenverstellbar: Sie füllt standardmäßig den Rest der Breite und rastet ein, sobald du sie ziehst, kann also unter ihren Inhalt schrumpfen, statt zurückzuspringen. Ein neuer Auto-Fit-Button in der Toolbar setzt alle eigenen Breiten zurück, sodass die Tabelle wieder ohne horizontales Scrollen ins Fenster passt.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Browser-Zurück macht jetzt den letzten Filter rückgängig">
-
-Ein gesetzter Analytics-Filter legt jetzt einen eigenen Verlaufseintrag an, **Zurück nimmt also diesen Filter zurück**, statt direkt von der Seite zu springen. Alle Filter zu löschen bleibt eine Aktion: Ein einzelnes Zurück stellt sie wieder her, statt sie einzeln abzutragen. Zeitraum, Perzentil und Sortierung ersetzen den aktuellen Eintrag bewusst weiterhin, damit sie den Verlauf nicht zumüllen.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Lifecycle- und Versions-Badges im Beacon-Drawer">
-
-Der Beacon-Drawer im Explorer zeigt jetzt das **Lifecycle-Event** und die **Version** des einzelnen Beacons (der Zähler, der hochläuft, wenn spätere Beacons eines Pageviews eintreffen) als kleine Badges im Header. Beides stand schon in der Zeile, war aber nie sichtbar.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="Filterleiste: Mehrfachauswahl, Chip-Bearbeitung und „Alle löschen“">
-
-Mehrere Werte derselben Dimension nacheinander auszuwählen überschreibt die vorherige Auswahl nicht mehr; aufeinanderfolgende Klicks arbeiteten alle auf demselben veralteten Stand. Beim Bearbeiten eines Filter-Chips hängt das Popover jetzt am Chip und hebt ihn hervor, statt am Filter-hinzufügen-Button zu kleben, der währenddessen auch nicht mehr aktiv aussieht. **Alle löschen** steht jetzt hinter allen Chips, statt sie zu zerteilen, und der Zähler, der über das Erscheinen entscheidet, berücksichtigt endlich auch Metrik-Bereiche.
 
 </ChangelogEntry>
 

@@ -18,33 +18,9 @@ Sites and cross-domain trackers are replaced by **applications**. An application
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-07-19" type="changed" area="platform" title="Setup moved into the docs, prefilled with your own values">
-
-The tracking-code panel in the app is replaced by a **Set up** link into this documentation. The app passes your hashes and collector mode along, so every snippet in the [install guide](/en/install/html) is copy-paste ready instead of showing `{source_hash}` placeholders. Arrive without those values and a panel at the top of the guide lets you paste your own; they're remembered per browser. The guide now leads with the one required `<script>` tag and marks the early-error bootstrap and the no-JS pixel as clearly optional extras, each saying where in the `<head>` it belongs, with the consent wiring and the first-party collector options after them. The **Set up** button stays highlighted until the application has actually received its first beacon, so a half-finished install is visible at a glance.
-
-</ChangelogEntry>
-
 <ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Reorder, resize, and hide columns on the Explorer's table">
 
 The Explorer's raw-requests table now lets you **reorder columns by dragging a column title**, **resize them by dragging a header's right edge**, and filter or remove a column from its own "…" menu. All three preferences persist per browser. The Page (URL) column is resizable too: it fills the remaining width by default, and once you drag it, it pins and truncates so it can shrink past its content instead of snapping back. A new auto-fit button in the toolbar resets every custom width so the table fits the viewport again with no horizontal scrolling.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Browser Back now undoes the last filter">
-
-Setting an analytics filter now creates its own browser history entry, so **Back undoes that filter** instead of jumping straight off the page. Clearing all filters stays a single action: one Back restores them, rather than peeling off one parameter at a time. Time range, percentile, and sorting deliberately keep replacing the current entry, so they don't flood your history.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="new" area="dashboard" title="Lifecycle and version badges in the beacon drawer">
-
-The Explorer's beacon drawer now shows the per-beacon **lifecycle event** and the **version** (the counter that increments as a pageview's later beacons arrive) as small badges in the header. Both were already on the row, just never surfaced.
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-07-19" type="fixed" area="dashboard" title="Filter bar: multi-select, chip editing, and Clear all">
-
-Picking several values for the same dimension in a row no longer overwrites the previous pick; consecutive toggles were all reducing against the same stale state. Editing a filter chip now anchors the popover to that chip and highlights it, instead of hanging off the add-filter button, which no longer looks active while you're editing. **Clear all** trails all chips instead of splitting them, and the counter that decides whether it appears finally counts metric ranges too.
 
 </ChangelogEntry>
 
