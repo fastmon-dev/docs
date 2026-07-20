@@ -127,7 +127,10 @@ export function useInstallConfig(): InstallConfig {
 export function snippetBase(config: InstallConfig): string {
   if (config.mode === "relative") return "";
   if (config.mode === "custom") {
-    const host = config.host.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    const host = config.host
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/+$/, "");
     return host ? `https://${host}` : "https://your-collector.example.com";
   }
   return FASTMON_COLLECTOR;
@@ -152,8 +155,10 @@ const STRINGS = {
     host: "Collector domain",
     partyFirst: "First-party",
     partyThird: "Third-party",
-    partyFirstHint: "Script and beacons come from your own domain, so content blockers treat them like your own resources.",
-    partyThirdHint: "Script and beacons come from another domain, so a strict content blocker can block them and undercount visits.",
+    partyFirstHint:
+      "Script and beacons come from your own domain, so content blockers treat them like your own resources.",
+    partyThirdHint:
+      "Script and beacons come from another domain, so a strict content blocker can block them and undercount visits.",
     whereFrom: "Find both hashes in the app under Applications → ··· → IDs & hashes.",
   },
   de: {
