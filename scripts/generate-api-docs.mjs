@@ -1,4 +1,4 @@
-// Fetches the Fastmon backend's OpenAPI document, snapshots it locally, and
+// Fetches the fastmon backend's OpenAPI document, snapshots it locally, and
 // generates one MDX page per endpoint via fumadocs-openapi.
 //
 // Source of truth: production backend. Always.

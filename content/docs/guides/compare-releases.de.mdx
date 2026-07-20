@@ -38,7 +38,7 @@ Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern und unterdrüc
 ### GitHub Actions
 
 ```yaml
-- name: Tag Fastmon release
+- name: Tag fastmon release
   if: success()
   env:
     FASTMON_TOKEN: ${{ secrets.FASTMON_TOKEN }}

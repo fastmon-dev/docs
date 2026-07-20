@@ -31,7 +31,7 @@ export function baseOptions(_locale: string): BaseLayoutProps {
         type: "icon",
         url: "https://app.fastmon.eu",
         text: "app.fastmon.eu",
-        label: "Open Fastmon app",
+        label: "Open fastmon app",
         icon: <LayoutDashboard />,
       },
     ],

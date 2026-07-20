@@ -43,7 +43,7 @@ Faustregel: Wenn ein Teil englisch ist, mit Bindestrich. Wenn beide deutsch, zus
 - `error` → Fehler (außer in Code/Logs: `Error`)
 - `warning` → Warnung
 - `endpoint` → Endpunkt (auch in Komposita: `API-Endpunkt`, `Server-Endpunkt`)
-- `setting`/`option` → Einstellung / Option (die Fastmon-UI ist auf Deutsch, UI-Labels also ebenfalls deutsch — „Einstellungen", nicht „Settings")
+- `setting`/`option` → Einstellung / Option (die fastmon-UI ist auf Deutsch, UI-Labels also ebenfalls deutsch — „Einstellungen", nicht „Settings")
 - `feature` → Funktion (oder „Feature" wenn etabliert)
 - `file` → Datei
 - `folder`/`directory` → Verzeichnis / Ordner
@@ -52,9 +52,9 @@ Faustregel: Wenn ein Teil englisch ist, mit Bindestrich. Wenn beide deutsch, zus
 
 **Rollen im Produkt — bewusste Trennung:**
 - **Besucher** = die anonyme Person, deren Pageviews der Beacon misst (Web-Vitals-Kontext: `web-vitals/*`, `beacon`, `collection-modes`, `privacy`). Niemals „User" oder „Nutzer".
-- **User** (englisch, groß) = die Fastmon-Kundschaft, die sich einloggt, Dashboards sieht, Tokens hat (Datenmodell-Kontext: `concepts/organizations`, `architecture`, `api`, `glossary`). Bleibt englisch, weil im Datenmodell `User` als Entität existiert.
+- **User** (englisch, groß) = die fastmon-Kundschaft, die sich einloggt, Dashboards sieht, Tokens hat (Datenmodell-Kontext: `concepts/organizations`, `architecture`, `api`, `glossary`). Bleibt englisch, weil im Datenmodell `User` als Entität existiert.
 
-Im Zweifel: Wer wird gemessen → **Besucher**. Wer benutzt Fastmon → **User**.
+Im Zweifel: Wer wird gemessen → **Besucher**. Wer benutzt fastmon → **User**.
 
 **Tracker vs. Beacon — bewusste Trennung (analog zu EN):**
 - **Tracker** = der ausgeführte JavaScript-Agent im Browser (die Instanz, die misst, sammelt, sendet, Cookies setzt, URLs strippt). Subjekt der Sätze: „Der Tracker entfernt …", „Der Tracker setzt das Cookie …".
@@ -121,7 +121,7 @@ Bevor du eine deutsche Doku-Datei abschließt, prüfe:
 1. **Anrede konsistent „du"?** Kein versehentliches „Sie", „man" oder „der Nutzer sollte"?
 2. **Komposita zusammen?** Kein Deppenleerzeichen?
 3. **Technische Begriffe englisch gelassen?** Kein „Abrufanfrage" für Pull Request. Ausnahmen wie `endpoint` → `Endpunkt` und `setting` → `Einstellung` sind oben in der Liste festgehalten.
-4. **Rollen sauber getrennt?** „Besucher" für die anonyme gemessene Person, „User" für Fastmon-Kunden. Nicht mischen.
+4. **Rollen sauber getrennt?** „Besucher" für die anonyme gemessene Person, „User" für fastmon-Kunden. Nicht mischen.
 5. **Keine 1:1-Übersetzungen?** Liest sich der Text, als wäre er originär deutsch?
 6. **Terminologie konsistent mit Rest des Projekts?**
 7. **Code, Pfade, Befehle unverändert?**
