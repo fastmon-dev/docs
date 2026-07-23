@@ -43,6 +43,26 @@ if (!res.ok) {
 }
 const spec = await res.json();
 
+// Tags we deliberately keep out of the public docs for now (e.g. endpoints
+// that are still admin-only or not ready to document). Their operations are
+// dropped from the spec before anything is generated, so no folder is emitted
+// and the sidebar guard stays green without listing them.
+const EXCLUDE_TAGS = new Set(["issues"]);
+let excludedOps = 0;
+for (const [route, methods] of Object.entries(spec.paths || {})) {
+  for (const [method, op] of Object.entries(methods || {})) {
+    if (op && Array.isArray(op.tags) && op.tags.some((t) => EXCLUDE_TAGS.has(t))) {
+      delete methods[method];
+      excludedOps++;
+    }
+  }
+  if (!Object.keys(methods).length) delete spec.paths[route];
+}
+if (spec.tags) spec.tags = spec.tags.filter((t) => !EXCLUDE_TAGS.has(t.name));
+if (excludedOps) {
+  console.log(`Excluded ${excludedOps} operation(s) for tag(s): ${[...EXCLUDE_TAGS].join(", ")}`);
+}
+
 // Normalise the spec so generateFiles doesn't choke.
 // FastAPI emits operation-level tags but doesn't always declare them in the
 // top-level `tags` array. fumadocs-openapi's `groupBy: 'tag'` requires every
