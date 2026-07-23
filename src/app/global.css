@@ -21,3 +21,26 @@
 [data-api-layout] article[data-full="true"] .prose {
   max-width: none !important;
 }
+
+/* === WIP banner height. The notice wraps to two or three lines on narrow
+   screens, but fumadocs' Banner hard-codes its height as an inline style and
+   feeds the same value into --fd-banner-height, which the docs grid uses
+   inside a calc() for the sticky header/sidebar offset. The height therefore
+   has to stay a real length (not `auto`, which would break that calc). We
+   drive it from this responsive variable so the banner box and the layout
+   offset stay in sync: tall enough for the wrapped text on phones, compact
+   once the sentence fits on one line. Tune the breakpoints if the copy
+   changes. */
+:root {
+  --wip-banner-height: 7rem;
+}
+@media (min-width: 30rem) {
+  :root {
+    --wip-banner-height: 5rem;
+  }
+}
+@media (min-width: 52rem) {
+  :root {
+    --wip-banner-height: 3.75rem;
+  }
+}
