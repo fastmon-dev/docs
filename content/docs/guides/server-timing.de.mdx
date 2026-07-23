@@ -7,7 +7,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 [TTFB](/de/web-vitals/ttfb) sagt dir, dass der Server langsam war. Es sagt dir nicht, *welcher Teil* langsam war: die Datenbank, ein Third-Party-Call, das Template-Rendering oder einfach ein Cache-Miss an der Edge. Der [`Server-Timing`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Server-Timing)-Response-Header ist der Standardweg, mit dem dein Backend genau diese Aufschlüsselung an die Response selbst anhängt, und der Browser stellt sie JavaScript zur Verfügung. Fastmon liest ihn bei jedem Pageview mit.
 
-<Callout type="info" title="Neu — wird bereits erfasst">
+<Callout type="info" title="Neu: wird bereits erfasst">
   Die Server-Timing-Erfassung ist live: Der Beacon liest den Header bereits, jeder Beacon trägt ihn, serverseitig voll normalisiert. Die Analytics-Dashboards darüber werden noch optimiert, Panels und Gruppierungen können sich also noch verschieben, während wir das Layout finalisieren. Nichts, was du jetzt einrichtest, ist umsonst; die Daten werden schon heute erfasst.
 </Callout>
 
@@ -25,15 +25,15 @@ Der Browser parst ihn in das [`serverTiming`](https://developer.mozilla.org/en-U
 
 | Feld   | Quelle          | Was es ist                                            |
 | ------ | --------------- | ----------------------------------------------------- |
-| `name` | der Metrikname  | `db`, `cache`, `app`, … — das Label, das du wählst    |
+| `name` | der Metrikname  | `db`, `cache`, `app`, …: das Label, das du wählst     |
 | `dur`  | `dur=`          | die gemeldete Dauer in Millisekunden (optional)       |
-| `desc` | `desc=`         | der Freitext (optional) — z. B. ein Cache-Status      |
+| `desc` | `desc=`         | der Freitext (optional): z. B. ein Cache-Status       |
 
-Das ist **per Konstruktion First-Party**: Das einzige `Server-Timing`, das der Beacon sehen kann, ist das, das dein eigener Origin auf dein eigenes Dokument gesetzt hat. Es gibt nichts im Beacon zu aktivieren, und es wird nie ein Third-Party-Header gelesen. Erfasst wird es unter jeder [Tracker-Einstellung](/de/tracker) — es trägt keine Besucherinformation, nur die Timing-Werte deines Servers.
+Das ist **per Konstruktion First-Party**: Das einzige `Server-Timing`, das der Beacon sehen kann, ist das, das dein eigener Origin auf dein eigenes Dokument gesetzt hat. Es gibt nichts im Beacon zu aktivieren, und es wird nie ein Third-Party-Header gelesen. Erfasst wird es unter jeder [Tracker-Einstellung](/de/tracker). Es trägt keine Besucherinformation, nur die Timing-Werte deines Servers.
 
 ## Wie fastmon die Werte normalisiert
 
-Der Beacon schickt die rohen Einträge; die Leitung ist fälschbar, also wird der Filterung des Trackers **nicht** vertraut. Alles Folgende wird serverseitig erneut angewendet, bevor auch nur ein Wert gespeichert wird. Schlechte Einträge werden einzeln verworfen — wegen einer fehlerhaften Metrik geht nie der ganze Beacon verloren.
+Der Beacon schickt die rohen Einträge; die Leitung ist fälschbar, also wird der Filterung des Trackers **nicht** vertraut. Alles Folgende wird serverseitig erneut angewendet, bevor auch nur ein Wert gespeichert wird. Schlechte Einträge werden einzeln verworfen. Wegen einer fehlerhaften Metrik geht nie der ganze Beacon verloren.
 
 **Formregeln.** Eine Metrik wird nur behalten, wenn sie besteht:
 
@@ -45,7 +45,7 @@ Der Beacon schickt die rohen Einträge; die Leitung ist fälschbar, also wird de
 **Drei Tiers.** Was überlebt, wird einsortiert in:
 
 1. **Hochgestufte Skalare** (immer behalten): die sieben [Backend-Phasen](#backend-phasen), die zwei [Cache-Status](#cache-status) und den [Seitentyp](#seitentyp). Sie werden zu dedizierten Spalten.
-2. **Tier-2-Katalog** (ohne Cap): ein bekannter Satz von Namen — `redis`, `mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `elasticsearch`, `parse`, `session`, … — landet in den Dauer-/Description-Maps des Pageviews.
+2. **Tier-2-Katalog** (ohne Cap): ein bekannter Satz von Namen (`redis`, `mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `elasticsearch`, `parse`, `session`, …) landet in den Dauer-/Description-Maps des Pageviews.
 3. **Tier-3-Custom** (≤ 8 pro Pageview): jeder andere gültige Name, den du dir ausdenkst.
 
 Über beide Maps hinweg sind Dauern auf 24 Keys und Descriptions auf 8 gekappt.
@@ -56,7 +56,7 @@ Wenn dieselbe Phase von mehr als einer Metrik gefüllt werden könnte, löst fas
 
 > **`fm-*` First-Party-Alias  ›  Site-Mapping  ›  eingebauter Vendor-Alias (`cf…`)  ›  eingebauter generischer Alias**
 
-Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie, weil sie an fastmons eigener Edge gemessen statt von der Seite gemeldet wird — sie ist nicht clientseitig fälschbar und über jede Site hinweg konsistent. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts** — ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
+Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie, weil sie an fastmons eigener Edge gemessen statt von der Seite gemeldet wird. Sie ist nicht clientseitig fälschbar und über jede Site hinweg konsistent. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts**. Ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
 
 ## Backend-Phasen
 
@@ -76,7 +76,7 @@ Phasen, die du nicht sendest, fehlen schlicht (NULLs werden übersprungen, nie a
 
 ## Cache-Status
 
-Ein Cache-Urteil wird als Description übertragen, nicht als Dauer — z. B. `Server-Timing: cdn-cache;desc="HIT"`. Fastmon erfasst **zwei Schichten** unabhängig:
+Ein Cache-Urteil wird als Description übertragen, nicht als Dauer: z. B. `Server-Timing: cdn-cache;desc="HIT"`. Fastmon erfasst **zwei Schichten** unabhängig:
 
 | Schicht  | Erkannte Namen (in Vorrang-Reihenfolge)           |
 | -------- | ------------------------------------------------- |
@@ -153,20 +153,20 @@ final class ServerTimingListener
 }
 ```
 
-Die meisten CDNs (Cloudflare, Fastly, CloudFront) können ihre eigene Cache-/Edge-Metrik an der Edge an denselben Header anhängen, sodass der Browser sowohl die Phasen deines Origins als auch das Cache-Urteil der Edge an einer Stelle sieht — und fastmon kennt deren native Namen bereits (`cfcachestatus`, `cfedge`, die CloudFront-Flags, …).
+Die meisten CDNs (Cloudflare, Fastly, CloudFront) können ihre eigene Cache-/Edge-Metrik an der Edge an denselben Header anhängen, sodass der Browser sowohl die Phasen deines Origins als auch das Cache-Urteil der Edge an einer Stelle sieht. Und fastmon kennt deren native Namen bereits (`cfcachestatus`, `cfedge`, die CloudFront-Flags, …).
 
 ## Verifizieren
 
 1. Öffne deine Site, dann DevTools → **Network** → Dokument-Request anklicken → **Headers**. Du solltest deinen `Server-Timing`-Header auf der Response sehen.
-2. Im **Timing**-Tab desselben Requests rendert Chrome die `Server-Timing`-Einträge inline — ein schneller Sanity-Check, dass die Syntax geparst wurde.
+2. Im **Timing**-Tab desselben Requests rendert Chrome die `Server-Timing`-Einträge inline (ein schneller Sanity-Check, dass die Syntax geparst wurde).
 3. Öffne in fastmon **Analytics → Server-Timing**. Neue Daten erscheinen mit den nächsten Beacons; gib den Daten ein paar Pageviews Zeit, bevor du Perzentile liest.
 
 ## Häufige Überraschungen
 
 - **Nur die Dokument-Response zählt.** Fastmon liest den Navigation-Entry, nicht das `Server-Timing` deiner Sub-Ressourcen (Skripte, Bilder, API-Calls). Für In-Page-Request-Timing siehe stattdessen [Fetch/XHR](/de/analytics#fetchxhr-und-server-timing).
-- **`dur` ist optional.** Eine Metrik mit nur einem `desc` (wie ein Cache-`HIT`/`MISS` oder ein Seitentyp) ist gültig und nützlich — genau so werden das Cache-Status- und das Seitentyp-Feld gespeist.
+- **`dur` ist optional.** Eine Metrik mit nur einem `desc` (wie ein Cache-`HIT`/`MISS` oder ein Seitentyp) ist gültig und nützlich. Genau so werden das Cache-Status- und das Seitentyp-Feld gespeist.
 - **Cross-Origin-Dokumente brauchen freigegebenes Timing.** Ein Same-Origin-Dokument ist per Default in Ordnung; wird dein HTML von einem anderen Origin ausgeliefert, wird `serverTiming` nur befüllt, wenn diese Response auch [`Timing-Allow-Origin`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin) sendet.
-- **Keine Internas im `desc` leaken.** Die Description ist Freitext, der zum Browser und wieder zurück übertragen wird. Was wie eine UUID oder ein langer Token aussieht, wird verworfen — beschränke dich aber ohnehin auf grobe Labels (`HIT`, `MISS`, Region-Codes); nie Query-Text, IDs oder Secrets dort ablegen.
+- **Keine Internas im `desc` leaken.** Die Description ist Freitext, der zum Browser und wieder zurück übertragen wird. Was wie eine UUID oder ein langer Token aussieht, wird verworfen. Beschränke dich aber ohnehin auf grobe Labels (`HIT`, `MISS`, Region-Codes); nie Query-Text, IDs oder Secrets dort ablegen.
 - **Maximal acht Custom-Keys.** Über den Katalog hinaus werden nur die ersten acht unbekannten Namen pro Pageview behalten. Wenn du viele Custom-Metriken erfindest, fasse die dauerhaften unter einem Namen zusammen, den fastmon bereits erkennt.
 
 ## Verwandt

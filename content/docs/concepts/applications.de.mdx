@@ -1,11 +1,11 @@
 ---
 title: Applications
-description: Eine Application ist ein Tracking-Snippet — ihre Hashes, Erfassungs-Config und die Sites (Domains), die sie bedient.
+description: "Eine Application ist ein Tracking-Snippet: ihre Hashes, Erfassungs-Config und die Sites (Domains), die sie bedient."
 ---
 
 Eine **Application** ist der Tracking-Embed: ein Snippet, ein Satz
 Erfassungseinstellungen und die zwei Hashes, die sie identifizieren.
-Sie bedient eine Domain oder zwanzig — jede Domain ist eine **Site**
+Sie bedient eine Domain oder zwanzig. Jede Domain ist eine **Site**
 mit eigenem Dashboard und eigenem Traffic. Die meisten brauchen genau
 eine Application mit einer Site.
 
@@ -16,7 +16,7 @@ Die Hierarchie ist **Organization → Application → Site**:
   `/s/{source_hash}.js`-Bundle, die komplette Erfassungs-Config und
   den `collector_hash`, an den Beacons posten. Sie hat eine oder
   mehrere Sites.
-- Eine **Site** ist eine einzelne Domain unter der Application — eine
+- Eine **Site** ist eine einzelne Domain unter der Application: eine
   reine Analytics-Einheit mit eigenem Dashboard. Siehe
   [Sites](/de/concepts/sites).
 
@@ -26,8 +26,8 @@ Domains ein Snippet und eine Erfassungs-Config teilen sollen.
 
 ## Die zwei Hashes
 
-Eine Application hat zwei kurze Hashes — beide auf der Application,
-nicht auf der Site:
+Eine Application hat zwei kurze Hashes (beide auf der Application,
+nicht auf der Site):
 
 - **`source_hash`** steht in der **Script-URL** (`/s/{source_hash}.js`)
   und sagt, welches Application-Bundle an den Browser geliefert wird.
@@ -43,7 +43,7 @@ das ausgelieferte Script wird invalidiert.
 
 Die Erfassungs-Config lebt auf der Application: ein
 [Preset](/de/tracker) (`minimal` / `standard` / `full`,
-Default `standard`), das sich in Einzelflags entfaltet — Sessions,
+Default `standard`), das sich in Einzelflags entfaltet: Sessions,
 der Besucher-`stitch`, Fehlerdetail, Query-Keys, fetch/XHR. Alles
 davon wird ins ausgelieferte Bundle gebacken. Die volle
 Aufschlüsselung steht unter [Presets](/de/tracker).
@@ -52,16 +52,16 @@ Aufschlüsselung steht unter [Presets](/de/tracker).
 
 `collector_mode` bestimmt den Host im Snippet:
 
-- **`default`** — fastmons geteilter Collector (`fastmon.site`); aus
+- **`default`**: fastmons geteilter Collector (`fastmon.site`); aus
   Sicht deiner Seite Third-Party.
-- **`relative`** — hostlose `/s/`- und `/c/`-Pfade, same-origin über
+- **`relative`**: hostlose `/s/`- und `/c/`-Pfade, same-origin über
   deinen Reverse-Proxy ausgeliefert; First-Party.
-- **`custom`** — ein absoluter `collector_endpoint`-Host, den du
+- **`custom`**: ein absoluter `collector_endpoint`-Host, den du
   kontrollierst.
 
 Der Browser entscheidet First- vs. Third-Party zur Laufzeit, indem er
 den Host mit der Seiten-Origin vergleicht. Den Collector später zu
-wählen hieße, das schon eingebettete Snippet zu tauschen — deshalb
+wählen hieße, das schon eingebettete Snippet zu tauschen. Deshalb
 wird er beim Anlegen gesetzt. Siehe [Implementierung](/de/install/html).
 
 ## Unbekannte Domains: `site_policy`
@@ -69,12 +69,12 @@ wird er beim Anlegen gesetzt. Siehe [Implementierung](/de/install/html).
 Kommt ein Beacon von einem Hostnamen, der keine registrierte Site
 ist, entscheidet die **`site_policy`** der Application:
 
-- **`open`** (Default) — der Beacon wird verworfen, aber der Hostname
+- **`open`** (Default): der Beacon wird verworfen, aber der Hostname
   als **vorgeschlagene Domain** vermerkt, die du mit einem Klick
   adoptierst (sie wird eine Site und erbt die Config der Application).
-- **`auto`** — für den Hostnamen wird automatisch eine Site angelegt,
+- **`auto`**: für den Hostnamen wird automatisch eine Site angelegt,
   und ihr Traffic wird ab dann behalten.
-- **`strict`** — der Beacon wird verworfen, ohne Vorschlag und ohne
+- **`strict`**: der Beacon wird verworfen, ohne Vorschlag und ohne
   Auto-Provisioning; nur exakt registrierte Domains werden bedient.
 
 Das ersetzt die alte `allowed_origins`-Liste und das per-Site
@@ -89,8 +89,8 @@ Wegwerf-Apps klar von deinem Produktions-Traffic zu trennen.
 
 ## Page-Type-Detection
 
-Optional. Setz `pagetype_ruleset` auf dein Shop-System — `shopware6`,
-`shopware5`, `oxid`, `magento` oder `woocommerce` — und der Tracker
+Optional. Setz `pagetype_ruleset` auf dein Shop-System (`shopware6`,
+`shopware5`, `oxid`, `magento` oder `woocommerce`), und der Tracker
 klassifiziert jeden Pageview (Home / Product / Cart / Checkout / …)
 aus der `<body>`-Klasse der Seite, ohne Server-Timing-Integration.
 Default aus (leer); ein per Server-Timing-Header geschickter
@@ -101,12 +101,12 @@ Page-Type hat immer Vorrang vor der Body-Class-Vermutung.
 Drei Einstellungen sind Application-Level-**Defaults**, die jede
 Mitglieds-Site erbt und pro Domain überschreiben kann:
 
-- **`data_retention_days`** (Default `90`) — wie lange Rohdaten
+- **`data_retention_days`** (Default `90`): wie lange Rohdaten
   behalten werden.
-- **`store_stitch`** — den Edge-Besucher-`stitch` persistieren
+- **`store_stitch`**: den Edge-Besucher-`stitch` persistieren
   (treibt Unique-Visitor-Zahlen). Folgt dem Preset der Application;
   eine Site kann ihn trotzdem selbst abschalten.
-- **`count_visitors_by`** (`stitch` / `session`) — nach welcher
+- **`count_visitors_by`** (`stitch` / `session`): nach welcher
   Kennung die **Visitors**-Metrik in Reports zählt. Eine
   Reporting-Präferenz, die zur Query-Zeit auf das begrenzt wird, was
   die Site tatsächlich speichert.
@@ -124,7 +124,7 @@ Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
 | `environment`         | enum                 | `prod` oder `dev`. Default `prod`. Markiert Nicht-Produktions-Apps.    |
 | `source_hash`         | string               | Global eindeutig; in der Script-URL (`/s/{source_hash}.js`).          |
 | `collector_hash`      | string               | Global eindeutig; in der Ingest-URL (`/c/{collector_hash}`).          |
-| Preset-Flags          | —                    | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. Siehe [Presets](/de/tracker). |
+| Preset-Flags          | bool · enum          | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. Siehe [Presets](/de/tracker). |
 | `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
 | `collector_endpoint`  | string · nullable    | Eigener Collector-Host (nur bei `custom`).                            |
 | `pagetype_ruleset`    | enum · optional      | Shop-System-Ruleset für Page-Type-Detection, oder leer (aus).         |
@@ -137,12 +137,12 @@ Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
 
 ## Sites: adoptieren, verschieben, löschen
 
-- **Domain hinzufügen** — eine Site unter der Application anlegen oder
+- **Domain hinzufügen**: eine Site unter der Application anlegen oder
   eine vorgeschlagene Domain adoptieren (siehe `site_policy` oben).
-- **Site verschieben** — eine Site einer anderen Application zuweisen;
+- **Site verschieben**: eine Site einer anderen Application zuweisen;
   sie übernimmt deren Config. Es gibt kein „Unassign": eine Domain
   gehört immer zu genau einer Application.
-- **Site löschen** — entfernt die Daten dieser Domain (mit
+- **Site löschen**: entfernt die Daten dieser Domain (mit
   Bestätigung).
 
 ## Verwandt

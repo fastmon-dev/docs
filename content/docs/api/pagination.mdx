@@ -3,7 +3,7 @@ title: Pagination
 description: Offset by default. Cursor for high-volume endpoints. Tell which scheme is in use by looking at meta.
 ---
 
-List endpoints in the fastmon API use one of two pagination schemes. You don't choose — the endpoint chooses based on the underlying data shape. Read the response `meta` to tell which one you got.
+List endpoints in the fastmon API use one of two pagination schemes. You don't choose: the endpoint chooses based on the underlying data shape. Read the response `meta` to tell which one you got.
 
 ## Defaults
 
@@ -75,7 +75,7 @@ curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
   -d '{ "time_range": { "from": "...", "to": "..." }, "limit": 100, "cursor": "eyJ0IjoiMjAyNi0wNS0wN1Q…" }'
 ```
 
-The cursor is **opaque** — it encodes whatever the server needs to resume. Don't parse it, don't construct it, and don't persist it beyond your immediate paging loop; it won't survive deploys.
+The cursor is **opaque**: it encodes whatever the server needs to resume. Don't parse it, don't construct it, and don't persist it beyond your immediate paging loop; it won't survive deploys.
 
 When `meta.next_cursor` is absent, you've reached the end.
 
@@ -88,7 +88,7 @@ Read `meta` on the response:
 | has `total` and `offset`                 | offset  |
 | has `next_cursor` (with no `total`)      | cursor  |
 
-Don't infer from the path. The same endpoint family can mix — for example `/analytics/sessions` is cursor-paginated while `/analytics/error-types` is offset-paginated, even though both sit under the analytics namespace.
+Don't infer from the path. The same endpoint family can mix: for example `/analytics/sessions` is cursor-paginated while `/analytics/error-types` is offset-paginated, even though both sit under the analytics namespace.
 
 ## Which endpoints use cursor
 
@@ -104,10 +104,10 @@ Everything else is offset-paginated.
 
 - **Cursor responses don't include a `total`.** This is intentional. Counting rows to compute a total would defeat the point of using cursors. If you need an "approximate total," combine an aggregation query (`/analytics/query` with `aggregations: ["count"]`) with the listing.
 - **Cursors expire.** They're not designed to be persisted for hours or days. If you stash a cursor in a queue and process it the next morning, expect a `400` or stale results.
-- **Cursors are not URLs.** Don't URL-encode them yourself if you're passing them through `?cursor=` — most HTTP clients handle that automatically.
+- **Cursors are not URLs.** Don't URL-encode them yourself if you're passing them through `?cursor=`; most HTTP clients handle that automatically.
 - **Sort order is fixed.** Cursor endpoints don't accept arbitrary `order_by`. The order is determined by the server (typically newest first for events). Offset endpoints do accept `order_by` per their specific schema.
 
 ## Related
 
 - [API overview](/en/api).
-- [Analytics API](/en/api/analytics/queryAnalytics) — the cursor-paginated feeds.
+- [Analytics API](/en/api/analytics/queryAnalytics): the cursor-paginated feeds.

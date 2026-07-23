@@ -235,7 +235,7 @@ function renderSchema(schema: any, spec: any, seen: Set<string>, depth = 0, inde
     const arr = schema.oneOf ?? schema.anyOf;
     const lines = [`${indent}- _(${schema.oneOf ? "one of" : "any of"})_`];
     arr.forEach((s: any, i: number) => {
-      lines.push(`${indent}  - **Variant ${i + 1}** — ${schemaSummary(s)}`);
+      lines.push(`${indent}  - **Variant ${i + 1}**: ${schemaSummary(s)}`);
       const inner = renderSchema(s, spec, seen, depth + 1, `${indent}    `);
       if (inner) lines.push(inner);
     });
@@ -249,7 +249,7 @@ function renderSchema(schema: any, spec: any, seen: Set<string>, depth = 0, inde
       const prop: any = propRaw;
       const isReq = required.includes(name);
       const t = schemaSummary(prop);
-      const desc = prop.description ? ` — ${String(prop.description).replace(/\n+/g, " ")}` : "";
+      const desc = prop.description ? `: ${String(prop.description).replace(/\n+/g, " ")}` : "";
       const def = prop.default !== undefined ? ` _(default: ${JSON.stringify(prop.default)})_` : "";
       lines.push(`${indent}- \`${name}\` (${t}${isReq ? ", required" : ""})${def}${desc}`);
       // Recurse into nested objects/arrays for one more level of context.
@@ -329,7 +329,7 @@ function renderOperationMarkdown(op: any, path: string, method: string, spec: an
       const t = p.schema?.type ?? "any";
       const fmt = p.schema?.format ? `, ${p.schema.format}` : "";
       const req = p.required ? ", required" : "";
-      const desc = p.description ? ` — ${p.description.replace(/\n+/g, " ")}` : "";
+      const desc = p.description ? `: ${p.description.replace(/\n+/g, " ")}` : "";
       lines.push(`- \`${p.name}\` (${t}${fmt}${req})${desc}`);
     }
   };
@@ -354,7 +354,7 @@ function renderOperationMarkdown(op: any, path: string, method: string, spec: an
     lines.push("", "**Responses**");
     for (const code of codes) {
       const r = responses[code] ?? {};
-      const desc = r.description ? ` — ${String(r.description).replace(/\n+/g, " ")}` : "";
+      const desc = r.description ? `: ${String(r.description).replace(/\n+/g, " ")}` : "";
       lines.push("", `### \`${code}\`${desc}`);
       if (r.content) {
         const rendered = renderMediaTypes(r.content, spec);
@@ -364,7 +364,7 @@ function renderOperationMarkdown(op: any, path: string, method: string, spec: an
   }
 
   if (op?.security?.length || op?.["x-fastmon-auth"]) {
-    lines.push("", "**Authentication**", "Required — see `Authentication` page.");
+    lines.push("", "**Authentication**", "Required. See the `Authentication` page.");
   }
 
   return lines.join("\n");

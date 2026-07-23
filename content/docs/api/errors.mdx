@@ -30,7 +30,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `details`     | optional | Code-specific. Validation errors put the offending `field` here.       |
 
 <Callout type="info">
-  Switch on `code` in client code; render `message` to humans. The `code` is part of our public contract — `message` may be reworded for clarity at any time.
+  Switch on `code` in client code; render `message` to humans. The `code` is part of our public contract; `message` may be reworded for clarity at any time.
 </Callout>
 
 ## Status codes
@@ -43,8 +43,8 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `400`  | The body or query was malformed. See `code` for specifics.                          |
 | `401`  | Authentication failed or wasn't provided. See [Authentication](/en/api/authentication). |
 | `403`  | Authenticated, but not allowed. Wrong organization, wrong role, or paused resource.  |
-| `404`  | Resource doesn't exist — *or* you can't see it. We don't leak existence.            |
-| `409`  | Conflict — usually a uniqueness violation or a state-machine clash.                  |
+| `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
+| `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
 | `422`  | Validation failed. `details.field` carries the offending field.                      |
 | `429`  | Rate-limited. Wait and retry; `Retry-After` is set.                                  |
 
@@ -54,8 +54,8 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | Status | What it means                                                          |
 | ------ | ---------------------------------------------------------------------- |
 | `500`  | Server error. Include `request_id` when reporting.                     |
-| `502`  | Bad gateway. Usually a deploy-window blip — retry with backoff.        |
-| `503`  | Service unavailable. Same as `502` — transient.                         |
+| `502`  | Bad gateway. Usually a deploy-window blip; retry with backoff.         |
+| `503`  | Service unavailable. Same as `502`: transient.                          |
 | `504`  | Gateway timeout. Retry once with longer client timeout.                |
 
 </Tab>
@@ -73,7 +73,7 @@ The full list, grouped by category.
 | `invalid_credentials`     | Email/password combination didn't match.                                             |
 | `two_factor_required`     | Login passed step one; a TOTP code is needed to complete the session.                |
 | `invalid_two_factor_code` | The TOTP code was wrong or expired.                                                  |
-| `session_expired`         | The session cookie is no longer valid — log in again.                                |
+| `session_expired`         | The session cookie is no longer valid. Log in again.                                 |
 | `invalid_token`           | Short-lived opaque token (email verification, password reset, OAuth state, 2FA temp) was invalid or expired. Distinct from `session_expired` on purpose: don't bounce the user to /login on a stale reset link. |
 
 ### Authorization
@@ -163,8 +163,8 @@ The full list, grouped by category.
 
 | Status                | Retry?                                                                  |
 | --------------------- | ----------------------------------------------------------------------- |
-| `429`                 | Yes — wait `Retry-After` seconds.                                       |
-| `502` / `503` / `504` | Yes — exponential backoff. Usually deploy-window blips.                 |
+| `429`                 | Yes: wait `Retry-After` seconds.                                        |
+| `502` / `503` / `504` | Yes: exponential backoff. Usually deploy-window blips.                  |
 | Other `5xx`           | Once. If it persists, report with `request_id`.                         |
 | `4xx`                 | **No.** The request is wrong; fix and resend.                            |
 
@@ -178,7 +178,7 @@ The request ID is on:
 
 - the `X-Request-ID` response header,
 - `error.request_id` in the JSON body,
-- the response of every successful request too — for chain correlation.
+- the response of every successful request too (for chain correlation).
 
 ## Common surprises
 
@@ -188,4 +188,4 @@ The request ID is on:
 ## Related
 
 - [API overview](/en/api)
-- [Authentication](/en/api/authentication) — `401` / `403` origins
+- [Authentication](/en/api/authentication): `401` / `403` origins

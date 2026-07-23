@@ -29,7 +29,7 @@ export function EnglishOnlyBanner() {
       role="status"
       className="mb-4 rounded-md border border-fd-border bg-fd-muted px-4 py-3 text-sm text-fd-muted-foreground"
     >
-      Die API-Dokumentation pflegen wir nur auf Englisch — du wurdest auf die englische Fassung
+      Die API-Dokumentation pflegen wir nur auf Englisch. Du wurdest auf die englische Fassung
       weitergeleitet.
     </div>
   );

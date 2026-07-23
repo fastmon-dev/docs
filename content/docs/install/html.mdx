@@ -15,7 +15,7 @@ app, Hugo, Next.js, WordPress, a tag manager.
 ## Applications and sites
 
 If you opened this page from an application's **Set up** button, it
-already exists and the hashes above are filled in — skip to step 1.
+already exists and the hashes above are filled in. Skip to step 1.
 
 Otherwise, create one first. An **application** is one tracking snippet.
 It owns the collection settings and the two hashes below, and it can
@@ -28,8 +28,8 @@ for that domain in one step, then hands you the snippet.
 
 That gives the application two short hashes:
 
-- `source_hash` — goes into the script URL.
-- `collector_hash` — where the tracker posts data. It's baked into the
+- `source_hash`: goes into the script URL.
+- `collector_hash`: where the tracker posts data. It's baked into the
   script, so you normally never touch it by hand.
 
 Both are on the application's card under **··· → IDs & hashes**.
@@ -56,7 +56,7 @@ the moment the download finishes, and the order between multiple async
 scripts is whichever-finishes-first. For Web Vitals we want predictable
 timing, so `defer` wins.
 
-(Attribute order inside the tag is irrelevant to the browser —
+(Attribute order inside the tag is irrelevant to the browser:
 `<script defer src="…">` and `<script src="…" defer>` behave
 identically. We write `defer` first so it matches what the app hands
 you.)
@@ -71,7 +71,7 @@ tracker catch the very first paint.
 | Plain HTML / Hugo / Jekyll | `<head>` of your base template.                                     |
 | WordPress                  | A header-snippet plugin, or `header.php`.                           |
 | Next.js / Nuxt / Astro     | The framework's head/script primitive (Next.js: `<Script strategy="afterInteractive">` in `app/layout.tsx`). |
-| Single-page apps           | The static `index.html` shell — once is enough.                     |
+| Single-page apps           | The static `index.html` shell: once is enough.                      |
 
 ## 2. Deploy and load a page
 
@@ -85,12 +85,12 @@ at periodic flushes. Expect a few requests per page view, not exactly
 one. Switching tabs or closing the page is the most reliable way to
 force a flush while testing.
 
-Then check it arrived — see [Verify it works](/en/install/verify).
+Then check it arrived: see [Verify it works](/en/install/verify).
 
 ### If the domain isn't a site yet
 
 Beacons are matched to a **site** by the page's hostname. If you added the
-domain when creating the application, you're done — data lands on that site.
+domain when creating the application, you're done: data lands on that site.
 
 If you didn't (you created an empty application, or you've just put the
 snippet on an additional domain), the first page view doesn't get thrown
@@ -104,7 +104,7 @@ Which of those happens is the application's **Unknown domains** setting:
 | ------- | ---------------------------------------------------- |
 | **Suggest** (default) | Listed as a suggested domain to adopt; the beacon itself is dropped. |
 | **Auto-create** | A site is created automatically on the first beacon. |
-| **Ignore** | Dropped silently — no suggestion, no site. |
+| **Ignore** | Dropped silently: no suggestion, no site. |
 
 ## Consent: when the session id is written
 
@@ -134,7 +134,7 @@ error thrown during early parsing happens before fastmon is listening.
 This tiny inline snippet queues those errors and hands them over when
 the tracker boots.
 
-It only works **above** the tracker tag from step 1, so put it there —
+It only works **above** the tracker tag from step 1, so put it there,
 first thing in the `<head>`:
 
 <InstallSnippet kind="bootstrap" />
@@ -202,7 +202,7 @@ collector host.
 
 ## What's next
 
-- [Verify it works](/en/install/verify) — a five-second DevTools check.
+- [Verify it works](/en/install/verify): a five-second DevTools check.
 - Tune what gets collected: [presets](/en/tracker).
 - [Privacy: what we don't collect](/en/privacy), handy when legal asks.
 - Tag deploys for before/after comparisons:

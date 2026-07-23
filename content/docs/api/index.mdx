@@ -1,6 +1,6 @@
 ---
 title: API Reference
-description: Base URL, authentication, response envelopes — and the auto-generated endpoint reference.
+description: Base URL, authentication, response envelopes, and the auto-generated endpoint reference.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -26,7 +26,7 @@ The fastmon REST API is the same surface the dashboard uses. The endpoint refere
 Pages are auto-generated per OpenAPI tag. Each operation has its own page with split-layout schema, language tabs (curl, JS, Python, Go, Java, C#), and a Try-it playground.
 
 <Cards>
-  <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container — members, plans, billing." />
+  <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container: members, plans, billing." />
   <Card title="Members" href="/en/api/members/listOrganizationMembers" description="Organization membership: list, remove, transfer ownership." />
   <Card title="Applications" href="/en/api/applications/listApplications" description="The tracking embed: source and collector hashes, collection config, hash rotation." />
   <Card title="Sites" href="/en/api/sites/listSites" description="The domains an application runs on. Each has its own dashboard and traffic." />
@@ -63,12 +63,12 @@ curl https://api.fastmon.eu/v1/organizations \
 
 ## Conventions
 
-- **IDs are UUID v7** strings — sortable by creation time.
-- **Timestamps are ISO-8601 UTC with `Z`** — `2026-04-18T12:34:56.123456Z`.
+- **IDs are UUID v7** strings: sortable by creation time.
+- **Timestamps are ISO-8601 UTC with `Z`**: `2026-04-18T12:34:56.123456Z`.
 - **Single resources** are returned raw; **lists** wrap with `data` + `meta`; **errors** wrap with `error`. See [Errors](/en/api/errors).
 - **Default limit** is 50; max is 100 on every list endpoint.
 - **`X-Request-ID`** is on every response. Mirror it back when reporting issues.
 
 ## Schema document
 
-The raw OpenAPI document lives at [`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`, …) for a typed client.
+The raw OpenAPI document lives at [`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`) for a typed client.
