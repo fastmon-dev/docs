@@ -12,6 +12,32 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-23" type="changed" area="tracker" title="Fetch/XHR endpoints group tighter, and campaign parameters stay out">
+
+The collector templates fetch/XHR endpoint paths more aggressively, so the per-endpoint view stays readable on sites whose own pages get fetched by the app. Long content slugs collapse to `:slug` (a `/blog/a-very-long-post-title` and its thousand siblings become one row), soft-navigation document fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/`, and the other framework conventions) collapse to `/:page`, since the page already carries its own URL and timing. Third-party hosts keep their endpoint row but lose the query string (query keys are a routing signal that only means something on your own hosts), and a request with eight or more query parameters shows as `?:many`. This runs server-side, so it also cleans up data you already collected, with no tracker rollout.
+
+One behavior change to note: **ad-attribution parameters** (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, and the `utm_*` and `gad_*` families) are now dropped from endpoint paths and page URLs even when [`collect_query_keys`](/en/tracker#collect-query-keys) is on, because their key set changes with every inbound link and carries no routing signal. Naming one explicitly in [`collect_query_values_for`](/en/tracker#collect-query-values-for) still keeps it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-22" type="changed" area="platform" title="Redesigned sign-in pages">
+
+Login, registration, and password reset move onto a single centered card over a plain background, with a new serif display face for the headings and the theme toggle in the corner. The old split-panel layout, the testimonial carousel, and the performance-risk copy alongside the form are gone.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-21" type="changed" area="platform" title="Open registration replaces the waitlist">
+
+Signing up no longer needs a waitlist invite: the "Get access" links go straight to registration, and anyone can create an account. A newly created organization waits for approval before it can add applications; until then the Applications page shows an awaiting-approval note, while your account and any existing data are unaffected.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-20" type="changed" area="dashboard" title="Empty charts say what's actually missing">
+
+A chart with nothing to show used to read "No data available", which described our storage rather than your site. Visitor-based charts (pages, browsers, devices, countries, referrers, Web Vitals, errors) now say "No visitors in the selected period", and request-based ones (cache hit rate, backend time, requests) say "No requests in the selected period". The diagonal "no data" hatching in trend charts is gone too: a quiet stretch is normal, so the line simply ends where the data ends and picks back up where it resumes, instead of being shaded as if something were broken.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Applications: one tracking snippet across one or more sites">
 
 Sites and cross-domain trackers are replaced by **applications**. An application is one tracking snippet: it owns the embed, the two hashes, and every [tracker setting](/en/tracker), and it serves one domain or twenty. Each domain stays its own **site** with its own dashboard and traffic, so there's no "single vs multi" mode any more, just how many sites an application has. The new Applications page gives each app a card with its sites and their live status, its releases, the embed snippet, and per-app analytics, and you adopt, move, or delete a site inline. A domain that sends beacons without being registered shows up as a **suggested domain** you adopt in one click; the new **Unknown domains** setting decides whether unknown hosts are suggested (the default), created automatically, or ignored. Retention, the visitor signal, and the visitor-counting identifier now default to the application and can be overridden per site. You pick the **collector** when you create an application (fastmon, same-origin, or your own domain), because changing it later means swapping the snippet you already embedded, and you can mark an application as production or development. The collection settings were renamed to match what they do at the same time: `store_session` is now `collect_sessions`, `preconsent_level` is now `session_consent` (`deferred` or `immediate`), and the error, query, and fetch/XHR switches gained a `collect_` prefix. See [Applications](/en/concepts/applications), [Sites](/en/concepts/sites), and [Tracker settings](/en/tracker).

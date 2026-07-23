@@ -89,7 +89,7 @@ Picks which identifier the dashboard counts distinct visitors by, `stitch` or `s
 
 Keeps the **names** of query parameters on the page URL (for example `?page`, `?variant`), so you can break analytics down by parameterized routes. Parameter **values** are always dropped at collection regardless of this switch. Off drops the query string entirely, storing origin plus path only. On by default (part of the Standard preset).
 
-**PII:** low. Only key names are kept, and they rarely carry visitor-specific data; every value is stripped before the URL leaves the browser. To keep a specific value, you have to opt in explicitly via [`collect_query_values_for`](#collect-query-values-for).
+**PII:** low. Only key names are kept, and they rarely carry visitor-specific data; every value is stripped before the URL leaves the browser. To keep a specific value, you have to opt in explicitly via [`collect_query_values_for`](#collect-query-values-for). A fixed set of ad-attribution and click-id parameters (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, and the `utm_*` and `gad_*` families) is always dropped, key and value, on page URLs and fetch/XHR paths regardless of this switch: they carry no routing signal and their key set changes per inbound link. Naming one in [`collect_query_values_for`](#collect-query-values-for) overrides that and keeps it.
 
 ### `collect_query_values_for` [#collect-query-values-for]
 
@@ -117,7 +117,7 @@ Keeps full stack-frame detail (script path plus line and column) for every frame
 
 Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on).
 
-**PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
+**PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. On top of the page-URL rules, the collector re-templates fetch/XHR paths server-side to keep the aggregate readable: long content slugs collapse to `:slug`, opaque tokens to `:id`, soft-navigation document fetches to `/:page`, and a third-party host keeps its endpoint row but loses its query string entirely. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
 
 ## Page type
 

@@ -89,7 +89,7 @@ Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitc
 
 Behält die **Namen** der Query-Parameter der Seiten-URL (etwa `?page`, `?variant`), sodass du Analytics nach parametrisierten Routen aufschlüsseln kannst. Parameter-**Werte** werden bei der Erhebung immer verworfen, unabhängig von diesem Schalter. Aus verwirft die Query-Strings komplett und speichert nur Origin plus Pfad. An per Default (Teil des Standard-Presets).
 
-**PII:** gering. Nur Schlüsselnamen bleiben, und die tragen selten besucherspezifische Daten; jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Um einen konkreten Wert zu behalten, musst du ihn explizit über [`collect_query_values_for`](#collect-query-values-for) freigeben.
+**PII:** gering. Nur Schlüsselnamen bleiben, und die tragen selten besucherspezifische Daten; jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Um einen konkreten Wert zu behalten, musst du ihn explizit über [`collect_query_values_for`](#collect-query-values-for) freigeben. Ein fester Satz an Ad-Attribution- und Click-ID-Parametern (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid` sowie die `utm_*`- und `gad_*`-Familien) wird unabhängig von diesem Schalter immer verworfen, Schlüssel und Wert, auf Seiten-URLs wie auf Fetch/XHR-Pfaden: Sie tragen kein Routing-Signal, und ihr Schlüsselsatz ändert sich pro eingehendem Link. Nennst du einen davon in [`collect_query_values_for`](#collect-query-values-for), überschreibt das die Regel und der Parameter bleibt.
 
 ### `collect_query_values_for` [#collect-query-values-for]
 
@@ -117,7 +117,7 @@ Behält volles Stack-Frame-Detail (Script-Pfad plus Zeile und Spalte) für jeden
 
 Erfasst aggregierte Fetch/XHR-Telemetrie: Aufruf-Counts pro Endpunkt, Dauern, Fehler-Statuscodes und die langsamsten Ausreißer, sodass du siehst, welche deiner eigenen APIs langsam sind oder fehlschlagen. Wird beim Rendern ins ausgelieferte Bundle gebacken. Aus unterdrückt die Fetch/XHR-Erhebung komplett, inklusive des Wrappers. An per Default (das Preset Standard schaltet es an).
 
-**PII:** Endpunkt-Pfade werden genau wie die Seiten-URL sanitisiert (Query, Fragment und Matrix-Params gestrippt; ID-artige Segmente auf `:id` templatisiert), und zwar strenger als Seiten-URLs. Die Zähler sind aggregierte Zahlen, und der Ziel-Host ist Site-Metadaten (welche deiner APIs, nicht wer sie aufgerufen hat). Das eine Restrisiko ist ein alphabetisches Pfadsegment wie `/users/jane-doe`, das die Templatisierung übersteht, dieselbe Betreiberpflicht wie bei Seiten-URLs: keine personenbezogenen Daten in Pfade.
+**PII:** Endpunkt-Pfade werden genau wie die Seiten-URL sanitisiert (Query, Fragment und Matrix-Params gestrippt; ID-artige Segmente auf `:id` templatisiert), und zwar strenger als Seiten-URLs. Zusätzlich zu den Seiten-URL-Regeln templatisiert der Collector Fetch/XHR-Pfade serverseitig nach, damit das Aggregat lesbar bleibt: Lange Content-Slugs klappen auf `:slug`, opake Tokens auf `:id`, Soft-Navigation-Dokument-Fetches auf `/:page`, und ein Third-Party-Host behält seine Endpoint-Zeile, verliert aber die Query komplett. Die Zähler sind aggregierte Zahlen, und der Ziel-Host ist Site-Metadaten (welche deiner APIs, nicht wer sie aufgerufen hat). Das eine Restrisiko ist ein alphabetisches Pfadsegment wie `/users/jane-doe`, das die Templatisierung übersteht, dieselbe Betreiberpflicht wie bei Seiten-URLs: keine personenbezogenen Daten in Pfade.
 
 ## Page-Type
 

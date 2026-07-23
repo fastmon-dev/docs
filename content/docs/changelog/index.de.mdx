@@ -17,6 +17,32 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-23" type="changed" area="tracker" title="Fetch/XHR-Endpoints gruppieren enger, Kampagnen-Parameter bleiben draußen">
+
+Der Collector templatisiert die Pfade von Fetch/XHR-Endpoints stärker, damit die Endpoint-Ansicht auch auf Sites lesbar bleibt, deren eigene Seiten von der App gefetcht werden. Lange Content-Slugs klappen zu `:slug` zusammen (aus `/blog/ein-sehr-langer-titel` und seinen tausend Geschwistern wird eine Zeile), Soft-Navigation-Dokument-Fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/` und die anderen Framework-Konventionen) klappen zu `/:page`, weil die Seite ihre URL und ihr Timing ohnehin selbst trägt. Third-Party-Hosts behalten ihre Endpoint-Zeile, verlieren aber die Query (Query-Keys sind ein Routing-Signal, das nur auf deinen eigenen Hosts etwas bedeutet), und ein Request mit acht oder mehr Query-Parametern erscheint als `?:many`. Das läuft serverseitig und räumt daher auch bereits erfasste Daten auf, ganz ohne Tracker-Rollout.
+
+Eine Verhaltensänderung zum Vormerken: **Ad-Attribution-Parameter** (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid` sowie die `utm_*`- und `gad_*`-Familien) werden jetzt aus Endpoint-Pfaden und Seiten-URLs verworfen, selbst bei aktivem [`collect_query_keys`](/de/tracker#collect-query-keys), denn ihr Schlüsselsatz ändert sich mit jedem eingehenden Link und trägt kein Routing-Signal. Wer einen davon explizit in [`collect_query_values_for`](/de/tracker#collect-query-values-for) nennt, behält ihn.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-22" type="changed" area="platform" title="Neu gestaltete Anmeldeseiten">
+
+Login, Registrierung und Passwort-Reset sitzen jetzt auf einer zentrierten Karte über schlichtem Hintergrund, mit einer neuen Serifenschrift für die Überschriften und dem Theme-Umschalter in der Ecke. Das frühere geteilte Layout, das Testimonial-Karussell und die Performance-Risiko-Texte neben dem Formular sind weg.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-21" type="changed" area="platform" title="Offene Registrierung ersetzt die Warteliste">
+
+Für die Anmeldung braucht es keine Wartelisten-Einladung mehr: Die „Zugang erhalten"-Links führen direkt zur Registrierung, und jede Person kann ein Konto anlegen. Eine neu angelegte Organisation wartet auf eine Freigabe, bevor sie Applications hinzufügen kann; bis dahin zeigt die Applications-Seite einen Hinweis „wartet auf Freigabe", während dein Konto und vorhandene Daten unberührt bleiben.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-20" type="changed" area="dashboard" title="Leere Charts sagen, was wirklich fehlt">
+
+Ein Chart ohne Daten zeigte „Keine Daten verfügbar", was eher unseren Speicher beschrieb als deine Site. Besucherbasierte Charts (Seiten, Browser, Geräte, Länder, Referrer, Web Vitals, Fehler) sagen jetzt „Keine Besucher im gewählten Zeitraum", requestbasierte (Cache-Trefferquote, Backend-Zeit, Requests) „Keine Requests im gewählten Zeitraum". Auch die diagonale „Keine Daten"-Schraffur in Trendcharts ist weg: Eine ruhige Phase ist normal, deshalb endet die Linie einfach dort, wo die Daten enden, und setzt wieder ein, wo sie weitergehen, statt schraffiert zu werden, als wäre etwas kaputt.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Applications: ein Tracking-Snippet über eine oder mehrere Sites">
 
 Sites und domainübergreifende Tracker werden durch **Applications** ersetzt. Eine Application ist ein Tracking-Snippet: Ihr gehören der Embed, die zwei Hashes und jede [Tracker-Einstellung](/de/tracker), und sie bedient eine Domain oder zwanzig. Jede Domain bleibt eine eigene **Site** mit eigenem Dashboard und eigenem Traffic; einen „Single vs. Multi"-Modus gibt es damit nicht mehr, nur noch die Anzahl der Sites einer Application. Die neue Applications-Seite gibt jeder App eine Karte mit ihren Sites samt Live-Status, ihren Releases, dem Embed-Snippet und Analytics pro App; Sites adoptierst, verschiebst oder löschst du direkt dort. Eine Domain, die Beacons schickt, ohne registriert zu sein, taucht als **vorgeschlagene Domain** auf, die du mit einem Klick adoptierst; die neue Einstellung **Unbekannte Domains** entscheidet, ob unbekannte Hosts vorgeschlagen (Default), automatisch angelegt oder ignoriert werden. Retention, Besuchersignal und die Zähl-Identität kommen jetzt als Default von der Application und lassen sich pro Site überschreiben. Den **Collector** wählst du beim Anlegen einer Application (fastmon, gleiche Origin oder eigene Domain), denn ein späterer Wechsel hieße, das schon eingebettete Snippet zu tauschen; außerdem kannst du eine Application als Produktion oder Development markieren. Gleichzeitig wurden die Erfassungseinstellungen passend zu ihrer Wirkung umbenannt: `store_session` heißt jetzt `collect_sessions`, `preconsent_level` heißt `session_consent` (`deferred` oder `immediate`), und die Schalter für Fehler, Query und fetch/XHR haben ein `collect_`-Präfix bekommen. Siehe [Applications](/de/concepts/applications), [Sites](/de/concepts/sites) und [Tracker-Einstellungen](/de/tracker).
