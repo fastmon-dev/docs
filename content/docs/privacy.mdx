@@ -54,7 +54,7 @@ Every beacon is tagged at the edge with its traffic class, so crawler and datace
 - **Cloud/hosting provider**, set when the client IP falls in a known datacenter range: one of `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, set when the User-Agent matches a known bot: a name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta`, or `unknown` for a generic-bot heuristic) plus a category such as `search-engine`, `ai-crawler`, `seo`, or `monitoring`.
 
-Same posture as the country code: all three are derived at the edge from the IP and User-Agent before both are destroyed, and only the resulting slug is stored. No byte of the raw IP or User-Agent is kept. The values come from these closed, edge-controlled vocabularies and are sanitized to a short `[a-z0-9_-]` slug, so the field can never become a raw-User-Agent or free-text channel; an empty value means ordinary traffic. They describe the *client's* network and software class, not the person behind it, and exist only for traffic quality: keeping crawler and datacenter noise out of your real-user metrics. Like the country code, this is processed under Art. 6 (1)(f) GDPR (legitimate interest) and involves no access to the visitor's device, so on its own it is not consent-gated.
+No byte of the raw IP or User-Agent is kept: only the slug is stored, and it describes the *client's* class, not the person. Like the country code, it is processed under Art. 6 (1)(f) GDPR (legitimate interest) and touches nothing on the visitor's device, so on its own it is not consent-gated.
 
 ### The edge-derived `stitch` identifier
 
