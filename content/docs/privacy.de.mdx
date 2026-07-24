@@ -54,8 +54,6 @@ Jedes Beacon wird am Edge mit seiner Traffic-Klasse markiert, damit sich Crawler
 - **Cloud-/Hosting-Provider**, gesetzt, wenn die Client-IP in einem bekannten Rechenzentrums-Bereich liegt: einer von `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, gesetzt, wenn der User-Agent zu einem bekannten Bot passt: ein Name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta` oder `unknown` für eine generische Bot-Heuristik) plus eine Kategorie wie `search-engine`, `ai-crawler`, `seo` oder `monitoring`.
 
-Kein Byte der rohen IP oder des rohen User-Agent bleibt: gespeichert wird nur der Slug, und der beschreibt die Klasse des *Clients*, nicht die Person. Wie der Ländercode nach Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) verarbeitet, ohne Zugriff aufs Endgerät des Besuchers, also für sich genommen nicht einwilligungspflichtig.
-
 ### Der am Edge abgeleitete `stitch`-Identifier
 
 Für Unique-Visitor-Zahlen und per-Besucher-Performance-Debugging, ohne dass etwas auf dem Gerät liegt, kann der Edge einen Einweg-Join-Key berechnen, bevor IP und User-Agent zerstört werden:

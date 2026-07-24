@@ -54,8 +54,6 @@ Every beacon is tagged at the edge with its traffic class, so crawler and datace
 - **Cloud/hosting provider**, set when the client IP falls in a known datacenter range: one of `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, set when the User-Agent matches a known bot: a name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta`, or `unknown` for a generic-bot heuristic) plus a category such as `search-engine`, `ai-crawler`, `seo`, or `monitoring`.
 
-No byte of the raw IP or User-Agent is kept: only the slug is stored, and it describes the *client's* class, not the person. Like the country code, it is processed under Art. 6 (1)(f) GDPR (legitimate interest) and touches nothing on the visitor's device, so on its own it is not consent-gated.
-
 ### The edge-derived `stitch` identifier
 
 For unique-visitor counts and per-visitor performance debugging without storing anything on the device, the edge can compute a one-way join key before the IP and User-Agent are destroyed:
