@@ -65,6 +65,7 @@ Use the `partner` plan. Each client is a **partner client**: a sub-organization 
 
 ## Common surprises
 
+- **A new organization is reviewed before it collects.** Creating one asks for the website domain you'll measure, and collection is gated on approval; until then its Applications page shows a review note. A blocked organization's banner names the support address, so a wrong call is always appealable.
 - **The org switcher is just UI.** API requests scope by the URL (`/v1/organizations/{id}/…`), not by whichever tab you've got open.
 - **Members are global fastmon users.** Invite an existing user and the existing account gets reused; no duplicate.
 - **Sites can't move between organizations.** If you genuinely need this, ping support. No self-serve action for it.

@@ -17,6 +17,42 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-07-27" type="changed" area="platform" title="Beim Anlegen einer Organisation zählt jetzt deine Website">
+
+Beim Anlegen einer Organisation fragt fastmon jetzt nach der Domain der Website, die du messen möchtest. Du kannst eine vollständige URL einfügen (`https://www.Example.com/shop`), fastmon reduziert sie auf den Hostnamen (`example.com`). Sie ist das Hauptkriterium, an dem die Freigabe einer Organisation entschieden wird. Die Freigabe steuert weiterhin die Erfassung: Eine neue Organisation zeigt bis zur Freigabe den Hinweis „Wir prüfen deine Organisation", und eine blockierte Organisation sieht ein Banner, das die Erfassung als pausiert ausweist und die Support-Adresse nennt, damit eine Fehlentscheidung immer anfechtbar bleibt. Freigaben und Blockierungen gehen den Eigentümern der Organisation per E-Mail in ihrer Kontosprache zu.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-27" type="fixed" area="platform" title="Anmeldung, E-Mail-Bestätigung und Organisationswechsel">
+
+Eine Reihe von Korrekturen rund um Anmeldung und Konto. Der Bestätigungslink meldet keinen Fehlschlag mehr, nachdem er tatsächlich funktioniert hat: Ein Mail-Client, der den Link vorab lädt, oder ein schnelles Doppeltippen verbrauchte bisher das einmalige Token und ließ dich auf einer Fehlerseite zurück; die Seite bietet jetzt einen Login-Button an, wenn die Adresse bereits bestätigt ist. Wer sich auf Deutsch registriert, bekommt die Bestätigungsmail auf Deutsch statt auf Englisch. Die Anmeldung springt nicht länger in einer Endlosschleife zwischen `/login` und Dashboard und bringt dich zurück auf die Seite, zu der du unterwegs warst. Und eine Organisation auf einer globalen Seite auszuwählen verwirft die Auswahl nicht mehr.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="new" area="dashboard" title="Bots, Rechenzentren und automatisierten Traffic sehen und ausblenden">
+
+Jeder Request trägt jetzt ein Traffic-Urteil: **Mensch**, **Vermutlich Bot** oder **Bot**. *Bot* heißt ein deklarierter oder verifizierter Crawler (ein Bot-User-Agent oder eine IP in einem veröffentlichten Crawler-Bereich); *Vermutlich Bot* heißt eine Rechenzentrums- oder VPN-Adresse oder eine User-Agent-Anomalie ohne Bot-Deklaration (auch Besucher über ein VPN landen hier); *Mensch* ist alles Übrige. Eine Checkbox **Bots ausblenden** reduziert die ganze Ansicht mit einem Klick auf echte Besucher, und ein neuer Chart **Bots & Besucher** teilt den Traffic nach Urteil auf und listet die häufigsten Bots nach Name sowie die Bot-Typen. Neue Filter greifen auf Rechenzentrum bzw. Hosting-Netz, Bot-Name, Bot-Typ und User-Agent-Anomalie. Die Erkennung läuft an unserem Edge aus IP und User-Agent gegen eine kleine feste Liste bekannter Provider und Crawler, und keine rohe IP wird gespeichert (siehe [Traffic-Klassen-Labels](/de/privacy#traffic-class-labels)).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="dashboard" title="Traffic & Besucher, neu gebaute Top-Seiten und eine klickbare Karte">
+
+Das Dashboard fasst Traffic-Trend, Top-Seiten, Geräte und Browser sowie die neue Bot-Aufschlüsselung zu einem Bereich **Traffic & Besucher** zusammen, wobei Traffic-Trend und Top-Seiten sich eine Zeile teilen, sodass die Seitenliste nicht mehr alles dominiert. **Top-Seiten** ist als kompakte Tabelle neu gebaut (Seite, Aufrufe, LCP) mit einem Traffic-Anteilsbalken pro Zeile und nach Status eingefärbtem LCP, und sie zeigt jetzt Query-Strings: `/?q=schuhe` und `/` sind getrennte Zeilen, statt zu einem verwirrenden Haufen zu verschmelzen. Auf der Weltkarte lässt sich die Metrik zwischen LCP, FCP und TTFB (p75) umschalten, und ein Klick auf ein Land filtert das ganze Dashboard darauf (erneuter Klick hebt es auf).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="dashboard" title="Ein frischer Look: neues Logo, neue Seitenleiste, neues Styling">
+
+Das Dashboard hat eine optische Auffrischung. Die Seitenleiste trägt das neue fastmon-Logo, fährt beim Ein- und Ausklappen seitlich ein statt zu faden und klappt zu einer Icon-Leiste mit Popovers und Tooltips zusammen. Buttons sind jetzt Pillen, Karten und Eingabefelder flacher mit leichteren Rändern und runderen Ecken, der Zeitraum-Picker und die übrigen Chart-Steuerungen teilen sich einen segmentierten Stil, und Überschriften nutzen eine neue Serifen-Displayschrift. Die helle und die dunkle Palette wurden für besseren Kontrast nachjustiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="platform" title="Marketing- und Rechtsseiten sind auf fastmon.eu umgezogen">
+
+Die App ist jetzt nur noch die App. Die Marketing-Startseite ist aus ihr verschwunden: Abgemeldete Besucher landen direkt beim Login, angemeldete beim Dashboard. Die Seiten für AGB, Datenschutz, Impressum und AVV liegen jetzt auf der Corporate-Site, und die alten In-App-Links `/terms`, `/privacy`, `/legal-notice` und `/avv` leiten dorthin weiter, damit vorhandene Lesezeichen weiter funktionieren. Die App selbst ist jetzt als `noindex` markiert.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-23" type="changed" area="tracker" title="Fetch/XHR-Endpoints gruppieren enger, Kampagnen-Parameter bleiben draußen">
 
 Der Collector templatisiert die Pfade von Fetch/XHR-Endpoints stärker, damit die Endpoint-Ansicht auch auf Sites lesbar bleibt, deren eigene Seiten von der App gefetcht werden. Lange Content-Slugs klappen zu `:slug` zusammen (aus `/blog/ein-sehr-langer-titel` und seinen tausend Geschwistern wird eine Zeile), Soft-Navigation-Dokument-Fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/` und die anderen Framework-Konventionen) klappen zu `/:page`, weil die Seite ihre URL und ihr Timing ohnehin selbst trägt. Third-Party-Hosts behalten ihre Endpoint-Zeile, verlieren aber die Query (Query-Keys sind ein Routing-Signal, das nur auf deinen eigenen Hosts etwas bedeutet), und ein Request mit acht oder mehr Query-Parametern erscheint als `?:many`. Das läuft serverseitig und räumt daher auch bereits erfasste Daten auf, ganz ohne Tracker-Rollout.

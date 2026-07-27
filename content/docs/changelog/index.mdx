@@ -12,6 +12,42 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-07-27" type="changed" area="platform" title="Creating an organization now asks for your website">
+
+Creating an organization now asks for the domain of the website you want to measure. You can paste a full URL (`https://www.Example.com/shop`) and fastmon reduces it to the hostname (`example.com`). It's the main thing an organization's approval is decided on. Approval still gates collection: a new organization shows a "we're reviewing your organization" note until it's approved, and an organization that gets blocked sees a banner that says collection is paused and names the support address, so a wrong call is always appealable. Approvals and blocks are emailed to the organization's owners in their account language.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-27" type="fixed" area="platform" title="Sign-in, email verification, and organization switching">
+
+A batch of sign-in and account fixes. The email verification link no longer reports a failure after it actually worked: a mail client that prefetches the link, or a quick double-tap, used to spend the single-use token and leave you on an error, and the page now offers a login button when the address is already confirmed. Registering in German sends the verification email in German instead of English. Signing in no longer bounces between `/login` and the dashboard in a redirect loop, and it returns you to the page you were headed for. And picking an organization while on a global page no longer drops the selection.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="new" area="dashboard" title="See and hide bots, datacenters, and automated traffic">
+
+Every request now carries a traffic verdict: **Human**, **Likely bot**, or **Bot**. *Bot* is a declared or verified crawler (a bot user-agent, or an IP in a published crawler range); *Likely bot* is a datacenter or VPN address, or a user-agent anomaly, with no bot declaration (so a visitor on a VPN lands here too); *Human* is everything else. A **Hide bots** checkbox drops the whole view to real visitors in one click, and a new **Bots & visitors** chart splits traffic by verdict and lists the top bots by name and the bot types. New filters cover the datacenter or hosting network, the bot name, the bot type, and the user-agent anomaly. Detection runs at our edge from the IP and user-agent against a small fixed list of known providers and crawlers, and no raw IP is stored (see [Traffic-class labels](/en/privacy#traffic-class-labels)).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="dashboard" title="Traffic & Visitors, a rebuilt Top Pages, and a clickable map">
+
+The dashboard groups the traffic trend, top pages, devices and browsers, and the new bots breakdown into one **Traffic & Visitors** area, with the traffic trend and Top Pages sharing a row so the page list no longer dominates. **Top Pages** is rebuilt as a compact table (page, views, LCP) with a per-row traffic-share bar and LCP colored by status, and it now shows query strings: `/?q=shoes` and `/` are separate rows instead of collapsing into one confusing pile. On the world map you can switch the metric between LCP, FCP, and TTFB (p75), and clicking a country filters the whole dashboard to it (click again to clear).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="dashboard" title="A refreshed look: new logo, sidebar, and styling">
+
+The dashboard has a visual refresh. The sidebar carries the new fastmon logo, slides in and out instead of fading, and collapses to an icon rail with popovers and tooltips. Buttons are now pills, cards and inputs are flatter with lighter borders and rounder corners, the date-range picker and the other chart controls share one segmented style, and headings use a new serif display face. The light and dark palettes were retuned for contrast.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-07-26" type="changed" area="platform" title="Marketing and legal pages moved to fastmon.eu">
+
+The app is now only the app. The marketing landing page is gone from it: signed-out visitors go straight to login, signed-in ones to the dashboard. The Terms, Privacy, Legal notice/Impressum, and DPA pages now live on the corporate site, and the old in-app `/terms`, `/privacy`, `/legal-notice`, and `/avv` links redirect there, so existing bookmarks keep working. The app itself is now marked `noindex`.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-23" type="changed" area="tracker" title="Fetch/XHR endpoints group tighter, and campaign parameters stay out">
 
 The collector templates fetch/XHR endpoint paths more aggressively, so the per-endpoint view stays readable on sites whose own pages get fetched by the app. Long content slugs collapse to `:slug` (a `/blog/a-very-long-post-title` and its thousand siblings become one row), soft-navigation document fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/`, and the other framework conventions) collapse to `/:page`, since the page already carries its own URL and timing. Third-party hosts keep their endpoint row but lose the query string (query keys are a routing signal that only means something on your own hosts), and a request with eight or more query parameters shows as `?:many`. This runs server-side, so it also cleans up data you already collected, with no tracker rollout.
