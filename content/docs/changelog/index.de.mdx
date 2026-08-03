@@ -17,6 +17,12 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-08-02" type="changed" area="dashboard" title="UI-Optimierungen, vor allem mobil und bei den Filtern">
+
+Eine Runde Interface-Arbeit über die angemeldete App, mit Fokus auf Mobile und Filtern. Die Dashboard-Kopfzeile ist in zwei Hälften neu gebaut, links wo du bist, rechts was du filterst, und Zeitraum, Perzentil, Gerät und Filter falten sich zu einer Scope-Zusammenfassung (`Letzte 7 Tage · p75 · 📱 · Land: DE +4`) mit den vollen Steuerungen im Popover dahinter; aktive Filter sortieren jetzt nach Wichtigkeit, sodass dieselbe Auswahl immer gleich aussieht. Am Handy wird die Sidebar zu einem Off-Canvas-Drawer, der den Inhalt zur Seite schiebt statt ihn zu verdecken, Dialoge bleiben im Bildschirm (lange Werte kürzen sich, statt die Buttons herauszuschieben), und Überschriften und Abstände sind über die Seiten hinweg einheitlich. Der Filter-Editor bekommt zudem drei Korrekturen: Beim Bearbeiten eines einwertigen Filters steht sein aktueller Wert da, die Wertezahlen berücksichtigen die bereits gesetzten Filter, und der Schalter „Bots ausblenden" taucht nicht mehr auf, während du einen unbeteiligten Filter bearbeitest. Und die Links für Dokumentation, Feedback und Support im Sidebar-Footer werden zu einem Hilfe-Button.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-07-27" type="fixed" area="platform" title="Anmeldung, E-Mail-Bestätigung und Organisationswechsel">
 
 Eine Reihe von Korrekturen rund um Anmeldung und Konto. Der Bestätigungslink meldet keinen Fehlschlag mehr, nachdem er tatsächlich funktioniert hat: Ein Mail-Client, der den Link vorab lädt, oder ein schnelles Doppeltippen verbrauchte bisher das einmalige Token und ließ dich auf einer Fehlerseite zurück; die Seite bietet jetzt einen Login-Button an, wenn die Adresse bereits bestätigt ist. Wer sich auf Deutsch registriert, bekommt die Bestätigungsmail auf Deutsch statt auf Englisch. Die Anmeldung springt nicht länger in einer Endlosschleife zwischen `/login` und Dashboard und bringt dich zurück auf die Seite, zu der du unterwegs warst. Und eine Organisation auf einer globalen Seite auszuwählen verwirft die Auswahl nicht mehr.
