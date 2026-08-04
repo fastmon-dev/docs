@@ -12,6 +12,36 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="The Explorer table sorts on the server">
+
+Clicking a column header now re-queries with that order, and the backend sorts before it truncates to the row limit, so "the ten worst TTFB pages" really are the worst across all matching traffic. Previously a header click only reordered the rows the browser had already loaded, which meant "the worst among the busiest". The sort travels in the URL, so a shared link opens in the same order. Nothing sorts implicitly anymore: selecting a metric adds a column and nothing else, and without a chosen sort the table states the backend's default order instead of pretending one. The raw pageview list sorts server-side too, by time or by any row column, with empty values sinking to the end in either direction; its visible columns are part of the link as well (`?cols=`), so a bookmark reopens the table exactly as it was. The metric columns also moved out of the buried "Columns" menu up to the query panel, next to aggregation and grouping. On the API, `/analytics/beacons` accepts `order_by` as a `{field, direction}` object over any scalar row field.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Server-Timing labels: keys that carry a value instead of a duration">
+
+An origin can send a Server-Timing key as a label rather than a timing, for example `pop;desc="DE-1331"` for the CDN node that served the request. Those keys were stored but invisible, because everything ranked by milliseconds. The Server-Timing page now lists them below the timed keys with the mix of their values, a pageview's drawer shows them as plain key/value fields, the Explorer can show any custom key as a column and sort and filter on it, and the pageview list can be scoped to a key or one of its values (`/analytics/beacons` gains a `server_timing` filter for this). The common PoP keys (`pop`, `fastly-pop`, `cdn-pop`, `x-qc-pop`) are no longer dropped at ingest: they name the CDN node, server infrastructure rather than the visitor (`asn`, `country`, and `ipv6` stay blocked). Also fixed along the way: expanding the trend of a custom key whose name contains a hyphen or a dot (`wp-total`, `cdn-upstream-fbl`) returned an error.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Copy a table as Markdown">
+
+The aggregated Explorer table and the raw pageview list each get a copy button that puts the table on the clipboard as Markdown, exactly as shown: the filtered rows in the visible sort order, with the formatted display values and the chosen columns. Handy for a ticket, a chat, or a prompt. Values containing pipes or line breaks are escaped, so a copied row cannot break the Markdown grid.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="fixed" area="dashboard" title="Duplicate rows, overflowing card headers, and silent zero tooltips">
+
+Three small fixes. The raw pageview table could duplicate or drop a row on sites that store no session IDs, because two pageviews in the same millisecond shared a row key (it keys on the pageview id now). A card header carrying controls could push its own buttons past the card's edge. And a chart tooltip showed nothing for a value of exactly 0.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-03" type="changed" area="dashboard" title="The Explorer filters like every other page">
+
+The Explorer had grown a filter apparatus of its own: its own Filter button, a fold-out strip with two columns and two add buttons, right next to the standard filter menu that does the same job everywhere else. The standard controls take over now: query filters live in the scope menu in the header, presets share one menu with your saved queries, and the client-side result filters sit above the table they narrow down. Refresh and live mode move from the far end of the header into the time-range control, since they act on that same window. And the filter count now counts every kind of filter: an exclude, a metric range like `lcp >= 2.5s`, or the bot switch used to be applied while the button still read as nothing filtered.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-02" type="changed" area="dashboard" title="UI optimizations, especially on mobile and around filters">
 
 A round of interface work across the signed-in app, focused on mobile and on filtering. The dashboard header is rebuilt into two halves, where you are on the left and what you're filtering on the right, and the time range, percentile, device, and filters fold into one scope summary (`Last 7 days · p75 · 📱 · Country: DE +4`) with the full controls in a popover behind it; active filters now sort by importance, so the same selection always looks the same. On a phone the sidebar becomes an off-canvas drawer that slides the content aside instead of covering it, dialogs stay within the screen (long values truncate instead of pushing the buttons off-screen), and headings and spacing are consistent across pages. The filter editor also gets three fixes: editing a single-valued filter shows its current value, the value counts respect the filters you already applied, and the "Hide bots" switch no longer appears while you edit an unrelated filter. And the sidebar's documentation, feedback, and support links collapse into one Help button.

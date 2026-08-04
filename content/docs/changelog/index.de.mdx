@@ -17,6 +17,36 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Die Explorer-Tabelle sortiert auf dem Server">
+
+Ein Klick auf einen Spaltenkopf fragt jetzt mit dieser Sortierung neu an, und das Backend sortiert, bevor es auf das Zeilenlimit kürzt. „Die zehn schlechtesten TTFB-Seiten" sind damit wirklich die schlechtesten im gesamten passenden Traffic; bisher ordnete der Klick nur die schon geladenen Zeilen um, also „die schlechtesten unter den meistbesuchten". Die Sortierung wandert in die URL, ein geteilter Link öffnet also dieselbe Reihenfolge. Implizit sortiert nichts mehr: Eine Metrik auszuwählen fügt eine Spalte hinzu und sonst nichts, und ohne gewählte Sortierung benennt die Tabelle die Standard-Reihenfolge des Backends, statt eine vorzutäuschen. Auch die rohe Pageview-Liste sortiert serverseitig, nach Zeit oder jeder Zeilenspalte, leere Werte sinken in beide Richtungen ans Ende; ihre sichtbaren Spalten stehen ebenfalls im Link (`?cols=`), ein Lesezeichen öffnet die Tabelle also genau so, wie sie war. Die Metrik-Spalten sind außerdem aus dem versteckten „Spalten"-Menü hinauf ins Abfrage-Panel gewandert, neben Aggregation und Gruppierung. Auf der API nimmt `/analytics/beacons` `order_by` jetzt als `{field, direction}`-Objekt über jedes skalare Zeilenfeld an.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Server-Timing-Labels: Keys mit Wert statt Dauer">
+
+Ein Origin kann einen Server-Timing-Key als Label statt als Timing schicken, etwa `pop;desc="DE-1331"` für den CDN-Knoten, der die Anfrage bedient hat. Solche Keys wurden gespeichert, blieben aber unsichtbar, weil alles nach Millisekunden rankte. Die Server-Timing-Seite listet sie jetzt unter den gemessenen Keys samt der Verteilung ihrer Werte, im Pageview-Drawer stehen sie als einfache Schlüssel/Wert-Felder, der Explorer zeigt jeden Custom-Key als Spalte und sortiert und filtert darauf, und die Pageview-Liste lässt sich auf einen Key oder einen seiner Werte eingrenzen (`/analytics/beacons` bekommt dafür einen `server_timing`-Filter). Die gängigen PoP-Keys (`pop`, `fastly-pop`, `cdn-pop`, `x-qc-pop`) werden beim Ingest nicht mehr verworfen: Sie benennen den CDN-Knoten, also Server-Infrastruktur, nicht den Besucher (`asn`, `country` und `ipv6` bleiben gesperrt). Nebenbei behoben: Den Trend eines Custom-Keys mit Bindestrich oder Punkt im Namen (`wp-total`, `cdn-upstream-fbl`) aufzuklappen führte zu einem Fehler.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Tabellen als Markdown kopieren">
+
+Die aggregierte Explorer-Tabelle und die rohe Pageview-Liste bekommen je einen Kopieren-Button, der die Tabelle als Markdown in die Zwischenablage legt, genau wie angezeigt: die gefilterten Zeilen in sichtbarer Sortierung, mit den formatierten Anzeigewerten und den gewählten Spalten. Praktisch für ein Ticket, einen Chat oder einen Prompt. Werte mit Pipes oder Zeilenumbrüchen werden escaped, eine kopierte Zeile kann das Markdown-Raster also nicht zerbrechen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-04" type="fixed" area="dashboard" title="Doppelte Zeilen, übergelaufene Kartenköpfe und stumme Null-Tooltips">
+
+Drei kleine Korrekturen. Die rohe Pageview-Tabelle konnte auf Sites ohne gespeicherte Session-IDs eine Zeile doppeln oder verschlucken, weil sich zwei Pageviews in derselben Millisekunde einen Zeilenschlüssel teilten (jetzt zählt die Pageview-ID). Ein Kartenkopf mit Bedienelementen konnte seine eigenen Buttons über den Kartenrand hinausschieben. Und ein Chart-Tooltip zeigte für den Wert 0 gar nichts an.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-03" type="changed" area="dashboard" title="Der Explorer filtert wie jede andere Seite">
+
+Der Explorer hatte sich einen eigenen Filterapparat zugelegt: einen eigenen Filter-Button, eine ausklappbare Leiste mit zwei Spalten und zwei Hinzufügen-Buttons, direkt neben dem Standard-Filtermenü, das überall sonst denselben Job macht. Jetzt übernehmen die Standard-Steuerungen: Query-Filter liegen im Scope-Menü der Kopfzeile, Presets teilen sich ein Menü mit deinen gespeicherten Abfragen, und die clientseitigen Ergebnis-Filter sitzen über der Tabelle, die sie eingrenzen. Aktualisieren und Live-Modus wandern vom Ende der Kopfzeile in die Zeitraum-Steuerung, denn sie wirken auf genau dieses Fenster. Und der Filterzähler zählt jetzt jede Art von Filter: Ein Ausschluss, ein Metrik-Bereich wie `lcp >= 2.5s` oder der Bot-Schalter galten bisher als „nichts gefiltert".
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-02" type="changed" area="dashboard" title="UI-Optimierungen, vor allem mobil und bei den Filtern">
 
 Eine Runde Interface-Arbeit über die angemeldete App, mit Fokus auf Mobile und Filtern. Die Dashboard-Kopfzeile ist in zwei Hälften neu gebaut, links wo du bist, rechts was du filterst, und Zeitraum, Perzentil, Gerät und Filter falten sich zu einer Scope-Zusammenfassung (`Letzte 7 Tage · p75 · 📱 · Land: DE +4`) mit den vollen Steuerungen im Popover dahinter; aktive Filter sortieren jetzt nach Wichtigkeit, sodass dieselbe Auswahl immer gleich aussieht. Am Handy wird die Sidebar zu einem Off-Canvas-Drawer, der den Inhalt zur Seite schiebt statt ihn zu verdecken, Dialoge bleiben im Bildschirm (lange Werte kürzen sich, statt die Buttons herauszuschieben), und Überschriften und Abstände sind über die Seiten hinweg einheitlich. Der Filter-Editor bekommt zudem drei Korrekturen: Beim Bearbeiten eines einwertigen Filters steht sein aktueller Wert da, die Wertezahlen berücksichtigen die bereits gesetzten Filter, und der Schalter „Bots ausblenden" taucht nicht mehr auf, während du einen unbeteiligten Filter bearbeitest. Und die Links für Dokumentation, Feedback und Support im Sidebar-Footer werden zu einem Hilfe-Button.
