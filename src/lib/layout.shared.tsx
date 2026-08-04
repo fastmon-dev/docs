@@ -10,8 +10,12 @@ export function baseOptions(_locale: string): BaseLayoutProps {
       title: (
         <span className="inline-flex items-center gap-2 font-semibold">
           {/* Plain <img> avoids the next/image aspect-ratio warning that
-              fires when className overrides height/width. */}
+              fires when className overrides height/width. next/image would
+              not optimize these SVGs anyway and needs a custom loader under
+              static export, hence the lint suppression. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-dark.svg" alt="" className="h-5 w-auto block dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-light.svg" alt="" className="h-5 w-auto hidden dark:block" />
           <span style={{ fontFamily: "var(--font-playfair)" }}>{appName}</span>
         </span>
