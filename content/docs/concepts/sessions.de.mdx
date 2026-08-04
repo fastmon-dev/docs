@@ -5,7 +5,7 @@ description: Wie fastmon Besucher zählt, ohne sie zu identifizieren, und was ei
 
 Fastmon zählt **Besucher**, keine Personen. Ein Besucher ist eine Zählung entlang einer **Identitätsachse**, und davon gibt es zwei:
 
-- **`stitch`** (der Standard): ein am Edge abgeleiteter Identifier, der vorhanden ist, wenn [`store_stitch`](/de/tracker#store-stitch) an ist (die Presets `Standard` und `Full`). Er ist von begrenzter Lebensdauer und forward-secret (siehe [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier)), also zählt das Dashboard damit eindeutige Besucher ohne Cookie und ohne gespeicherte personenbezogene Daten. Unter dem Default-Preset `Standard` ist er an, eindeutige Besucher werden also von Anfang an gezählt; das Preset `Minimal` ist das Opt-down, das keinen Identifier speichert, dann gibt es keine Besucherzählung.
+- **`stitch`** (der Standard): ein am Edge abgeleiteter Identifier, der vorhanden ist, wenn [`store_stitch`](/de/tracker#store-stitch) an ist (die Presets `Standard` und `Full`). Er ist von begrenzter Lebensdauer und forward-secret (siehe [Privacy](/de/privacy#der-am-edge-abgeleitete-stitch-identifier)), also zählt das Dashboard damit eindeutige Besucher ohne Cookie und ohne dass etwas auf dem Gerät liegt. Unter dem Default-Preset `Standard` ist er an, eindeutige Besucher werden also von Anfang an gezählt; das Preset `Minimal` ist das Opt-down, das keinen Identifier speichert, dann gibt es keine Besucherzählung.
 - **`session`**: die clientseitig vergebene `session_id` (`sid` auf der Leitung), nur vorhanden, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist (das Preset `Full`, oder nachdem dein CMP `grantConsent()` aufruft). Sie gruppiert einen kurzen Schub Pageviews desselben Browsers zu einem **Besuch** mit einer 30-Minuten-Grenze, auf der die besuchsbezogenen Views aufbauen.
 
 Wonach das Dashboard standardmäßig zählt, legt die Site-Einstellung **`count_visitors_by`** fest (Standard `stitch`). Das ist eine Reporting-Entscheidung, getrennt davon, was die Site erfasst: Erfasst eine Site die gewählte Identität nicht, fällt die Zählung auf das zurück, was sie erfasst, und auf nichts, wenn sie keine von beiden erfasst.
@@ -91,5 +91,5 @@ Die Analytics-API bietet zwei Endpunkte:
 ## Verwandt
 
 - [Tracker-Einstellungen](/de/tracker): was der Beacon pro Pageview erfasst und welche Identitäten jede Einstellung erzeugt.
-- [Privacy](/de/privacy): wie der `stitch`-Identifier abgeleitet wird und warum aus ihm keine umkehrbaren personenbezogenen Daten werden.
+- [Privacy](/de/privacy): wie der `stitch`-Identifier abgeleitet wird und woher seine Datenschutz-Garantie tatsächlich kommt.
 - [Analytics-API](/en/api/analytics/listAnalyticsVisitors): Besucher programmatisch abfragen.
