@@ -183,7 +183,9 @@ in the dashboard, no config file.
 
 1. **Add fastmon as an origin.** Under **Backends** in your organization,
    click **Origin hinzufügen** and fill in: **Name** `fastmon`,
-   **Protokoll** `https`, **Adresse** `fastmon.site`, **Port** `443`.
+   **Protokoll** `https`, **Adresse** `fastmon.site`, **Port** `443` and,
+   importantly, **Hostname** `fastmon.site`. Without the hostname Smoxy
+   forwards your zone's own Host header and fastmon rejects the request.
 2. **Route the two prefixes to it.** Under **Regeln**, create a
    *Conditional Rule* whose condition is **URI** **Entspricht**
    `^/(s|c)/`, then open the rule's **Einstellungen** tab and pick the

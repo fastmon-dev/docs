@@ -194,7 +194,9 @@ Schritte im Dashboard, ganz ohne Config-Datei.
 1. **fastmon als Origin anlegen.** Unter **Backends** in deiner
    Organisation auf **Origin hinzufügen** klicken und ausfüllen:
    **Name** `fastmon`, **Protokoll** `https`, **Adresse** `fastmon.site`,
-   **Port** `443`.
+   **Port** `443` und, ganz wichtig, **Hostname** `fastmon.site`. Ohne
+   den Hostname reicht Smoxy den Host-Header deiner Zone durch und
+   fastmon lehnt die Anfrage ab.
 2. **Die beiden Präfixe dorthin routen.** Unter **Regeln** eine
    *Conditional Rule* anlegen, deren Bedingung **URI** **Entspricht**
    `^/(s|c)/` lautet, dann im Tab **Einstellungen** der Regel unter
