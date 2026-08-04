@@ -24,7 +24,7 @@ Diese Regeln gelten unabhängig davon, wie die Site konfiguriert ist:
 
 fastmon setzt **überhaupt keine Cookies**, in keiner Konfiguration. Das Einzige, was der Tracker auf das Gerät des Besuchers schreiben kann, ist ein einzelner `sessionStorage`-Eintrag (`_fms`), die Session-ID, und das nur, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist. Per Default schreibt er nichts: das Standard-Preset, mit dem neue Sites starten, speichert keine Session-ID, also keine Cookies, kein `localStorage`, kein `sessionStorage`, kein IndexedDB, keine Cache API.
 
-Speicherfrei bezieht sich darauf, was auf dem Gerät liegt, nicht darauf, ob eine Einwilligung nötig ist: das Auslesen der Performance-APIs ist unabhängig davon einwilligungsrelevant. Siehe [Consent und TDDDG](#consent-and-the-tdddg).
+Speicherfrei bezieht sich darauf, was auf dem Gerät liegt. Das Auslesen der Performance-APIs ist nach unserer Einschätzung kein Zugriff auf gespeicherte Informationen im Sinne des TDDDG, weil die Werte erst zur Laufzeit entstehen; eine strengere Lesart sieht das anders. Siehe [Consent und TDDDG](#consent-and-the-tdddg).
 
 Wenn `collect_sessions` an ist, entscheidet der Schalter [`session_consent`](/de/tracker#session-consent), ob die Session-ID beim Pageload geschrieben oder aufgeschoben wird, bis dein CMP Consent erteilt. Die ID liegt im `sessionStorage` und verschwindet beim Schließen des Tabs. Es gibt nirgends im Design einen persistenten Identifier oder ein seitenübergreifendes Cookie.
 
@@ -68,7 +68,7 @@ abgeschnitten auf 128 Bit (32 Hex-Zeichen auf dem Wire). Er wird gespeichert, wa
 - **Verknüpfbarkeit gedeckelt, höchstens ~24 h.** Bei jeder Salt-Rotation bekommt derselbe Besucher einen neuen `stitch`-Wert. Cross-Pageview-Verknüpfung kann nicht über ein Salt-Fenster hinaus anwachsen.
 - **Pro Domain, nie Cross-Site.** Sowohl `collector_hash` als auch die Seiten-`domain` stecken im HMAC-Input, also liefert dieselbe (IP, UA) auf jeder Domain einen anderen `stitch`, auch über die Domains hinweg, die eine einzelne [Application](/de/concepts/applications) bedient. Nichts verknüpft einen Besucher über Domains oder Sites hinweg; die „keine Cross-Site-Identifier"-Zeile oben gilt unverändert.
 
-Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Besucher-Identifier und damit als personenbezogenes Datum zu behandeln. Rechtsgrundlage ist dann die Einwilligung, nicht eine Interessenabwägung nach Art. 6 Abs. 1 lit. f DSGVO: für ein personenbezogenes Tracking reicht eine Abwägung nicht aus, und ohne Personenbezug greift die DSGVO gar nicht, dann braucht es auch keine. Weil er unter dem Default-Preset Standard an ist, benenne ihn in deiner Datenschutzerklärung. Wenn du lieber gar keinen Besucher-Identifier speicherst, hält `store_stitch` aus (das Preset Minimal) die Zeile echt anonym.
+Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung. Weil er unter dem Default-Preset Standard an ist, benenne ihn in deiner Datenschutzerklärung. Wenn du lieber gar keinen Besucher-Identifier speicherst, hält `store_stitch` aus (das Preset Minimal) die Zeile echt anonym.
 
 ### Identifier abschalten, oder aus lassen
 
@@ -131,7 +131,7 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
 
 ## Was das für dich heißt
 
-- **Consent ist die Entscheidung des Betreibers, egal wie eingestellt.** Zwei Fragen, getrennt zu prüfen: das Auslesen der Performance-APIs ist nach § 25 Abs. 1 TDDDG in jeder Konfiguration einwilligungsrelevant, unabhängig von deinem Einsatzszenario, also schaltest du den Beacon hinter dein CMP. Vom Einsatzszenario hängt die zweite Frage ab, nämlich ob die gespeicherten Felder personenbezogene Daten im Sinne der DSGVO sind (siehe [Consent und TDDDG](#consent-and-the-tdddg)).
+- **Zwei Fragen, getrennt zu prüfen.** Nach § 25 TDDDG hängt es am Preset: Minimal und Standard schreiben nichts auf das Gerät, Full schreibt eine Session-ID und braucht dafür eine Einwilligung. Nach DSGVO ist die Rechtsgrundlage die Interessenabwägung nach Art. 6 Abs. 1 lit. f, weil über den HTTP-Header eine IP-Adresse im Spiel ist. Die Bewertung für deinen Einsatz bleibt deine (siehe [Consent und TDDDG](#consent-and-the-tdddg)).
 - **Deine Daten verlassen die EU nie.** Es gibt gar keinen US-Transfer, über den man nachdenken müsste.
 - **Deinem Team kannst du eine Ein-Seiter-Antwort geben**: Link auf diese Seite plus unseren AVV, fertig.
 - **Explizites Opt-In vor jeder Session-Verknüpfung?** Schalte [`collect_sessions`](/de/tracker#collect-sessions) an und lass [`session_consent`](/de/tracker#session-consent) auf `off`, sodass die Session-ID erst geschrieben wird, nachdem dein CMP `grantConsent()` aufruft.

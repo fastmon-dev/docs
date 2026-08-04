@@ -24,7 +24,7 @@ These rules hold regardless of how the site is configured:
 
 fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`collect_sessions`](/en/tracker#collect-sessions) is on. By default it writes nothing: the Standard preset new sites start on stores no session id, so no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
 
-Storage-free is about what the beacon keeps on the device, not about whether consent applies: reading the browser's performance APIs is consent-relevant regardless. See [Consent and the TDDDG](#consent-and-the-tdddg).
+Storage-free is about what the beacon keeps on the device. Reading the browser's performance APIs is, in our assessment, not access to stored information under the TDDDG, because the values only come into being at runtime; a stricter reading sees it differently. See [Consent and the TDDDG](#consent-and-the-tdddg).
 
 When `collect_sessions` is on, whether the session id is written on page load or deferred until your CMP grants consent is the [`session_consent`](/en/tracker#session-consent) switch. The id lives in `sessionStorage` and is gone when the tab closes. There is no persistent identifier and no cross-page cookie anywhere in the design.
 
@@ -68,7 +68,7 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
 - **Per-domain, never cross-site.** Both `collector_hash` and the page `domain` are in the HMAC input, so the same (IP, UA) yields a different `stitch` on every domain, including across the domains served by a single [application](/en/concepts/applications). Nothing links a visitor across domains or across sites; the "no cross-site identifier" row above is unchanged.
 
-Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and is therefore to be treated as personal data. The legal basis is then consent, not a legitimate-interest assessment under Art. 6 (1)(f) GDPR: a balancing test does not carry personal tracking, and without a personal reference the GDPR does not apply, so none is needed. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
+Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
 
 ### Turning identifiers off, or leaving them off
 
@@ -131,7 +131,7 @@ The tracker enforces the wire shape. Two things sit on your side of the line:
 
 ## What this means for you
 
-- **Consent is the operator's call, whatever the settings.** Two questions, assessed separately: reading the browser's performance APIs is consent-relevant under § 25 (1) TDDDG in every configuration, independently of your deployment, so gate the beacon behind your CMP. What does depend on your deployment is the second question, whether the stored fields are personal data under the GDPR (see [Consent and the TDDDG](#consent-and-the-tdddg)).
+- **Two questions, assessed separately.** Under § 25 TDDDG it turns on the preset: Minimal and Standard write nothing to the device, Full writes a session id and needs consent for it. Under the GDPR the legal basis is the legitimate-interest balance in Art. 6 (1)(f), because an IP address is involved via the HTTP header. The assessment for your deployment stays yours (see [Consent and the TDDDG](#consent-and-the-tdddg)).
 - **Your data never leaves the EU.** No US transfer to reason about in the first place.
 - **You can hand your team a one-page answer**: point them at this page and our DPA, done.
 - **Want explicit opt-in before any session linkage?** Turn on [`collect_sessions`](/en/tracker#collect-sessions) with [`session_consent`](/en/tracker#session-consent) left at `off`, so the session id is written only after your CMP calls `grantConsent()`.
