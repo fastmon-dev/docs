@@ -16,7 +16,6 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" \"scripts/**/*.{mjs,ts}\""
   },
   "dependencies": {
-    "@orama/orama": "^3.1.18",
     "fumadocs-core": "16.14.0",
     "fumadocs-mdx": "15.2.1",
     "fumadocs-openapi": "^11.2.2",
@@ -26,7 +25,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "shiki": "^4.4.1",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zbsearch": "^3.3.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
