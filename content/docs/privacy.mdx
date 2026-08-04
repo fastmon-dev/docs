@@ -33,6 +33,7 @@ When `collect_sessions` is on, whether the session id is written on page load or
 Just enough to compute Web Vitals and per-page performance breakdowns. The exact field-by-field list is in [The RUM Beacon](/en/concepts/beacon); the categories:
 
 - **Page URL**: origin + pathname, plus query-parameter names when [`collect_query_keys`](/en/tracker#collect-query-keys) is on (the default Standard preset). The hash fragment and query values are dropped at the tracker; a value is kept only for keys you allow-list ([`collect_query_values_for`](/en/tracker#collect-query-values-for)).
+- **Referrer**: sanitized at the tracker to origin + pathname (query and hash dropped), then classified server-side into a bucketed source and medium. The raw value is discarded before any logging path and never persists, in any mode.
 - **Web Vitals**: LCP, INP, CLS, FCP, TTFB, and related timings.
 - **Navigation timing**: nav type, TTFB, page-load timing.
 - **Resource timing**: per-category byte sizes and counts (script, css, img, font, other).
@@ -136,7 +137,7 @@ The tracker enforces the wire shape. Two things sit on your side of the line:
 - **Two questions, assessed separately.** Under § 25 TDDDG it turns on the preset: Minimal and Standard write nothing to the device, Full writes a session id and needs consent for it. Under the GDPR the legal basis is the legitimate-interest balance in Art. 6 (1)(f), because an IP address is involved via the HTTP header. The assessment for your deployment stays yours (see [Consent and the TDDDG](#consent-and-the-tdddg)).
 - **Your data never leaves the EU.** No US transfer to reason about in the first place.
 - **You can hand your team a one-page answer**: point them at this page and our DPA, done.
-- **Want explicit opt-in before any session linkage?** Turn on [`collect_sessions`](/en/tracker#collect-sessions) with [`session_consent`](/en/tracker#session-consent) left at `off`, so the session id is written only after your CMP calls `grantConsent()`.
+- **Want explicit opt-in before any session linkage?** Turn on [`collect_sessions`](/en/tracker#collect-sessions) with [`session_consent`](/en/tracker#session-consent) left at `deferred`, so the session id is written only after your CMP calls `grantConsent()`.
 
 ## What's next
 

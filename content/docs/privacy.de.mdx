@@ -33,6 +33,7 @@ Wenn `collect_sessions` an ist, entscheidet der Schalter [`session_consent`](/de
 Genau das, was wir brauchen, um Web Vitals und Performance pro Seite auszurechnen. Die genaue Liste Feld für Feld steht unter [Der RUM-Beacon](/de/concepts/beacon); die Kategorien:
 
 - **Seiten-URL**: Origin + Pathname, dazu die Query-Parameter-Namen, wenn [`collect_query_keys`](/de/tracker#collect-query-keys) an ist (das Default-Preset Standard). Hash-Fragment und Query-Werte werden im Tracker verworfen; ein Wert bleibt nur für Schlüssel, die du allow-listest ([`collect_query_values_for`](/de/tracker#collect-query-values-for)).
+- **Referrer**: im Tracker auf Origin + Pathname gekürzt (Query und Hash verworfen), serverseitig in eine Quelle und ein Medium klassifiziert. Der Rohwert wird vor jedem Logging-Pfad verworfen und persistiert nie, in keinem Modus.
 - **Web Vitals**: LCP, INP, CLS, FCP, TTFB und verwandte Timings.
 - **Navigation-Timing**: Nav-Typ, TTFB, Pageload-Timing.
 - **Resource-Timing**: pro Kategorie aggregierte Byte-Größen und Counts (Script, CSS, Image, Font, Sonstige).
@@ -136,7 +137,7 @@ Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
 - **Zwei Fragen, getrennt zu prüfen.** Nach § 25 TDDDG hängt es am Preset: Minimal und Standard schreiben nichts auf das Gerät, Full schreibt eine Session-ID und braucht dafür eine Einwilligung. Nach DSGVO ist die Rechtsgrundlage die Interessenabwägung nach Art. 6 Abs. 1 lit. f, weil über den HTTP-Header eine IP-Adresse im Spiel ist. Die Bewertung für deinen Einsatz bleibt deine (siehe [Consent und TDDDG](#consent-and-the-tdddg)).
 - **Deine Daten verlassen die EU nie.** Es gibt gar keinen US-Transfer, über den man nachdenken müsste.
 - **Deinem Team kannst du eine Ein-Seiter-Antwort geben**: Link auf diese Seite plus unseren AVV, fertig.
-- **Explizites Opt-In vor jeder Session-Verknüpfung?** Schalte [`collect_sessions`](/de/tracker#collect-sessions) an und lass [`session_consent`](/de/tracker#session-consent) auf `off`, sodass die Session-ID erst geschrieben wird, nachdem dein CMP `grantConsent()` aufruft.
+- **Explizites Opt-In vor jeder Session-Verknüpfung?** Schalte [`collect_sessions`](/de/tracker#collect-sessions) an und lass [`session_consent`](/de/tracker#session-consent) auf `deferred`, sodass die Session-ID erst geschrieben wird, nachdem dein CMP `grantConsent()` aufruft.
 
 ## Nächste Schritte
 
