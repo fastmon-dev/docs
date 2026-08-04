@@ -5,7 +5,7 @@ description: How fastmon counts visitors without identifying them, and what a se
 
 Fastmon counts **visitors**, not people. A visitor is a count along an **identity axis**, and there are two:
 
-- **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or any stored personal data. It's on under the default `Standard` preset, so unique-visitor counts work out of the box; the `Minimal` preset is the opt-down that stores no identifier, and then there are no visitor counts.
+- **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or anything stored on the device. It's on under the default `Standard` preset, so unique-visitor counts work out of the box; the `Minimal` preset is the opt-down that stores no identifier, and then there are no visitor counts.
 - **`session`**: the client-minted `session_id` (`sid` on the wire), present only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the `Full` preset, or after your CMP calls `grantConsent()`). It groups a short burst of page-views from the same browser into a **visit** with a 30-minute boundary, which the visit-level views build on.
 
 Which one the dashboard counts by default is the site's **`count_visitors_by`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
@@ -91,5 +91,5 @@ Pass `identity` explicitly to override the site default, or leave it null to use
 ## Related
 
 - [Tracker settings](/en/tracker): what the beacon collects per page-view, and which identities each setting produces.
-- [Privacy](/en/privacy): how the `stitch` identifier is derived and why it isn't personal data you can reverse.
+- [Privacy](/en/privacy): how the `stitch` identifier is derived and where its privacy guarantee actually comes from.
 - [Analytics API](/en/api/analytics/listAnalyticsVisitors): querying visitors programmatically.

@@ -49,14 +49,15 @@ Mehr schickt der Beacon nicht. Es gibt auch keinen Opt-In, mit dem du irgendwo �
 
 ### Bot- und Rechenzentrums-Labels [#bot-and-datacenter-labels]
 
-Jedes Beacon wird am Edge als Bot-, Crawler- oder Rechenzentrums-Traffic markiert, damit es sich von echten Besucherdaten trennen lässt. Zwei unabhängige Prüfungen laufen gegen eine feste, kuratierte Liste, kein offenes Nachschlagen:
+Jedes Beacon wird am Edge als Bot-, Crawler- oder Rechenzentrums-Traffic markiert, damit es sich von echten Besucherdaten trennen lässt. Drei unabhängige Prüfungen laufen am Edge, die ersten beiden gegen eine feste, kuratierte Liste, kein offenes Nachschlagen:
 
 - **Cloud-/Hosting-Provider**, gesetzt, wenn die Client-IP in einem bekannten Rechenzentrums-Bereich liegt: einer von `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, gesetzt, wenn der User-Agent zu einem bekannten Bot passt: ein Name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta` oder `unknown` für eine generische Bot-Heuristik) plus eine Kategorie wie `search-engine`, `ai-crawler`, `seo` oder `monitoring`.
+- **User-Agent-Anomalie**, gesetzt, wenn der User-Agent den Low-Entropy Client Hints des Browsers (`sec-ch-ua`, `sec-ch-ua-platform`) widerspricht: `headless`, `spoofed` oder `non-browser`. Die Hints werden am Edge ausgewertet und mit dem Rest des rohen Requests verworfen; gespeichert wird nur das Verdikt.
 
 ### Der am Edge abgeleitete `stitch`-Identifier
 
-Für Unique-Visitor-Zahlen und per-Besucher-Performance-Debugging, ohne dass etwas auf dem Gerät liegt, kann der Edge einen Einweg-Join-Key berechnen, bevor IP und User-Agent zerstört werden:
+Für Unique-Visitor-Zahlen und per-Besucher-Performance-Debugging, ohne dass etwas auf dem Gerät liegt, kann der Edge einen kurzlebigen Join-Key unter einem rotierenden Salt berechnen, bevor IP und User-Agent zerstört werden:
 
 ```
 stitch = HMAC-SHA256(rotierendes_Salt, IP | User-Agent | collector_hash | domain)
@@ -67,6 +68,7 @@ abgeschnitten auf 128 Bit (32 Hex-Zeichen auf dem Wire). Er wird gespeichert, wa
 - **Forward Secrecy by Construction.** Das Salt ist ein 32-Byte-Wert aus `crypto/rand`, lebt ausschließlich im RAM des aktiven Edge und rotiert alle 24 Stunden. Es wird nie persistiert, nie verteilt, nie geloggt. Wer später Zugriff auf die Zeile bekommt, kann `stitch` nicht zurück auf (IP, UA) rechnen: das Salt, mit dem es produziert wurde, ist weg.
 - **Verknüpfbarkeit gedeckelt, höchstens ~24 h.** Bei jeder Salt-Rotation bekommt derselbe Besucher einen neuen `stitch`-Wert. Cross-Pageview-Verknüpfung kann nicht über ein Salt-Fenster hinaus anwachsen.
 - **Pro Domain, nie Cross-Site.** Sowohl `collector_hash` als auch die Seiten-`domain` stecken im HMAC-Input, also liefert dieselbe (IP, UA) auf jeder Domain einen anderen `stitch`, auch über die Domains hinweg, die eine einzelne [Application](/de/concepts/applications) bedient. Nichts verknüpft einen Besucher über Domains oder Sites hinweg; die „keine Cross-Site-Identifier"-Zeile oben gilt unverändert.
+- **Das Salt ist das einzige Geheimnis.** Die übrigen HMAC-Inputs sind öffentlich oder stehen in der gespeicherten Zeile selbst, und der Eingaberaum ist klein genug zum Durchprobieren; wer das lebende Salt hätte, könnte ein vermutetes (IP, UA)-Paar durch Nachrechnen bestätigen. Niemand hat es: es existiert nur im laufenden Edge-Prozess und ist nach der Rotation weg. Die Garantie ist operativ (RAM-only-Salt, 24-h-Rotation), nicht mathematisch.
 
 Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung. Weil er unter dem Default-Preset Standard an ist, benenne ihn in deiner Datenschutzerklärung. Wenn du lieber gar keinen Besucher-Identifier speicherst, hält `store_stitch` aus (das Preset Minimal) die Zeile echt anonym.
 
@@ -114,7 +116,7 @@ Wenn du von einem US-Analytics-Produkt umsteigst, hier das relevante Delta:
 
 | Fähigkeit                        | fastmon | Typischer US-RUM-Anbieter        |
 | -------------------------------- | ------- | -------------------------------- |
-| Gesetzte Cookies                 | 0       | 1–N (Analytics + Ad-Partner)     |
+| Gesetzte Cookies                 | 0       | 1-N (Analytics + Ad-Partner)     |
 | IP gespeichert                   | Nein    | Oft, manchmal trunkiert          |
 | Cross-Site-Identity-Graph        | Nein    | Oft, via SDK oder Pixel-Netz     |
 | Session-Replay / DOM-Dump        | Nein    | Häufig als Opt-In                |

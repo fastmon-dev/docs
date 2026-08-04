@@ -49,14 +49,15 @@ That's the whole payload. There's no opt-in we can offer to "unlock" more. We di
 
 ### Bot and datacenter labels [#bot-and-datacenter-labels]
 
-Every beacon is tagged at the edge as bot, crawler, or datacenter traffic, so it can be told apart from real-user data. Two independent checks run against a fixed, curated list, not an open-ended lookup:
+Every beacon is tagged at the edge as bot, crawler, or datacenter traffic, so it can be told apart from real-user data. Three independent checks run at the edge, the first two against a fixed, curated list, not an open-ended lookup:
 
 - **Cloud/hosting provider**, set when the client IP falls in a known datacenter range: one of `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, set when the User-Agent matches a known bot: a name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta`, or `unknown` for a generic-bot heuristic) plus a category such as `search-engine`, `ai-crawler`, `seo`, or `monitoring`.
+- **User-agent anomaly**, set when the User-Agent contradicts the browser's own low-entropy client hints (`sec-ch-ua`, `sec-ch-ua-platform`): `headless`, `spoofed`, or `non-browser`. The hints are evaluated at the edge and discarded with the rest of the raw request; only the verdict is stored.
 
 ### The edge-derived `stitch` identifier
 
-For unique-visitor counts and per-visitor performance debugging without storing anything on the device, the edge can compute a one-way join key before the IP and User-Agent are destroyed:
+For unique-visitor counts and per-visitor performance debugging without storing anything on the device, the edge can compute a salted, short-lived join key before the IP and User-Agent are destroyed:
 
 ```
 stitch = HMAC-SHA256(rotating_salt, IP | User-Agent | collector_hash | domain)
@@ -67,6 +68,7 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 - **Forward secrecy by construction.** The salt is a 32-byte `crypto/rand` value held only in the active edge's RAM and rotated every 24 hours. It is never persisted, never distributed, never logged. An attacker who later gains row access cannot reverse `stitch` back to (IP, UA): the salt that produced it is gone.
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
 - **Per-domain, never cross-site.** Both `collector_hash` and the page `domain` are in the HMAC input, so the same (IP, UA) yields a different `stitch` on every domain, including across the domains served by a single [application](/en/concepts/applications). Nothing links a visitor across domains or across sites; the "no cross-site identifier" row above is unchanged.
+- **The salt is the only secret.** The other HMAC inputs are public or sit on the stored row itself, and the input space is small enough to enumerate, so whoever held the live salt could confirm a suspected (IP, UA) pair by recomputing. Nobody holds it: it exists only inside the running edge process and is gone after rotation. The guarantee is operational (RAM-only salt, 24 h rotation), not mathematical.
 
 Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
 
@@ -114,7 +116,7 @@ If you're moving from a US analytics product, here's the relevant delta:
 
 | Capability                | fastmon | Typical US RUM provider          |
 | ------------------------- | ------- | -------------------------------- |
-| Cookies set               | 0       | 1–N (analytics + ad partners)    |
+| Cookies set               | 0       | 1-N (analytics + ad partners)    |
 | IP stored                 | No      | Often, sometimes truncated       |
 | Cross-site identity graph | No      | Often, via SDK or pixel network  |
 | Session replay / DOM dump | No      | Common opt-in feature            |
