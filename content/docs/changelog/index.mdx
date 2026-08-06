@@ -12,6 +12,18 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-06" type="fixed" area="tracker" title="Shopware 6 page types: home counts as home, and detection survives 6.8">
+
+Two changes to the `shopware6` ruleset. First, the storefront home page counted as `category`: Shopware 6 renders it through the same navigation controller as category pages, and the `is-ctl-index` class the mapping expected does not exist there. The tracker now reads the controller and action class together (`is-ctl-navigation is-act-home`), so home pages count as `home`. Second, Shopware 6.8 removes the `is-ctl-*` and `is-act-*` body classes entirely, so the tracker now prefers their designated replacement, the `is-active-route-*` class that shops emit since about 6.6. Detection keeps working across the 6.8 upgrade with no action on your side, and on the route class the checkout splits properly: the cart page counts as `cart`, the confirm, finish, and register steps as `checkout`, and the whole account area (orders, profile, addresses) as `account`. Shops without the route class fall back to the legacy classes, where cart and checkout still share the coarser `cart`. A browser-cached tracker keeps its old behavior until the cache rolls over. The [ruleset table](/en/tracker#ruleset-page-types) shows the updated mapping.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-05" type="changed" area="dashboard" title="Filter work: the world map, the header chips, and the value editor">
+
+A round of filter work. Clicking a country on the world map now works and opens a popover with the country's numbers and the + and - actions (filter to it or exclude it, also reachable from the hover tooltip); excluded countries get a red outline, and the map keeps zoom and pan during a refetch instead of resetting. The filter chips in the header get quick actions: the chip opens the panel straight into its value editor, an x removes the filter, and hovering lists every selected value with its own x. In the value editor, your selected values are pinned at the top and stay removable even when they match no traffic (an excluded country used to disappear from its own list), and including and excluding the same value can no longer coexist. And filtering no longer shakes the dashboard: the performance tiles, the geo map, and the Core Web Vitals card keep showing the previous values while the new ones load, instead of swapping to a full-height spinner.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="The Explorer table sorts on the server">
 
 Clicking a column header now re-queries with that order, and the backend sorts before it truncates to the row limit, so "the ten worst TTFB pages" really are the worst across all matching traffic. Previously a header click only reordered the rows the browser had already loaded, which meant "the worst among the busiest". The sort travels in the URL, so a shared link opens in the same order. Nothing sorts implicitly anymore: selecting a metric adds a column and nothing else, and without a chosen sort the table states the backend's default order instead of pretending one. The raw pageview list sorts server-side too, by time or by any row column, with empty values sinking to the end in either direction; its visible columns are part of the link as well (`?cols=`), so a bookmark reopens the table exactly as it was. The metric columns also moved out of the buried "Columns" menu up to the query panel, next to aggregation and grouping. On the API, `/analytics/beacons` accepts `order_by` as a `{field, direction}` object over any scalar row field.

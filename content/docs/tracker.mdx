@@ -123,7 +123,7 @@ Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, er
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page-controller token (for example `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type).
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type).
 
 **PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
 
@@ -131,17 +131,17 @@ Classifies each pageview into a **page type** (product, category, cart, checkout
 
 Each ruleset maps the framework's page-controller token to one of a fixed set of page types (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Tokens outside this table map to nothing, and the pageview keeps an empty page type. The mapping lives in the collector, so it improves without redeploying the browser-cached tracker.
 
-| Page type    | Shopware 6          | Shopware 5 <sup>1</sup> | OXID eShop                        | Magento                     | WooCommerce                              |
-| ------------ | ------------------- | ----------------------- | --------------------------------- | --------------------------- | ---------------------------------------- |
-| **home**     | `is-ctl-index`      | `is--ctl-index`         | `cl-start`                        | `cms-index-index`           | not typed <sup>2</sup>                   |
-| **product**  | `is-ctl-product`    | `is--ctl-detail`        | `cl-details`                      | `catalog-product-view`      | `single-product`                         |
-| **category** | `is-ctl-navigation` | `is--ctl-listing`       | `cl-alist`                        | `catalog-category-view`     | `post-type-archive-product`, `tax-product_cat` |
-| **cart**     | `is-ctl-checkout` <sup>3</sup> | `is--ctl-checkout` <sup>3</sup> | `cl-basket`             | `checkout-cart-index`       | `woocommerce-cart`                       |
-| **checkout** | folded into cart <sup>3</sup> | folded into cart <sup>3</sup> | `cl-user`, `cl-payment`, `cl-order` | `checkout-index-index` | `woocommerce-checkout`                   |
-| **search**   | `is-ctl-search`     | `is--ctl-search`        | `cl-search`                       | `catalogsearch-result-index` | not typed <sup>2</sup>                  |
-| **account**  | `is-ctl-account`    | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
+| Page type    | Shopware 6 <sup>1</sup>    | Shopware 5              | OXID eShop                        | Magento                     | WooCommerce                              |
+| ------------ | -------------------------- | ----------------------- | --------------------------------- | --------------------------- | ---------------------------------------- |
+| **home**     | `frontend-home-page`, `is-ctl-navigation is-act-home` | `is--ctl-index`         | `cl-start`                        | `cms-index-index`           | not typed <sup>2</sup>                   |
+| **product**  | `frontend-detail-page`, `is-ctl-product*` | `is--ctl-detail`        | `cl-details`                      | `catalog-product-view`      | `single-product`                         |
+| **category** | `frontend-navigation-page`, `is-ctl-navigation*` | `is--ctl-listing`       | `cl-alist`                        | `catalog-category-view`     | `post-type-archive-product`, `tax-product_cat` |
+| **cart**     | `frontend-checkout-cart-page`, `is-ctl-checkout*` | `is--ctl-checkout` <sup>3</sup> | `cl-basket`               | `checkout-cart-index`       | `woocommerce-cart`                       |
+| **checkout** | `frontend-checkout-confirm-page`, `frontend-checkout-finish-page`, `frontend-checkout-register-page` | folded into cart <sup>3</sup> | `cl-user`, `cl-payment`, `cl-order` | `checkout-index-index` | `woocommerce-checkout`                   |
+| **search**   | `frontend-search-page`, `is-ctl-search*`, `is-ctl-suggest*` | `is--ctl-search`    | `cl-search`                       | `catalogsearch-result-index` | not typed <sup>2</sup>                  |
+| **account**  | `frontend-account-*`, `is-ctl-account*` | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
 
-<sup>1</sup> Shopware 5 markup is provisional and still being verified against production shops. <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
+<sup>1</sup> Each cell lists the current token first: Shopware's `is-active-route-*` classes with the fixed prefix stripped, emitted since about 6.6 and the only page marker left in 6.8, which removes the `is-ctl-*` and `is-act-*` classes. The `is-ctl-*` tokens after it are the legacy fallback for older shops and browser-cached trackers, with `*` standing for any action tail. Home needs the exact legacy class pair, because the home page renders through the navigation controller like any category page (Shopware 6 has no `is-ctl-index`). On the legacy classes, cart and checkout share `is-ctl-checkout` and both report the coarser `cart`; `is-ctl-account*` also covers the account controller family (`is-ctl-accountorder`, `is-ctl-accountprofile`). <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware 5 shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
 
 ## Ingest and routing
 
