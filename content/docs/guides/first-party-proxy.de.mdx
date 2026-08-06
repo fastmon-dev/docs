@@ -54,7 +54,7 @@ location /s/ {
 
 Caddy setzt `X-Forwarded-For` selbst, hier kommt nur das Secret dazu:
 
-```caddy
+```txt
 handle /c/* {
 	reverse_proxy https://fastmon.site {
 		header_up Host fastmon.site
