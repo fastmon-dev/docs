@@ -174,7 +174,10 @@ fastmon. For nginx:
 <InstallSnippet kind="nginx" />
 
 Any reverse proxy or CDN works the same way: forward `/s/` and `/c/` to
-`https://fastmon.site` and preserve the client IP header.
+`https://fastmon.site` and preserve the client IP header. For the edge to
+actually trust that header and resolve real visitor locations, authorize
+your proxy with a secret: see the
+[First-party proxy guide](/en/guides/first-party-proxy).
 
 #### Smoxy [#smoxy]
 

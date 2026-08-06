@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Add: First-party proxy guide
+
+New guide `guides/first-party-proxy` (EN + DE) for the per-application proxy secret: why an unknown proxy's `X-Forwarded-For` is ignored at the edge, how the `FM-Proxy-Key` header authorizes a customer-run beacon proxy to forward the real visitor IP, and ready-to-paste configs for nginx, Caddy, and a Cloudflare Worker (`/c/` carries the secret, `/s/` needs none). Covers rotation (the previous secret stays valid until the next rotation) and disable. The dashboard's First-party proxy section deep-links here instead of embedding the configs, and the same-origin section of the install chapter cross-links the guide where it asks proxies to preserve the client IP header.
+
 ### Change: Docs rewritten for the `Org → Application → Site` model
 
 Follows the backend unifying per-site embeds and org-trackers into one `applications` table. The tracking embed is now an **application**: it owns both hashes, every tracker setting and the collector, and serves one or more **sites** (domains). New `concepts/applications` page (EN + DE) in the Concepts nav, `concepts/sites` slimmed to a domain plus three per-domain overrides, and `concepts/org-trackers` retired with its inbound links repointed. `tracker.mdx` moved to the current API field names including the anchors: `store_session` is now `collect_sessions`, `preconsent_level` is now `session_consent` (`deferred` / `immediate`), and the error, query and fetch/XHR switches gained a `collect_` prefix. `allowed_origins` and `enforce_domain_match` are replaced by `site_policy` (`open` / `auto` / `strict`), and `environment` is documented. Concepts index, glossary and the `filter-internal-traffic` guide follow the same model; the guide's "separate site" advice was wrong, since sites share their application's snippet.

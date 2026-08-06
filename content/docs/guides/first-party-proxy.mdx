@@ -1,0 +1,106 @@
+---
+title: First-party proxy
+description: Relay beacons through your own server and still get accurate geo and visitor counts, by authorizing your proxy with a per-application secret.
+---
+
+With the [same-origin collector mode](/en/install/html#collector) your reverse
+proxy forwards beacons to fastmon. From fastmon's perspective every one of
+those requests now comes from the same client: your proxy server. A proxy
+normally announces the real visitor in the `X-Forwarded-For` header, but the
+edge cannot take that header from an unknown peer at face value, since anyone
+on the internet can send it. So without further setup, all visitors behind
+your proxy resolve to your server's IP: one location on the geo map and one
+visitor in every count that stitches on IP.
+
+The **proxy secret** fixes this. It is a per-application secret your proxy
+presents in the `FM-Proxy-Key` request header. When the edge sees a valid
+secret on a beacon, it trusts the `X-Forwarded-For` header from that request
+and resolves the real visitor IP. Geo and visitor metrics work exactly as if
+the beacon had reached fastmon directly.
+
+## Get the secret
+
+In the dashboard, open your application under **Applications**, go to
+**Settings → Collector** and find the **First-party proxy** section. Click
+**Generate secret** and copy the value.
+
+## Configure your proxy
+
+Add the header to the beacon route (`/c/`). The script route (`/s/`) serves a
+static file and needs no secret. Replace `<your-proxy-secret>` with the value
+from the dashboard.
+
+### nginx
+
+```nginx
+# Beacon collector (visitor IP forwarding needs the secret)
+location /c/ {
+    proxy_pass https://fastmon.site;
+    proxy_set_header Host fastmon.site;
+    proxy_set_header FM-Proxy-Key "<your-proxy-secret>";
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+# Tracker script (no secret needed)
+location /s/ {
+    proxy_pass https://fastmon.site;
+    proxy_set_header Host fastmon.site;
+}
+```
+
+### Caddy
+
+Caddy sets `X-Forwarded-For` on its own, so only the secret is added:
+
+```caddy
+handle /c/* {
+	reverse_proxy https://fastmon.site {
+		header_up Host fastmon.site
+		header_up FM-Proxy-Key "<your-proxy-secret>"
+	}
+}
+
+handle /s/* {
+	reverse_proxy https://fastmon.site {
+		header_up Host fastmon.site
+	}
+}
+```
+
+### Cloudflare Worker
+
+```js
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    url.protocol = "https:";
+    url.hostname = "fastmon.site";
+    const headers = new Headers(request.headers);
+    if (url.pathname.startsWith("/c/")) {
+      headers.set("FM-Proxy-Key", "<your-proxy-secret>");
+      headers.set("X-Forwarded-For", request.headers.get("CF-Connecting-IP") ?? "");
+    }
+    return fetch(url, { method: request.method, headers, body: request.body });
+  },
+};
+```
+
+Changes reach the edge within about five minutes. To verify, open the geo
+map after a few visits: traffic should spread across your visitors'
+locations instead of piling onto one city.
+
+## Rotating the secret
+
+**Rotate** in the dashboard issues a new secret immediately. The one you had
+before stays valid until the next rotation, so you can update your proxy
+configuration at your own pace with no gap in data quality. Rotating twice in
+a row invalidates the older of the two secrets.
+
+**Disable** invalidates both secrets at once. Beacons keep flowing
+afterwards; the edge just falls back to your server's IP as the client IP.
+
+## What's next
+
+- [Verify it works](/en/install/verify): a five-second DevTools check.
+- [Same-origin collector mode](/en/install/html#collector), if your proxy
+  setup is not in place yet.

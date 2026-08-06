@@ -1,4 +1,12 @@
 {
   "title": "Guides",
-  "pages": ["index", "beacon-inspector", "compare-releases", "filter-internal-traffic", "notification-rules", "server-timing"]
+  "pages": [
+    "index",
+    "beacon-inspector",
+    "compare-releases",
+    "filter-internal-traffic",
+    "first-party-proxy",
+    "notification-rules",
+    "server-timing"
+  ]
 }

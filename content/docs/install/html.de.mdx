@@ -185,6 +185,9 @@ proxyst du die beiden Pfad-Präfixe zu fastmon. Für nginx:
 
 Jeder Reverse-Proxy oder CDN funktioniert genauso: `/s/` und `/c/` an
 `https://fastmon.site` weiterleiten und den Client-IP-Header beibehalten.
+Damit der Edge diesem Header auch vertraut und echte Besucher-Standorte
+auflöst, autorisierst du deinen Proxy mit einem Secret: siehe den
+[First-Party-Proxy-Guide](/de/guides/first-party-proxy).
 
 #### Smoxy [#smoxy]
 
