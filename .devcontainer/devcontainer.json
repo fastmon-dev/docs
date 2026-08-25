@@ -60,7 +60,17 @@
   //     non-empty dir) because the node_modules sub-volume is already mounted
   //     here. Auth is the repo-scoped deploy key via ~/.ssh/config.
   //  3. Install deps.
-  "postCreateCommand": "sudo chown dev:dev /workspaces/docs /workspaces/docs/node_modules /home/dev/.claude && if [ ! -d /workspaces/docs/.git ]; then git init -q -b main && git remote add origin git@github.com:fastmon-dev/docs.git && git fetch --tags origin && git checkout -f -B main origin/main; fi && npm ci",
+  //  Array form (["sh", "-c", …]) for the same reason as initializeCommand:
+  //  a string-form command is not guaranteed to reach a shell. Zed splits it
+  //  and runs only the first token, so `sudo` arrives argument-less and the
+  //  whole postCreate fails with sudo's usage text (DevContainerScriptsFailed).
+  //  Also pins the shell: dev's login shell is fish, which cannot parse
+  //  `if …; then …; fi`.
+  "postCreateCommand": [
+    "sh",
+    "-c",
+    "sudo chown dev:dev /workspaces/docs /workspaces/docs/node_modules /home/dev/.claude && if [ ! -d /workspaces/docs/.git ]; then git init -q -b main && git remote add origin git@github.com:fastmon-dev/docs.git && git fetch --tags origin && git checkout -f -B main origin/main; fi && npm ci"
+  ],
   "remoteUser": "dev",
   "containerEnv": {
     "GIT_CONFIG_COUNT": "4",
