@@ -15,20 +15,22 @@ Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist
 
 Die Analytics-Hauptansicht einer Site zeigt:
 
-- **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde.
-- **Drei zentrale Kennzahlen**: Unique Visitors, Pageviews und Views per Visit, jeweils mit Sparkline und Veränderung zur Vorperiode.
-- **Trend-Chart**: die Kennzahlen über den gewählten Zeitraum, optional mit Vorperioden-Overlay.
-- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem, …).
+- **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde. Bei Shops zeigt die Karte zusätzlich, wie viele davon gerade im Warenkorb, im Checkout oder auf der Abschlussseite sind.
+- **Zentrale Kennzahlen**: Unique Visitors, Pageviews, Views per Visit und Checkouts, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum, damit sich ein Tag und ein Monat vergleichen lassen.
+- **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`), ein geteilter Link öffnet also dieselbe Kennzahl. Bei Checkouts werden Warenkorb und Checkout als Kontextlinien darunter gezeichnet.
+- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem und so weiter).
+- **Checkout-Zahlen**: Besucher, Besucher mit Warenkorb-Interaktion, mit Checkout-Seite und mit abgeschlossenem Checkout, dazu Warenkorb-Requests nach Art. Nur Zählwerte, keine abgeleiteten Raten; siehe [Checkout-Funnel](/de/checkout-funnel).
 - **Kampagnen & Attribution**: UTM-Abdeckung und Listen nach Source/Medium/Kampagne, inklusive Click-ID-Labels der Werbeplattformen.
-- **Tech-Panel**: Bfcache-Trefferquote, Top-Third-Party-Kategorien und ob Fehler aus First- oder Third-Party-Code stammen.
 
 Besucherzahlen sind anonym per Konstruktion; was ein „Besucher" hier bedeuten kann und was nicht, steht unter [Privacy](/de/privacy).
 
 ## Filtern
 
-Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem Dashboard, der Übersicht und jeder Metrik-Detailseite. Tipp eine Dimension und einen Wert (zum Beispiel `country = DE`) und drück Enter, um einen Filter-Chip hinzuzufügen; das Wertefeld vervollständigt mit den echten Werten des aktuellen Zeitraums und zeigt, wie viele Pageviews je Wert anfallen. Die Dimensionsauswahl listet die meistgenutzten zuerst (Seite, Land, Gerät), dann den Rest: Browser, Betriebssystem, Verbindung, Viewport, Referrer-Quelle und -Medium, UTM-Felder, Click-ID-Label, Domain, Navigationstyp und Protokoll.
+Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem Dashboard, der Übersicht und jeder Metrik-Detailseite. Tipp eine Dimension und einen Wert (zum Beispiel `country = DE`) und drück Enter, um einen Filter-Chip hinzuzufügen; das Wertefeld vervollständigt mit den echten Werten des aktuellen Zeitraums und zeigt, wie viele Pageviews je Wert anfallen. Die Dimensionsauswahl listet die meistgenutzten zuerst (Seite, Land, Gerät), dann den Rest: Browser, Betriebssystem, Verbindung, Viewport, Referrer-Quelle und -Medium, UTM-Felder, Click-ID-Label, Domain, Navigationstyp, Protokoll und die [Checkout-Stufe](/de/checkout-funnel) (Warenkorb, Checkout, Abgeschlossen).
 
 Filter leben in der URL, überstehen also ein Neuladen, sind teilbar und wandern beim Wechsel zwischen Views mit. Mehrere Chips werden mit UND verknüpft; ein Komma in einem Wert bedeutet „eines von". Klick einen Chip zum Bearbeiten, das X entfernt ihn. Der „Filter"-Button trägt ein Badge mit der Anzahl aktiver Filter.
+
+Jeder Chip hat außerdem einen Ein/Aus-Schalter. Ausgeschaltet behält der Chip seine Werte und bleibt an seinem Platz, durchgestrichen dargestellt, und die Abfrage läuft ohne ihn: der schnellste Weg, „wie sieht das ohne den Länderfilter aus?" zu beantworten und ihn danach wieder einzuschalten. Ein ausgeschalteter Filter grenzt nichts ein und zählt nicht im Badge; ein Klick auf dasselbe Land in der Karte oder dasselbe Gerätesegment schaltet ihn wieder ein, statt einen zweiten Filter anzulegen. Auch dieser Zustand steht in der URL, ein geteilter Link öffnet also mit denselben ein- und ausgeschalteten Filtern.
 
 ## Navigieren mit dem Befehlsmenü
 
@@ -46,7 +48,7 @@ Wie viel Detail du siehst, hängt von den [Tracker-Einstellungen](/de/tracker) d
 
 ## Besucher
 
-Der Besucher-Explorer listet eindeutige Besucher (Start- und Endzeit, Dauer, Seitenanzahl, Geräteinfo, durchschnittliches LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web Vitals und Fehlern.
+Der Besucher-Explorer listet eindeutige Besucher (Start- und Endzeit, Dauer, Seitenanzahl, Land mit Flagge und Name, Geräteinfo, durchschnittliches LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web Vitals, Fehlern, seinem Page-Type und, bei Shops, seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht oder eine Warenkorb-Interaktion ausgelöst haben. Ein Besucher lässt sich per `?visitor=` direkt verlinken.
 
 Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (vorhanden, wenn [`store_stitch`](/de/tracker#store-stitch) an ist) oder `session` (die seitenübergreifende `session_id`, vorhanden, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist). Die `count_visitors_by` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert, der Besucher-Explorer funktioniert also von Anfang an; das Preset `Minimal` speichert keine der beiden Identitäten und lässt ihn leer. Das Replay je Besucher braucht die `session`-Identität. Das ganze Modell steht unter [Besucher und Sessions](/de/concepts/sessions).
 
@@ -62,10 +64,11 @@ Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Sc
 
 ## API
 
-Jedes Panel entspricht einem Query-Endpunkt unter `/v1/organizations/{org_id}/analytics/…`: ein flexibler [Query-Endpunkt](/en/api/analytics/queryAnalytics) für Zeitreihen und Breakdowns, dazu dedizierte Endpunkte für Histogramme, Fehlertypen und -details, Besucher, Fetch/XHR, Server-Timing, Ressourcen- und Third-Party-Breakdowns, LoAF und den Experience Score. Siehe die [Analytics-Endpunktreferenz](/en/api/analytics/queryAnalytics) (nur auf Englisch).
+Jedes Panel entspricht einem Query-Endpunkt unter `/v1/organizations/{org_id}/analytics/…`: ein flexibler [Query-Endpunkt](/en/api/analytics/queryAnalytics) für Zeitreihen und Breakdowns, dazu dedizierte Endpunkte für Histogramme, Fehlertypen und -details, Besucher, Fetch/XHR, Server-Timing, Ressourcen- und Third-Party-Breakdowns, LoAF, den [Checkout-Funnel](/en/api/analytics/queryAnalyticsCheckoutFunnel) und den Experience Score. Siehe die [Analytics-Endpunktreferenz](/en/api/analytics/queryAnalytics) (nur auf Englisch).
 
 ## Weiterlesen
 
+- [Checkout-Funnel](/de/checkout-funnel): wie Pageviews ihre Stufe Warenkorb, Checkout oder Abschluss bekommen, und was die Zahlen bedeuten.
 - [Tracker-Einstellungen](/de/tracker): was der Tracker pro Einstellung sammelt, und warum die Session-Identität oder Stack-Traces fehlen können.
 - [Besucher und Sessions](/de/concepts/sessions): wie aus Pageviews Besucher und Sessions werden.
 - [Synthetic Monitoring](/de/synthetic): das Labor-Gegenstück zu diesen Feld-Dashboards.

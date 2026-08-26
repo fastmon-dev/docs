@@ -80,6 +80,8 @@ Die Analytics-API bietet zwei Endpunkte:
 
 Übergib `identity` explizit, um den Site-Standard zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/listAnalyticsVisitors).
 
+Die Liste filtert danach, was die Journey eines Besuchers enthält: `contains_page_type` für einen Page-Type, bei Shops `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` für den [Checkout-Funnel](/de/checkout-funnel). Jeder Pageview im Detail trägt seine `checkout_stage` und die Warenkorb-Interaktionsfelder. Der Funnel selbst hat eigene Endpunkte unter `/analytics/funnels/checkout`, gruppiert über dieselbe Identität.
+
 ## Häufige Überraschungen
 
 - **Besucherzahlen folgen `store_stitch`, nicht dem Consent.** Wenn `stitch` gespeichert wird (das Default-Preset `Standard`, und `Full`), bekommst du eindeutige Besucherzahlen ohne Cookie und ohne Einwilligung. Das Preset `Minimal` speichert keinen Identifier, hat also weder Besucherzahlen noch Sessions. `collect_sessions` anzuschalten ergänzt die *session*-Identität, die die 30-Minuten-Besuchsgrenze zieht, auf der die session-only-Views (Seiten pro Besuch, Bounce) aufbauen.

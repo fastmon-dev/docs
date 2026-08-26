@@ -96,6 +96,22 @@ aus der `<body>`-Klasse der Seite, ohne Server-Timing-Integration.
 Default aus (leer); ein per Server-Timing-Header geschickter
 Page-Type hat immer Vorrang vor der Body-Class-Vermutung.
 
+## Checkout-Funnel [#checkout-funnel]
+
+Standardmäßig an. Der Collector markiert jeden Pageview, dessen URL auf
+ein Warenkorb-, Checkout- oder Abschluss-Muster passt, mit dieser Stufe
+und registriert Warenkorb-Requests, die die Shopseiten per Fetch/XHR
+senden. `checkout_tracking` ist das Opt-out; die drei Pfadlisten
+(`checkout_cart_paths`, `checkout_paths`, `checkout_success_paths`) erben
+jeweils entweder die eingebauten Muster (`null`) oder ersetzen sie komplett
+durch bis zu 10 eigene, wobei `*` das einzige Wildcard-Zeichen ist und ein
+Muster den ganzen Pfad beschreiben muss. Die Markierung wirkt nur
+vorwärts: Pfade oder Schalter zu ändern klassifiziert nichts neu, was
+schon gespeichert ist. Besucher pro Stufe zu zählen braucht eine
+gespeicherte Besucher-Identität (`store_stitch`). Die eingebauten Muster
+und was die Zahlen bedeuten stehen unter
+[Checkout-Funnel](/de/checkout-funnel).
+
 ## Per-Domain-Defaults
 
 Drei Einstellungen sind Application-Level-**Defaults**, die jede
@@ -128,6 +144,8 @@ Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
 | `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
 | `collector_endpoint`  | string · nullable    | Eigener Collector-Host (nur bei `custom`).                            |
 | `pagetype_ruleset`    | enum · optional      | Shop-System-Ruleset für Page-Type-Detection, oder leer (aus).         |
+| `checkout_tracking`   | bool                 | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |
+| `checkout_cart_paths`, `checkout_paths`, `checkout_success_paths` | list · nullable | URL-Muster pro Funnel-Stufe. `null` erbt die eingebauten Muster; eine Liste ersetzt sie. |
 | `site_policy`         | enum                 | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
 | `data_retention_days` | int                  | Per-Domain-Default (`90`); eine Site kann überschreiben.              |
 | `store_stitch`        | bool                 | Per-Domain-Default; eine Site kann überschreiben.                     |

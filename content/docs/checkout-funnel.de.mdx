@@ -1,0 +1,96 @@
+---
+title: Checkout-Funnel
+description: Warenkorb, Checkout und Abschluss als beobachtete Fakten pro Besucher, abgeleitet aus der Seiten-URL und den Warenkorb-Requests des Shops. Ohne Tracker-Änderung, standardmäßig an.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Der Checkout-Funnel beantwortet eine Frage, die die Web Vitals nicht beantworten können: nicht wie schnell der Shop ist, sondern ob Besucher durch ihn hindurchkommen. fastmon markiert jeden Pageview, dessen URL eine Warenkorb-, Checkout- oder Abschlussseite ist, registriert die Warenkorb-Requests, die die Shopseiten selbst senden, und zählt pro Besucher, wie weit er gekommen ist. Alles wird aus Daten abgeleitet, die der Tracker ohnehin schickt: Es gibt nichts zu installieren, und es wird nichts Neues erhoben.
+
+<Callout type="info" title="Nur Fakten">
+  Jede Zahl im Funnel zählt etwas, das beobachtet wurde: Ein Besucher hat eine Warenkorbseite geladen, ein Besucher hat eine Danke-Seite geladen. Eine Kennzahl „abgebrochen" gibt es absichtlich nicht. Ein Abbruch wäre eine Behauptung aus einer fehlenden Beobachtung (der Besucher kann auf einem anderen Gerät gekauft haben, nach der täglichen `stitch`-Rotation, oder auf einer Danke-Seite, die den Tracker nicht lädt). fastmon meldet die Zahlen pro Schritt; die Differenz zu deuten ist deine Sache.
+</Callout>
+
+## Wie ein Pageview seine Stufe bekommt
+
+Beim Ingest gleicht der Collector die bereits bereinigte Seiten-URL (Origin und Pfad, plus die Query-Keys, die deine Site freigegeben hat) mit einer Liste von URL-Mustern pro Stufe ab und stempelt `cart`, `checkout` oder `success` auf den Pageview. Pageviews ohne Treffer behalten eine leere Stufe. Der Tracker ist nicht beteiligt: Der Browser sendet kein zusätzliches Feld, und ein im Browser gecachter Tracker braucht kein Update.
+
+Die eingebauten Muster decken die gängigen Shop-Systeme ab: Shopware 5 und 6, WooCommerce (englische und deutsche Slugs), Magento 2, PrestaShop, JTL Shop 5 und Shopify. Jedes Muster toleriert ein Sprach- oder Shop-Präfix, `/de/warenkorb` und `/fr/cart` zählen also wie ihre Root-Varianten.
+
+Die Prüfreihenfolge ist fest und absichtlich nicht die Funnel-Reihenfolge. `success` wird zuerst geprüft, weil Abschlussseiten oft unter dem Checkout-Pfad liegen (`/checkout/finish`, `/checkout/onepage/success`). `cart` wird vor `checkout` geprüft, weil Shopware und Magento auch den Warenkorb unter den Checkout-Pfad legen (`/checkout/cart`) und er nicht als Checkout-Einstieg zählen darf.
+
+Die Markierung wird mit dem Pageview gespeichert und nie neu berechnet. Änderst du die Muster oder den Schalter, wirkt das auf Pageviews ab diesem Moment; was schon gespeichert ist, behält seine Stufe.
+
+### Eingebaute Muster [#default-patterns]
+
+Ein Muster muss den ganzen Pfad beschreiben. `*` steht für eine beliebige Zeichenfolge, `/` eingeschlossen; alles andere ist wörtlich gemeint. Groß- und Kleinschreibung spielt keine Rolle.
+
+| Stufe        | Eingebaute Muster | Shop-Systeme |
+| ------------ | ----------------- | ------------ |
+| **cart**     | `*/checkout/cart*`, `*/cart`, `*/cart/*`, `*/warenkorb`, `*/warenkorb/*`, `*/warenkorb.*` | Shopware, Magento 2, WooCommerce, Shopify, PrestaShop, JTL 5 |
+| **checkout** | `*/checkout`, `*/checkout/*`, `*/kasse`, `*/kasse/*`, `*/bestellvorgang`, `*/bestellvorgang/*`, `*/bestellvorgang.*`, `*/bestellung`, `*/bestellung/*`, `/order` | Shopware, Magento 2, WooCommerce, JTL 5, PrestaShop, deutsche Eigenbau-Shops |
+| **success**  | `*/checkout/finish*`, `*/checkout/onepage/success*`, `*/order-received/*`, `*/order-confirmation`, `*/order-confirmation/*`, `*/bestellabschluss`, `*/bestellabschluss/*`, `*/bestellabschluss.*`, `*/checkout/success*`, `*/thankyou`, `*/thankyou/*`, `*/thank-you`, `*/thank-you/*`, `*/danke`, `*/danke/*`, `*/danke.*` | Shopware, Magento 2, WooCommerce, PrestaShop, JTL 5, generische Danke-Seiten |
+
+Die Muster enden bewusst an Wortgrenzen: `*/cart` und `*/cart/*` treffen die Warenkorbseite, aber nicht `/cartoons`, und `*/thank-you` trifft nicht die Newsletter-Seite `/thank-you-for-subscribing`. `/order` ist exakt und nur auf Root-Ebene gemeint, weil `*/order` die Shopware-Seite `/account/order` treffen würde.
+
+Bei zwei Shop-Systemen gibt es etwas zu beachten. Bei Shopify laufen Checkout, Verarbeitung und Danke-Seite auf Shopifys eigener Infrastruktur, wo dein Tracker nicht lädt; ein Shopify-Funnel endet deshalb beim Warenkorb, und die [Warenkorb-Interaktionen](#cart-interactions) sind das Kaufsignal, das bleibt. OXID führt den gesamten Checkout über `index.php?cl=basket|user|payment|order|thankyou`, ohne jeden Unterschied im Pfad; siehe das [OXID-Rezept](#oxid) unten.
+
+Der Schalter läuft auf jeder Site, Shop oder nicht. Auf einer Site mit Content-Pfaden wie `/docs/checkout/setup` oder `/help/cart` bekommen diese Pageviews eine Stufe. Das bleibt überschaubar (niemand öffnet den Funnel einer Doku-Site), und Abhilfe schaffen eigene Muster für die Stufe oder das Abschalten.
+
+## Warenkorb-Interaktionen [#cart-interactions]
+
+Die URL-Stufen sehen Seiten. Ein Besucher, der ein Produkt aus einer Liste oder einem Offcanvas-Warenkorb hinzufügt, lädt nie eine Warenkorbseite; deshalb registriert der Funnel zusätzlich **Warenkorb-Interaktionen**: ein First-Party-`POST` der Seite an einen bekannten Warenkorb-Endpunkt, gelesen aus der Fetch/XHR-Telemetrie, die der Tracker ohnehin erfasst. Wo der Endpunkt es verrät, trägt die Interaktion eine Art: `add`, `change` (Mengenänderungen; bei Shopify auch Entfernen, das der Shop als Menge 0 schickt), `remove` oder `other` (die Art steht nur im Request-Body, den fastmon nie liest).
+
+| Art        | Endpunkte (POST) | Shop-Systeme |
+| ---------- | ---------------- | ------------ |
+| **add**    | `/checkout/line-item/add`, `/checkout/ajaxaddarticlecart`, `/checkout/cart/add/*`, `*/cart/add`, `*/cart/add.js`, `/wp-json/wc/store/v1/cart/add-item` | Shopware 6, Shopware 5, Magento 2, Shopify, WooCommerce (Store API) |
+| **change** | `/checkout/line-item/update`, `/checkout/line-item/change-quantity/*`, `*/cart/change`, `*/cart/change.js`, `*/cart/update`, `*/cart/update.js`, `/wp-json/wc/store/v1/cart/update-item` | Shopware 6, Shopify, WooCommerce (Store API) |
+| **remove** | `/checkout/line-item/delete/*`, `/wp-json/wc/store/v1/cart/remove-item` | Shopware 6, WooCommerce (Store API) |
+| **other**  | `/cart` | PrestaShop, Shopify Hydrogen |
+
+Warenkorb-Interaktionen brauchen [`collect_fetch_xhr`](/de/tracker#collect-fetch-xhr) (im Preset Standard an). Ist es aus, funktionieren die URL-Stufen weiter, und die Interaktionszahlen bleiben leer. Hinzufügen per klassischem Formular-POST (OXID, WooCommerce-Produktseiten) ist für Fetch/XHR unsichtbar und wird nicht gezählt; die Endpunktliste wird serverseitig gepflegt und wächst ohne Tracker-Release.
+
+Warenkorb-Interaktionen stehen **neben** den Funnel-Schritten, nie als einer davon. Ihre Abdeckung hängt vom Shop-System und von der Fetch/XHR-Einstellung ab; als erster Schritt würden sie jede nachfolgende Conversion-Rate verfälschen.
+
+## Was die Zahlen bedeuten
+
+- **Besucher pro Schritt.** Jeder Besucher zählt einmal pro Schritt, den er im Zeitraum mindestens einmal erreicht hat, gruppiert über die Besucher-Identität (standardmäßig `stitch`, siehe [Besucher und Sessions](/de/concepts/sessions)). Pro Besucher wird nichts gespeichert; die Gruppierung passiert zur Abfragezeit.
+- **Einsortiert nach Einstieg.** In der Zeitreihe landet ein Besucher im Bucket seines ersten Funnel-Pageviews, nicht dem seines Abschlusses. Die Zahlen eines Tages sind endgültig, sobald der Tag, das 24-Stunden-`stitch`-Fenster und die Ingest-Verzögerung vorbei sind; bis dahin kommen späte Abschlüsse noch nach.
+- **Raten können über 100 % liegen.** Ein Besucher kann einen späteren Schritt erreichen, ohne dass der frühere beobachtet wurde (Deep-Link in den Checkout, Offcanvas-Warenkorb ohne eigene URL, Express-Checkout). fastmon zeigt das so, wie es ist, statt es glattzurechnen.
+- **Abschluss heißt Seite, nicht Zahlung.** Der Schritt `success` zählt Besucher, die eine Danke-Seite geladen haben. Ein Shop, dessen Danke-Seite den Tracker nicht lädt oder dessen Zahlungsanbieter den Besucher nie dorthin zurückschickt, zeigt Checkouts ohne Abschlüsse. Das ist der häufigste Einrichtungsfehler: Eine Site mit Checkout-Besuchern und null Abschlüssen über längere Zeit verdient einen Blick auf die Danke-Seite.
+
+## Wo es auftaucht
+
+- **Analytics-Dashboard.** Checkouts ist die vierte zentrale Kennzahl neben Besuchern und Pageviews, mit eigener Kachel, Vergleich und Sparkline. Wählst du sie aus, wechselt das Hauptdiagramm auf die Abschluss-Serie, mit Warenkorb und Checkout als dünnen Kontextlinien darunter. Das Checkout-Panel darunter listet Besucher, Besucher mit Warenkorb-Interaktion, mit Checkout-Seite und mit abgeschlossenem Checkout, dazu die Warenkorb-Requests nach Art. Die Karte der aktuellen Besucher trägt die drei Stufen für die letzten fünf Minuten. Alle Kennzahl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum, damit sich ein Tag und ein Monat vergleichen lassen.
+- **Filter `checkout_stage`.** Warenkorb, Checkout und Abgeschlossen sind feste Optionen in der Filterleiste, den Chips und dem Befehlsmenü. Es ist ein Filter, keine Gruppierungsdimension: Web Vitals pro Funnel-Stufe sind eine gefilterte Abfrage auf jeder Metrikseite, kein Breakdown.
+- **Besucher.** Filtere die Liste auf alle, die eine Stufe erreicht oder eine Warenkorb-Interaktion ausgelöst haben. Auf der Journey trägt jeder Pageview einen Funnel-Chip in der Farbe seiner Stufe und je einen Chip pro Warenkorb-Aktion, neben dem Page-Type-Chip.
+- **Business Impact.** Wo der Funnel Daten hat, zeigt die Seite die gemessene Conversion-Rate statt der aus LCP und INP geschätzten. Gezählt werden weiterhin Danke-Seiten, und die Kachel sagt das auch.
+
+## Einstellungen
+
+Schalter und Muster liegen an der Application unter **Einstellungen → Checkout-Funnel** und auf der API als Felder der Application (`checkout_tracking`, `checkout_cart_paths`, `checkout_paths`, `checkout_success_paths`). Siehe [Applications](/de/concepts/applications#checkout-funnel).
+
+- **`checkout_tracking`** ist standardmäßig an und ist das explizite Opt-out. Es umfasst die URL-Stufen und die Warenkorb-Interaktionen; einen eigenen Schalter für den Warenkorb gibt es nicht. Weil die Markierung nur vorwärts wirkt, hinterlässt Abschalten eine Lücke, die sich später nicht mehr füllen lässt. Standardmäßig an bedeutet, dass eine Site vom ersten Tag an eine Funnel-Historie hat, wenn sie den Tab zum ersten Mal öffnet.
+- **Pfade pro Stufe.** Jede Stufe erbt entweder die eingebauten Muster (der Default, gespeichert als `null`) oder ersetzt sie komplett durch deine eigene Liste. Es gibt keine Mischung, damit „warum trifft diese URL?" immer genau eine Antwort hat. Bis zu 10 Muster pro Stufe, jedes bis zu 200 Zeichen, druckbares ASCII in Kleinbuchstaben, `*` als einziges Wildcard-Zeichen; der Editor im Dashboard prüft vor dem Speichern gegen dieselben Regeln. Verbesserungen an der eingebauten Liste erreichen jede Site, die diese Stufe nicht überschrieben hat.
+- **Voraussetzungen.** Besucher pro Stufe zu zählen braucht eine gespeicherte Besucher-Identität ([`store_stitch`](/de/tracker#store-stitch) oder Sessions). Ohne eine antworten die Funnel-Endpunkte mit `422`, statt irreführende Nullen zu zeigen. Warenkorb-Interaktionen brauchen zusätzlich [`collect_fetch_xhr`](/de/tracker#collect-fetch-xhr).
+
+### Query-basierte Checkouts (OXID und andere) [#oxid]
+
+OXID hält den gesamten Checkout auf `index.php` und unterscheidet die Schritte nur im Query-Parameter `cl`. Da der Matcher gegen die bereinigte URL läuft, funktioniert er, sobald die Site den Wert dieses Keys behält: Nimm `cl` in [`collect_query_values_for`](/de/tracker#collect-query-values-for) auf (damit wird `?cl=…` mit der URL gespeichert, mit derselben Hinweispflicht wie bei jedem Query-Opt-in) und setz eigene Muster: cart `*?cl=basket*`, checkout `*?cl=user*`, `*?cl=payment*`, `*?cl=order*`, success `*?cl=thankyou*`. Können andere Query-Keys vor `cl` stehen, ergänze die Varianten mit `*&cl=…*`. Dasselbe Rezept deckt generische `?step=`-Checkouts ab. Query-Muster sind absichtlich nicht Teil der Defaults: Ohne das Opt-in könnten sie nie treffen.
+
+## Datenschutz
+
+Die Stufe ist ein Label mit vier Werten, berechnet aus der URL, die die Site sowieso speichert; die Warenkorb-Interaktion ist ein Merker, berechnet aus Fetch/XHR-Pfaden, die die Site sowieso speichert. Keines von beiden fügt dem Beacon ein Feld hinzu, keines erhöht die Besucher-Entropie, und keines liest etwas, das die Konfiguration der Site nicht schon erlaubt hat. Pro Besucher wird nichts aufbewahrt: Funnel und Journeys werden zur Abfragezeit durch Gruppieren der Pageviews über die Identität berechnet. Die Funktion steht in jedem Erfassungsmodus zur Verfügung, auch in `anonymous`. Siehe [Privacy](/de/privacy#what-we-collect).
+
+## API
+
+- `POST /v1/organizations/{org_id}/analytics/funnels/checkout`: die Schritte mit Besucherzahlen und Conversion-Raten, die Warenkorb-Interaktionen nach Art und die Zeitreihe, gebucketet nach Funnel-Einstieg. Nimmt die üblichen `time_range`, `filters` und `identity`. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutFunnel) (nur auf Englisch).
+- `POST /v1/organizations/{org_id}/analytics/funnels/checkout/journeys`: die Pageviews rund um den Treffer eines Besuchers auf einem Schritt. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutJourneys).
+- `POST /v1/organizations/{org_id}/analytics/visitors` nimmt `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` (`true`/`false`) als Filter; Besucher-Detail und Pageview-Liste tragen `checkout_stage` und die Warenkorb-Interaktionsfelder pro Pageview.
+- `checkout_stage` ist eine Filterdimension auf jedem Analytics-Endpunkt, der `filters` annimmt.
+
+## Weiterlesen
+
+- [Applications](/de/concepts/applications#checkout-funnel): die Felder und wo sie liegen.
+- [Tracker-Einstellungen](/de/tracker#collect-fetch-xhr): `collect_fetch_xhr` und `collect_query_values_for`, die zwei Einstellungen, von denen der Funnel abhängt.
+- [Besucher und Sessions](/de/concepts/sessions): die Identität, über die der Funnel gruppiert.

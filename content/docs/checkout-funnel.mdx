@@ -1,0 +1,96 @@
+---
+title: Checkout funnel
+description: Cart, checkout, and success as observed facts per visitor, derived from the page URL and the shop's own cart requests. No tracker change, on by default.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The checkout funnel answers a question the Web Vitals cannot: not how fast the shop is, but whether visitors get through it. fastmon marks every pageview whose URL is a cart, checkout, or success page, records cart requests the shop's own pages send, and counts per visitor how far they got. Everything is derived from data the tracker already sends, so there is nothing to install and nothing new is collected.
+
+<Callout type="info" title="Facts only">
+  Every number in the funnel is a count of something that was observed: a visitor loaded a cart page, a visitor loaded a thank-you page. There is deliberately no "abandoned" metric. An abandonment would be a claim built from a missing observation (the visitor may have bought on another device, after the daily `stitch` rotation, or on a thank-you page that does not load the tracker). fastmon reports the counts per step; the difference between them is yours to interpret.
+</Callout>
+
+## How a pageview gets its stage
+
+At ingest the collector matches the already-sanitized page URL (origin and path, plus any query keys your site opted in) against a list of URL patterns per stage and stamps one of `cart`, `checkout`, or `success` on the pageview. Pageviews that match nothing keep an empty stage. The tracker is not involved: the browser sends no extra field, and a browser-cached tracker needs no update.
+
+The built-in patterns cover the common shop systems out of the box: Shopware 5 and 6, WooCommerce (English and German slugs), Magento 2, PrestaShop, JTL Shop 5, and Shopify. Every pattern tolerates a language or shop prefix, so `/de/warenkorb` and `/fr/cart` count like their root variants.
+
+Matching order is fixed and deliberately not the funnel order. `success` is tested first, because success pages often live under the checkout path (`/checkout/finish`, `/checkout/onepage/success`). `cart` is tested before `checkout`, because Shopware and Magento put the cart under the checkout path too (`/checkout/cart`) and it must not count as entering the checkout.
+
+The marks are stored with the pageview and never recomputed. Changing the patterns or the switch affects pageviews from that moment on; what is already stored keeps its stage.
+
+### Default patterns [#default-patterns]
+
+A pattern must describe the whole path. `*` matches any run of characters, including `/`; everything else is literal. Matching is case-insensitive.
+
+| Stage        | Built-in patterns | Shop systems |
+| ------------ | ----------------- | ------------ |
+| **cart**     | `*/checkout/cart*`, `*/cart`, `*/cart/*`, `*/warenkorb`, `*/warenkorb/*`, `*/warenkorb.*` | Shopware, Magento 2, WooCommerce, Shopify, PrestaShop, JTL 5 |
+| **checkout** | `*/checkout`, `*/checkout/*`, `*/kasse`, `*/kasse/*`, `*/bestellvorgang`, `*/bestellvorgang/*`, `*/bestellvorgang.*`, `*/bestellung`, `*/bestellung/*`, `/order` | Shopware, Magento 2, WooCommerce, JTL 5, PrestaShop, custom German shops |
+| **success**  | `*/checkout/finish*`, `*/checkout/onepage/success*`, `*/order-received/*`, `*/order-confirmation`, `*/order-confirmation/*`, `*/bestellabschluss`, `*/bestellabschluss/*`, `*/bestellabschluss.*`, `*/checkout/success*`, `*/thankyou`, `*/thankyou/*`, `*/thank-you`, `*/thank-you/*`, `*/danke`, `*/danke/*`, `*/danke.*` | Shopware, Magento 2, WooCommerce, PrestaShop, JTL 5, generic thank-you pages |
+
+The patterns are word-bounded on purpose: `*/cart` and `*/cart/*` match the cart page but not `/cartoons`, and `*/thank-you` does not match a newsletter's `/thank-you-for-subscribing`. `/order` is exact and root-only because `*/order` would match Shopware's `/account/order` page.
+
+Two shop systems need a word of caution. Shopify's checkout, processing, and thank-you pages run on Shopify's infrastructure, where your tracker does not load, so a Shopify funnel ends at the cart and the [cart interactions](#cart-interactions) are the purchase signal that remains. OXID routes the whole checkout through `index.php?cl=basket|user|payment|order|thankyou` without any path difference; see the [OXID recipe](#oxid) below.
+
+The switch runs on every site, shops or not. On a site with content paths like `/docs/checkout/setup` or `/help/cart`, those pageviews pick up a stage. That is bounded (nobody opens the funnel of a documentation site), and the remedy is either custom patterns for the stage or the opt-out.
+
+## Cart interactions [#cart-interactions]
+
+The URL stages see pages. A visitor who adds a product from a listing or a drawer cart never loads a cart page, so the funnel also records **cart interactions**: a first-party `POST` from the page to a known cart endpoint, read from the fetch/XHR telemetry the tracker already collects. Where the endpoint reveals it, the interaction carries a kind: `add`, `change` (quantity updates; on Shopify this includes removes, which the shop sends as a quantity of 0), `remove`, or `other` (the kind lives only in the request body, which fastmon never reads).
+
+| Kind       | Endpoints (POST) | Shop systems |
+| ---------- | ---------------- | ------------ |
+| **add**    | `/checkout/line-item/add`, `/checkout/ajaxaddarticlecart`, `/checkout/cart/add/*`, `*/cart/add`, `*/cart/add.js`, `/wp-json/wc/store/v1/cart/add-item` | Shopware 6, Shopware 5, Magento 2, Shopify, WooCommerce (Store API) |
+| **change** | `/checkout/line-item/update`, `/checkout/line-item/change-quantity/*`, `*/cart/change`, `*/cart/change.js`, `*/cart/update`, `*/cart/update.js`, `/wp-json/wc/store/v1/cart/update-item` | Shopware 6, Shopify, WooCommerce (Store API) |
+| **remove** | `/checkout/line-item/delete/*`, `/wp-json/wc/store/v1/cart/remove-item` | Shopware 6, WooCommerce (Store API) |
+| **other**  | `/cart` | PrestaShop, Shopify Hydrogen |
+
+Cart interactions need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr) (on under the Standard preset). With it off, the URL stages still work and the cart interaction counts stay empty. Adds that go out as a classic form POST (OXID, WooCommerce single-product pages) are invisible to fetch/XHR and are not counted; the list of endpoints is maintained server-side and grows without a tracker release.
+
+Cart interactions are reported **beside** the funnel steps, never as one. Their coverage depends on the shop system and on the fetch/XHR setting, so using them as the first step would corrupt every conversion rate that follows.
+
+## What the numbers mean
+
+- **Visitors per step.** Each visitor counts once per step they reached at least once in the window, grouped on the visitor identity (`stitch` by default, see [Visitors and sessions](/en/concepts/sessions)). Nothing per visitor is stored; the grouping happens at query time.
+- **Bucketed by entry.** In the time series a visitor lands in the bucket of their first funnel pageview, not of their success. A day's numbers are final once the day, the 24-hour `stitch` window, and the ingest lag have passed; until then late successes still arrive.
+- **Rates can exceed 100 %.** A visitor can enter a later step without the earlier one being observed (a deep link into the checkout, a drawer cart with no URL, an express checkout). fastmon reports that as it is rather than normalizing it away.
+- **Success is a page, not a payment.** The success step counts visitors who loaded a thank-you page. A shop whose thank-you page does not load the tracker, or whose payment provider never returns the visitor to it, shows checkouts without successes. That is the most common setup issue: a site with checkout visitors and zero successes over a longer period is worth a look at the thank-you page.
+
+## Where it shows up
+
+- **Analytics dashboard.** Checkouts is the fourth headline metric next to visitors and pageviews, with its own tile, comparison, and sparkline. Selecting it switches the main chart to the success series with cart and checkout drawn underneath as context lines. The checkout panel below lists visitors, visitors with a cart interaction, with a checkout page, and with a completed checkout, plus the cart requests by kind. The current-visitors card carries the three stages for the last five minutes. All headline tiles also show an average per minute over the selected range, so a day and a month compare on the same footing.
+- **`checkout_stage` filter.** Cart, checkout, and completed are fixed options in the filter bar, the chips, and the command palette. It is a filter, not a grouping dimension: Web Vitals per funnel stage is a filtered query on any metric page, not a breakdown.
+- **Visitors.** Filter the list to everyone who reached a stage or issued a cart interaction. On the journey, each pageview carries a Funnel chip colored by stage and one chip per cart action, next to the page-type chip.
+- **Business Impact.** Where the funnel has data, the page shows the measured conversion rate instead of the estimate derived from LCP and INP. It still counts thank-you pages, and the tile says so.
+
+## Settings
+
+The switch and the patterns live on the application under **Settings → Checkout funnel**, and on the API as fields of the application (`checkout_tracking`, `checkout_cart_paths`, `checkout_paths`, `checkout_success_paths`). See [Applications](/en/concepts/applications#checkout-funnel).
+
+- **`checkout_tracking`** is on by default and is the explicit opt-out. It covers both the URL stages and the cart interactions; there is no separate switch for the cart. Because marking is forward-only, turning it off leaves a gap you cannot fill later. On by default is what gives a site a funnel history from the day it first opens the tab.
+- **Per-stage paths.** Each stage either inherits the built-in patterns (the default, stored as `null`) or replaces them wholesale with your own list. There is no merge, so "why does this URL match?" always has one answer. Up to 10 patterns per stage, each up to 200 characters, lowercase printable ASCII, `*` the only wildcard; the dashboard editor validates against the same rules before saving. Improvements to the built-in list reach every site that did not override that stage.
+- **Requirements.** Counting visitors per stage needs a stored visitor identity ([`store_stitch`](/en/tracker#store-stitch), or sessions). Without one the funnel endpoints answer `422` rather than showing misleading zeros. Cart interactions additionally need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr).
+
+### Query-based checkouts (OXID and others) [#oxid]
+
+OXID keeps the whole checkout on `index.php` and distinguishes the steps only in the `cl` query parameter. Since the matcher runs against the sanitized URL, it works as soon as the site keeps that key's value: add `cl` to [`collect_query_values_for`](/en/tracker#collect-query-values-for) (this stores `?cl=…` with the URL, with the same customer-notice obligation as any query opt-in), then set custom patterns: cart `*?cl=basket*`, checkout `*?cl=user*`, `*?cl=payment*`, `*?cl=order*`, success `*?cl=thankyou*`. If other query keys can precede `cl`, add the `*&cl=…*` variants. The same recipe covers generic `?step=` checkouts. Query patterns are deliberately not part of the defaults: without the opt-in they could never match.
+
+## Privacy
+
+The stage is a four-value label computed from the URL the site already stores; the cart interaction is a flag computed from fetch/XHR paths the site already stores. Neither adds a field to the beacon, neither adds visitor entropy, and neither reads anything the site's configuration did not already permit. Nothing is kept per visitor: the funnel and the journeys are computed at query time by grouping pageviews on the identity. The feature is available in every collection mode, including `anonymous`. See [Privacy](/en/privacy#what-we-collect).
+
+## API
+
+- `POST /v1/organizations/{org_id}/analytics/funnels/checkout`: the steps with visitor counts and conversion rates, the cart interaction counts by kind, and the series bucketed by funnel entry. Accepts the usual `time_range`, `filters`, and `identity`. See the [reference](/en/api/analytics/queryAnalyticsCheckoutFunnel).
+- `POST /v1/organizations/{org_id}/analytics/funnels/checkout/journeys`: the pageviews around a visitor's hit on a given step. See the [reference](/en/api/analytics/queryAnalyticsCheckoutJourneys).
+- `POST /v1/organizations/{org_id}/analytics/visitors` accepts `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` (`true`/`false`) as filters; the visitor detail and the pageview list carry `checkout_stage` and the cart interaction fields per pageview.
+- `checkout_stage` is a filter dimension on every analytics endpoint that takes `filters`.
+
+## What's next
+
+- [Applications](/en/concepts/applications#checkout-funnel): the fields and where they live.
+- [Tracker settings](/en/tracker#collect-fetch-xhr): `collect_fetch_xhr` and `collect_query_values_for`, the two settings the funnel depends on.
+- [Visitors and sessions](/en/concepts/sessions): the identity the funnel groups on.

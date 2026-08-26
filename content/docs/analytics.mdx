@@ -15,20 +15,22 @@ Analytics is the exploration layer on top of everything your beacons collect: wh
 
 The main Analytics view for a site shows:
 
-- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15.
-- **Three headline metrics**: Unique Visitors, Pageviews, and Views per Visit, each with a sparkline and the change against the previous period.
-- **Trend chart**: the headline metrics over the selected range, with an optional previous-period overlay.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, …).
+- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15. On shops the card also shows how many of them are at the cart, checkout, and success stage.
+- **Headline metrics**: Unique Visitors, Pageviews, Views per Visit, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range, so a day and a month compare on the same footing.
+- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. With Checkouts selected, cart and checkout are drawn underneath as context lines.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on).
+- **Checkout numbers**: visitors, visitors with a cart interaction, with a checkout page, and with a completed checkout, plus cart requests by kind. Counts only, no derived rates; see [Checkout funnel](/en/checkout-funnel).
 - **Campaigns & attribution**: UTM coverage and source/medium/campaign lists, including ad-platform click-ID labels.
-- **Tech panel**: back/forward-cache hit rate, top third-party categories, and whether errors originate first- or third-party.
 
 Visitor counts are anonymous by construction; see [Privacy](/en/privacy) for what a "visitor" can and cannot mean here.
 
 ## Filtering
 
-A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, and protocol.
+A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel) (cart, checkout, completed).
 
 Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
+
+Every chip also has an on/off switch. Switched off, the chip keeps its values and stays in place, drawn struck through, and the query runs without it: the quickest way to answer "what does this look like without the country filter" and then put it back. A switched-off filter narrows nothing and is not counted in the badge; clicking the same country on the map or the same device segment switches it back on instead of adding a second filter. The state travels in the URL too, so a shared link opens with the same filters on and off.
 
 ## Navigating with the command palette
 
@@ -47,7 +49,7 @@ How much detail you see depends on the site's [tracker settings](/en/tracker): e
 
 ## Visitors
 
-The Visitors explorer lists distinct visitors (start and end time, duration, page count, device info, average LCP/FCP, error count) with filters, and a per-visitor detail view showing every pageview in order, each with its Web Vitals and errors.
+The Visitors explorer lists distinct visitors (start and end time, duration, page count, country with flag and name, device info, average LCP/FCP, error count) with filters, and a per-visitor detail view showing every pageview in order, each with its Web Vitals, errors, page type, and, on shops, its [checkout stage](/en/checkout-funnel) and cart actions. The summary above the list describes the whole selected period, not the loaded page of results: visitors, visitors with a single page, and the median pages per visitor. Behavior filters narrow the list to visitors with at least a given number of pages, errors, duration, or LCP, with a given page type in the journey, or who reached a funnel stage or issued a cart interaction. A visitor can be deep-linked with `?visitor=`.
 
 A visitor is counted along an identity axis: `stitch` (present when [`store_stitch`](/en/tracker#store-stitch) is on) or `session` (the cross-page `session_id`, present when [`collect_sessions`](/en/tracker#collect-sessions) is on). The site's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`, so the visitor explorer works out of the box; the `Minimal` preset stores neither identity and leaves it empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions) for the full model.
 
@@ -63,10 +65,11 @@ The [Experience Score](/en/web-vitals/experience-score) panel breaks the score d
 
 ## API
 
-Every panel maps to a query endpoint under `/v1/organizations/{org_id}/analytics/…`: a flexible [query endpoint](/en/api/analytics/queryAnalytics) for time series and breakdowns, plus dedicated endpoints for histograms, error types and details, visitors, Fetch/XHR, Server-Timing, resource and third-party breakdowns, LoAF, and the Experience Score. See the [Analytics endpoint reference](/en/api/analytics/queryAnalytics).
+Every panel maps to a query endpoint under `/v1/organizations/{org_id}/analytics/…`: a flexible [query endpoint](/en/api/analytics/queryAnalytics) for time series and breakdowns, plus dedicated endpoints for histograms, error types and details, visitors, Fetch/XHR, Server-Timing, resource and third-party breakdowns, LoAF, the [checkout funnel](/en/api/analytics/queryAnalyticsCheckoutFunnel), and the Experience Score. See the [Analytics endpoint reference](/en/api/analytics/queryAnalytics).
 
 ## What's next
 
+- [Checkout funnel](/en/checkout-funnel): how pageviews get their cart, checkout, and success stage, and what the counts mean.
 - [Tracker settings](/en/tracker): what the tracker collects per setting, and why the session identity or stack traces may be missing.
 - [Visitors and sessions](/en/concepts/sessions): how pageviews become visitors and sessions.
 - [Synthetic Monitoring](/en/synthetic): the lab-data complement to these field dashboards.

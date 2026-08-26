@@ -93,7 +93,7 @@ Keeps the **names** of query parameters on the page URL (for example `?page`, `?
 
 ### `collect_query_values_for` [#collect-query-values-for]
 
-An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`collect_query_keys`](#collect-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset.
+An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`collect_query_keys`](#collect-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset. Shops whose checkout steps differ only in a query parameter (OXID's `cl`) list that key here so the [checkout funnel](/en/checkout-funnel#oxid) can match on it.
 
 **PII:** you own this one. A value is stored only for the exact keys you list, and never "all values". If you list a parameter that carries personal data (an email, a user id, a token), you have chosen to store it, so keep the list to non-personal keys.
 
@@ -115,7 +115,7 @@ Keeps full stack-frame detail (script path plus line and column) for every frame
 
 ### `collect_fetch_xhr` [#collect-fetch-xhr]
 
-Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on).
+Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on). The [checkout funnel](/en/checkout-funnel#cart-interactions) reads its cart interactions from this telemetry (a `POST` to a known cart endpoint), so with this off the cart interaction counts stay empty while the URL stages keep working.
 
 **PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. On top of the page-URL rules, the collector re-templates fetch/XHR paths server-side to keep the aggregate readable: long content slugs collapse to `:slug`, opaque tokens to `:id`, soft-navigation document fetches to `/:page`, and a third-party host keeps its endpoint row but loses its query string entirely. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
 
@@ -123,7 +123,7 @@ Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, er
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type).
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The page type says what kind of page it is; the [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone, and it works without a ruleset.
 
 **PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
 
