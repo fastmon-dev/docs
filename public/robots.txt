@@ -1,0 +1,113 @@
+# robots.txt for https://docs.fastmon.eu/
+#
+# Same stance as the main site (https://fastmon.eu/robots.txt): search engines
+# and AI assistants are both welcome. Crawl us, index us, cite us.
+#
+# Machine readable overviews for LLMs and AI assistants:
+#   https://docs.fastmon.eu/llms.txt       (index of every page)
+#   https://docs.fastmon.eu/llms-full.txt  (full page text)
+#
+# Every docs page also has a markdown twin, linked from the page itself via the
+# "copy markdown" button.
+#
+# Marketing site and pricing: https://fastmon.eu/
+#
+# Content Signals (contentsignals.org, draft-romm-aipref-contentsignals):
+#   search   = build an index, link us, quote short excerpts
+#   ai-input = feed us into a model at query time (RAG, grounding, AI answers)
+#   ai-train = train or fine-tune models on us
+# All three are yes, which matches the crawler rules below. The line is
+# repeated per group on purpose: a crawler obeys only the most specific group
+# that matches it, so a signal under "*" alone would never reach GPTBot.
+
+User-agent: *
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# AI and LLM crawlers are explicitly welcome.
+
+# OpenAI (training, ChatGPT user requests, search)
+User-agent: GPTBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: ChatGPT-User
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: OAI-SearchBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Anthropic (Claude)
+User-agent: ClaudeBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: Claude-User
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: Claude-SearchBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: anthropic-ai
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+User-agent: Perplexity-User
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Google AI (Gemini)
+User-agent: Google-Extended
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Apple Intelligence
+User-agent: Applebot-Extended
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Common Crawl
+User-agent: CCBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Meta AI
+User-agent: meta-externalagent
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Amazon (Alexa, Rufus)
+User-agent: Amazonbot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# ByteDance (Doubao)
+User-agent: Bytespider
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# DuckDuckGo (DuckAssist)
+User-agent: DuckAssistBot
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+# Mistral (Le Chat)
+User-agent: MistralAI-User
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+
+Sitemap: https://docs.fastmon.eu/sitemap.xml

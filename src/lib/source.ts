@@ -3,6 +3,7 @@ import { loader } from "fumadocs-core/source";
 import { docsContentRoute, docsImageRoute, docsRoute } from "./shared";
 import { i18n } from "./i18n";
 import * as React from "react";
+import type { Metadata } from "next";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
@@ -18,6 +19,33 @@ export function getPageImage(page: (typeof source)["$inferPage"]) {
   return {
     segments,
     url: `${docsImageRoute}/${segments.join("/")}`,
+  };
+}
+
+/** Title, description, social image, canonical and hreflang for one docs page.
+ *  Every route's `generateMetadata` goes through here, so the head of a docs
+ *  page cannot drift from the head of an API or changelog page.
+ *
+ *  The canonical matters because the same content is reachable with and without
+ *  a trailing slash, and hreflang because the two languages are separate URLs
+ *  that must point at each other. Both are relative: `metadataBase` in the root
+ *  layout turns them into absolute URLs. */
+export function pageMetadata(page: (typeof source)["$inferPage"]): Metadata {
+  const languages: Record<string, string> = {};
+  for (const lang of i18n.languages) {
+    const alt = source.getPage(page.slugs, lang);
+    if (alt) languages[lang] = alt.url;
+  }
+  const fallback = languages[i18n.defaultLanguage];
+
+  return {
+    title: page.data.title,
+    description: page.data.description,
+    alternates: {
+      canonical: page.url,
+      languages: { ...languages, ...(fallback ? { "x-default": fallback } : {}) },
+    },
+    openGraph: { images: getPageImage(page).url },
   };
 }
 

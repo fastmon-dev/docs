@@ -1,4 +1,4 @@
-import { getPageImage, getPageMarkdownUrl, source } from "@/lib/source";
+import { getPageMarkdownUrl, pageMetadata, source } from "@/lib/source";
 import {
   DocsBody,
   DocsDescription,
@@ -53,11 +53,5 @@ export async function generateMetadata(
   const page = source.getPage(["api", ...params.slug], params.lang);
   if (!page) notFound();
 
-  return {
-    title: page.data.title,
-    description: page.data.description,
-    openGraph: {
-      images: getPageImage(page).url,
-    },
-  };
+  return pageMetadata(page);
 }
