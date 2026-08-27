@@ -25,8 +25,16 @@ not translate word-for-word).
 - **Cut throat-clearing** ("It's worth noting that", "Importantly", "seamlessly",
   "powerful", "robust", "leverage"). Say what changed and what it means for the user.
 
-Keep the existing entries as the tone reference: one short paragraph, present tense,
-concrete. Entries dated before 2026-06-26 are the good baseline.
+**Short, unambiguous, formatted.** Nobody reads long text. Present tense, concrete.
+
+- A small change is one short paragraph (two or three sentences).
+- An entry with several distinct facts (new fields, a changed meaning, side fixes) gets
+  a one-sentence intro (what was wrong or what is new), then one bullet per fact with
+  the scannable term in bold, then a closing `Docs: [Page → Section](/en/…)` line
+  whenever a docs page covers it. Keep bullets to one or two sentences; cut rationale
+  that the reader does not need to act.
+- Never one long paragraph that strings several facts together. Around 700 characters
+  of body is the point where an entry must be bulleted or cut.
 
 **One change, one entry.** Fold bug-fixes that only make a feature work into that
 feature's entry. Leave out purely internal or negligible tweaks (the changelog intro

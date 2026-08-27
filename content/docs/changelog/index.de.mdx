@@ -19,13 +19,25 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <ChangelogEntry date="2026-08-27" type="new" area="dashboard" title="Der Early-Hints-Vorsprung und die Store-Phasen im Dashboard">
 
-Das Dashboard nimmt `ttfb_final` und die zwei neuen Phasen auf. Die Response-Aufschlüsselung lässt die Server-Phasen an den finalen Response-Headern enden: Antwortet eine Site mit 103 Early Hints, trägt die Wartezeit eine Zeile „Early Hints" vom ersten Byte bis zu den finalen Headern, die Server-Phasen darunter enden, wo diese Zeile endet, und der Übertragungsbalken beginnt bei den finalen Headern, statt den Vorsprung ein zweites Mal als Download zu zählen. Eine Server-Phase, die länger ist als das erste Byte, behält ihre gemeldete Länge und wird zweiteilig mit der Naht am Übergang gezeichnet, wo sie bisher in die Wartezeit gequetscht wurde (ein Shop mit 297 ms Backend stand als die 61 ms da, die der Browser sah). Sites ohne vorläufige Response und Browser, die das Timing nicht melden, sehen aus wie zuvor. Die TTFB-Seite bekommt für denselben Sachverhalt ein Panel „Early Hints": den Vorsprung am gewählten Perzentil, die zwei ersten Bytes als einen geteilten Balken und den Anteil der Pageviews, auf denen er gemessen wurde; es erscheint nur, wo sich die beiden Werte unterscheiden. Search und KV sind eigene Phasen neben DB, Cache, External und Render auf der Server-Timing-Seite, im Wasserfall der Aufschlüsselung und als Explorer-Metriken und -Spalten, und das Preset „Backend-Phasen" bekommt ein Diagramm DB gegen Search und KV. Der Pageview-Drawer addiert das Backend nicht mehr zu seinen eigenen Teilen: Die Zusammensetzung ist jetzt eine verschachtelte Liste, jeder Teil unter dem, was ihn enthält, mit seinem Anteil an dieser Zeile, und nicht zugeordnete Zeit als eigene Zeile. Jede Phase trägt in der Aufschlüsselung ihre eigene Farbe, und die Cache-Phase heißt „Cache" statt „Cache (FPC)", weil sie die eigenen Cache-Aufrufe der Anwendung summiert und der Full-Page-Cache der Cache-Status des Origins ist. Siehe [TTFB → Early Hints](/de/web-vitals/ttfb#early-hints).
+Das Dashboard nimmt `ttfb_final` und die Phasen Search und KV auf.
+
+- **Response-Aufschlüsselung**: Bei Sites mit 103 Early Hints läuft eine Zeile „Early Hints" vom ersten Byte bis zu den finalen Response-Headern. Die Server-Phasen enden dort, und der Übertragungsbalken beginnt dort, statt den Vorsprung doppelt zu zählen. Eine Server-Phase, die länger ist als das erste Byte, behält ihre gemeldete Länge, statt in die Wartezeit gequetscht zu werden.
+- **TTFB-Seite**: ein Panel „Early Hints" mit dem Vorsprung am gewählten Perzentil, beiden ersten Bytes als einem geteilten Balken und dem Anteil der Pageviews, auf denen er gemessen wurde. Nur sichtbar, wo sich die beiden Werte unterscheiden.
+- **Search und KV** sind eigene Phasen auf der Server-Timing-Seite, im Wasserfall und als Explorer-Metriken und -Spalten. Das Preset „Backend-Phasen" bekommt ein Diagramm DB gegen Search und KV.
+- **Pageview-Drawer**: Die Server-Timing-Zusammensetzung ist eine verschachtelte Liste (jeder Teil unter dem, was ihn enthält, mit seinem Anteil an dieser Zeile), nicht zugeordnete Zeit steht als eigene Zeile. Das Backend wird nicht mehr zu seinen eigenen Teilen addiert.
+- Jede Phase hat in der Aufschlüsselung ihre eigene Farbe, und die Cache-Phase heißt „Cache" statt „Cache (FPC)": Sie summiert die Cache-Aufrufe der Anwendung; der Full-Page-Cache ist der Cache-Status des Origins.
+
+Doku: [TTFB → Early Hints](/de/web-vitals/ttfb#early-hints).
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="Die Besucher-Journey sagt, wer der Besucher war, und gibt die ID heraus">
 
-Land, Gerät, Betriebssystem und Browser standen nur in der Besuchertabelle, ein geteilter `?visitor=`-Link öffnete also eine Journey, ohne zu sagen, wessen sie war. Der Kopf der Session trägt sie jetzt, in der angepinnten Karte und in der aufgeklappten Zeile, pro Pageview gelesen, weil ein gestitchter Besucher Geräte und Länder wechseln kann: Was variiert, wird aufgelistet. Die Zeile zeigte acht von 32 Hex-Zeichen ohne Weg zum Rest; die ID lässt sich jetzt per Hover vollständig kopieren, und eine Zeilenaktion grenzt die Seite auf diesen Besucher ein: bei einem Stitch als echter Filter mit Chip in der Leiste, den auch die anderen Analytics-Seiten lesen, bei einer Session-ID, auf die das Backend nicht filtern kann, über das Suchfeld über der Tabelle. Gerät, Betriebssystem, Land und Browser haben dasselbe Hover-Plus und -Minus bekommen wie die Pageview-Tabelle des Explorers.
+Zwei Dinge, die einem geteilten `?visitor=`-Link fehlten.
+
+- **Wer es war**: Der Kopf der Journey zeigt Land, Gerät, Betriebssystem und Browser, pro Pageview gelesen. Was bei einem gestitchten Besucher variiert, wird aufgelistet statt eingedampft.
+- **Die ID**: per Hover vollständig kopierbar. Eine Zeilenaktion grenzt die Seite auf diesen Besucher ein: bei einem Stitch als Filter-Chip (den auch die anderen Analytics-Seiten lesen), bei einer Session-ID über das Suchfeld.
+- Gerät, Betriebssystem, Land und Browser bekommen dasselbe Hover-Plus und -Minus wie die Pageview-Tabelle des Explorers.
 
 </ChangelogEntry>
 
@@ -43,13 +55,28 @@ Die Übersicht listete nackte Sites und versteckte damit die Struktur genau dort
 
 <ChangelogEntry date="2026-08-27" type="new" area="api" title="Suchmaschinen und Key-Value-Stores bekommen eigene Server-Timing-Phasen">
 
-`cache_dur` summierte `redis` und Shopifys `edge_cart`, als wären sie Cache-Zeit, und Elasticsearch zählte nirgends, obwohl die Suche in einem typischen Shopware-Shop einen großen Teil der Backend-Zeit ausmacht. Zwei neue Phasen räumen das auf: `search_dur` summiert `elasticsearch`, `opensearch`, `solr`, `search` und `fm-search`; `kv_dur` summiert `redis`, `valkey`, `kv` und `fm-kv`. Beide folgen den Regeln der bestehenden Summen (die Mitglieder bleiben für den Drill-down in den Maps, ohne Quell-Key gibt es `NULL`), sind Perzentil-Phasen auf `POST /analytics/server-timing`, Zeilenfelder auf `/analytics/beacons` und aggregierbare Metriken. `db_dur` bleibt rein relational. Damit ändert sich die Bedeutung von `cache_dur`: `redis` zählt jetzt in `kv_dur` (Redis kann Sessions, eine Queue oder der Primärspeicher sein, sein Wert sagt also nur „Zeit in Redis"), und `edge_cart` fällt ganz aus den Summen. Gespeicherte Werte werden nicht umgeschrieben; ein `cache_dur`-Chart über einen langen Zeitraum macht auf einer betroffenen Site beim Deploy eine Stufe nach unten, und ein Shop, der Redis als Cache nutzt, sendet zusätzlich `fm-cache`. Nebenbei: Zwei Shopify-Header-Keys, die Konfiguration statt Timing sind (`compressionlevel`, `speculationtags`), werden im Collector und in der Denylist des Trackers verworfen, `compressiontime` kommt in den Katalog und belegt keinen der acht Custom-Slots mehr, und eine numerische Description außerhalb des Dauer-Fensters (Shopifys Theme-ID, `theme;desc="190311530496"`) bleibt eine Description, statt zu einer sechsjährigen Dauer zu werden, die jedes Perzentil über den Key verzerrte. Der [Server-Timing-Guide](/de/guides/server-timing#backend-phasen) hat die aktualisierten Tabellen.
+`cache_dur` zählte `redis` und Shopifys `edge_cart` als Cache-Zeit, und Elasticsearch zählte nirgends. Zwei neue Phasen räumen das auf.
+
+- **`search_dur`** summiert `elasticsearch`, `opensearch`, `solr`, `search` und `fm-search`.
+- **`kv_dur`** summiert `redis`, `valkey`, `kv` und `fm-kv`.
+- Beide sind Perzentil-Phasen auf `POST /analytics/server-timing`, Zeilenfelder auf `/analytics/beacons` und aggregierbare Metriken. `db_dur` bleibt rein relational.
+- **`cache_dur` ändert seine Bedeutung**: `redis` wandert nach `kv_dur`, `edge_cart` fällt aus den Summen. Gespeicherte Werte werden nicht umgeschrieben, ein `cache_dur`-Chart über einen langen Zeitraum macht beim Deploy also eine Stufe nach unten. Ist Redis dein Cache, sende zusätzlich `fm-cache`.
+- **Shopify-Hygiene**: `compressionlevel` und `speculationtags` werden verworfen (Konfiguration, kein Timing), `compressiontime` kommt in den Katalog, und ein numerisches `desc` außerhalb des Dauer-Fensters (eine Theme-ID) bleibt eine Description, statt zu einer sechsjährigen Dauer zu werden.
+
+Doku: [Server-Timing → Backend-Phasen](/de/guides/server-timing#backend-phasen).
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-27" type="new" area="tracker" title="ttfb_final: das echte erste Byte hinter 103 Early Hints">
 
-Auf Sites hinter 103 Early Hints (Shopify-Storefronts, Cloudflare) lag TTFB regelmäßig unter den Server-Timing-Backend-Phasen desselben Pageviews. Beides stimmte: `responseStart` zeigt auf das erste Byte der ersten Response, und mit Early Hints ist das die vorläufige 103, die die Edge in etwa einem Roundtrip beantwortet, während der `Server-Timing`-Header auf der finalen Response mitreist. Der Tracker liest jetzt zusätzlich `finalResponseHeadersStart` (Wire-Key `frs`, Chromium ab 115, sonst `null`) und wendet dieselbe Aktivierungs-Korrektur und dieselbe 60-Sekunden-Kappung an wie bei TTFB; der Collector speichert den Wert als `ttfb_final` neben `ttfb` und verwirft Werte darunter. So liest du das Paar: leer heißt, der Browser meldet den Wert nicht oder der Pageview war eine Soft-Navigation oder ein bfcache-Restore; gleich `ttfb` heißt keine vorläufige Response; größer als `ttfb` heißt Early Hints aktiv, und die Differenz ist der Vorsprung der Edge. TTFB selbst bleibt `responseStart` und damit vergleichbar mit CrUX. `ttfb_final` ist ein Zeilenfeld auf `POST /analytics/beacons`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik. Die Server-Timing-Denylist des Trackers bekommt außerdem Shopifys `compressionlevel` und `speculationtags`, spiegelgleich zum Collector. Siehe [Server-Timing → Early Hints](/de/web-vitals/ttfb#early-hints).
+Hinter 103 Early Hints (Shopify-Storefronts, Cloudflare) lag TTFB unter den Server-Timing-Phasen des Servers. Beides stimmte: `responseStart` ist das erste Byte der vorläufigen 103, der `Server-Timing`-Header reist auf der finalen Response mit.
+
+- **Der Tracker liest `finalResponseHeadersStart`** (Wire-Key `frs`, Chromium ab 115, sonst `null`), mit der Aktivierungs-Korrektur und der 60-Sekunden-Kappung von TTFB. Der Collector speichert den Wert als `ttfb_final` und verwirft Werte unter `ttfb`.
+- **So liest du das Paar**: leer heißt, der Browser meldet den Wert nicht, oder es war eine Soft-Navigation oder ein bfcache-Restore; gleich `ttfb` heißt keine vorläufige Response; größer als `ttfb` heißt Early Hints, und die Differenz ist der Vorsprung der Edge.
+- **TTFB bleibt `responseStart`** und damit vergleichbar mit CrUX. `ttfb_final` ist ein Zeilenfeld auf `/analytics/beacons`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik.
+- Die Server-Timing-Denylist des Trackers bekommt Shopifys `compressionlevel` und `speculationtags`, spiegelgleich zum Collector.
+
+Doku: [TTFB → Early Hints](/de/web-vitals/ttfb#early-hints).
 
 </ChangelogEntry>
 
@@ -61,7 +88,16 @@ Das Besucher-Panel konnte nicht sagen, von welchem Gerät, Browser oder Land ein
 
 <ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="Der Checkout im Explorer">
 
-Funnel-Stufe und Warenkorb-Zähler waren nur auf der Analytics-Seite lesbar. Der Explorer gruppiert jetzt nach Checkout-Stufe, in einer eigenen Gruppe des Gruppieren-Menüs: die Verteilung der Stufen gestapelt über die Zeit, eine Linie pro Stufe für jede Metrik, eine Stufen-Spalte in der gruppierten Tabelle und eine Zeile, die wie jede andere Dimension in diese Stufe hineinspringt. Die leere Stufe ist ein benannter Eimer, „Kein Checkout", weil die meisten Pageviews außerhalb des Funnels liegen. Warenkorb-Aktionen und fehlgeschlagene Warenkorb-Aktionen sind Metriken, zeichen- und summierbar wie jeder andere Zähler und in Benachrichtigungsregeln nutzbar; beide stammen aus Fetch/XHR und zählen von Natur aus zu wenig, deshalb bleiben sie Zählwerte neben dem Funnel und nie der Nenner einer Rate. „Warenkorb-Aktionen mindestens 1" ist ein Filter, das Pageview-Gegenstück zum Warenkorb-Schalter bei den Besuchern, und `checkout_stage` lässt sich ausschließen und nicht nur filtern. Die rohe Pageview-Tabelle bekommt Stufe, Warenkorb-Aktionen und fehlgeschlagene Aktionen als Spalten, der Pageview-Drawer einen Checkout-Abschnitt mit den Arten, wo das Shop-System sie verrät. Ein Preset „Checkout" bringt Stufen über die Zeit, LCP pro Stufe und Warenkorb-Aktionen gegen fehlgeschlagene, eingegrenzt auf die drei Funnel-Stufen; beim Verlassen eines Presets fällt die Eingrenzung weg, die es mitgebracht hat. Das Checkout-Panel im Dashboard verlinkt mit demselben Zeitraum und derselben Site in den Explorer. Auf der API ist `checkout_stage` in `/analytics/query` eine Gruppierungsdimension und ein Ausschluss, `cart_interactions` und `cart_interaction_errors` sind dort Metriken und Metrikbereiche, und `/analytics/beacons` projiziert alles davon auf jede Zeile. Abfragen darauf lesen die Pageview-Quelle; die Aggregat-Tiers bleiben unberührt.
+Funnel-Stufe und Warenkorb-Zähler waren nur auf der Analytics-Seite lesbar.
+
+- **Gruppieren nach Checkout-Stufe**: gestapelt über die Zeit, eine Linie pro Stufe für jede Metrik, eine Stufen-Spalte, Drill-down pro Zeile. Die leere Stufe heißt „Kein Checkout".
+- **Warenkorb-Aktionen und fehlgeschlagene Warenkorb-Aktionen als Metriken**, zeichen- und summierbar, in Benachrichtigungsregeln nutzbar. Sie zählen von Natur aus zu wenig und sind nie der Nenner einer Rate.
+- **Filter**: „Warenkorb-Aktionen mindestens 1"; `checkout_stage` lässt sich ausschließen und nicht nur filtern.
+- **Pro Pageview**: Stufe und Warenkorb-Aktionen als Tabellenspalten, dazu ein Checkout-Abschnitt im Drawer.
+- **Ein Preset „Checkout"**, eingegrenzt auf die drei Stufen. Das Checkout-Panel im Dashboard verlinkt mit demselben Zeitraum und derselben Site in den Explorer.
+- **API**: `checkout_stage` als Gruppierung und Ausschluss, `cart_interactions` und `cart_interaction_errors` als Metriken und Metrikbereiche, alles auch auf `/analytics/beacons`-Zeilen.
+
+Doku: [Checkout-Funnel → Wo es auftaucht](/de/checkout-funnel#wo-es-auftaucht).
 
 </ChangelogEntry>
 
@@ -91,61 +127,120 @@ Der Titel war ein statisches „fastmon" für die ganze App, zwei offene Dashboa
 
 <ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="Checkout-Funnel: Warenkorb, Checkout und Abschluss als beobachtete Fakten">
 
-Shops konnten sehen, wie schnell ihre Seiten sind, aber nicht, ob Besucher bis zum Checkout durchkommen. Jetzt trägt jeder Pageview, dessen URL eine Warenkorb-, Checkout- oder Danke-Seite ist, diese Stufe, beim Ingest gestempelt anhand eingebauter Muster für Shopware 5 und 6, WooCommerce, Magento 2, PrestaShop, JTL 5 und Shopify (Sprachpräfixe wie `/de/warenkorb` eingeschlossen). Ein First-Party-`POST` an einen bekannten Warenkorb-Endpunkt markiert den Pageview zusätzlich als Warenkorb-Interaktion, gelesen aus der Fetch/XHR-Telemetrie, die der Tracker sowieso schickt. Am Tracker ändert sich nichts, und es wird nichts Neues erhoben: Beides sind Labels über Daten, die die Site schon speichert, und alles pro Besucher wird zur Abfragezeit berechnet. Im Dashboard wird Checkouts die vierte zentrale Kennzahl, mit Warenkorb und Checkout als Kontextlinien im Diagramm, wenn sie ausgewählt ist; ein Checkout-Panel listet Besucher pro Stufe und Warenkorb-Requests nach Art (es ersetzt die Tech-Einblicke); die Karte der aktuellen Besucher trägt die drei Stufen; und die Zähl-Kacheln zeigen einen Durchschnitt pro Minute, damit sich ein Tag und ein Monat vergleichen lassen. `checkout_stage` ist überall eine Filterdimension, die Besucherliste filtert auf alle, die eine Stufe erreicht oder den Warenkorb angefasst haben, und zeigt beides auf der Journey, und Business Impact meldet die gemessene Conversion-Rate, wo der Funnel Daten hat. Jede Zahl zählt etwas Beobachtetes. Eine Abbruch-Kennzahl gibt es absichtlich nicht, weil „abgebrochen" eine Behauptung aus einer fehlenden Beobachtung wäre; der Schritt Abschluss zählt Danke-Seiten, keine Zahlungen. Die Funktion ist standardmäßig an, mit Opt-out und einem Pfad-Editor pro Stufe unter Einstellungen → Checkout-Funnel. Zählen pro Stufe braucht eine gespeicherte Besucher-ID (`store_stitch`), Warenkorb-Interaktionen brauchen `collect_fetch_xhr`. Auf der API: `POST /analytics/funnels/checkout` und `/journeys`, dazu `contains_checkout_stage` und `contains_cart_interaction` auf der Besucherliste. Die Seite [Checkout-Funnel](/de/checkout-funnel) hat die Muster, das OXID-Rezept und die Einschränkungen.
+Shops konnten sehen, wie schnell ihre Seiten sind, aber nicht, ob Besucher den Checkout erreichen. Jetzt geht das, ohne Tracker-Änderung und ohne neue Erhebung.
+
+- **Stufen aus der URL**: Ein Pageview auf einer Warenkorb-, Checkout- oder Danke-Seite trägt diese Stufe, beim Ingest anhand eingebauter Muster für Shopware 5 und 6, WooCommerce, Magento 2, PrestaShop, JTL 5 und Shopify erkannt.
+- **Warenkorb-Interaktionen aus Fetch/XHR**: Ein First-Party-`POST` an einen bekannten Warenkorb-Endpunkt markiert den Pageview, mit der Art, wo der Endpunkt sie verrät.
+- **Dashboard**: Checkouts als vierte zentrale Kennzahl, ein Checkout-Panel mit Besuchern pro Stufe und Warenkorb-Requests nach Art (ersetzt die Tech-Einblicke), die Stufen auf der Karte der aktuellen Besucher und Pro-Minute-Durchschnitte auf den Zähl-Kacheln.
+- **Filter, Besucher, Business Impact**: `checkout_stage` als Filterdimension, die Besucherliste gefiltert auf eine Stufe oder eine Warenkorb-Interaktion, und eine gemessene Conversion-Rate auf Business Impact, wo der Funnel Daten hat.
+- **Nur Fakten**: keine Abbruch-Kennzahl, und Abschluss zählt Danke-Seiten, keine Zahlungen.
+- **Einstellungen**: standardmäßig an, Opt-out und Pfade pro Stufe unter Einstellungen → Checkout-Funnel. Braucht `store_stitch`; Warenkorb-Interaktionen brauchen `collect_fetch_xhr`.
+- **API**: `POST /analytics/funnels/checkout` und `/journeys`; `contains_checkout_stage` und `contains_cart_interaction` auf der Besucherliste.
+
+Doku: [Checkout-Funnel](/de/checkout-funnel).
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="Einen Filter ausschalten, ohne ihn zu löschen">
 
-Die Frage „wie sieht das ohne den Länderfilter aus?" hieß bisher: Filter löschen und danach wieder eintippen. Jeder Filter-Chip hat jetzt einen Ein/Aus-Schalter: Ausgeschaltet behält der Chip seine Werte und bleibt an seinem Platz, durchgestrichen dargestellt, und die Abfrage läuft ohne ihn. Das gilt gleichermaßen für Einschluss-Filter, Ausschlüsse, Metrikbereiche und die Ja/Nein-Filter. Ein ausgeschalteter Filter grenzt nichts ein, und der Rest der Seite sieht das genauso: Er zählt nicht im Badge, die Karte zeichnet kein Land als ausgewählt, die Gerätesegmente gelten als nicht gewählt, und ein Klick darauf schaltet den Filter wieder ein, statt einen zweiten anzulegen. Der Zustand steht in den bestehenden URL-Parametern als vorangestelltes `!` am Schlüssel des Eintrags; ein Link, der vor dieser Änderung geteilt wurde, öffnet also mit allen Filtern an. Die Scope-Zeile zeigt ein Land außerdem mit seiner Flagge statt mit dem zweistelligen Code.
+„Wie sieht das ohne den Länderfilter aus?" hieß bisher: Filter löschen und danach wieder eintippen.
+
+- **Jeder Chip hat einen Ein/Aus-Schalter.** Ausgeschaltet behält er seine Werte, bleibt durchgestrichen an seinem Platz, und die Abfrage läuft ohne ihn. Gilt für Einschluss-Filter, Ausschlüsse, Metrikbereiche und Ja/Nein-Filter.
+- **Aus heißt überall aus**: nicht im Badge gezählt, kein Land in der Karte als ausgewählt gezeichnet, Gerätesegmente nicht gewählt. Ein Klick darauf schaltet den Filter wieder ein, statt einen zweiten anzulegen.
+- **In der URL** als vorangestelltes `!` am Schlüssel des Eintrags, ältere Links öffnen also mit allen Filtern an.
+- Die Scope-Zeile zeigt ein Land mit seiner Flagge statt mit dem Code.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-26" type="changed" area="dashboard" title="Besucher: eine Zusammenfassung für den Zeitraum, und Links, die stabil bleiben">
 
-Die Zusammenfassung über der Besucherliste berechnete durchschnittliche Dauer und durchschnittliche Seiten pro Besucher über die gerade geladenen Zeilen, beide Werte sprangen also beim Weiterblättern, und der Standardfilter „mindestens 3 Seiten" zog eine Untergrenze unter einen davon. Sie beschreibt jetzt den gewählten Zeitraum: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Die durchschnittliche Dauer fällt weg, statt repariert zu werden, weil es keine zeitraumweite Besuchsdauer gibt, aus der sie sich berechnen ließe. Das Land zeigt in Tabelle und Karten seine Flagge und den lokalisierten Namen, der Code steht im Hover. In der URL sind Verhaltensfilter einfache Zahlen (`?minPages=3`), und der Parameter für den direkt verlinkten Besucher heißt `visitor` statt `session`, weil er je nach Identität einen Stitch oder eine Session-ID trägt; alte Links funktionieren weiter und schreiben sich beim ersten Aufruf um. Zwei Fixes kommen mit: Ein alter `/sessions`-Link mit Page-Type-Filter kam ungefiltert an, und eine 32-stellige Besucher-ID, die als Zahl in der App landete, wurde mit bereits verlorenen Ziffern weitergereicht. Die Weiterleitung übergibt ihre Filter jetzt, und eine ID, die den Rundweg nicht exakt übersteht, wird verworfen statt verfälscht.
+Die Zusammenfassung über der Besucherliste wurde über die geladenen Zeilen berechnet und sprang deshalb beim Weiterblättern.
+
+- **Zusammenfassung über den Zeitraum**: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Die durchschnittliche Dauer fällt weg, statt repariert zu werden: Es gibt keine zeitraumweite Besuchsdauer, aus der sie sich berechnen ließe.
+- **Land** zeigt Flagge und lokalisierten Namen, der Code steht im Hover.
+- **URL**: Verhaltensfilter sind einfache Zahlen (`?minPages=3`), und der Parameter für den verlinkten Besucher heißt `visitor` statt `session`. Alte Links funktionieren weiter und schreiben sich um.
+- **Fixes**: Ein alter `/sessions`-Link mit Page-Type-Filter kam ungefiltert an, und eine 32-stellige Besucher-ID, die als Zahl in der App landete, hatte Ziffern verloren und wurde trotzdem weitergereicht. Sie wird jetzt verworfen statt verfälscht.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-25" type="new" area="dashboard" title="Response-Aufschlüsselung: wo eine typische Antwort ihre Zeit verbringt">
 
-Der Netzwerk-Abschnitt bekommt eine neue Karte über die volle Breite, die Response-Aufschlüsselung. Sie ersetzt das Diagramm „Network Request Timing", das dieselben vier Metriken als einen Balken zeigte, ohne dass man tiefer hineinschauen konnte. Die neue Karte zeichnet einen Wasserfall am gewählten Perzentil, wie man ihn aus den Devtools des Browsers kennt: DNS, Verbindungsaufbau, Warten auf das erste Byte und Übertragung als Treppe, danach die LCP-Phasen (Load Delay, Load Duration, Render Delay) als eigene Gruppe. Server-Timing-Phasen (Origin, Edge, Backend) liegen als Anteil des Servers innerhalb der Wartezeit, und die Vergleiche für CDN- und Origin-Cache teilen ihre Balken in Hit und Rest. FCP, LCP und DOM Interactive stehen als Marker auf der Achse; ein später Marker wie Load heftet sich als Wert-Pille an den rechten Rand, statt die Skala zu strecken. Perzentile einzelner Phasen addieren sich nicht, deshalb leitet die Karte die Wartezeit als Rest ab und skaliert die LCP-Phasen so, dass sie genau am LCP-Marker enden; jeder Tooltip zeigt den gemeldeten Rohwert, die Position auf der Zeitachse und den Anteil der Requests, die die Phase gemeldet haben. Unter dem Wasserfall listen Zeilen die Page-Types (wenn deine Seite welche meldet) oder die Seiten, jede mit einem kompakten Balken in denselben Farben. Ein Klick auf eine Zeile engt den Wasserfall darauf ein, sichtbar als Breadcrumb „Gesamt › cart", und die Auswahl steht in der URL, ein geteilter Link öffnet also dieselbe Ansicht. Der Pageview-Drawer im Explorer zeigt denselben Wasserfall im Kleinformat, gebaut aus den Metriken dieses einen Pageviews. Ein Fix kommt mit: Ein Deep-Link auf eine Karte weiter unten auf der Seite (`?panel=`) scrollte nicht, weil der Abschnitt noch nicht gerendert war. Der verlinkte Abschnitt lädt jetzt sofort, was auch bestehende Teilen-Links auf die Seitentabelle repariert.
+Der Netzwerk-Abschnitt bekommt eine Karte „Response-Aufschlüsselung" über die volle Breite. Sie ersetzt das Diagramm „Network Request Timing", das vier Metriken als einen Balken zeigte, ohne dass man tiefer hineinschauen konnte.
+
+- **Ein Wasserfall am gewählten Perzentil**, wie ihn die Devtools zeichnen: DNS, Verbindungsaufbau, Wartezeit und Übertragung als Treppe, danach die LCP-Phasen (Load Delay, Load Duration, Render Delay). Server-Timing-Phasen liegen innerhalb der Wartezeit; die Vergleiche für CDN- und Origin-Cache teilen ihre Balken in Hit und Rest. FCP, LCP und DOM Interactive stehen als Marker auf der Achse.
+- **Ehrliche Mathematik**: Perzentile einzelner Phasen addieren sich nicht, deshalb wird die Wartezeit als Rest abgeleitet und die LCP-Phasen enden genau am LCP-Marker. Tooltips zeigen den Rohwert, die Position und den Anteil der Requests, die die Phase gemeldet haben.
+- **Zeilen darunter** listen Page-Types (wo gemeldet) oder Seiten mit kompakten Balken. Ein Klick auf eine Zeile engt den Wasserfall ein („Gesamt › cart"); die Auswahl steht in der URL.
+- **Der Pageview-Drawer** im Explorer zeigt denselben Wasserfall für einen einzelnen Pageview.
+- Fix: Ein Deep-Link auf eine Karte weiter unten (`?panel=`) scrollte nicht, weil der Abschnitt noch nicht gerendert war. Er lädt jetzt sofort.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-24" type="new" area="dashboard" title="Top-Seiten und Page-Types in einer Performance-Tabelle">
 
-Die Karte „Top Pages" unter Traffic & Besucher zeigte Views und LCP, und die Performance pro Page-Type hatte gar keinen Platz, obwohl sich in den Zahlen der ganzen Seite ein langsamer Checkout hinter einer schnellen Startseite versteckt. Aus der Karte wird eine Tabelle über die volle Breite: Views mit einem Balken für den Traffic-Anteil, daneben LCP, INP, CLS und TTFB nebeneinander, jeder Wert als statusfarbene Pille am gewählten Perzentil. Ein Schalter im Kopf wechselt zwischen Page-Types und Seiten. Seiten mit Page-Type-Detection öffnen auf Page-Types, mit dem untypisierten Traffic als gedämpfter Zeile am Ende, damit die Anteile aufgehen; Seiten ohne Detection landen direkt auf den Seiten, und die Page-Type-Ansicht verweist auf die Applikationseinstellungen, um die Detection einzurichten. Zeilen filtern weiterhin das Dashboard oder springen in den Explorer. Der Traffic-Trend bekommt wieder eine eigene Zeile über die volle Breite: Trend und Tabelle stehen untereinander, statt sich eine 2/3-plus-1/3-Zeile zu teilen. Große Zahlen kürzen jetzt überall gleich ab: Browser, Bots & Besucher und Geräte nutzen dieselbe K/M-Formatierung wie die Tabelle, die exakte Zahl steht im Tooltip.
+Die Karte „Top Pages" zeigte Views und LCP, und die Performance pro Page-Type hatte gar keinen Platz, obwohl sich in den Zahlen der ganzen Site ein langsamer Checkout hinter einer schnellen Startseite versteckt.
+
+- **Eine Tabelle über die volle Breite**: Views mit einem Balken für den Traffic-Anteil, daneben LCP, INP, CLS und TTFB als statusfarbene Pillen am gewählten Perzentil.
+- **Page-Types oder Seiten**, umschaltbar im Kopf. Sites mit Page-Type-Detection öffnen auf Page-Types, mit dem untypisierten Traffic als gedämpfter Zeile, damit die Anteile aufgehen; Sites ohne landen auf den Seiten und werden auf die Einstellungen verwiesen.
+- Zeilen filtern weiterhin das Dashboard oder springen in den Explorer. Der Traffic-Trend bekommt wieder eine eigene volle Zeile.
+- Große Zahlen kürzen überall gleich ab (K/M), die exakte Zahl steht im Tooltip.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-06" type="new" area="platform" title="First-Party-Proxies können die echte Besucher-IP weitergeben">
 
-Wer Beacons über den eigenen Server weiterleitet (First-Party-Proxy), bekam bisher alle Besucher als einen: Aus Sicht unserer Edge kamen alle Requests von der IP des Proxys, und ein `X-Forwarded-For` von beliebigen Absendern zu übernehmen würde Spoofing Tür und Tor öffnen. Jetzt gibt es eine explizite Freigabe pro Applikation: Unter **Settings → Collector** ein Proxy-Secret generieren, es im Header `FM-Proxy-Key` auf der Beacon-Route mitschicken, und die Edge löst die echte Besucher-IP aus dem `X-Forwarded-For` deines Proxys auf. Geo- und Besucherzahlen funktionieren dann, als wäre das Beacon direkt angekommen. Beim Rotieren bleibt das vorherige Secret bis zur nächsten Rotation gültig, eine Proxy-Flotte lässt sich also ohne Lücke umkonfigurieren; Löschen schaltet das Vertrauen ab. Auf der API sind das `POST` und `DELETE /v1/applications/{id}/proxy-secret`. Der [First-Party-Proxy-Guide](/de/guides/first-party-proxy) enthält fertige Snippets für nginx, Caddy und Cloudflare Worker.
+Wer Beacons über den eigenen Server weiterleitete, bekam alle Besucher als einen: Alle Requests kamen von der IP des Proxys, und ein beliebiges `X-Forwarded-For` zu übernehmen würde Spoofing erlauben.
+
+- **Eine explizite Freigabe pro Application**: Unter Einstellungen → Collector ein Proxy-Secret generieren, es im Header `FM-Proxy-Key` auf der Beacon-Route mitschicken, und die Edge liest die echte Besucher-IP aus dem `X-Forwarded-For` deines Proxys. Geo- und Besucherzahlen funktionieren, als wäre das Beacon direkt angekommen.
+- **Rotation ohne Lücke**: Das vorherige Secret bleibt bis zur nächsten Rotation gültig. Löschen schaltet das Vertrauen ab.
+- **API**: `POST` und `DELETE /v1/applications/{id}/proxy-secret`.
+
+Doku: [First-Party-Proxy-Guide](/de/guides/first-party-proxy), mit Snippets für nginx, Caddy und Cloudflare Worker.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-06" type="fixed" area="tracker" title="Shopware-6-Page-Types: Home zählt als Home, und die Erkennung übersteht 6.8">
 
-Zwei Änderungen an der `shopware6`-Ruleset. Erstens zählte die Shop-Startseite als `category`: Shopware 6 rendert sie über denselben Navigation-Controller wie Kategorieseiten, und die Klasse `is-ctl-index`, die das Mapping erwartete, existiert dort gar nicht. Der Tracker liest jetzt Controller- und Action-Klasse zusammen (`is-ctl-navigation is-act-home`), Startseiten zählen damit als `home`. Zweitens entfernt Shopware 6.8 die Body-Klassen `is-ctl-*` und `is-act-*` komplett; der Tracker bevorzugt deshalb jetzt deren designierten Ersatz, die `is-active-route-*`-Klasse, die Shops seit etwa 6.6 ausgeben. Die Erkennung funktioniert damit über das 6.8-Upgrade hinweg weiter, ohne dass du etwas tun musst, und über die Route-Klasse trennt sich der Checkout sauber: Die Warenkorbseite zählt als `cart`, die Schritte Bestätigen, Abschluss und Registrierung als `checkout`, und der ganze Kontobereich (Bestellungen, Profil, Adressen) als `account`. Shops ohne Route-Klasse fallen auf die Legacy-Klassen zurück, dort teilen sich Warenkorb und Checkout weiter das gröbere `cart`. Ein im Browser gecachter Tracker behält sein altes Verhalten, bis der Cache abläuft. Die [Ruleset-Tabelle](/de/tracker#ruleset-page-types) zeigt das aktualisierte Mapping.
+Zwei Änderungen an der `shopware6`-Ruleset.
+
+- **Home zählt als Home.** Die Startseite zählte als `category`, weil Shopware 6 sie über den Navigation-Controller rendert und die erwartete Klasse `is-ctl-index` dort nicht existiert. Der Tracker liest jetzt Controller- und Action-Klasse zusammen (`is-ctl-navigation is-act-home`).
+- **Die Erkennung übersteht 6.8**, das die Klassen `is-ctl-*` und `is-act-*` entfernt. Der Tracker bevorzugt die `is-active-route-*`-Klasse, die Shops seit etwa 6.6 ausgeben. Darüber trennt sich der Checkout sauber: Warenkorbseite als `cart`, die Schritte Bestätigen, Abschluss und Registrierung als `checkout`, der Kontobereich als `account`. Ältere Shops fallen auf die Legacy-Klassen zurück, wo Warenkorb und Checkout weiter `cart` teilen.
+- Ein im Browser gecachter Tracker behält sein altes Verhalten, bis der Cache abläuft.
+
+Doku: [Tracker → Ruleset-Tabelle](/de/tracker#ruleset-page-types).
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-05" type="changed" area="dashboard" title="Filterarbeit: Weltkarte, Header-Chips und Werte-Editor">
 
-Eine Runde Filterarbeit. Ein Klick auf ein Land der Weltkarte funktioniert jetzt und öffnet ein Popover mit den Zahlen des Landes und den Plus- und Minus-Aktionen (darauf filtern oder es ausschließen, auch im Hover-Tooltip erreichbar); ausgeschlossene Länder bekommen eine rote Umrandung, und die Karte behält Zoom und Ausschnitt beim Nachladen, statt sich zurückzusetzen. Die Filter-Chips im Header bekommen Schnellaktionen: Der Chip öffnet das Panel direkt in seinem Werte-Editor, ein x entfernt den Filter, und wer über den Chip fährt, sieht jeden ausgewählten Wert mit eigenem x. Im Werte-Editor sind die ausgewählten Werte oben angepinnt und bleiben auch dann entfernbar, wenn sie keinen Traffic treffen (ein ausgeschlossenes Land verschwand bisher aus seiner eigenen Liste), und denselben Wert gleichzeitig ein- und auszuschließen geht nicht mehr. Und Filtern lässt das Dashboard nicht mehr springen: Die Performance-Kacheln, die Geo-Karte und die Core-Web-Vitals-Karte zeigen die bisherigen Werte weiter, während die neuen laden, statt einem seitenhohen Spinner zu weichen.
+Eine Runde Filterarbeit.
+
+- **Weltkarte**: Ein Klick auf ein Land funktioniert und öffnet ein Popover mit seinen Zahlen und den Plus- und Minus-Aktionen (filtern oder ausschließen). Ausgeschlossene Länder bekommen eine rote Umrandung, und die Karte behält Zoom und Ausschnitt beim Nachladen.
+- **Header-Chips**: Ein Chip öffnet direkt seinen Werte-Editor, ein x entfernt den Filter, im Hover steht jeder ausgewählte Wert mit eigenem x.
+- **Werte-Editor**: Ausgewählte Werte sind oben angepinnt und bleiben auch ohne passenden Traffic entfernbar; denselben Wert ein- und auszuschließen geht nicht mehr.
+- **Kein Springen mehr**: Performance-Kacheln, Geo-Karte und die Core-Web-Vitals-Karte zeigen die bisherigen Werte weiter, während die neuen laden.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Die Explorer-Tabelle sortiert auf dem Server">
 
-Ein Klick auf einen Spaltenkopf fragt jetzt mit dieser Sortierung neu an, und das Backend sortiert, bevor es auf das Zeilenlimit kürzt. „Die zehn schlechtesten TTFB-Seiten" sind damit wirklich die schlechtesten im gesamten passenden Traffic; bisher ordnete der Klick nur die schon geladenen Zeilen um, also „die schlechtesten unter den meistbesuchten". Die Sortierung wandert in die URL, ein geteilter Link öffnet also dieselbe Reihenfolge. Implizit sortiert nichts mehr: Eine Metrik auszuwählen fügt eine Spalte hinzu und sonst nichts, und ohne gewählte Sortierung benennt die Tabelle die Standard-Reihenfolge des Backends, statt eine vorzutäuschen. Auch die rohe Pageview-Liste sortiert serverseitig, nach Zeit oder jeder Zeilenspalte, leere Werte sinken in beide Richtungen ans Ende; ihre sichtbaren Spalten stehen ebenfalls im Link (`?cols=`), ein Lesezeichen öffnet die Tabelle also genau so, wie sie war. Die Metrik-Spalten sind außerdem aus dem versteckten „Spalten"-Menü hinauf ins Abfrage-Panel gewandert, neben Aggregation und Gruppierung. Auf der API nimmt `/analytics/beacons` `order_by` jetzt als `{field, direction}`-Objekt über jedes skalare Zeilenfeld an.
+Ein Klick auf den Spaltenkopf ordnete nur die schon geladenen Zeilen um; „die zehn schlechtesten TTFB-Seiten" waren also „die schlechtesten unter den meistbesuchten".
+
+- **Serverseitige Sortierung**: Das Backend sortiert, bevor es kürzt, und die Sortierung steht in der URL.
+- **Nichts sortiert implizit**: Eine Metrik auszuwählen fügt eine Spalte hinzu und sonst nichts; ohne gewählte Sortierung benennt die Tabelle die Standard-Reihenfolge des Backends.
+- **Die rohe Pageview-Liste** sortiert ebenfalls serverseitig, nach Zeit oder jeder Spalte, leere Werte am Ende. Ihre sichtbaren Spalten stehen im Link (`?cols=`).
+- Die Metrik-Spalten sind aus dem „Spalten"-Menü ins Abfrage-Panel gewandert.
+- **API**: `/analytics/beacons` nimmt `order_by` als `{field, direction}` über jedes skalare Zeilenfeld an.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-04" type="new" area="dashboard" title="Server-Timing-Labels: Keys mit Wert statt Dauer">
 
-Ein Origin kann einen Server-Timing-Key als Label statt als Timing schicken, etwa `pop;desc="DE-1331"` für den CDN-Knoten, der die Anfrage bedient hat. Solche Keys wurden gespeichert, blieben aber unsichtbar, weil alles nach Millisekunden rankte. Die Server-Timing-Seite listet sie jetzt unter den gemessenen Keys samt der Verteilung ihrer Werte, im Pageview-Drawer stehen sie als einfache Schlüssel/Wert-Felder, der Explorer zeigt jeden Custom-Key als Spalte und sortiert und filtert darauf, und die Pageview-Liste lässt sich auf einen Key oder einen seiner Werte eingrenzen (`/analytics/beacons` bekommt dafür einen `server_timing`-Filter). Die gängigen PoP-Keys (`pop`, `fastly-pop`, `cdn-pop`, `x-qc-pop`) werden beim Ingest nicht mehr verworfen: Sie benennen den CDN-Knoten, also Server-Infrastruktur, nicht den Besucher (`asn`, `country` und `ipv6` bleiben gesperrt). Nebenbei behoben: Den Trend eines Custom-Keys mit Bindestrich oder Punkt im Namen (`wp-total`, `cdn-upstream-fbl`) aufzuklappen führte zu einem Fehler.
+Ein Origin kann einen Server-Timing-Key als Label statt als Timing schicken (`pop;desc="DE-1331"`). Solche Keys wurden gespeichert, blieben aber unsichtbar, weil alles nach Millisekunden rankte.
+
+- **Jetzt sichtbar**: Die Server-Timing-Seite listet sie unter den gemessenen Keys samt Verteilung ihrer Werte, der Pageview-Drawer zeigt sie als Schlüssel/Wert-Felder, und der Explorer zeigt jeden Custom-Key als Spalte und sortiert und filtert darauf.
+- **Eingegrenzte Pageview-Liste**: `/analytics/beacons` bekommt einen `server_timing`-Filter auf einen Key oder einen seiner Werte.
+- **PoP-Keys bleiben**: `pop`, `fastly-pop`, `cdn-pop` und `x-qc-pop` benennen den CDN-Knoten, nicht den Besucher (`asn`, `country` und `ipv6` bleiben gesperrt).
+- Fix: Den Trend eines Custom-Keys mit Bindestrich oder Punkt im Namen (`wp-total`) aufzuklappen führte zu einem Fehler.
 
 </ChangelogEntry>
 
@@ -163,13 +258,22 @@ Drei kleine Korrekturen. Die rohe Pageview-Tabelle konnte auf Sites ohne gespeic
 
 <ChangelogEntry date="2026-08-03" type="changed" area="dashboard" title="Der Explorer filtert wie jede andere Seite">
 
-Der Explorer hatte sich einen eigenen Filterapparat zugelegt: einen eigenen Filter-Button, eine ausklappbare Leiste mit zwei Spalten und zwei Hinzufügen-Buttons, direkt neben dem Standard-Filtermenü, das überall sonst denselben Job macht. Jetzt übernehmen die Standard-Steuerungen: Query-Filter liegen im Scope-Menü der Kopfzeile, Presets teilen sich ein Menü mit deinen gespeicherten Abfragen, und die clientseitigen Ergebnis-Filter sitzen über der Tabelle, die sie eingrenzen. Aktualisieren und Live-Modus wandern vom Ende der Kopfzeile in die Zeitraum-Steuerung, denn sie wirken auf genau dieses Fenster. Und der Filterzähler zählt jetzt jede Art von Filter: Ein Ausschluss, ein Metrik-Bereich wie `lcp >= 2.5s` oder der Bot-Schalter galten bisher als „nichts gefiltert".
+Der Explorer hatte einen eigenen Filterapparat, direkt neben dem Standard-Filtermenü, das überall sonst dieselbe Aufgabe erfüllt.
+
+- **Die Standard-Bedienelemente übernehmen**: Abfrage-Filter im Scope-Menü, Presets in einem Menü mit den gespeicherten Abfragen, clientseitige Ergebnisfilter über der Tabelle.
+- Aktualisieren und Live-Modus wandern in die Zeitraum-Steuerung.
+- **Der Filterzähler zählt jede Art**: Ein Ausschluss, ein Metrikbereich wie `lcp >= 2.5s` oder der Bot-Schalter waren bisher aktiv, während der Button „nichts gefiltert" anzeigte.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-08-02" type="changed" area="dashboard" title="UI-Optimierungen, vor allem mobil und bei den Filtern">
 
-Eine Runde Interface-Arbeit über die angemeldete App, mit Fokus auf Mobile und Filtern. Die Dashboard-Kopfzeile ist in zwei Hälften neu gebaut, links wo du bist, rechts was du filterst, und Zeitraum, Perzentil, Gerät und Filter falten sich zu einer Scope-Zusammenfassung (`Letzte 7 Tage · p75 · 📱 · Land: DE +4`) mit den vollen Steuerungen im Popover dahinter; aktive Filter sortieren jetzt nach Wichtigkeit, sodass dieselbe Auswahl immer gleich aussieht. Am Handy wird die Sidebar zu einem Off-Canvas-Drawer, der den Inhalt zur Seite schiebt statt ihn zu verdecken, Dialoge bleiben im Bildschirm (lange Werte kürzen sich, statt die Buttons herauszuschieben), und Überschriften und Abstände sind über die Seiten hinweg einheitlich. Der Filter-Editor bekommt zudem drei Korrekturen: Beim Bearbeiten eines einwertigen Filters steht sein aktueller Wert da, die Wertezahlen berücksichtigen die bereits gesetzten Filter, und der Schalter „Bots ausblenden" taucht nicht mehr auf, während du einen unbeteiligten Filter bearbeitest. Und die Links für Dokumentation, Feedback und Support im Sidebar-Footer werden zu einem Hilfe-Button.
+Eine Runde Interface-Arbeit in der eingeloggten App, mit Fokus auf Mobil und Filtern.
+
+- **Header in zwei Hälften**: links, wo du bist, rechts, wonach du filterst. Zeitraum, Perzentil, Gerät und Filter falten sich zu einer Scope-Zusammenfassung (`Letzte 7 Tage · p75 · 📱 · Land: DE +4`) mit den Bedienelementen in einem Popover. Aktive Filter sortieren nach Wichtigkeit.
+- **Mobil**: Die Seitenleiste wird zu einem Offcanvas-Drawer, Dialoge bleiben im Bildschirm, Überschriften und Abstände sind über alle Seiten konsistent.
+- **Fixes im Filter-Editor**: Ein einwertiger Filter zeigt seinen aktuellen Wert, die Wertezähler berücksichtigen die schon gesetzten Filter, und der Schalter „Bots ausblenden" erscheint nicht mehr beim Bearbeiten eines anderen Filters.
+- Die Links zu Dokumentation, Feedback und Support falten sich zu einem Hilfe-Button.
 
 </ChangelogEntry>
 
@@ -181,7 +285,14 @@ Eine Reihe von Korrekturen rund um Anmeldung und Konto. Der Bestätigungslink me
 
 <ChangelogEntry date="2026-07-26" type="new" area="dashboard" title="Bots, Rechenzentren und automatisierten Traffic sehen und ausblenden">
 
-Jeder Request trägt jetzt ein Traffic-Urteil: **Mensch**, **Vermutlich Bot** oder **Bot**. *Bot* heißt ein deklarierter oder verifizierter Crawler (ein Bot-User-Agent oder eine IP in einem veröffentlichten Crawler-Bereich); *Vermutlich Bot* heißt eine Rechenzentrums- oder VPN-Adresse oder eine User-Agent-Anomalie ohne Bot-Deklaration (auch Besucher über ein VPN landen hier); *Mensch* ist alles Übrige. Eine Checkbox **Bots ausblenden** reduziert die ganze Ansicht mit einem Klick auf echte Besucher, und ein neuer Chart **Bots & Besucher** teilt den Traffic nach Urteil auf und listet die häufigsten Bots nach Name sowie die Bot-Typen. Neue Filter greifen auf Rechenzentrum bzw. Hosting-Netz, Bot-Name, Bot-Typ und User-Agent-Anomalie. Die Erkennung läuft an unserem Edge aus IP und User-Agent gegen eine kleine feste Liste bekannter Provider und Crawler; IP und User-Agent werden direkt danach verworfen, es bleibt nichts Rohes gespeichert (siehe [was wir behalten und warum](/de/privacy#bot-and-datacenter-labels)).
+Jeder Request trägt jetzt ein Traffic-Urteil.
+
+- **Mensch, Wahrscheinlich Bot, Bot.** Bot ist ein deklarierter oder verifizierter Crawler. Wahrscheinlich Bot ist eine Rechenzentrums- oder VPN-Adresse oder eine User-Agent-Anomalie ohne Bot-Deklaration (ein Besucher im VPN landet hier). Mensch ist alles andere.
+- **Bots ausblenden** reduziert die ganze Ansicht mit einem Klick auf echte Besucher. Ein Chart **Bots & Besucher** teilt den Traffic nach Urteil und listet die häufigsten Bots und Bot-Typen.
+- **Neue Filter**: Rechenzentrum oder Hosting-Netz, Bot-Name, Bot-Typ, User-Agent-Anomalie.
+- Die Erkennung läuft an der Edge gegen eine feste Liste von Anbietern und Crawlern; IP und User-Agent werden direkt danach verworfen.
+
+Doku: [Privacy → Bot- und Rechenzentrums-Labels](/de/privacy#bot-and-datacenter-labels).
 
 </ChangelogEntry>
 
@@ -199,9 +310,12 @@ Das Dashboard hat eine optische Auffrischung. Die Seitenleiste trägt das neue f
 
 <ChangelogEntry date="2026-07-23" type="changed" area="tracker" title="Fetch/XHR-Endpoints gruppieren enger, Kampagnen-Parameter bleiben draußen">
 
-Der Collector templatisiert die Pfade von Fetch/XHR-Endpoints stärker, damit die Endpoint-Ansicht auch auf Sites lesbar bleibt, deren eigene Seiten von der App gefetcht werden. Lange Content-Slugs klappen zu `:slug` zusammen (aus `/blog/ein-sehr-langer-titel` und seinen tausend Geschwistern wird eine Zeile), Soft-Navigation-Dokument-Fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/` und die anderen Framework-Konventionen) klappen zu `/:page`, weil die Seite ihre URL und ihr Timing ohnehin selbst trägt. Third-Party-Hosts behalten ihre Endpoint-Zeile, verlieren aber die Query (Query-Keys sind ein Routing-Signal, das nur auf deinen eigenen Hosts etwas bedeutet), und ein Request mit acht oder mehr Query-Parametern erscheint als `?:many`. Das läuft serverseitig und räumt daher auch bereits erfasste Daten auf, ganz ohne Tracker-Rollout.
+Der Collector templatisiert Fetch/XHR-Endpunkt-Pfade aggressiver, damit die Ansicht pro Endpunkt lesbar bleibt. Das läuft serverseitig, also werden auch schon erhobene Daten aufgeräumt.
 
-Eine Verhaltensänderung zum Vormerken: **Ad-Attribution-Parameter** (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid` sowie die `utm_*`- und `gad_*`-Familien) werden jetzt aus Endpoint-Pfaden und Seiten-URLs verworfen, selbst bei aktivem [`collect_query_keys`](/de/tracker#collect-query-keys), denn ihr Schlüsselsatz ändert sich mit jedem eingehenden Link und trägt kein Routing-Signal. Wer einen davon explizit in [`collect_query_values_for`](/de/tracker#collect-query-values-for) nennt, behält ihn.
+- **Engere Templatisierung**: Lange Content-Slugs klappen auf `:slug`, Soft-Navigation-Dokument-Fetches (`_rsc`, `_data`, `/_next/data/`, `/page-data/`) auf `/:page`, Third-Party-Hosts verlieren die Query, und acht oder mehr Query-Parameter erscheinen als `?:many`.
+- **Ad-Attribution-Parameter bleiben draußen** (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, die Familien `utm_*` und `gad_*`), auf Endpunkt-Pfaden und Seiten-URLs, auch bei aktivem `collect_query_keys`. Wer einen in `collect_query_values_for` nennt, behält ihn.
+
+Doku: [Tracker → collect_query_keys](/de/tracker#collect-query-keys).
 
 </ChangelogEntry>
 
@@ -225,7 +339,15 @@ Ein Chart ohne Daten zeigte „Keine Daten verfügbar", was eher unseren Speiche
 
 <ChangelogEntry date="2026-07-19" type="changed" area="dashboard" title="Applications: ein Tracking-Snippet über eine oder mehrere Sites">
 
-Sites und domainübergreifende Tracker werden durch **Applications** ersetzt. Eine Application ist ein Tracking-Snippet: Ihr gehören der Embed, die zwei Hashes und jede [Tracker-Einstellung](/de/tracker), und sie bedient eine Domain oder zwanzig. Jede Domain bleibt eine eigene **Site** mit eigenem Dashboard und eigenem Traffic; einen „Single vs. Multi"-Modus gibt es damit nicht mehr, nur noch die Anzahl der Sites einer Application. Die neue Applications-Seite gibt jeder App eine Karte mit ihren Sites samt Live-Status, ihren Releases, dem Embed-Snippet und Analytics pro App; Sites adoptierst, verschiebst oder löschst du direkt dort. Eine Domain, die Beacons schickt, ohne registriert zu sein, taucht als **vorgeschlagene Domain** auf, die du mit einem Klick adoptierst; die neue Einstellung **Unbekannte Domains** entscheidet, ob unbekannte Hosts vorgeschlagen (Default), automatisch angelegt oder ignoriert werden. Retention, Besuchersignal und die Zähl-Identität kommen jetzt als Default von der Application und lassen sich pro Site überschreiben. Den **Collector** wählst du beim Anlegen einer Application (fastmon, gleiche Origin oder eigene Domain), denn ein späterer Wechsel hieße, das schon eingebettete Snippet zu tauschen; außerdem kannst du eine Application als Produktion oder Development markieren. Gleichzeitig wurden die Erfassungseinstellungen passend zu ihrer Wirkung umbenannt: `store_session` heißt jetzt `collect_sessions`, `preconsent_level` heißt `session_consent` (`deferred` oder `immediate`), und die Schalter für Fehler, Query und fetch/XHR haben ein `collect_`-Präfix bekommen. Siehe [Applications](/de/concepts/applications), [Sites](/de/concepts/sites) und [Tracker-Einstellungen](/de/tracker).
+Sites und Cross-Domain-Tracker werden durch Applications ersetzt.
+
+- **Eine Application, ein Snippet**: Sie besitzt den Embed, die zwei Hashes und jede Tracker-Einstellung und bedient eine Domain oder zwanzig. Jede Domain bleibt eine Site mit eigenem Dashboard. Keinen „Single vs. Multi"-Modus mehr.
+- **Applications-Seite**: eine Karte pro App mit ihren Sites samt Live-Status, Releases, Embed-Snippet und Analytics. Sites lassen sich inline adoptieren, verschieben oder löschen.
+- **Vorgeschlagene Domains**: Eine Domain, die unregistriert Beacons schickt, erscheint zum Adoptieren mit einem Klick. Die neue Einstellung „Unbekannte Domains" entscheidet: vorschlagen (Default), automatisch anlegen oder ignorieren.
+- **Defaults pro Application**, pro Site überschreibbar: Aufbewahrung, Besuchersignal und der Identifier zum Zählen von Besuchern. Der Collector wird beim Anlegen gewählt; Applications lassen sich als Produktion oder Entwicklung markieren.
+- **Umbenannte Einstellungen**: `store_session` heißt `collect_sessions`, `preconsent_level` heißt `session_consent` (`deferred` oder `immediate`), und die Schalter für Fehler, Query und Fetch/XHR bekommen das Präfix `collect_`.
+
+Doku: [Applications](/de/concepts/applications), [Sites](/de/concepts/sites), [Tracker-Einstellungen](/de/tracker).
 
 </ChangelogEntry>
 
@@ -249,7 +371,14 @@ Die Speicherleiste auf den Einstellungsseiten von Application und Site sitzt jet
 
 <ChangelogEntry date="2026-07-17" type="new" area="extension" title="Beacon Inspector: eine DevTools-Erweiterung zum Lesen von Beacons">
 
-Der **Beacon Inspector** ist eine Browser-DevTools-Erweiterung, die die Collector-Beacons deiner Seite liest und live dekodiert. Er gruppiert jeden Beacon nach Pageview, schlüsselt die kurzen Wire-Keys in lesbare Felder auf, verfolgt den Lebenszyklus von `init` bis zum terminalen Beacon und zeigt die Web Vitals, während sie sich einpendeln. Er erfasst sowohl die `fetch`-Beacons, die das Network-Panel ohnehin listet, als auch die `sendBeacon`-Bodies, die es nicht zeigt, du siehst also jede Emission mit vollständigem Payload. Ein Follow-Modus pinnt den neuesten Pageview, Compare stellt zwei nebeneinander, und der Export kopiert einen Beacon als Markdown (optional anonymisiert) für einen Bug-Report. Er ist Open Source und läuft komplett im Browser; keine Beacon-Daten verlassen das Gerät. Siehe [Beacon Inspector](/de/guides/beacon-inspector).
+Eine Browser-DevTools-Erweiterung, die die Beacons deiner Seite mitliest und live dekodiert.
+
+- Gruppiert Beacons nach Pageview, packt die Wire-Keys in lesbare Felder aus, verfolgt den Lebenszyklus von `init` bis zum letzten Beacon und zeigt die Web Vitals, während sie sich setzen.
+- Erfasst die `fetch`-Beacons und die `sendBeacon`-Bodies, die das Netzwerk-Panel nicht zeigen kann.
+- Der Follow-Modus pinnt den neuesten Pageview, Vergleichen stellt zwei nebeneinander, und der Export kopiert ein Beacon als Markdown (optional anonymisiert).
+- Open Source; keine Beacon-Daten verlassen das Gerät.
+
+Doku: [Beacon Inspector](/de/guides/beacon-inspector).
 
 </ChangelogEntry>
 
@@ -267,7 +396,14 @@ Dein **Theme** (hell, dunkel oder automatisch) und der Schalter für die **Rot-G
 
 <ChangelogEntry date="2026-07-16" type="changed" area="tracker" title="Weniger, besser getimte Beacons pro Pageview">
 
-Die Beacon-Aussendung des Trackers wurde überarbeitet: weniger Requests und genauere Loading-Metriken. `init` feuert jetzt sofort als Marker „dieser Pageview existiert“ (sodass auch ein Bot oder eine abrupt geschlossene Seite registriert wird), und `loaded` wird zurückgehalten, bis der LCP final ist (erste Interaktion, Tab-Wechsel oder ein 10-Sekunden-Deckel), statt beim ersten, oft vorläufigen LCP-Eintrag zu feuern. In den Speicher gelangt jetzt der echte finale LCP. Mid-Pageview-Update-Beacons feuern nur noch bei einem aussagekräftigen Signal (ein neuer First-Party-Endpoint, ein fehlgeschlagener Request oder ein langsamer Aufruf über 500 ms) statt bei jedem fetch oder XHR, sodass First-Party-Prefetch und Third-Party-Analytics-Geplapper keine Flut mehr auslösen: ein typischer Pageview sendet jetzt zwei bis vier Beacons. Terminale Beacons behalten `keepalive`, Beacons der lebenden Seite nicht mehr, sodass das finale Beacon (mit dem endgültigen INP und CLS der Seite) auf Chromium zuverlässig ankommt, statt unter starker Navigation gelegentlich verloren zu gehen. Keine Änderung am Wire-Format oder an deiner Einbindung; siehe [Lifecycle und Stellschrauben des Beacons](/de/concepts/beacon#fine-tuning).
+Der Tracker sendet weniger Requests und misst die Ladephase genauer. Am Wire-Format und an deinem Setup ändert sich nichts.
+
+- **`init` feuert sofort** als Marker „Pageview existiert", damit auch ein Bot oder eine abrupt geschlossene Seite registriert wird.
+- **`loaded` wartet auf das finale LCP** (erste Interaktion, Tab verborgen oder eine Kappung bei 10 Sekunden) statt auf den ersten, oft vorläufigen Eintrag.
+- **Update-Beacons nur bei einem relevanten Signal** (neuer First-Party-Endpunkt, fehlgeschlagener Request, Aufruf über 500 ms). Ein typischer Pageview sendet zwei bis vier Beacons.
+- **Terminale Beacons behalten `keepalive`**, Live-Beacons nicht mehr, damit das finale INP und CLS auf Chromium zuverlässig ankommen.
+
+Doku: [Beacon → Feinjustierung](/de/concepts/beacon#fine-tuning).
 
 </ChangelogEntry>
 
@@ -327,7 +463,13 @@ Der Pageview-Drawer zeichnet seine Netzwerk-Abschnitte jetzt als proportionale B
 
 <ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Query-Aufbewahrung gilt jetzt auch für fetch/XHR-Endpoint-Pfade">
 
-Der Tracker hat den Query-String bisher von jedem fetch/XHR-Endpoint-Pfad entfernt, sodass ein Front-Controller-Shop, der die Route im Query hält (`/index.php?controller=Search` gegenüber `?controller=Cart`), jeden Request in einen nutzlosen `/index.php`-Bucket zusammenfallen ließ. Diese Pfade beachten jetzt dieselben zwei Site-Einstellungen wie die Seiten-URL: [`query_value_keys`](/de/tracker#collect-query-values-for) behält die gewählten `key=value`-Paare (sodass `controller` und `action` die Routen trennen), und [`track_query_keys`](/de/tracker#collect-query-keys) behält die bloßen Key-Namen. Ist keins von beiden gesetzt, wird der Query weiterhin verworfen, unkonfigurierte Sites ändern sich also nicht und es gibt keine Migration. Die Reduktion läuft im Tracker (der Pfad ist sein Aggregationsschlüssel), und der Collector wendet dieselbe Regel als Absicherung erneut an. Konfigurierte Keys sind auf Buchstaben, Ziffern, `_` und `-` beschränkt, sowohl beim Speichern als auch beim Ausliefern des Skripts, sodass ein Key nie aus dem ausgelieferten Bundle ausbrechen kann.
+Der Tracker strippte die Query von jedem Fetch/XHR-Pfad; ein Front-Controller-Shop (`/index.php?controller=Search` gegen `?controller=Cart`) fiel so in einen einzigen `/index.php`-Eimer.
+
+- **Dieselben Einstellungen wie die Seiten-URL**: `collect_query_values_for` behält die gewählten `key=value`-Paare, `collect_query_keys` die bloßen Key-Namen. Ohne beides ändert sich nichts.
+- Der Tracker reduziert den Pfad; der Collector wendet dieselbe Regel als Absicherung erneut an.
+- Konfigurierte Keys sind auf Buchstaben, Ziffern, `_` und `-` begrenzt, ein Key kann also nie aus dem ausgelieferten Bundle ausbrechen.
+
+Doku: [Tracker → collect_query_values_for](/de/tracker#collect-query-values-for).
 
 </ChangelogEntry>
 
@@ -345,19 +487,32 @@ Das Beacon-Drill-down (`POST /analytics/beacons`) liefert mehr Detail je Beacon 
 
 <ChangelogEntry date="2026-07-14" type="changed" area="tracker" title="Web-Vitals-Messung an web-vitals v5 angeglichen">
 
-Der Tracker misst die Core Web Vitals jetzt so, wie es Googles web-vitals-v5-Bibliothek und CrUX tun, damit deine Feld-Werte zu dem passen, was die Search Console zeigt. **INP** ist jetzt die CrUX-p98-Schätzung (etwa deine 98.-Perzentil-Interaktion) statt der einzelnen langsamsten Interaktion und liest sich auf interaktionsreichen Seiten daher niedriger: eine Änderung der Methode, keine Regression. **Prerender-Seiten** erzeugen keine Phantom-Pageviews und keine aufgeblähten Zeiten mehr, denn der Tracker startet erst, sobald die Seite aktiviert wird, und rebasiert TTFB, FCP und LCP auf diesen Moment. Eine im **Hintergrund-Tab** geöffnete Seite zählt ihren verzögerten ersten Paint nicht mehr als langsames Laden: Paints, nachdem der Tab zum ersten Mal verborgen war, werden verworfen und der Pageview wird markiert. CLS zählt Layout-Verschiebungen während des Prerenders weiterhin mit, passend zu CrUX.
+Der Tracker misst die Core Web Vitals so wie Googles web-vitals-v5-Library und CrUX, damit deine Feldzahlen zur Search Console passen.
+
+- **INP** ist die CrUX-p98-Schätzung statt der einzelnen schlechtesten Interaktion. Auf interaktionsreichen Seiten liest es sich niedriger: eine Methodenänderung, keine Regression.
+- **Vorgerenderte Seiten** erzeugen keine Phantom-Pageviews oder aufgeblähten Timings mehr; der Tracker aktiviert sich erst mit der Seite und setzt TTFB, FCP und LCP auf diesen Moment.
+- **Hintergrund-Tabs**: Paints nach dem ersten Verbergen des Tabs werden verworfen und der Pageview markiert. CLS zählt Layout-Shifts während des Prerenders weiter, wie CrUX.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-07-14" type="new" area="tracker" title="Element-Attribution für LCP, INP und CLS">
 
-Jeder Pageview hält jetzt fest, warum ein Web Vital langsam war und welches Element es verursacht hat. LCP teilt sich in vier Phasen (Time to First Byte, Resource Load Delay, Load Duration, Render Delay), die in Summe den LCP ergeben, INP in drei (Input Delay, Processing, Presentation), und LCP, CLS und INP tragen je einen CSS-Selektor-Pfad zum verantwortlichen Element (bei LCP zusätzlich die Bild-URL). Dynamische IDs wie `#order-98123` dienen nie als Anker: Sie sind schwache personenbezogene Daten und würden die Kardinalität aufblähen, also fällt der Pfad auf einen stabilen Vorfahren zurück. Was verfügbar ist, hängt vom Browser ab: LCP-Phasen brauchen Chrome 77, Firefox 122 oder Safari 26.2; INP-Phasen Chrome 96, Firefox 144 oder Safari 26.2; und CLS-Attribution gibt es nur in Chromium. Auf Apple-Traffic bleiben diese Felder vorerst also leer.
+Jeder Pageview hält fest, warum ein Web Vital langsam war und welches Element es verursacht hat.
+
+- **Phasen**: LCP teilt sich in Time to First Byte, Resource Load Delay, Load Duration und Render Delay; INP in Input Delay, Processing und Presentation.
+- **Elemente**: LCP, CLS und INP tragen einen CSS-Selektor-Pfad zum verantwortlichen Element (bei LCP zusätzlich die Bild-URL). Dynamische IDs wie `#order-98123` sind nie der Anker; der Pfad fällt auf einen stabilen Elternknoten zurück.
+- **Browser-Support**: LCP-Phasen brauchen Chrome 77, Firefox 122 oder Safari 26.2; INP-Phasen Chrome 96, Firefox 144 oder Safari 26.2; CLS-Attribution gibt es nur in Chromium.
 
 </ChangelogEntry>
 
 <ChangelogEntry date="2026-07-14" type="new" area="dashboard" title="Web-Vitals-Attribution im Dashboard">
 
-Die Detailseiten der Core Web Vitals zeigen jetzt die neue Attribution je Pageview. LCP und INP bekommen je eine **Phase Breakdown**-Card: die durchschnittliche Metrik als Kaskade in ihre Phasen zerlegt und dieselben Phasen über die Zeit gestapelt. Die Breakdown-Tabellen (langsamste Seiten, nach Seite, Land, Gerät) bekommen eine Spalte **Phases**, die zeigt, welche Phase je Zeile dominiert, und beim Aufklappen einer Zeile kommt eine auf sie beschränkte Phasen-Ansicht hinzu. Ein neues Panel **Element Targets** auf LCP, CLS und INP reiht die CSS-Selektoren, die am häufigsten für das Vital verantwortlich sind, angeführt von einem Hauptverursacher-Callout („verantwortlich für N % der attribuierten Pageviews“); bei LCP kannst du stattdessen die verantwortliche Bild-URL reihen lassen. Der **Explorer** bekommt die Phasen-Metriken und die Dimension INP-Interaktionstyp, und die **Visitors**-Journey samt Beacon-Drawer zeigt je Pageview die Phasenaufteilung, das Element und den Interaktionstyp.
+Die Detailseiten der Core Web Vitals zeigen die neue Attribution pro Pageview.
+
+- **Phasen-Aufschlüsselung** auf LCP und INP: die Metrik in ihre Phasen zerlegt als Kaskade, und dieselben Phasen gestapelt über die Zeit.
+- **Phasen-Spalte** in den Breakdown-Tabellen (langsamste Seiten, nach Seite, Land, Gerät); eine aufgeklappte Zeile bekommt eine darauf eingegrenzte Phasenansicht.
+- **Element-Targets** auf LCP, CLS und INP ranken die am häufigsten verantwortlichen Selektoren, angeführt von einem Hauptverursacher-Hinweis; auf LCP wahlweise nach Bild-URL.
+- Der Explorer bekommt die Phasen-Metriken und die INP-Interaktionstyp-Dimension; Besucher-Journey und Beacon-Drawer zeigen Phasen, Element und Interaktionstyp jedes Pageviews.
 
 </ChangelogEntry>
 
@@ -513,7 +668,12 @@ Der KI-Assistent „Ask“ hat dieselbe Antwort manchmal zweimal gestreamt und d
 
 <ChangelogEntry date="2026-07-06" type="changed" area="dashboard" title="Cache-Monitoring, entlang des Request-Pfads neu geordnet">
 
-Die Cache-Seite ist jetzt entlang der drei Schichten aufgebaut, die ein Request durchläuft, mit einem Umschalter **Browser / CDN / Origin**. Jede Schicht zeigt denselben Panel-Satz: Trefferquote, Status-Verteilung, ein gestapeltes Diagramm „Cache-Status über Zeit“ (mit Umschalter absolut/prozentual und einer Legende, die per Klick einen einzelnen Wert isoliert) sowie die Zuordnung nach Seite. Der Browser-Cache ist auf wiederkehrende Aufrufe umgestellt (Reloads sowie Vor und Zurück), bei denen der Cache warm ist; er trägt keine Gut/Schlecht-Bewertung mehr, da es keinen verbindlichen Zielwert gibt, und eine Kennzahl „Erste Navigationen“ liefert Kontext. CDN und Origin nutzen die nativen Trefferquoten-Metriken und schließen Soft-Navigationen aus, die kein Dokument laden und keinen Cache-Status tragen. Ein neues Panel **Ressourcen nach Typ** schlüsselt den Traffic nach Skript, CSS, Bildern, Schriften und Sonstigem auf, mit Umschalter Anzahl/Bytes. Das Dashboard erhält ein einzelnes kombiniertes Cache-Widget mit demselben Umschalter, und der Menüpunkt Cache ist als **Neu** markiert.
+Die Cache-Seite ist um die drei Schichten herum gebaut, die ein Request durchläuft, mit einem Umschalter Browser / CDN / Origin.
+
+- **Dieselben Panels pro Schicht**: Trefferquote, Statusverteilung, Cache-Status über die Zeit (absolut/prozentual, Legende zum Isolieren per Klick) und Seiten-Attribution.
+- **Browser-Cache** ist um wiederkehrende Views (Reloads, Vor/Zurück) herum gefasst, ohne Gut/Schlecht-Bewertung; eine Zahl „Erste Navigationen" gibt Kontext.
+- **CDN und Origin** lesen native Trefferquoten-Metriken und schließen Soft-Navigationen aus, die keinen Cache-Status tragen.
+- **Ressourcen nach Typ**: Script, CSS, Bilder, Fonts und Sonstiges, umschaltbar zwischen Anzahl und Bytes. Das Dashboard bekommt ein kombiniertes Cache-Widget mit demselben Umschalter.
 
 </ChangelogEntry>
 
@@ -561,7 +721,12 @@ Die Zeilen der „Woran es liegt“-Aufschlüsselung haben jetzt Hover-Aktionen 
 
 <ChangelogEntry date="2026-06-27" type="changed" area="dashboard" title="Aufgeräumtere Verteilungsdarstellung">
 
-Detailseiten wiederholen die Werteverteilung nicht mehr am Seitenende; sie lebt jetzt nur noch im oberen „Über die Zeit“-Panel. Die Grid-Panels der Aufschlüsselung zeigen den Anteil jedes Werts an den Seitenaufrufen neben der absoluten Zahl, und Teilen-Links stellen die gewählte Diagrammansicht (Über die Zeit, Verteilung oder beides) einer aufgeklappten Zeile wieder her, nicht nur die Zeile selbst. CDN- und Origin-Cache-Aufschlüsselungen enthalten jetzt einen „unbekannt“-Bucket für Antworten ohne Cache-Header, aber nur, wenn mindestens 1 % der Aufrufe einen bekannten Cache-Status haben, sodass eine vollständig ungecachte Seite kein nutzloses „unbekannt 100 %“-Panel mehr zeigt. Auf der Fehler-Seite wurde der „Im Explorer öffnen“-Button oben rechts entfernt; den Drill-down auf Datensatzebene erreichst du jetzt über die Tabellen.
+Ein Aufräumen der Detailseiten.
+
+- Die Werteverteilung lebt nur noch im oberen Panel „Über die Zeit" und wird unten nicht mehr wiederholt.
+- Breakdown-Panels zeigen den Anteil jedes Werts an den Pageviews neben der Anzahl, und Share-Links stellen die gewählte Chart-Ansicht einer aufgeklappten Zeile wieder her.
+- CDN- und Origin-Cache-Breakdowns bekommen einen Eimer „unbekannt", der nur erscheint, wenn mindestens 1 % der Views einen bekannten Cache-Status haben.
+- Der Button „Im Explorer öffnen" auf der Fehlerseite ist weg; der Drill-down läuft über die Tabellen.
 
 </ChangelogEntry>
 
@@ -591,7 +756,13 @@ Ein Schnellfilter **Alle / Desktop / Mobil** sitzt jetzt neben der Zeitauswahl a
 
 <ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Klarere Explorer-Filter, Breadcrumb-Drill-down und fixierte Share-Links">
 
-Die zwei Filterzeilen des Explorers heißen jetzt **Query-Filter** (serverseitig angewandt) und **Ergebnis-Filter** (im Browser angewandt) und stehen auf einer Zeile. Die Statusfarbe Gut/Verbesserungswürdig/Schlecht ist bei Wert-Metriken dauerhaft an, und Anzahl-Metriken (etwa Requests pro URL) klappen jetzt in das Aufschlüsselungs-Raster und einen Verlauf auf statt in eine leere Verteilung. Steigst du von einer Metrik aus ein, erweitert sich der Breadcrumb um die Herkunft (zum Beispiel „Core Web Vitals › LCP › Explorer“), und ein Zurück-Pfeil bringt dich genau dorthin zurück, inklusive der Zeile, die du aufgeklappt hattest. Teilbare Links fixieren jetzt den aktuellen Zeitraum auf absolute Zeitstempel, sodass ein geteilter Link immer dasselbe Zeitfenster öffnet. Die eigenständige **Seiten**-Ansicht wurde zugunsten von **Analytics** abgelöst, das jetzt weiter oben in der Seitenleiste steht.
+Eine Runde Explorer-Arbeit.
+
+- **Filterzeilen beschriftet** als Abfrage-Filter (Server) und Ergebnis-Filter (Browser), in einer Zeile.
+- Die Statusfarbe ist bei Wert-Metriken immer an; Zähl-Metriken klappen zum Breakdown-Raster und einem Trend auf.
+- **Breadcrumb-Drill-down**: „Core Web Vitals › LCP › Explorer", mit einem Zurück-Pfeil an die exakte Stelle, aufgeklappte Zeile inklusive.
+- **Share-Links fixieren den Zeitraum** auf absolute Zeitstempel.
+- Die eigenständige Ansicht „Seiten" ist zugunsten von Analytics eingestellt.
 
 </ChangelogEntry>
 

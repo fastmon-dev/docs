@@ -119,7 +119,7 @@ export function ChangelogEntry({
           </span>
         </h3>
       </a>
-      <div className="text-sm text-fd-muted-foreground [&_a]:text-fd-foreground [&>:first-child]:mt-0 [&>:last-child]:mb-0">
+      <div className="text-sm text-fd-muted-foreground [&_a]:text-fd-foreground [&>:first-child]:mt-0 [&>:last-child]:mb-0 [&_p]:my-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mt-1 [&_li>p]:my-0 [&_strong]:font-medium [&_strong]:text-fd-foreground">
         {children}
       </div>
     </article>
