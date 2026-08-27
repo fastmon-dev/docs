@@ -12,6 +12,30 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-27" type="new" area="dashboard" title="The Early Hints head start and the store phases in the dashboard">
+
+The dashboard picks up `ttfb_final` and the two new phases. The response breakdown ends the server phases on the final response headers: where a site answers with 103 Early Hints, the wait carries an "Early Hints" row from the first byte to the final headers, the server phases below it end where that row ends, and the transfer bar starts at the final headers instead of counting the head start a second time as download. A server phase that outlasts the first byte keeps its reported length, drawn in two parts with the seam on the crossing, where it used to be clamped into the wait (a shop with 297 ms of backend was printed as the 61 ms the browser saw). Sites without an interim response, and browsers that do not report the timing, look as before. The TTFB page gets an Early Hints panel for the same fact: the head start at the selected percentile, the two first bytes as one split bar, and the share of pageviews it was measured on; it appears only where the two values differ. Search and KV are phases of their own next to DB, Cache, External, and Render on the Server-Timing page, in the breakdown waterfall, and as Explorer metrics and columns, and the "Backend phases" preset gains a DB-against-search-and-KV chart. The pageview drawer stops adding the backend to its own parts: the composition is a nested list now, each part under what contains it with its share of that row, and unattributed time as its own row. Every phase wears its own color in the breakdown, and the cache phase is called "Cache" rather than "Cache (FPC)", since it sums the application's own cache calls and the full page cache is the origin cache status. See [TTFB → Early Hints](/en/web-vitals/ttfb#early-hints).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="The visitor journey says who the visitor was, and hands the ID over">
+
+Country, device, OS, and browser stood in the visitors table only, so a shared `?visitor=` link opened a journey with no idea whose it was. The session header carries them now, in the pinned card and the expanded row, read per pageview because a stitched visitor can cross devices and countries: what varies is listed. The row showed eight of thirty-two hex characters with no way to get the rest; the ID is click-to-copy on hover now, in full, and a row action narrows the page to that visitor: for a stitch a real filter with a chip in the bar, which the other analytics pages read too, and for a session ID, which the backend cannot filter on, the visitor search box above the table. Device, OS, country, and browser each grew the same hover plus and minus the Explorer's pageview table has.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="The page classes people recognize keep their color">
+
+Yesterday's per-class colors on the visitor journey hashed every non-funnel page type onto a nine-hue wheel, and collisions were routine: "category" and "product" hash to the same hue, so whichever appeared first kept it and the other moved, which made "category" teal in one visit and something else in the next. The nine classes almost every site has (home, category, product, search, blog, account, contact, wishlist, static) own a hue outright now, with the German spellings reading as the same class; site-specific names keep their hashed hue and give way when they land on a taken one. "Artikel" is deliberately not in the list: it is a product on one shop and a blog post on the next.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="The organization overview is about applications">
+
+The overview listed bare sites, which hid the structure exactly where a new user first meets it: an application carries the tracker and its collection settings, a site is one of the domains underneath it. Applications are the cards now, busiest first, each listing its domains with the pageviews and the LCP of the last 24 hours next to the status dot. Above them the same window for the whole organization: pageviews, visitors, LCP p75. An application without a domain says so and offers to add one instead of being invisible.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-27" type="new" area="api" title="Search engines and key-value stores get their own Server-Timing phases">
 
 `cache_dur` summed `redis` and Shopify's `edge_cart` as if they were cache time, and Elasticsearch counted nowhere, although search carries a large share of backend time in a typical Shopware shop. Two new phases fix that: `search_dur` sums `elasticsearch`, `opensearch`, `solr`, `search`, and `fm-search`; `kv_dur` sums `redis`, `valkey`, `kv`, and `fm-kv`. Both follow the rules of the existing sums (members stay in the maps for drill-down, no source key means `NULL`), are percentile phases on `POST /analytics/server-timing`, row fields on `/analytics/beacons`, and aggregatable metrics. `db_dur` stays purely relational. This changes what `cache_dur` means: `redis` now counts in `kv_dur` (Redis can be sessions, a queue, or the primary store, so its value only says "time in Redis"), and `edge_cart` leaves the sums entirely. Stored values are not rewritten, so a long-window `cache_dur` chart on an affected site steps down at the deploy; a shop that uses Redis as its cache emits `fm-cache` on top. Along the way, two Shopify header keys that are configuration rather than timing (`compressionlevel`, `speculationtags`) are dropped in the collector and in the tracker's own denylist, `compressiontime` joins the catalog and no longer uses one of the eight custom slots, and a numeric description outside the duration window (Shopify's theme id, `theme;desc="190311530496"`) stays a description instead of becoming a six-year duration that skewed every percentile over the key. The [Server-Timing guide](/en/guides/server-timing#backend-phases) has the updated tables.

@@ -78,6 +78,8 @@ Phasen, die du nicht sendest, fehlen schlicht (NULLs werden übersprungen, nie a
 
 Die Store-Phasen sind absichtlich getrennt. `search_dur` und `kv_dur` gibt es seit dem 27. August 2026; davor zählte `redis` in `cache_dur`, und `elasticsearch` zählte nirgends. Redis kann Session-Store, Queue oder Primärspeicher sein, sein Wert misst also nur „Zeit in Redis" und landet jetzt in `kv_dur`; `cache_dur` behält die Keys, die eindeutig ein Cache sind. Ist dein Redis *dein* Cache, sende zusätzlich zu `redis` ein `fm-cache` (oder `cache`). Shopifys `edge_cart` ist ganz aus den Summen raus und bleibt für den Drill-down in den Maps. Gespeicherte Werte wurden nicht umgeschrieben; auf einer betroffenen Site macht ein `cache_dur`-Chart über einen langen Zeitraum an diesem Datum deshalb eine Stufe nach unten.
 
+Alle neun Phasen erscheinen auf der Server-Timing-Seite, im Wasserfall der Response-Aufschlüsselung und als Metriken und Spalten im Explorer (die Cache-Phase heißt „Cache"; der Full-Page-Cache ist der [Cache-Status](#cache-status) des Origins, eine andere Schicht). Der Pageview-Drawer listet die Phasen verschachtelt: DB, Cache, Search, KV, External und Render unter Backend, Backend unter Origin, jede mit ihrem Anteil an der Zeile, die sie enthält, und die keiner Schicht zugeordnete Zeit als Zeile „Nicht zugeordnet".
+
 ## Cache-Status
 
 Ein Cache-Urteil wird als Description übertragen, nicht als Dauer: z. B. `Server-Timing: cdn-cache;desc="HIT"`. Fastmon erfasst **zwei Schichten** unabhängig:

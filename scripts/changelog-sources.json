@@ -5,7 +5,7 @@
   },
   "frontend": {
     "repo": "../frontend",
-    "since": "2026.8.15"
+    "since": "2026.8.16"
   },
   "tracker": {
     "paths": [

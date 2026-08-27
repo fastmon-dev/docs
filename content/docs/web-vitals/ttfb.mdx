@@ -49,6 +49,8 @@ To tell them apart, fastmon also stores **`ttfb_final`**: the browser's `finalRe
 
 TTFB itself stays `responseStart`, so it keeps comparing to CrUX and the web-vitals field data. `ttfb_final` is a row field on `POST /analytics/beacons`, part of the visitor pageview detail, and an aggregatable metric (avg, p50 to p99).
 
+In the dashboard, the TTFB page shows an **Early Hints** panel wherever the two values differ: the head start at the selected percentile, the two first bytes as one split bar, and the share of pageviews the final one was measured on (a Chromium-only timing, and soft navigations carry none). The [response breakdown](/en/analytics#fetchxhr-and-server-timing) draws the head start as its own "Early Hints" row inside the wait, ends the server phases on it, and starts the transfer bar at the final response headers rather than at the first byte. In the Explorer, `ttfb_final` is a chartable metric, a sortable column, and a drawer field; the pageview drawer shows it only when it differs from TTFB.
+
 ## How to see TTFB in fastmon
 
 The dashboard's **Performance** section shows TTFB at p50, p75, p95.

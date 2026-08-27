@@ -78,6 +78,8 @@ Phases you don't emit are simply absent (NULLs are skipped, never counted as zer
 
 The store phases are split on purpose. `search_dur` and `kv_dur` exist since 27 August 2026; before that, `redis` counted in `cache_dur` and `elasticsearch` counted nowhere. Redis can be a session store, a queue, or the primary store, so its time only measures "time in Redis" and now lands in `kv_dur`; `cache_dur` keeps the keys that are unambiguously a cache. If your Redis *is* your cache, emit `fm-cache` (or `cache`) on top of `redis`. Shopify's `edge_cart` left the sums entirely and stays in the maps for drill-down. Stored values were not rewritten, so on an affected site a long-window `cache_dur` chart steps down at that date.
 
+All nine phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the cache phase is labeled "Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Cache, Search, KV, External, and Render under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
+
 ## Cache status
 
 A cache verdict is carried as a description, not a duration (e.g. `Server-Timing: cdn-cache;desc="HIT"`). Fastmon tracks **two layers** independently:
