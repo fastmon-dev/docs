@@ -80,7 +80,7 @@ Die Analytics-API bietet zwei Endpunkte:
 
 Übergib `identity` explizit, um den Site-Standard zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/listAnalyticsVisitors).
 
-Die Liste filtert danach, was die Journey eines Besuchers enthält: `contains_page_type` für einen Page-Type, bei Shops `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` für den [Checkout-Funnel](/de/checkout-funnel). Jeder Pageview im Detail trägt seine `checkout_stage` und die Warenkorb-Interaktionsfelder. Der Funnel selbst hat eigene Endpunkte unter `/analytics/funnels/checkout`, gruppiert über dieselbe Identität.
+Die Liste filtert danach, was die Journey eines Besuchers enthält: `contains_page_type` für einen Page-Type, bei Shops `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` für den [Checkout-Funnel](/de/checkout-funnel). Jeder Pageview im Detail trägt seine `checkout_stage`, die Warenkorb-Interaktionsfelder und seinen eigenen Client-Kontext (`country`, `browser`, `browser_version`, `device_type`, `os`): pro Pageview statt pro Besucher, weil ein `stitch`-Besucher Geräte, Länder und Browser wechseln kann und eine Mischung als Mischung sichtbar bleiben soll. Der Funnel selbst hat eigene Endpunkte unter `/analytics/funnels/checkout`, gruppiert über dieselbe Identität.
 
 ## Häufige Überraschungen
 

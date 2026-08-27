@@ -80,7 +80,7 @@ The Analytics API exposes two endpoints:
 
 Pass `identity` explicitly to override the site default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
 
-The list filters on what a visitor's journey contains: `contains_page_type` for a page type, and on shops `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` for the [checkout funnel](/en/checkout-funnel). Each pageview in the detail carries its `checkout_stage` and cart interaction fields. The funnel itself has its own endpoints under `/analytics/funnels/checkout`, grouped on the same identity.
+The list filters on what a visitor's journey contains: `contains_page_type` for a page type, and on shops `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` for the [checkout funnel](/en/checkout-funnel). Each pageview in the detail carries its `checkout_stage` and cart interaction fields, and its own client context (`country`, `browser`, `browser_version`, `device_type`, `os`): per pageview rather than per visitor, because a `stitch` visitor can span devices, countries, and browsers, and a mixture should show as one. The funnel itself has its own endpoints under `/analytics/funnels/checkout`, grouped on the same identity.
 
 ## Common surprises
 

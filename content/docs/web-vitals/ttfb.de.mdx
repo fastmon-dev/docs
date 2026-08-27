@@ -35,6 +35,20 @@ Wird dein TTFB von Schritt 4 dominiert, liegt der Fix in deiner Application. Wir
 
 TTFB wird aus der Navigation-Timing-API als `responseStart - fetchStart` errechnet. Der Tracker nimmt es bei jedem Pageview mit neuem Navigation-Eintrag mit.
 
+## TTFB hinter 103 Early Hints [#early-hints]
+
+Auf Sites hinter 103 Early Hints (Shopify-Storefronts, Cloudflare) liegt TTFB regelmäßig *unter* den [Server-Timing](/de/guides/server-timing)-Phasen des Servers für denselben Pageview. Beides stimmt. `responseStart` markiert das erste Byte der *ersten* Response, und mit Early Hints ist das die vorläufige 103, die die Edge in etwa einem Roundtrip beantwortet; die echte Antwort deines Servers, mit dem `Server-Timing`-Header darauf, kommt später. Die beiden messen unterschiedliche Responses desselben Requests.
+
+Um sie auseinanderzuhalten, speichert fastmon zusätzlich **`ttfb_final`**: das `finalResponseHeadersStart` des Browsers, das erste Byte der finalen Response. Der Tracker liest es mit derselben Aktivierungs-Korrektur und derselben 60-Sekunden-Kappung wie TTFB (Wire-Key `frs`), und der Collector verwirft einen Wert unter `ttfb`. So liest du das Paar:
+
+| `ttfb_final`      | Bedeutung                                                                        |
+| ----------------- | -------------------------------------------------------------------------------- |
+| leer (`NULL`)     | Der Browser meldet den Wert nicht (Safari, Firefox; Chromium vor 115), oder der Pageview war eine Soft-Navigation oder ein bfcache-Restore. |
+| gleich `ttfb`     | Keine vorläufige Response; das erste Byte war das echte.                        |
+| größer als `ttfb` | Early Hints aktiv. Die Differenz ist der Vorsprung der Edge, und `ttfb_final` ist der Wert, in den `edge_dur + backend_dur` des Servers passen muss. |
+
+TTFB selbst bleibt `responseStart` und damit vergleichbar mit CrUX und den Web-Vitals-Felddaten. `ttfb_final` ist ein Zeilenfeld auf `POST /analytics/beacons`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik (avg, p50 bis p99).
+
 ## TTFB in fastmon ansehen
 
 Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.

@@ -38,14 +38,14 @@ The beacon ships the raw entries; the wire is forgeable, so the tracker's filter
 **Form rules.** A metric is kept only if it passes:
 
 - **Name**: lowercased, must match `^[a-z][a-z0-9._-]{0,31}$` (starts with a letter, ≤ 32 chars). A `tideways.layer.` prefix is stripped first.
-- **Duration**: numeric and `0 ≤ dur ≤ 10,000,000 ms`. Anything larger reads as a timestamp misuse and is dropped. A numeric-only `desc` (e.g. `items;desc=3`) is treated as the duration.
+- **Duration**: numeric and `0 ≤ dur ≤ 10,000,000 ms`. Anything larger reads as a timestamp misuse and is dropped. A numeric-only `desc` (e.g. `items;desc=3`) is treated as the duration, but only if it fits the same window; a number outside it (Shopify's `theme;desc="190311530496"` is a theme id) stays a description instead of becoming a six-year duration.
 - **Description**: ≤ 32 chars, `[a-zA-Z0-9 _.:/-]` only; otherwise dropped.
-- **Denylist & ID guard**: infrastructure and trace keys (`requestid`, `traceparent`, `cfray`, `servedby`, `asn`, `country`, `*-pop`, `ipv6`, …) are discarded outright, and any name *or* description that looks like a UUID or a long hex/base64 blob is dropped as a cardinality / PII guard.
+- **Denylist & ID guard**: infrastructure and trace keys (`requestid`, `traceparent`, `cfray`, `servedby`, `asn`, `country`, `ipv6`) and config values that are not timings (Shopify's `compressionlevel` and `speculationtags`) are discarded outright, and any name *or* description that looks like a UUID or a long hex/base64 blob is dropped as a cardinality / PII guard. The CDN PoP keys (`pop`, `fastly-pop`, `cdn-pop`, `x-qc-pop`) are kept: they name the serving node, not the visitor.
 
 **Three tiers.** What survives is sorted into:
 
-1. **Promoted scalars** (always kept): the seven [backend phases](#backend-phases), the two [cache statuses](#cache-status), and the [page type](#page-type). These become dedicated columns.
-2. **Tier-2 catalog** (uncapped): a known set of names (`redis`, `mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `elasticsearch`, `parse`, `session`) kept in the per-pageview duration/description maps.
+1. **Promoted scalars** (always kept): the nine [backend phases](#backend-phases), the two [cache statuses](#cache-status), and the [page type](#page-type). These become dedicated columns.
+2. **Tier-2 catalog** (uncapped): a known set of names (`mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
 3. **Tier-3 custom** (≤ 8 per pageview): any other valid name you invent.
 
 Across both maps, durations are capped at 24 keys and descriptions at 8.
@@ -56,11 +56,11 @@ When the same phase could be filled by more than one metric, fastmon resolves it
 
 > **`fm-*` first-party alias  ›  your site's mapping  ›  built-in vendor alias (`cf…`)  ›  built-in generic alias**
 
-Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
+Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
 
 ## Backend phases
 
-Recognized names fold into **seven phases**, shown as p50 / p75 / p95 over the time range. Five take the first alias that carries a duration; `cache` and `external` **sum** every matching member (the members also stay in the maps for drill-down). The `fm-*` alias always leads.
+Recognized names fold into **nine phases**, shown as p50 / p75 / p95 over the time range. Five take the first alias that carries a duration; `cache`, `external`, `search`, and `kv` **sum** every matching member (the members also stay in the maps for drill-down). The `fm-*` alias always leads.
 
 | Phase          | Recognized names (in precedence order)                          | How          |
 | -------------- | --------------------------------------------------------------- | ------------ |
@@ -69,10 +69,14 @@ Recognized names fold into **seven phases**, shown as p50 / p75 / p95 over the t
 | `backend_dur`  | `fm-backend`, `processing`, `total`, `app`, `be`, `wp-total`, `bootstrap` | first w/ dur |
 | `db_dur`       | `fm-db`, `db`, `sql`, `rdbms`                                  | first w/ dur |
 | `render_dur`   | `fm-render`, `render`, `wp-template`, `view`, `ssr`           | first w/ dur |
-| `cache_dur`    | `fm-cache`, `cache`, `redis`, `memcache`, `apcu`, `edge_cart` | **sum**      |
+| `cache_dur`    | `fm-cache`, `cache`, `memcache`, `apcu`                       | **sum**      |
 | `external_dur` | `fm-external`, `http`, `fetch`, `api`, `ext`                  | **sum**      |
+| `search_dur`   | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`  | **sum**      |
+| `kv_dur`       | `fm-kv`, `redis`, `valkey`, `kv`                              | **sum**      |
 
-Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat.
+Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat. `db_dur` is purely relational: time in Elasticsearch or Redis never folds into it.
+
+The store phases are split on purpose. `search_dur` and `kv_dur` exist since 27 August 2026; before that, `redis` counted in `cache_dur` and `elasticsearch` counted nowhere. Redis can be a session store, a queue, or the primary store, so its time only measures "time in Redis" and now lands in `kv_dur`; `cache_dur` keeps the keys that are unambiguously a cache. If your Redis *is* your cache, emit `fm-cache` (or `cache`) on top of `redis`. Shopify's `edge_cart` left the sums entirely and stays in the maps for drill-down. Stored values were not rewritten, so on an affected site a long-window `cache_dur` chart steps down at that date.
 
 ## Cache status
 
@@ -168,6 +172,7 @@ Most CDNs (Cloudflare, Fastly, CloudFront) can append their own cache/edge metri
 - **Cross-origin documents need the timing exposed.** A same-origin document is fine by default; if your HTML is served from a different origin, `serverTiming` is only populated when that response also sends [`Timing-Allow-Origin`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Timing-Allow-Origin).
 - **Don't leak internals in `desc`.** The description is free text that ships to the browser and back. Anything that looks like a UUID or a long token is dropped, but keep it to coarse labels (`HIT`, `MISS`, region codes) regardless; never put query text, IDs, or secrets there.
 - **Eight custom keys, max.** Beyond the catalog, only the first eight unknown names per pageview are kept. If you're inventing many custom metrics, fold the durable ones into a name fastmon already recognizes.
+- **Server time longer than TTFB is not bad data.** Behind 103 Early Hints the first byte is the edge's interim response, and the phases describe the final one; `edge_dur + backend_dur` has to fit into `ttfb_final`, not into `ttfb`. See [TTFB → Early Hints](/en/web-vitals/ttfb#early-hints).
 
 ## Related
 

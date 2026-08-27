@@ -12,6 +12,54 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-27" type="new" area="api" title="Search engines and key-value stores get their own Server-Timing phases">
+
+`cache_dur` summed `redis` and Shopify's `edge_cart` as if they were cache time, and Elasticsearch counted nowhere, although search carries a large share of backend time in a typical Shopware shop. Two new phases fix that: `search_dur` sums `elasticsearch`, `opensearch`, `solr`, `search`, and `fm-search`; `kv_dur` sums `redis`, `valkey`, `kv`, and `fm-kv`. Both follow the rules of the existing sums (members stay in the maps for drill-down, no source key means `NULL`), are percentile phases on `POST /analytics/server-timing`, row fields on `/analytics/beacons`, and aggregatable metrics. `db_dur` stays purely relational. This changes what `cache_dur` means: `redis` now counts in `kv_dur` (Redis can be sessions, a queue, or the primary store, so its value only says "time in Redis"), and `edge_cart` leaves the sums entirely. Stored values are not rewritten, so a long-window `cache_dur` chart on an affected site steps down at the deploy; a shop that uses Redis as its cache emits `fm-cache` on top. Along the way, two Shopify header keys that are configuration rather than timing (`compressionlevel`, `speculationtags`) are dropped in the collector and in the tracker's own denylist, `compressiontime` joins the catalog and no longer uses one of the eight custom slots, and a numeric description outside the duration window (Shopify's theme id, `theme;desc="190311530496"`) stays a description instead of becoming a six-year duration that skewed every percentile over the key. The [Server-Timing guide](/en/guides/server-timing#backend-phases) has the updated tables.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="new" area="tracker" title="ttfb_final: the real first byte behind 103 Early Hints">
+
+On sites behind 103 Early Hints (Shopify storefronts, Cloudflare) TTFB regularly read below the Server-Timing backend phases of the same pageview. Both were right: `responseStart` points at the first byte of the first response, and with Early Hints that is the interim 103 the edge answers within about one round trip, while the `Server-Timing` header rides on the final response. The tracker now also reads `finalResponseHeadersStart` (wire key `frs`, Chromium 115 and later, `null` elsewhere) and applies the same activation adjustment and 60-second cap as TTFB; the collector stores it as `ttfb_final` next to `ttfb` and drops values below it. Reading the pair: empty means the browser cannot report it or the pageview was a soft navigation or bfcache restore; equal to `ttfb` means no interim response; above `ttfb` means Early Hints are active and the difference is the edge's head start. TTFB itself stays `responseStart`, so it keeps comparing to CrUX. `ttfb_final` is a row field on `POST /analytics/beacons`, part of the visitor pageview detail, and an aggregatable metric. The tracker's Server-Timing denylist also gains Shopify's `compressionlevel` and `speculationtags`, mirroring the collector. See [Server-Timing → Early Hints](/en/web-vitals/ttfb#early-hints).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="api" title="The visitor detail carries each pageview's client context">
+
+The visitor panel could not say which device, browser, or country a pageview came from without the visitors list open next to it. Each pageview in `POST /analytics/visitors/detail` now carries `country`, `browser`, `browser_version`, `device_type`, and `os`. Per pageview rather than per visitor on purpose: a `stitch` visitor can span devices, countries, and browsers, and collapsing that to one value would state something the data does not say. No new collection; these are the same fields every beacon row already stores.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="The checkout in the Explorer">
+
+The funnel stage and the cart counters were readable on the Analytics page only. The Explorer now groups by Checkout Stage, in its own group of the Group-by menu: the stage distribution stacked over time, one line per stage for any metric, a stage column in the grouped table, and a row that drills into that stage like any other dimension. The empty stage is a named bucket, "No checkout", because outside the funnel is where most pageviews live. Cart Actions and Failed Cart Actions are metrics, chartable and summable like any other counter, and usable in notification rules; both are derived from fetch/XHR and undercount by construction, so they stay counts beside the funnel and never the denominator of a rate. "Cart Actions at least 1" is a filter, the pageview-level counterpart to the cart toggle on Visitors, and `checkout_stage` can be excluded as well as filtered. The raw pageview table gets stage, cart actions, and failed cart actions as columns, and the pageview drawer a Checkout section with the kinds where the shop system reveals them. A "Checkout" preset brings stages over time, LCP per stage, and cart actions against failed ones, scoped to the three funnel stages; leaving a preset clears the scope it brought. The checkout panel on the dashboard links into the Explorer with the same window and site scope. On the API, `checkout_stage` is a group-by dimension and an exclude in `/analytics/query`, `cart_interactions` and `cart_interaction_errors` are metrics and metric ranges there, and `/analytics/beacons` projects all of them onto each row. Queries on these read the pageview source; the aggregate tiers are untouched.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-26" type="fixed" area="dashboard" title="Comparison buckets are paired by clock, not by list position">
+
+A previous-period comparison with a time-only grouping matched the two result lists by index. ClickHouse never returns an empty bucket, and the buckets are empty at different places in the two windows, so a single quiet minute in the previous period shifted every comparison after it by a minute: the chart compared 14:03 against 14:02 and called the difference a change. At minute granularity empty buckets are the normal case. Buckets are now keyed by their own timestamp, shifted by the distance between the two windows; a bucket with no counterpart reports no comparison instead of borrowing its neighbor's. Month keeps positional matching, since a calendar month has no fixed width.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="The time picker reaches below six hours">
+
+The quick ranges gain Last 15 minutes, Last hour, and Last 3 hours, all bucketed by minute, so "is something burning right now" no longer requires typing a range by hand. The digit shortcuts cover all eight presets, 1 for 15 minutes through 8 for 90 days, and a `?period=15min` link keeps meaning the same live window it did when shared. The range panel sorts its quick ranges into two columns, minutes and hours on the left, days on the right with Today and Yesterday on top, and the recently used ranges below as a grid of at most four. Opening the panel no longer drops focus into the From field, so the digit and t/y shortcuts work while it is open.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-26" type="changed" area="dashboard" title="Each page type wears its own color on the visitor journey">
+
+The Type chip drew every page class in the same green, so a visit full of home, product, and search pages read as one undifferentiated rail. The value now carries the color: a value that is also a checkout-funnel stage takes that stage's color so the two chips next to each other agree, a value that means "could not tell" is gray like everywhere else, and every other class gets a stable hue from a fixed wheel, walked forward within one visit so two classes on the same screen never look alike. The wheel skips red, which on the visit row already means error.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-26" type="changed" area="dashboard" title="Every page names itself in the browser tab">
+
+The title was one static "fastmon" for the whole app, so two open dashboard tabs were indistinguishable. Every route now sets its own title, most specific part first so truncation keeps the distinguishing bit ("LCP - Core Web Vitals - fastmon", "Table - Explorer - fastmon"), translated with the active locale and using the same words as the sidebar and breadcrumbs.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-26" type="new" area="dashboard" title="Checkout funnel: cart, checkout, and success as observed facts">
 
 Shops could see how fast their pages are, but not whether visitors get through to the checkout. Now every pageview whose URL is a cart, checkout, or thank-you page carries that stage, stamped at ingest against built-in patterns for Shopware 5 and 6, WooCommerce, Magento 2, PrestaShop, JTL 5, and Shopify (language prefixes like `/de/warenkorb` included). A first-party `POST` to a known cart endpoint additionally marks the pageview as a cart interaction, read from the fetch/XHR telemetry the tracker already sends. Nothing changes in the tracker and nothing new is collected: both are labels over data the site already stores, and everything per visitor is computed at query time. On the dashboard, Checkouts becomes the fourth headline metric, with cart and checkout drawn as context lines in the chart when it is selected; a checkout panel lists visitors per stage and cart requests by kind (it replaces Tech insights); the current-visitors card carries the three stages; and the count tiles show a per-minute average so a day and a month compare. `checkout_stage` is a filter dimension everywhere, the Visitors list filters to everyone who reached a stage or touched the cart and shows both on the journey, and Business Impact reports the measured conversion rate where the funnel has data. Every number is a count of something observed. There is deliberately no abandonment metric, because "abandoned" would be a claim built from a missing observation; the success step counts thank-you pages, not payments. The feature is on by default, with an opt-out and a per-stage path editor under Settings → Checkout funnel. Counting per stage needs a stored visitor id (`store_stitch`), and cart interactions need `collect_fetch_xhr`. On the API: `POST /analytics/funnels/checkout` and `/journeys`, plus `contains_checkout_stage` and `contains_cart_interaction` on the visitors list. The [Checkout funnel](/en/checkout-funnel) page has the patterns, the OXID recipe, and the caveats.

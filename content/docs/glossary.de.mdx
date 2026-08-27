@@ -93,7 +93,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Third-Party**: Request an eine andere Domain als die der Site selbst. Fastmon gruppiert nach Domain und Kategorie für Impact-Analyse. Siehe `/analytics/third-party`.
 
-**Checkout-Stufe**: Serverseitig abgeleitetes Label auf einem Pageview (`cart`, `checkout`, `success` oder leer), beim Ingest durch Abgleich der Seiten-URL mit Mustern pro Stufe gesetzt. Der Baustein des Checkout-Funnels; eine Filterdimension, keine Gruppierungsdimension. Siehe [Checkout-Funnel](/de/checkout-funnel).
+**Checkout-Stufe**: Serverseitig abgeleitetes Label auf einem Pageview (`cart`, `checkout`, `success` oder leer), beim Ingest durch Abgleich der Seiten-URL mit Mustern pro Stufe gesetzt. Der Baustein des Checkout-Funnels; überall ein Filter, im Explorer auch eine Gruppierungsdimension. Siehe [Checkout-Funnel](/de/checkout-funnel).
 
 **Warenkorb-Interaktion**: Ein Pageview, während dessen die Seite einen `POST` an einen bekannten Warenkorb-Endpunkt des Shop-Systems geschickt hat (hinzufügen, ändern, entfernen), gelesen aus der Fetch/XHR-Telemetrie. Steht neben den Funnel-Schritten, nie als einer davon. Siehe [Checkout-Funnel](/de/checkout-funnel#cart-interactions).
 

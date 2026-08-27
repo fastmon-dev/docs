@@ -35,6 +35,20 @@ If your TTFB is dominated by step 4, the fix is in your application. If it's dom
 
 TTFB is captured from the Navigation Timing API as `responseStart - fetchStart`. The tracker includes it with every page-view that has a new navigation entry.
 
+## TTFB behind 103 Early Hints [#early-hints]
+
+On sites behind 103 Early Hints (Shopify storefronts, Cloudflare) TTFB regularly reads *below* the server's own [Server-Timing](/en/guides/server-timing) phases for the same pageview. Both are right. `responseStart` marks the first byte of the *first* response, and with Early Hints that is the interim 103 the edge answers in about one round trip; your server's real response, and the `Server-Timing` header on it, comes later. The two measure different responses of the same request.
+
+To tell them apart, fastmon also stores **`ttfb_final`**: the browser's `finalResponseHeadersStart`, the first byte of the final response. The tracker reads it with the same activation adjustment and 60-second cap as TTFB (wire key `frs`), and the collector drops a value below `ttfb`. Reading the pair:
+
+| `ttfb_final`     | Meaning                                                                          |
+| ---------------- | -------------------------------------------------------------------------------- |
+| empty (`NULL`)   | The browser does not report it (Safari, Firefox; Chromium before 115), or the pageview was a soft navigation or a bfcache restore. |
+| equal to `ttfb`  | No interim response; the first byte was the real one.                            |
+| above `ttfb`     | Early Hints active. The difference is the edge's head start, and `ttfb_final` is the value the server's `edge_dur + backend_dur` has to fit into. |
+
+TTFB itself stays `responseStart`, so it keeps comparing to CrUX and the web-vitals field data. `ttfb_final` is a row field on `POST /analytics/beacons`, part of the visitor pageview detail, and an aggregatable metric (avg, p50 to p99).
+
 ## How to see TTFB in fastmon
 
 The dashboard's **Performance** section shows TTFB at p50, p75, p95.

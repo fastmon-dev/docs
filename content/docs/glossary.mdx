@@ -93,7 +93,7 @@ Compact definitions. For depth, follow the link on each term.
 
 **Third-party**: A request to a domain different from the site's own. Fastmon groups these by domain and category for impact analysis. See `/analytics/third-party`.
 
-**Checkout stage**: A server-derived label on a pageview (`cart`, `checkout`, `success`, or empty), set at ingest by matching the page URL against per-stage patterns. The building block of the checkout funnel; a filter dimension, not a grouping one. See [Checkout funnel](/en/checkout-funnel).
+**Checkout stage**: A server-derived label on a pageview (`cart`, `checkout`, `success`, or empty), set at ingest by matching the page URL against per-stage patterns. The building block of the checkout funnel; a filter everywhere, and a group-by dimension in the Explorer. See [Checkout funnel](/en/checkout-funnel).
 
 **Cart interaction**: A pageview during which the page sent a `POST` to a known cart endpoint of the shop system (add, change, remove), read from the fetch/XHR telemetry. Reported beside the funnel steps, never as one. See [Checkout funnel](/en/checkout-funnel#cart-interactions).
 
