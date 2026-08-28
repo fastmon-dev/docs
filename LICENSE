@@ -19,20 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Scope of this license
-
-The MIT License above covers the site source code: everything in `src/`,
-`scripts/`, the configuration files at the repository root, and the GitHub
-workflows.
-
-It does not cover:
-
-- The documentation content in `content/`, which is licensed under
-  CC BY 4.0. See LICENSE-CONTENT.md.
-- The fastmon name and logos (`public/logo-*.svg`, `public/favicon.*`), which
-  are trademarks of fastmon and may not be used without permission.
-- The fonts in `public/fonts/`, which are licensed under the SIL Open Font
-  License 1.1. See the OFL.txt file next to each font.
