@@ -5,9 +5,9 @@ on:
   push:
     branches: [main]
 
-# GitHub-hosted runners on purpose: pull requests from forks run untrusted code
-# (npm ci, build), which must never reach the self-hosted deploy runner.
-# Only deploy.yml uses self-hosted, and it fires on main only.
+# GitHub-hosted runners only: this repository is public, and pull requests
+# from forks run untrusted code (npm ci, build). The organisation's
+# self-hosted runners are reserved for private repositories.
 permissions:
   contents: read
 

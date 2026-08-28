@@ -22,5 +22,5 @@ We confirm receipt within three working days.
   request and weekly (`.github/workflows/security.yml`).
 - Dependabot keeps npm packages, the devcontainer image, and GitHub Actions up
   to date (`.github/dependabot.yml`).
-- Pull requests run on GitHub-hosted runners only. The self-hosted deploy runner
-  is used solely for pushes to `main` that already passed CI.
+- All workflows, including the deploy, run on GitHub-hosted runners. No
+  self-hosted runner is attached to this repository.
