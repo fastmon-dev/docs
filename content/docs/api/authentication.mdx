@@ -1,21 +1,29 @@
 ---
 title: Authentication
-description: API requests authenticate with an fm_… Bearer token.
+description: API requests authenticate with an fm_… API key sent as a Bearer token. Keys are scoped to permissions and bound to organizations.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Every `/v1/` endpoint requires authentication. The public API uses a single scheme: a Bearer token.
+Every `/v1/` endpoint requires authentication. The public API uses a single scheme: an API key sent as a Bearer token.
 
 <Callout type="info">
-  The dashboard SPA uses session cookies, but they're only valid for the dashboard's own origin. Programmatic clients (CI jobs, scripts, backend services) must use a Bearer token.
+  The dashboard uses session cookies, which are only valid for the dashboard's own origin. Programmatic clients (CI jobs, scripts, backend services) use an API key.
 </Callout>
 
-## Bearer token
+## Creating a key
 
-Generate a token in the dashboard under **Account → API token**. It looks like `fm_<long-random-suffix>` and is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
+Create a key in the dashboard under **Account → API keys → Create key**. Every key names three things:
 
-Send it on every request:
+- **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time, so a key never gains a permission that ships later.
+- **Organizations**: the organizations the key may act in. At least one. A key never reaches an organization that was not on its list, even if you join more later.
+- **Expiry**: a date, or never. An expired key answers `401 credential_expired` (distinct from a wrong key, so a pipeline log says what to do).
+
+Creating a key asks for your password again and sends a security notification mail. The secret looks like `fm_<long-random-suffix>` and is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
+
+The same call is `POST /v1/account/api-keys` (session only, not with another key). An application's **CI/CD** snippet in the dashboard creates a `release:write` key for that application's organization in place and writes it into the curl command. `GET /v1/permissions` lists every permission with a description and the roles that hold it.
+
+## Sending it
 
 ```http
 Authorization: Bearer fm_abcdef…
@@ -26,21 +34,33 @@ curl https://api.fastmon.eu/v1/sites \
   -H "Authorization: Bearer fm_abcdef…"
 ```
 
+## What a key can do
+
+- **Never more than its owner.** On every request the key's scopes are intersected with your current [role](/en/concepts/organizations#roles) in that organization. Demoting or removing you narrows or cuts off your keys immediately.
+- **Only in the organizations it names.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /v1/organizations` and the Ask conversations) are filtered to the key's organizations.
+- **Not for credential or account management.** Creating or revoking keys, passkeys, 2FA, password, e-mail, account deletion, creating an organization, and accepting an invite need a dashboard session. So do the platform `/admin` routes.
+- **Missing scope**: `403 permission_denied`, with the missing permission in `details.permission`. See [Errors](/en/api/errors#authorization).
+
+`GET /v1/permissions/self` reports what the calling key can actually do per organization (scopes intersected with your current role) next to the organizations it was issued for. An organization you have since left shows up as the difference between the two.
+
+## Managing keys
+
+**Account → API keys** lists every key with its organizations, its scopes grouped by resource, its expiry, and its last use (`last_used_at`, updated at most every five minutes). Revoking takes effect immediately and needs no re-authentication. Revoked keys stay listed in their own section as the record that the key existed and when it was pulled; the API returns them with `GET /v1/account/api-keys?include_revoked=true`.
+
+Keys are hashed server-side; only the `fm_` prefix is queryable. To rotate, create a new key and revoke the old one.
+
 <Callout type="warn">
-  Lost tokens are unrecoverable. Server-side they're hashed; only the `fm_` prefix is queryable. To rotate, regenerate from the dashboard; the previous token stops working immediately.
+  Repeated failed attempts with a key lock the source address out of that key for 15 minutes. A wrong key in one pipeline never locks out the same key elsewhere.
 </Callout>
-
-## What a token can do
-
-- **Per-user.** A token carries the identity of the user who generated it. Regenerating from the dashboard replaces it (the previous value stops working immediately).
-- **Same scope as the user.** A token from a `member` does what a `member` can; a token from an `owner` does what an `owner` can.
-- **Org-spanning.** If the user is in multiple organizations, the token works against all of them.
 
 ## Common surprises
 
-- **You can't manage another user's token.** Even an `owner` can only regenerate their own.
+- **You can't manage another user's key.** Even an `owner` can only see and revoke their own. Every organization a key names records its creation and revocation in its audit log (`api_key.issued`, `api_key.revoked`).
+- **Registration hands out no key.** A key needs an organization to be bound to; create it once your organization exists.
+- **Connected apps hold keys too.** A first-party integration authorized via OAuth receives a key with your permissions and organizations as of that moment. Reconnect it to grant an organization you joined later.
 
 ## Related
 
 - [API overview](/en/api): base URL and conventions.
-- [Errors](/en/api/errors): `401 unauthorized` and `403 forbidden` responses.
+- [Organizations → Roles](/en/concepts/organizations#roles): the role bundles keys are cut from.
+- [Errors](/en/api/errors): `401` and `403` responses.

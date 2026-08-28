@@ -3,17 +3,19 @@ title: Compare releases
 description: Tag deploys from CI/CD and answer "did this deploy regress LCP?" in one query.
 ---
 
-The cleanest way to catch performance regressions is to tag every deploy as a [release](/en/concepts/releases) and let the analytics API do the before/after comparison. This guide wires it up end-to-end: API token, release call from CI/CD, comparison query.
+The cleanest way to catch performance regressions is to tag every deploy as a [release](/en/concepts/releases) and let the analytics API do the before/after comparison. This guide wires it up end-to-end: API key, release call from CI/CD, comparison query.
 
 **Time to set up:** 10–15 minutes. **You'll need:** an authenticated fastmon account, edit access to your CI/CD pipeline, and a site that's already [ingesting beacons](/en/install/verify).
 
-## 1. Create an API token
+## 1. Create an API key
 
-1. In fastmon, open **Account → API token**.
-2. Click **Generate token**. Copy the value: it starts with `fm_`. You won't see it again.
-3. Store it in your CI's secret store as `FASTMON_TOKEN`.
+1. In fastmon, open **Account → API keys** and click **Create key**.
+2. Pick the organization the site belongs to and tick `release:write` and `analytics:read`; the release call and the comparison query below need nothing else. Choose an expiry.
+3. Copy the value: it starts with `fm_` and is shown once. Store it in your CI's secret store as `FASTMON_API_KEY`.
 
-If you ever lose the token, regenerate it via `POST /v1/account/api-key`. The old one stops working immediately.
+A pipeline that only posts releases can skip the account page: the **CI/CD** snippet on the application page creates a `release:write` key for that organization in place and writes it into the curl command.
+
+If you ever lose the key, revoke it and create a new one. The old one stops working immediately. See [Authentication](/en/api/authentication) for what a key can and cannot do.
 
 ## 2. Find the site ID
 
@@ -25,7 +27,7 @@ The release call goes at the **end** of your deploy job, after the deploy has fi
 
 ```bash
 curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"version\": \"$DEPLOY_VERSION\",
@@ -41,11 +43,11 @@ The `-fsS` flags make curl fail loudly on non-2xx responses without spamming pro
 - name: Tag fastmon release
   if: success()
   env:
-    FASTMON_TOKEN: ${{ secrets.FASTMON_TOKEN }}
+    FASTMON_API_KEY: ${{ secrets.FASTMON_API_KEY }}
     FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
   run: |
     curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-      -H "Authorization: Bearer $FASTMON_TOKEN" \
+      -H "Authorization: Bearer $FASTMON_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{ \"version\": \"${{ github.sha }}\" }"
 ```
@@ -59,7 +61,7 @@ fastmon-release:
   script:
     - |
       curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-        -H "Authorization: Bearer $FASTMON_TOKEN" \
+        -H "Authorization: Bearer $FASTMON_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
 ```
@@ -77,7 +79,7 @@ Reload your site's release list:
 
 ```bash
 curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-  -H "Authorization: Bearer $FASTMON_TOKEN"
+  -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
 You should see your new release in the `data` array, with the `version` you supplied.
@@ -90,7 +92,7 @@ The dashboard has a release picker on **Performance**: pick the release and the 
 
 ```bash
 curl https://api.fastmon.eu/v1/organizations/$ORG_ID/analytics/query \
-  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "time_range": { "from": "2026-05-07T12:00:00Z", "to": "2026-05-08T12:00:00Z" },

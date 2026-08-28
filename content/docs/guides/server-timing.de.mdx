@@ -44,8 +44,8 @@ Der Beacon schickt die rohen Einträge; die Leitung ist fälschbar, also wird de
 
 **Drei Tiers.** Was überlebt, wird einsortiert in:
 
-1. **Hochgestufte Skalare** (immer behalten): die neun [Backend-Phasen](#backend-phasen), die zwei [Cache-Status](#cache-status) und den [Seitentyp](#seitentyp). Sie werden zu dedizierten Spalten.
-2. **Tier-2-Katalog** (ohne Cap): ein bekannter Satz von Namen (`mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `compressiontime` sowie die Mitglieder der summierten Phasen unten) landet in den Dauer-/Description-Maps des Pageviews.
+1. **Hochgestufte Skalare** (immer behalten): die acht [Backend-Phasen](#backend-phasen), die zwei [Cache-Status](#cache-status) und den [Seitentyp](#seitentyp). Sie werden zu dedizierten Spalten.
+2. **Tier-2-Katalog** (ohne Cap): ein bekannter Satz von Namen (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime` sowie die Mitglieder der summierten Phasen unten) landet in den Dauer-/Description-Maps des Pageviews.
 3. **Tier-3-Custom** (≤ 8 pro Pageview): jeder andere gültige Name, den du dir ausdenkst.
 
 Über beide Maps hinweg sind Dauern auf 24 Keys und Descriptions auf 8 gekappt.
@@ -56,29 +56,30 @@ Wenn dieselbe Phase von mehr als einer Metrik gefüllt werden könnte, löst fas
 
 > **`fm-*` First-Party-Alias  ›  Site-Mapping  ›  eingebauter Vendor-Alias (`cf…`)  ›  eingebauter generischer Alias**
 
-Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie, weil sie an fastmons eigener Edge gemessen statt von der Seite gemeldet wird. Sie ist nicht clientseitig fälschbar und über jede Site hinweg konsistent. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts**. Ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
+Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie, weil sie an fastmons eigener Edge gemessen statt von der Seite gemeldet wird. Sie ist nicht clientseitig fälschbar und über jede Site hinweg konsistent. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts**. Ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
 
 ## Backend-Phasen
 
-Erkannte Namen werden auf **neun Phasen** abgebildet, gezeigt als p50 / p75 / p95 über den Zeitraum. Fünf nehmen den ersten Alias, der eine Dauer trägt; `cache`, `external`, `search` und `kv` **summieren** jedes passende Mitglied (die Mitglieder bleiben für den Drill-down zusätzlich in den Maps). Der `fm-*`-Alias hat immer Vorrang.
+Erkannte Namen werden auf **acht Phasen** abgebildet, gezeigt als p50 / p75 / p95 über den Zeitraum, jeweils mit der Zahl der Pageviews, die die Phase gemeldet haben. Vier nehmen den ersten Alias, der eine Dauer trägt; `http`, `search` und `kv` **summieren** jedes passende Mitglied; `db` nimmt den ersten relationalen Alias und addiert die Document-Stores obendrauf. Summierte Mitglieder bleiben für den Drill-down zusätzlich in den Maps. Der `fm-*`-Alias hat immer Vorrang.
 
-| Phase          | Erkannte Namen (in Vorrang-Reihenfolge)                         | Wie          |
-| -------------- | --------------------------------------------------------------- | ------------ |
-| `edge_dur`     | `fm-edge`, `cfedge`, `edge`, `time-elapsed`                     | erster mit dur |
-| `origin_dur`   | `fm-origin`, `cforigin`, `origin`, `cdn-upstream-fbl`          | erster mit dur |
-| `backend_dur`  | `fm-backend`, `processing`, `total`, `app`, `be`, `wp-total`, `bootstrap` | erster mit dur |
-| `db_dur`       | `fm-db`, `db`, `sql`, `rdbms`                                  | erster mit dur |
-| `render_dur`   | `fm-render`, `render`, `wp-template`, `view`, `ssr`           | erster mit dur |
-| `cache_dur`    | `fm-cache`, `cache`, `memcache`, `apcu`                       | **Summe**    |
-| `external_dur` | `fm-external`, `http`, `fetch`, `api`, `ext`                  | **Summe**    |
-| `search_dur`   | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`  | **Summe**    |
-| `kv_dur`       | `fm-kv`, `redis`, `valkey`, `kv`                              | **Summe**    |
+| Phase         | Erkannte Namen (in Vorrang-Reihenfolge)                                   | Wie                          |
+| ------------- | ------------------------------------------------------------------------- | ---------------------------- |
+| `edge_dur`    | `fm-edge`, `cfedge`, `edge`, `time-elapsed`                               | erster mit dur               |
+| `origin_dur`  | `fm-origin`, `cforigin`, `origin`, `cdn-upstream-fbl`                     | erster mit dur               |
+| `backend_dur` | `fm-backend`, `processing`, `total`, `app`, `be`, `wp-total`, `bootstrap` | erster mit dur               |
+| `db_dur`      | `fm-db`, `db`, `sql`, `rdbms`; dazu `mongodb`, `sqlite`                   | erster mit dur, **+ Summe**  |
+| `render_dur`  | `fm-render`, `render`, `wp-template`, `view`, `ssr`                       | erster mit dur               |
+| `http_dur`    | `fm-http`, `http`, `fetch`, `api`, `ext`                                  | **Summe**                    |
+| `search_dur`  | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`              | **Summe**                    |
+| `kv_dur`      | `fm-kv`, `redis`, `valkey`, `kv`, `memcache`, `cache`                     | **Summe**                    |
 
-Phasen, die du nicht sendest, fehlen schlicht (NULLs werden übersprungen, nie als Null gezählt). Die Perzentile zeigen dir z. B., dass `db` dein p95-Problem ist, während `render` flach bleibt. `db_dur` ist rein relational: Zeit in Elasticsearch oder Redis fließt nie hinein.
+Phasen, die du nicht sendest, fehlen schlicht (NULLs werden übersprungen, nie als Null gezählt). Die Perzentile zeigen dir z. B., dass `db` dein p95-Problem ist, während `render` flach bleibt. Lies sie zusammen mit ihrem Count: Ein p75 über 12 Pageviews sagt weniger als einer über 50.000.
 
-Die Store-Phasen sind absichtlich getrennt. `search_dur` und `kv_dur` gibt es seit dem 27. August 2026; davor zählte `redis` in `cache_dur`, und `elasticsearch` zählte nirgends. Redis kann Session-Store, Queue oder Primärspeicher sein, sein Wert misst also nur „Zeit in Redis" und landet jetzt in `kv_dur`; `cache_dur` behält die Keys, die eindeutig ein Cache sind. Ist dein Redis *dein* Cache, sende zusätzlich zu `redis` ein `fm-cache` (oder `cache`). Shopifys `edge_cart` ist ganz aus den Summen raus und bleibt für den Drill-down in den Maps. Gespeicherte Werte wurden nicht umgeschrieben; auf einer betroffenen Site macht ein `cache_dur`-Chart über einen langen Zeitraum an diesem Datum deshalb eine Stufe nach unten.
+**Was wohin zählt.** `db_dur` ist der Primärspeicher. Die relationalen Aliase sind verschiedene Namen für dieselbe Messung, also gewinnt der erste; `mongodb` und `sqlite` werden addiert, weil ein Document-Store dort, wo er auftaucht, der Primärspeicher ist (Tideways meldet `rdbms` und `mongodb` als getrennte Layer eines Requests). Suchmaschinen zählen nie als Datenbankzeit. `kv_dur` ist die gesamte Key-Value- und Cache-Schicht, egal welche Engine dahintersteht: Ein Redis-Object-Cache und derselbe Cache auf memcache landen in derselben Spalte, und der Drill-down pro Key sagt weiterhin, welche Engine die Zeit gebraucht hat. `apcu` (Shared Memory im Prozess) und Shopifys `edge_cart` stecken in keiner Summe und bleiben in den Maps. Queue-Broker (`amqp`, `kafka`, `beanstalk`, `queue`) bleiben ebenfalls nur im Drill-down: Synchrone Broker-Zeit in einem Request ist fast immer ein billiges Publish.
 
-Alle neun Phasen erscheinen auf der Server-Timing-Seite, im Wasserfall der Response-Aufschlüsselung und als Metriken und Spalten im Explorer (die Cache-Phase heißt „Cache"; der Full-Page-Cache ist der [Cache-Status](#cache-status) des Origins, eine andere Schicht). Der Pageview-Drawer listet die Phasen verschachtelt: DB, Cache, Search, KV, External und Render unter Backend, Backend unter Origin, jede mit ihrem Anteil an der Zeile, die sie enthält, und die keiner Schicht zugeordnete Zeit als Zeile „Nicht zugeordnet".
+**Historie.** `search_dur` und `kv_dur` gibt es seit dem 27. August 2026; davor zählte `redis` in `cache_dur`, und `elasticsearch` zählte nirgends. Seit dem 28. August 2026 ist `cache_dur` in `kv_dur` aufgegangen, und `external_dur` heißt `http_dur` (gleiche Mitglieder). Gespeicherte Werte wurden nicht umgeschrieben und `http_dur` nicht rückwirkend befüllt: Über einen langen Zeitraum macht `kv_dur` an diesem Datum eine Stufe nach oben, und `http_dur` beginnt dort. `cache_dur` und `external_dur` sind aus der API verschwunden; das Detail pro Key vor diesem Datum steht weiterhin in `server_timing_dur`. Notification Rules, die eine der alten Metriken nennen, werden weiter auf der Nachfolgerin ausgewertet; neue Rules nehmen die neuen Namen.
+
+Alle acht Phasen erscheinen auf der Server-Timing-Seite, im Wasserfall der Response-Aufschlüsselung und als Metriken und Spalten im Explorer (die KV-Phase heißt „KV / Cache"; der Full-Page-Cache ist der [Cache-Status](#cache-status) des Origins, eine andere Schicht). Der Pageview-Drawer listet die Phasen verschachtelt: DB, Search, KV / Cache, HTTP und Render unter Backend, Backend unter Origin, jede mit ihrem Anteil an der Zeile, die sie enthält, und die keiner Schicht zugeordnete Zeit als Zeile „Nicht zugeordnet".
 
 ## Cache-Status
 
@@ -137,7 +138,7 @@ def add_server_timing(resp):
 ```js title="Express / Node"
 res.setHeader('Server-Timing', [
   `db;dur=${dbMs.toFixed(1)}`,
-  `external;dur=${apiMs.toFixed(1)}`,
+  `http;dur=${apiMs.toFixed(1)}`,
   `render;dur=${renderMs.toFixed(1)}`,
 ].join(', '));
 ```

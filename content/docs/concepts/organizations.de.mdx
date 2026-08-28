@@ -3,7 +3,7 @@ title: Organisationen
 description: Der Top-Level-Account-Container. Alles in fastmon gehört zu genau einer.
 ---
 
-Eine **Organisation** ist der oberste Container in fastmon. Sites, Mitglieder, Einladungen, API-Tokens, Notification Rules: alles hängt an genau einer Organisation, und nichts geht darüber hinaus.
+Eine **Organisation** ist der oberste Container in fastmon. Sites, Mitglieder, Einladungen, Notification Rules: alles hängt an genau einer Organisation, und nichts geht darüber hinaus.
 
 ## Warum das wichtig ist
 
@@ -26,7 +26,7 @@ Die meisten Accounts haben genau eine Organisation. Mehrere lohnen sich vor alle
 | `id`              | UUID v7                                   | Stabiler Identifier. Verwendet in API-URLs (`/v1/organizations/{id}/…`). |
 | `name`            | string                                    | Menschenlesbar. Erscheint im Org-Switcher.                            |
 | `plan`            | enum                                      | `beta`, `starter`, `pro`, `partner` oder `enterprise`.                |
-| `members`         | Liste von `{ user_id, role }`             | Rollen: `owner`, `member`.                                            |
+| `members`         | Liste von `{ user_id, role }`             | Rollen: `owner`, `member`, `viewer`. Die Antwort trägt außerdem deine eigene `role` und deine `permissions`. |
 
 ## Pläne
 
@@ -42,12 +42,17 @@ Der Plan steuert Features und Quotas. Welche Web Vitals erfasst werden, hängt n
 
 ## Rollen
 
+Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist eine einzelne Fähigkeit in der Form `resource:action` (`analytics:read`, `release:write`, `member:manage`); jede API-Route nennt die, die sie braucht, und das Dashboard blendet Aktionen nach derselben Liste ein oder aus. `GET /v1/permissions` listet jede Berechtigung mit Beschreibung und den Rollen, die sie haben.
+
 | Rolle    | Darf                                                                                         |
 | -------- | -------------------------------------------------------------------------------------------- |
-| `owner`  | Alles. Sites, Mitglieder, Billing und Integrationen verwalten. Ownership transferieren. Organisation löschen. |
-| `member` | Dashboards ansehen, Analytics-Queries laufen lassen, eigene Notification Rules verwalten.    |
+| `owner`  | Alles, was ein Mitglied darf, und dazu: Organisationseinstellungen (Name, Einwilligung zu KI und Synthetic Monitoring), Mitglieder und ihre Rollen, Notification Rules, Partnerbeziehungen, Audit-Log, Billing, Übergabe und Löschung. |
+| `member` | Die tägliche Arbeit: Sites, Applications, Releases und Synthetic-Seiten anlegen und ändern; Synthetic-Runs starten; den KI-Assistenten fragen; Issues triagieren; Leute einladen. |
+| `viewer` | Nur lesen. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und die Mitgliederliste. Ändert nichts und löst nichts aus, was Geld kostet oder Mails verschickt. |
 
-Es gibt immer genau einen Owner. **Transfer ownership** übergibt ihn; der bisherige Owner wird Mitglied.
+Die Bündel sind ineinander geschachtelt: Ein Mitglied hat alles, was ein Viewer hat, ein Owner alles, was ein Mitglied hat. [API-Keys](/en/api/authentication) werden aus denselben Bündeln geschnitten: Die Scopes eines Keys sind Berechtigungen, und ein Key kann nie mehr als die Rolle des Users, der ihn erstellt hat.
+
+Eine Organisation kann mehrere Owner haben. Owner ändern Rollen unter **Mitglieder** (`PATCH /v1/members/{member_id}`); nur ein Owner kann die Owner-Rolle vergeben. Der letzte Owner kann weder herabgestuft werden noch die Organisation verlassen, solange andere Mitglieder da sind (`last_owner`). **Transfer ownership** übergibt die Organisation in einem Schritt an ein anderes Mitglied.
 
 ## Häufige Szenarien
 
@@ -67,6 +72,7 @@ Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-
 
 - **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen über die URL (`/v1/organizations/{id}/…`), nicht über irgendeinen aktiven Tab.
 - **Mitglieder sind globale fastmon-User.** Lädst du einen bestehenden User neu ein, wird der bestehende Account weiterverwendet, kein Duplikat.
+- **Ein Mitglied direkt hinzufügen darf nur ein Owner.** `POST /v1/organizations/{id}/members` braucht `member:manage`. Mitglieder laden stattdessen ein, und die Einladung trägt die Rolle.
 - **Sites können nicht zwischen Organisationen umziehen.** Falls doch nötig: Support melden, das geht nicht per Self-Service.
 
 ## Verwandt

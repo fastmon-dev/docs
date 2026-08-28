@@ -44,8 +44,8 @@ The beacon ships the raw entries; the wire is forgeable, so the tracker's filter
 
 **Three tiers.** What survives is sorted into:
 
-1. **Promoted scalars** (always kept): the nine [backend phases](#backend-phases), the two [cache statuses](#cache-status), and the [page type](#page-type). These become dedicated columns.
-2. **Tier-2 catalog** (uncapped): a known set of names (`mongodb`, `kafka`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
+1. **Promoted scalars** (always kept): the eight [backend phases](#backend-phases), the two [cache statuses](#cache-status), and the [page type](#page-type). These become dedicated columns.
+2. **Tier-2 catalog** (uncapped): a known set of names (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
 3. **Tier-3 custom** (≤ 8 per pageview): any other valid name you invent.
 
 Across both maps, durations are capped at 24 keys and descriptions at 8.
@@ -56,29 +56,30 @@ When the same phase could be filled by more than one metric, fastmon resolves it
 
 > **`fm-*` first-party alias  ›  your site's mapping  ›  built-in vendor alias (`cf…`)  ›  built-in generic alias**
 
-Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-cache`, `fm-external`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
+Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
 
 ## Backend phases
 
-Recognized names fold into **nine phases**, shown as p50 / p75 / p95 over the time range. Five take the first alias that carries a duration; `cache`, `external`, `search`, and `kv` **sum** every matching member (the members also stay in the maps for drill-down). The `fm-*` alias always leads.
+Recognized names fold into **eight phases**, shown as p50 / p75 / p95 over the time range, each with the number of pageviews that reported it. Four take the first alias that carries a duration; `http`, `search`, and `kv` **sum** every matching member; `db` takes the first relational alias and adds the document stores on top. Summed members also stay in the maps for drill-down. The `fm-*` alias always leads.
 
-| Phase          | Recognized names (in precedence order)                          | How          |
-| -------------- | --------------------------------------------------------------- | ------------ |
-| `edge_dur`     | `fm-edge`, `cfedge`, `edge`, `time-elapsed`                     | first w/ dur |
-| `origin_dur`   | `fm-origin`, `cforigin`, `origin`, `cdn-upstream-fbl`          | first w/ dur |
-| `backend_dur`  | `fm-backend`, `processing`, `total`, `app`, `be`, `wp-total`, `bootstrap` | first w/ dur |
-| `db_dur`       | `fm-db`, `db`, `sql`, `rdbms`                                  | first w/ dur |
-| `render_dur`   | `fm-render`, `render`, `wp-template`, `view`, `ssr`           | first w/ dur |
-| `cache_dur`    | `fm-cache`, `cache`, `memcache`, `apcu`                       | **sum**      |
-| `external_dur` | `fm-external`, `http`, `fetch`, `api`, `ext`                  | **sum**      |
-| `search_dur`   | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`  | **sum**      |
-| `kv_dur`       | `fm-kv`, `redis`, `valkey`, `kv`                              | **sum**      |
+| Phase         | Recognized names (in precedence order)                                    | How                     |
+| ------------- | ------------------------------------------------------------------------- | ----------------------- |
+| `edge_dur`    | `fm-edge`, `cfedge`, `edge`, `time-elapsed`                               | first w/ dur            |
+| `origin_dur`  | `fm-origin`, `cforigin`, `origin`, `cdn-upstream-fbl`                     | first w/ dur            |
+| `backend_dur` | `fm-backend`, `processing`, `total`, `app`, `be`, `wp-total`, `bootstrap` | first w/ dur            |
+| `db_dur`      | `fm-db`, `db`, `sql`, `rdbms`; plus `mongodb`, `sqlite`                   | first w/ dur, **+ sum** |
+| `render_dur`  | `fm-render`, `render`, `wp-template`, `view`, `ssr`                       | first w/ dur            |
+| `http_dur`    | `fm-http`, `http`, `fetch`, `api`, `ext`                                  | **sum**                 |
+| `search_dur`  | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`              | **sum**                 |
+| `kv_dur`      | `fm-kv`, `redis`, `valkey`, `kv`, `memcache`, `cache`                     | **sum**                 |
 
-Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat. `db_dur` is purely relational: time in Elasticsearch or Redis never folds into it.
+Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat. Read them next to their count: a p75 over 12 pageviews says less than one over 50,000.
 
-The store phases are split on purpose. `search_dur` and `kv_dur` exist since 27 August 2026; before that, `redis` counted in `cache_dur` and `elasticsearch` counted nowhere. Redis can be a session store, a queue, or the primary store, so its time only measures "time in Redis" and now lands in `kv_dur`; `cache_dur` keeps the keys that are unambiguously a cache. If your Redis *is* your cache, emit `fm-cache` (or `cache`) on top of `redis`. Shopify's `edge_cart` left the sums entirely and stays in the maps for drill-down. Stored values were not rewritten, so on an affected site a long-window `cache_dur` chart steps down at that date.
+**What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top, because a document store is the primary store wherever it appears (Tideways reports `rdbms` and `mongodb` as separate layers of one request). Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well: synchronous broker time in a request is almost always a cheap publish.
 
-All nine phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the cache phase is labeled "Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Cache, Search, KV, External, and Render under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
+**History.** `search_dur` and `kv_dur` exist since 27 August 2026; before that, `redis` counted in `cache_dur` and `elasticsearch` counted nowhere. Since 28 August 2026, `cache_dur` is folded into `kv_dur` and `external_dur` is renamed to `http_dur` (same members). Stored values were not rewritten and `http_dur` was not backfilled, so on a long window `kv_dur` steps up at that date and `http_dur` starts there. `cache_dur` and `external_dur` are gone from the API; the per-key detail before that date is still in `server_timing_dur`. Notification rules that name a retired metric keep evaluating on its successor; new rules take the new names.
+
+All eight phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the KV phase is labeled "KV / Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Search, KV / Cache, HTTP, and Render under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
 
 ## Cache status
 
@@ -137,7 +138,7 @@ def add_server_timing(resp):
 ```js title="Express / Node"
 res.setHeader('Server-Timing', [
   `db;dur=${dbMs.toFixed(1)}`,
-  `external;dur=${apiMs.toFixed(1)}`,
+  `http;dur=${apiMs.toFixed(1)}`,
   `render;dur=${renderMs.toFixed(1)}`,
 ].join(', '));
 ```

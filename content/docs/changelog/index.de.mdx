@@ -17,6 +17,64 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-08-28" type="new" area="platform" title="Rollen sind Bündel von Berechtigungen, und ein Viewer nur zum Lesen kommt dazu">
+
+Die Zugriffskontrolle wechselt von „ist dieser User Owner?" zu benannten Berechtigungen (`resource:action`), und eine dritte Rolle kommt dazu.
+
+- **Viewer**: ein reiner Lesezugang. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und Mitglieder; ändert nichts und löst nichts aus, was Geld kostet oder Mails verschickt. Vergeben beim Einladen oder unter Mitglieder.
+- **Berechtigungen** sind das, was Routen prüfen und woran das Dashboard Aktionen knüpft. Die Organisations-Antwort trägt deine `role` und `permissions`; `GET /v1/permissions` listet den Katalog.
+- **Mehrere Owner** sind möglich. `PATCH /v1/members/{member_id}` ändert eine Rolle; der letzte Owner kann weder herabgestuft werden noch gehen, solange andere Mitglieder da sind (`last_owner`).
+- **Ein Ablehnungscode**: `403 permission_denied` mit der fehlenden Berechtigung in `details.permission` ersetzt `owner_required`.
+- **Mitglied direkt hinzufügen** (`POST /organizations/{id}/members`) braucht jetzt einen Owner (`member:manage`); Mitglieder laden stattdessen ein.
+- **Der Wert des Proxy-Secrets** wird nur mit `app:write` angezeigt; ein Viewer sieht, dass eines gesetzt ist (`proxy_secret_redacted`).
+
+Doku: [Organisationen → Rollen](/de/concepts/organizations#rollen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="changed" area="api" title="API-Keys: mit Scopes, an Organisationen gebunden, mit Ablaufdatum">
+
+Das persönliche API-Token wird durch API-Keys ersetzt, die sagen, was sie dürfen und wo.
+
+- **Erstellen unter Account → API-Keys** oder mit `POST /v1/account/api-keys`: Name, mindestens eine Organisation, mindestens ein Scope und ein Ablaufdatum (oder nie). Das Erstellen fragt dein Passwort ab und verschickt eine Sicherheits-Mail; das Secret wird einmal angezeigt.
+- **Scopes sind Berechtigungen** und werden bei jedem Request mit deiner aktuellen Rolle geschnitten, ein Key kann dich also nur einschränken. `GET /v1/permissions/self` zeigt, was ein Key pro Organisation darf.
+- **Ablauf und letzte Nutzung**: Ein abgelaufener Key antwortet `401 credential_expired`; `last_used_at` sagt, ob ein Key noch benutzt wird.
+- **Widerrufene Keys** bleiben mit `?include_revoked=true` gelistet. Widerrufen braucht keine erneute Anmeldung.
+- **Nur mit Session**: Keys erstellen und widerrufen, Passkeys, 2FA, Passwort, E-Mail, Organisation anlegen, Einladung annehmen und die `/admin`-Routen lehnen API-Keys ab.
+- **Entfernt**: `GET`/`POST /v1/account/api-key`; die Registrierung gibt keinen Key mehr aus. Verbundene Apps bekommen Keys mit deinen Berechtigungen und Organisationen zum Zeitpunkt der Zustimmung.
+
+Doku: [API → Authentication](/en/api/authentication) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="new" area="dashboard" title="Den Release-Key direkt im CI/CD-Schnipsel erstellen">
+
+Der CI/CD-Schnipsel einer Application erstellt seinen Key an Ort und Stelle: Name vorausgefüllt, Ablaufdatum nach Wahl, und nach der Passwortabfrage steht das Secret direkt im curl-Befehl. Der Key trägt `release:write` in dieser Organisation und sonst nichts. Unter Account → API-Keys nennt ein Key zuerst seine Organisationen, gruppiert seine Scopes nach Ressource, und widerrufene Keys behalten einen eigenen Abschnitt. Eine abgelehnte Aktion nennt jetzt die Berechtigung, nach der du fragen musst, und ein Audit-Log-Eintrag lässt sich zu seinen vollständigen Details aufklappen.
+
+Doku: [Releases vergleichen → API-Key erstellen](/de/guides/compare-releases#1-api-key-erstellen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="changed" area="api" title="Server-Timing: cache_dur geht in kv_dur auf, external_dur heißt http_dur">
+
+Die Trennung von Cache und KV hing am Hersteller: Ein Redis-Object-Cache zählte als KV, derselbe Cache auf memcache als Cache. Acht Phasen bleiben.
+
+- **`kv_dur`** summiert jetzt `redis`, `valkey`, `kv`, `fm-kv`, `memcache` und `cache`; im Dashboard heißt die Phase „KV / Cache". `apcu` verlässt die Summen (nur Drill-down).
+- **`http_dur`** ersetzt `external_dur` mit denselben Mitgliedern und dem Alias `fm-http`. `fm-cache` und `fm-external` entfallen; keine Site hat sie je gesendet.
+- **`mongodb` und `sqlite` addieren in `db_dur`** zusätzlich zum relationalen Alias: Wo ein Document-Store auftaucht, ist er der Primärspeicher.
+- **`count` pro Phase** auf `POST /analytics/server-timing`: die Zahl der Pageviews hinter jedem Perzentil.
+- `queue` und `twig` kommen in den Katalog (ohne Custom-Slot). Gespeicherte Werte werden nicht umgeschrieben; Notification Rules mit den alten Metriknamen werden weiter auf den neuen ausgewertet.
+
+Doku: [Server-Timing → Backend-Phasen](/de/guides/server-timing#backend-phasen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="Kürzere Tooltips in der Response-Aufschlüsselung">
+
+Ein Tooltip in der Response-Aufschlüsselung besteht jetzt aus dem Namen der Zeile, ihrem Anfang und Ende (`61ms → 358ms`) und dem Anteil der Requests, die sie gemeldet haben, begrenzt auf eine lesbare Breite. Der restliche Text erscheint nur, wo ein Balken es nicht sagen kann: wenn der Early-Hints-Vorsprung den Balken von seiner Metrik weggeschoben hat. Wer auf eine Server-Phase zeigt, sieht deren Tooltip, nicht den von TTFB. „Erneut versuchen" auf einer Fehlerseite lädt die Daten neu, statt denselben Fehler noch einmal zu rendern.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-27" type="new" area="dashboard" title="Der Early-Hints-Vorsprung und die Store-Phasen im Dashboard">
 
 Das Dashboard nimmt `ttfb_final` und die Phasen Search und KV auf.

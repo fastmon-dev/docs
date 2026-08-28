@@ -41,7 +41,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 ## Ressourcen und Accounts
 
-**Organisation**: Top-Level-Account-Container. Besitzt Applications, Mitglieder, Notification Rules, API-Tokens. Siehe [Organisationen](/de/concepts/organizations).
+**Organisation**: Top-Level-Account-Container. Besitzt Applications, Mitglieder, Notification Rules. Siehe [Organisationen](/de/concepts/organizations).
 
 **Application**: Ein Tracking-Snippet. Ihr gehören das ausgelieferte Bundle, beide Hashes und jede [Tracker-Einstellung](/de/tracker); sie bedient eine oder mehrere Sites. Siehe [Applications](/de/concepts/applications).
 
@@ -57,11 +57,13 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Tag**: Freies Label auf einer Site (max. 10) zum Organisieren von Sites. Ein Cross-Site-Analytics-Scope per Tag ist geplant; Tags filtern Analytics noch nicht. Konventionen: `env:production`, `team:growth` etc.
 
-**Member**: User in einer Organisation mit Rolle (`owner` / `member`).
+**Member**: User in einer Organisation mit Rolle (`owner` / `member` / `viewer`). Siehe [Organisationen → Rollen](/de/concepts/organizations#rollen).
+
+**Berechtigung**: Eine einzelne Fähigkeit innerhalb einer Organisation in der Form `resource:action` (`analytics:read`, `release:write`). Rollen sind Bündel von Berechtigungen; die Scopes eines API-Keys sind Berechtigungen.
 
 **Invite**: Schwebende Mitgliedschaft, wartet auf Annahme.
 
-**API-Token**: Bearer-Token mit Präfix `fm_…` für programmatischen Zugriff. Server-seitig gehasht; verlorene Tokens nicht wiederherstellbar.
+**API-Key**: Secret mit Präfix `fm_…`, als Bearer-Token gesendet, für programmatischen Zugriff. Auf Berechtigungen beschränkt, an Organisationen gebunden, optional mit Ablaufdatum. Server-seitig gehasht; verlorene Keys nicht wiederherstellbar. Siehe [Authentication](/en/api/authentication) (nur auf Englisch).
 
 ## Storage und Infrastruktur
 

@@ -41,7 +41,7 @@ Compact definitions. For depth, follow the link on each term.
 
 ## Resources and accounts
 
-**Organization**: Top-level account container. Owns applications, members, notification rules, API tokens. See [Organizations](/en/concepts/organizations).
+**Organization**: Top-level account container. Owns applications, members, notification rules. See [Organizations](/en/concepts/organizations).
 
 **Application**: One tracking snippet. Owns the served bundle, both hashes, and every [tracker setting](/en/tracker), and serves one or more sites. See [Applications](/en/concepts/applications).
 
@@ -57,11 +57,13 @@ Compact definitions. For depth, follow the link on each term.
 
 **Tag**: Free-form label on a site (max 10) for organizing sites. Cross-site analytics scoping by tag is planned; tags don't filter analytics yet. Conventions: `env:production`, `team:growth`, etc.
 
-**Member**: User attached to an organization with a role (`owner` / `member`).
+**Member**: User attached to an organization with a role (`owner` / `member` / `viewer`). See [Organizations → Roles](/en/concepts/organizations#roles).
+
+**Permission**: One capability inside an organization, in `resource:action` form (`analytics:read`, `release:write`). Roles are bundles of permissions; API key scopes are permissions.
 
 **Invite**: Pending membership awaiting acceptance.
 
-**API token**: `fm_…`-prefixed bearer token for programmatic access. Hashed server-side; lost tokens are unrecoverable.
+**API key**: `fm_…`-prefixed secret sent as a Bearer token for programmatic access. Scoped to permissions, bound to organizations, optionally expiring. Hashed server-side; lost keys are unrecoverable. See [Authentication](/en/api/authentication).
 
 ## Storage and infrastructure
 

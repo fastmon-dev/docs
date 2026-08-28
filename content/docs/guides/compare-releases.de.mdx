@@ -3,17 +3,19 @@ title: Releases vergleichen
 description: Deploys aus CI/CD taggen und „hat dieser Deploy LCP verschlechtert?" in einer Query beantworten.
 ---
 
-Wenn du Performance-Regressionen sauber erwischen willst, taggst du jeden Deploy als [Release](/de/concepts/releases), und die Analytics-API macht den Vorher-Nachher-Vergleich. Dieser Guide deckt den kompletten Ablauf ab: API-Token, Release-Call aus CI/CD, Vergleichs-Query.
+Wenn du Performance-Regressionen sauber erwischen willst, taggst du jeden Deploy als [Release](/de/concepts/releases), und die Analytics-API macht den Vorher-Nachher-Vergleich. Dieser Guide deckt den kompletten Ablauf ab: API-Key, Release-Call aus CI/CD, Vergleichs-Query.
 
 **Setup-Zeit:** 10–15 Minuten. **Was du brauchst:** authentifizierten fastmon-Account, Edit-Zugriff auf die CI/CD-Pipeline, eine Site, die schon [Beacons empfängt](/de/install/verify).
 
-## 1. API-Token erzeugen
+## 1. API-Key erstellen
 
-1. Öffne in fastmon **Account → API-Token**.
-2. Klicke **Generate token** und kopier den Wert: beginnt mit `fm_`. Wird nicht erneut angezeigt.
-3. Leg ihn im Secret-Store deines CI als `FASTMON_TOKEN` ab.
+1. Öffne in fastmon **Account → API-Keys** und klicke **Key erstellen**.
+2. Wähle die Organisation, zu der die Site gehört, und hake `release:write` und `analytics:read` an; mehr brauchen der Release-Call und die Vergleichs-Query unten nicht. Wähle ein Ablaufdatum.
+3. Kopier den Wert: beginnt mit `fm_` und wird nur einmal angezeigt. Leg ihn im Secret-Store deines CI als `FASTMON_API_KEY` ab.
 
-Token verloren? Erzeug ihn neu mit `POST /v1/account/api-key`. Der alte funktioniert sofort nicht mehr.
+Eine Pipeline, die nur Releases meldet, kommt ohne die Account-Seite aus: Der **CI/CD**-Schnipsel auf der Application-Seite erstellt direkt dort einen `release:write`-Key für diese Organisation und schreibt ihn in den curl-Befehl.
+
+Key verloren? Widerrufe ihn und erstell einen neuen. Der alte funktioniert sofort nicht mehr. Was ein Key darf und was nicht, steht unter [Authentication](/en/api/authentication) (nur auf Englisch).
 
 ## 2. Site-ID finden
 
@@ -25,7 +27,7 @@ Der Release-Call kommt **ans Ende** des Deploy-Jobs, nach erfolgreichem Deploy. 
 
 ```bash
 curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"version\": \"$DEPLOY_VERSION\",
@@ -41,11 +43,11 @@ Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern und unterdrüc
 - name: Tag fastmon release
   if: success()
   env:
-    FASTMON_TOKEN: ${{ secrets.FASTMON_TOKEN }}
+    FASTMON_API_KEY: ${{ secrets.FASTMON_API_KEY }}
     FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
   run: |
     curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-      -H "Authorization: Bearer $FASTMON_TOKEN" \
+      -H "Authorization: Bearer $FASTMON_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{ \"version\": \"${{ github.sha }}\" }"
 ```
@@ -59,7 +61,7 @@ fastmon-release:
   script:
     - |
       curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-        -H "Authorization: Bearer $FASTMON_TOKEN" \
+        -H "Authorization: Bearer $FASTMON_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
 ```
@@ -77,7 +79,7 @@ Release-Liste der Site abfragen:
 
 ```bash
 curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
-  -H "Authorization: Bearer $FASTMON_TOKEN"
+  -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
 Im `data`-Array sollte dein neuer Release stehen, mit der übergebenen `version`.
@@ -90,7 +92,7 @@ Das Dashboard hat einen Release-Picker auf **Performance**: Release auswählen, 
 
 ```bash
 curl https://api.fastmon.eu/v1/organizations/$ORG_ID/analytics/query \
-  -H "Authorization: Bearer $FASTMON_TOKEN" \
+  -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "time_range": { "from": "2026-05-07T12:00:00Z", "to": "2026-05-08T12:00:00Z" },

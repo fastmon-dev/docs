@@ -47,7 +47,9 @@ const spec = await res.json();
 // that are still admin-only or not ready to document). Their operations are
 // dropped from the spec before anything is generated, so no folder is emitted
 // and the sidebar guard stays green without listing them.
-const EXCLUDE_TAGS = new Set(["issues"]);
+// `issues` and `highlights` are the Watchdog, which runs in shadow mode and has
+// no member-facing surface yet.
+const EXCLUDE_TAGS = new Set(["issues", "highlights"]);
 let excludedOps = 0;
 for (const [route, methods] of Object.entries(spec.paths || {})) {
   for (const [method, op] of Object.entries(methods || {})) {

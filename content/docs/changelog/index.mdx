@@ -12,6 +12,64 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-28" type="new" area="platform" title="Roles are bundles of permissions, and a read-only viewer joins">
+
+Access control moves from "is this user an owner" to named permissions (`resource:action`), and a third role joins.
+
+- **Viewer**: a read-only seat. Sees dashboards, analytics, releases, synthetic results, notification rules, and members; changes nothing and triggers nothing that costs money or sends mail. Assign it on invite or under Members.
+- **Permissions** are what routes check and what the dashboard gates actions on. The organization payload carries your `role` and `permissions`; `GET /v1/permissions` lists the catalog.
+- **Several owners** are possible. `PATCH /v1/members/{member_id}` changes a role; the last owner cannot be demoted or leave while other members remain (`last_owner`).
+- **One denial code**: `403 permission_denied` with the missing permission in `details.permission` replaces `owner_required`.
+- **Adding a member directly** (`POST /organizations/{id}/members`) now needs an owner (`member:manage`); members invite instead.
+- **The proxy secret's value** is shown only with `app:write`; a viewer sees that one is set (`proxy_secret_redacted`).
+
+Docs: [Organizations → Roles](/en/concepts/organizations#roles).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="changed" area="api" title="API keys: scoped, bound to organizations, with an expiry">
+
+The personal API token is replaced by API keys that say what they may do and where.
+
+- **Create under Account → API keys** or with `POST /v1/account/api-keys`: name, at least one organization, at least one scope, and an expiry (or never). Creating asks for your password and sends a security mail; the secret is shown once.
+- **Scopes are permissions** and are intersected with your current role on every request, so a key can only ever narrow you. `GET /v1/permissions/self` shows what a key can do per organization.
+- **Expiry and last use**: an expired key answers `401 credential_expired`; `last_used_at` says whether anything still uses a key.
+- **Revoked keys** stay listed with `?include_revoked=true`. Revoking needs no re-authentication.
+- **Session only**: creating and revoking keys, passkeys, 2FA, password, e-mail, creating an organization, accepting an invite, and the `/admin` routes refuse API keys.
+- **Removed**: `GET`/`POST /v1/account/api-key`, and registration no longer hands out a key. Connected apps receive keys with your permissions and organizations as of consent.
+
+Docs: [API → Authentication](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="new" area="dashboard" title="Create the release key from the CI/CD snippet">
+
+The CI/CD snippet on an application creates its key in place: name prefilled, expiry your choice, and after the password prompt the secret is written straight into the curl command. The key carries `release:write` in that organization and nothing else. Under Account → API keys, a key names its organizations first, groups its scopes by resource, and revoked keys keep a section of their own. A permission denial now names the permission to ask for, and an audit-log entry expands to its full details.
+
+Docs: [Compare releases → Create an API key](/en/guides/compare-releases#1-create-an-api-key).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-28" type="changed" area="api" title="Server-Timing: cache_dur folds into kv_dur, external_dur becomes http_dur">
+
+The cache/KV split keyed on the vendor: a Redis object cache counted as KV, the same cache on memcache as Cache. Eight phases remain.
+
+- **`kv_dur`** now sums `redis`, `valkey`, `kv`, `fm-kv`, `memcache`, and `cache`; the dashboard labels it "KV / Cache". `apcu` leaves the sums (drill-down only).
+- **`http_dur`** replaces `external_dur` with the same members and the alias `fm-http`. `fm-cache` and `fm-external` are dropped; no site ever sent them.
+- **`mongodb` and `sqlite` add into `db_dur`** on top of the relational alias: where a document store appears, it is the primary datastore.
+- **`count` per phase** on `POST /analytics/server-timing`: the number of pageviews behind each percentile.
+- `queue` and `twig` join the catalog (no custom slot used). Stored values are not rewritten; notification rules naming the old metrics keep evaluating on the new ones.
+
+Docs: [Server-Timing → Backend phases](/en/guides/server-timing#backend-phases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-27" type="changed" area="dashboard" title="Shorter tooltips in the response breakdown">
+
+A tooltip in the response breakdown is now the row's name, its start and end (`61ms → 358ms`), and the share of requests that reported it, capped at a readable width. The remaining prose appears only where a bar cannot say it: when the Early Hints head start moved the bar off its metric. Pointing at a server phase shows that phase's tooltip, not TTFB's. "Try again" on an error page re-runs the loaders instead of re-rendering the same failure.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-27" type="new" area="dashboard" title="The Early Hints head start and the store phases in the dashboard">
 
 The dashboard picks up `ttfb_final` and the Search and KV phases.

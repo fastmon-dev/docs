@@ -42,7 +42,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | ------ | ----------------------------------------------------------------------------------- |
 | `400`  | The body or query was malformed. See `code` for specifics.                          |
 | `401`  | Authentication failed or wasn't provided. See [Authentication](/en/api/authentication). |
-| `403`  | Authenticated, but not allowed. Wrong organization, wrong role, or paused resource.  |
+| `403`  | Authenticated, but not allowed. Missing permission, wrong organization, or paused resource. |
 | `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
 | `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
 | `422`  | Validation failed. `details.field` carries the offending field.                      |
@@ -75,6 +75,7 @@ The full list, grouped by category.
 | `invalid_two_factor_code` | The TOTP code was wrong or expired.                                                  |
 | `session_expired`         | The session cookie is no longer valid. Log in again.                                 |
 | `invalid_token`           | Short-lived opaque token (email verification, password reset, OAuth state, 2FA temp) was invalid or expired. Distinct from `session_expired` on purpose: don't bounce the user to /login on a stale reset link. |
+| `credential_expired`      | The API key is genuine but past its `expires_at`. Create a new key.                  |
 
 ### Authorization
 
@@ -84,7 +85,7 @@ The full list, grouped by category.
 | `organization_access_denied`  | The token/user can't access this organization.                                   |
 | `site_access_denied`          | The token/user can't access this site.                                           |
 | `admin_required`              | The action requires platform-admin privileges.                                   |
-| `owner_required`              | The action requires organization-owner privileges.                               |
+| `permission_denied`           | In the organization, but without the permission the route needs. `details.permission` names it; for relationship rules (handing out the owner role) `details.required_role` does. Also answered when an API key was not issued for this organization. |
 
 ### Not found
 
@@ -113,6 +114,7 @@ The full list, grouped by category.
 | `billing_partner_exists`      | Billing-partner relationship is already set; remove the existing one first.      |
 | `circular_partner_forbidden`  | Partner relationship would create a cycle.                                       |
 | `self_transfer_forbidden`     | Can't transfer ownership to yourself.                                            |
+| `last_owner`                  | Demoting or removing the organization's last owner would leave nobody who can administer it. |
 | `conflict`                    | Catch-all conflict without a more specific code.                                 |
 
 ### Input
