@@ -1,0 +1,35 @@
+name: Documentation error
+description: Something in the docs is wrong, unclear, outdated, or missing.
+title: "[docs] "
+labels: ["docs"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Page
+      description: Link to the page (and section, if the URL has an anchor).
+      placeholder: https://docs.fastmon.eu/en/install/verify#still-nothing
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: Quote the sentence if you can. A screenshot is fine too.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: What should it say instead?
+      description: Optional. If you know the correct information, write it here. Better yet, open a pull request; see CONTRIBUTING.md.
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - English
+        - Deutsch
+        - Both
+    validations:
+      required: true
