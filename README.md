@@ -8,7 +8,7 @@ Static-export only — no Node runtime in production.
 - Next.js 16 (Turbopack, `output: 'export'`)
 - Fumadocs UI + MDX
 - Tailwind v4
-- Orama client-side search (i18n-aware: English + German tokenizers)
+- Client-side search via zbsearch (i18n-aware: English + German tokenizers)
 
 ## Languages
 
@@ -73,4 +73,17 @@ server {
 
 - No Google Fonts at runtime: `next/font/google` self-hosts at build time.
 - No US-jurisdiction services in the runtime path. The build pulls from npm only.
-- Search runs client-side via Orama — no external search service.
+- Search runs client-side via zbsearch; no external search service.
+
+## Contributing
+
+Spotted a mistake? Edit the page on GitHub and open a pull request, or file an
+issue with the "Documentation error" template. See [CONTRIBUTING.md](CONTRIBUTING.md)
+for the house rules (both languages, plain wording, no em-dashes).
+
+## License
+
+- Site code (`src/`, `scripts/`, config): [MIT](LICENSE)
+- Documentation content (`content/`): [CC BY 4.0](LICENSE-CONTENT.md)
+- Fonts (`public/fonts/`): SIL Open Font License 1.1, see the `OFL.txt` next to each font
+- The fastmon name and logos are trademarks and not covered by these licenses

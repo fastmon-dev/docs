@@ -5,13 +5,19 @@ on:
   push:
     branches: [main]
 
+# GitHub-hosted runners on purpose: pull requests from forks run untrusted code
+# (npm ci, build), which must never reach the self-hosted deploy runner.
+# Only deploy.yml uses self-hosted, and it fires on main only.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   checks:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -30,7 +36,7 @@ jobs:
         if: always()
 
   build:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7

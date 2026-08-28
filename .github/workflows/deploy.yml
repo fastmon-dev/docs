@@ -54,10 +54,11 @@ jobs:
       - name: Verify deploy secrets
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           missing=()
           for v in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH \
-                   DEPLOY_SSH_KEY; do
+                   DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
             if [ -z "${!v}" ]; then missing+=("$v"); fi
           done
           if [ ${#missing[@]} -gt 0 ]; then
@@ -70,15 +71,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          # Pinned host key. Generate the secret once with
+          #   ssh-keyscan -p <port> <host>
+          # and update it when the target host's key changes.
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
-      # Host-key checking disabled by request: each CI runner is ephemeral
-      # so a stable known_hosts file would have to live in a secret anyway.
-      # `accept-new` would still reject changed keys after the first run on
-      # a given runner; with `no` we trade MITM resistance for one less
-      # secret to manage. Acceptable for an internal-network deploy target.
       - name: Rsync to ${{ env.DEPLOY_HOST }}
         run: |
           rsync -av --delete \
-            -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts" \
             ./out/ \
             "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"

@@ -1,0 +1,8 @@
+# Every change needs a review from the fastmon team before it can be merged.
+# Enable "Require review from Code Owners" in the branch protection rules for
+# `main` to make this binding.
+* @lroehrs @kamilczujowski
+
+# Workflows and deploy configuration: repository owner only.
+/.github/ @lroehrs
+/Caddyfile @lroehrs

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Product question or support
+    url: mailto:support@fastmon.eu
+    about: Questions about fastmon itself (dashboard, tracker, billing) go to support, not to the docs repository.
+  - name: Security report
+    url: https://github.com/fastmon-dev/docs/security/advisories/new
+    about: Report a vulnerability privately. See SECURITY.md.
