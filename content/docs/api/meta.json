@@ -4,6 +4,7 @@
     "index",
     "---Concepts---",
     "authentication",
+    "oauth",
     "errors",
     "pagination",
     "---Endpoints---",

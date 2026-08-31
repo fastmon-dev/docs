@@ -50,7 +50,7 @@ A role is a fixed bundle of **permissions**. A permission is one capability in `
 | `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; triage issues; invite people. |
 | `viewer` | Read-only. Sees dashboards, analytics, releases, synthetic results, notification rules, and the member list. Changes nothing and triggers nothing that costs money or sends mail. |
 
-The bundles nest: a member holds everything a viewer holds, an owner everything a member holds. [API keys](/en/api/authentication) are cut from the same bundles: a key's scopes are permissions, and it can never do more than the role of the user who created it.
+The bundles nest: a member holds everything a viewer holds, an owner everything a member holds. [Personal API keys](/en/api/authentication) are cut from the same bundles: a key's scopes are permissions, intersected with your current role on every request. An [organization key](/en/api/authentication#two-kinds-of-key) belongs to the organization instead and stands on its scopes alone, capped at issue time. Managing organization keys and [connected apps](/en/api/oauth) takes `org_key:manage`, which members and owners hold and viewers do not.
 
 An organization can have several owners. Owners change roles under **Members** (`PATCH /v1/members/{member_id}`); only an owner can hand out the owner role. The last owner cannot be demoted or leave while other members remain (`last_owner`). **Transfer ownership** hands the organization to another member in one step.
 
@@ -66,7 +66,7 @@ Run two unrelated brands and want billing and access cleanly separated? Create t
 
 ### Agency running client sites
 
-Use the `partner` plan. Each client is a **partner client**: a sub-organization the agency runs. Agency users see all clients; the client sees only itself.
+Use the `partner` plan. Each client is a **partner client**: a sub-organization the agency runs. Agency users see all clients; the client sees only itself. A partner organization can also issue [one API key that follows its client list](/en/api/authentication#creating-a-key) instead of one key per client.
 
 ## Common surprises
 

@@ -12,6 +12,47 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-31" type="new" area="api" title="API keys the organization owns">
+
+Every key used to belong to the person who created it, so a pipeline's key died with the account that made it. An organization can now own keys directly.
+
+- **Create under Organization settings → Access** or with `POST /v1/organizations/{org_id}/api-keys`, behind the new `org_key:manage` permission (members and owners, not viewers, never partner access). The secret starts with `fmo_` and is shown once.
+- **The scopes are the whole authority.** An organization key has no owner whose role could cut it, so it does exactly what it was issued for. The ceiling at creation is what the person issuing holds in that organization; no key can ever carry `org_key:manage`.
+- **Offboarding changes nothing.** The key keeps working when the person who created it leaves. Anyone with `org_key:manage` can revoke any key on the list, without re-authentication.
+- **Agencies get one key for all clients.** A partner organization can issue a key with `audience: "clients"`: it acts in whatever organizations are its clients right now, resolved on every request and capped at the member bundle.
+- **The audit log names the actor.** Issuing and revoking record the person who clicked; what a key or a connected app does later is recorded under its own name.
+
+Docs: [API → Authentication](/en/api/authentication#two-kinds-of-key).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="platform" title="Connected apps become OAuth connections of the organization">
+
+A connected app used to hold an API key issued to whoever clicked "Connect". It now holds an OAuth connection that belongs to the organization and survives every account.
+
+- **Short-lived tokens instead of a key.** The app authenticates with an access token that lives 15 minutes and renews it with a rotating refresh token. A refresh token works exactly once; a replayed one disconnects the app, so a stolen copy cannot be used quietly.
+- **The consent screen states what is approved**: which account is approving (with the option to switch), which organization the connection binds to (real memberships only), and the requested permissions with descriptions, narrowable before approving.
+- **Disconnect under Organization settings → Access** or with `DELETE /v1/organizations/{org_id}/connections/{id}`. Access tokens already issued expire on their own within minutes. Approving the same app again updates the existing connection rather than adding a second one.
+- **A connection can belong to one person instead** when the integration declares it (an assistant that reads on your behalf, for example). Its authority follows your current role on every request and it ends with your membership; manage it under Account → Access.
+- **For app developers**: self-registration, authorization code with PKCE, discovery under `/.well-known/oauth-authorization-server`. Connections made before this change keep their key until you reconnect.
+
+Docs: [API → OAuth apps](/en/api/oauth).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="api" title="API keys can be edited and rotated">
+
+Adding one permission to a key used to mean a new secret in every pipeline that uses it. Keys now change in place, personal and organization keys alike.
+
+- **Edit** name, scopes, and expiry with `PATCH`. Your password is asked only when the change widens the key (a new scope, a later expiry); narrowing and renaming pass without it.
+- **Rotate** (`POST …/rotate`) issues a successor with the same name, scopes, and organizations and a fresh secret. An optional grace window (up to 24 hours) keeps the old secret working until a deploy has reached every consumer. Rotating never extends the expiry.
+- **An organization key above your grade is read-only.** Editing and rotating need someone who holds everything the key holds; revoking never waits for that.
+- **The key list answers "can this act right now".** A status says active, expires soon, expired, or revoked; an expired key no longer sits among the live ones.
+
+Docs: [API → Authentication](/en/api/authentication#editing-and-rotating-a-key).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-28" type="new" area="platform" title="Roles are bundles of permissions, and a read-only viewer joins">
 
 Access control moves from "is this user an owner" to named permissions (`resource:action`), and a third role joins.

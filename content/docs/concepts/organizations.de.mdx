@@ -50,7 +50,7 @@ Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist 
 | `member` | Die tägliche Arbeit: Sites, Applications, Releases und Synthetic-Seiten anlegen und ändern; Synthetic-Runs starten; den KI-Assistenten fragen; Issues triagieren; Leute einladen. |
 | `viewer` | Nur lesen. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und die Mitgliederliste. Ändert nichts und löst nichts aus, was Geld kostet oder Mails verschickt. |
 
-Die Bündel sind ineinander geschachtelt: Ein Mitglied hat alles, was ein Viewer hat, ein Owner alles, was ein Mitglied hat. [API-Keys](/en/api/authentication) werden aus denselben Bündeln geschnitten: Die Scopes eines Keys sind Berechtigungen, und ein Key kann nie mehr als die Rolle des Users, der ihn erstellt hat.
+Die Bündel sind ineinander geschachtelt: Ein Mitglied hat alles, was ein Viewer hat, ein Owner alles, was ein Mitglied hat. [Persönliche API-Keys](/en/api/authentication) werden aus denselben Bündeln geschnitten: Die Scopes eines Keys sind Berechtigungen, bei jedem Request mit deiner aktuellen Rolle geschnitten. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) gehört stattdessen der Organisation und steht allein auf seinen Scopes, begrenzt beim Ausstellen. Organisations-Keys und [verbundene Apps](/en/api/oauth) verwaltet, wer `org_key:manage` hält: Member und Owner, nicht Viewer.
 
 Eine Organisation kann mehrere Owner haben. Owner ändern Rollen unter **Mitglieder** (`PATCH /v1/members/{member_id}`); nur ein Owner kann die Owner-Rolle vergeben. Der letzte Owner kann weder herabgestuft werden noch die Organisation verlassen, solange andere Mitglieder da sind (`last_owner`). **Transfer ownership** übergibt die Organisation in einem Schritt an ein anderes Mitglied.
 
@@ -66,7 +66,7 @@ Wenn du zwei eigenständige Brands betreibst und Billing wie Zugriffe sauber tre
 
 ### Agentur, die Kunden-Sites betreibt
 
-Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-Organisation, die die Agentur verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst.
+Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-Organisation, die die Agentur verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst. Eine Partner-Organisation kann außerdem [einen API-Key ausstellen, der ihrer Client-Liste folgt](/en/api/authentication#creating-a-key), statt eines Keys pro Client.
 
 ## Häufige Überraschungen
 

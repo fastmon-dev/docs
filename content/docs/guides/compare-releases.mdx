@@ -9,13 +9,13 @@ The cleanest way to catch performance regressions is to tag every deploy as a [r
 
 ## 1. Create an API key
 
-1. In fastmon, open **Account → API keys** and click **Create key**.
-2. Pick the organization the site belongs to and tick `release:write` and `analytics:read`; the release call and the comparison query below need nothing else. Choose an expiry.
-3. Copy the value: it starts with `fm_` and is shown once. Store it in your CI's secret store as `FASTMON_API_KEY`.
+1. In fastmon, open your organization's settings, then **Access**, and click **Create key**. An [organization key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) belongs to the organization, so it keeps working when its creator leaves: the right shape for a pipeline. (A personal key under **Account → Access** works too, but follows your role and memberships.)
+2. Tick `release:write` and `analytics:read`; the release call and the comparison query below need nothing else. Choose an expiry.
+3. Copy the value: it is shown once. Store it in your CI's secret store as `FASTMON_API_KEY`.
 
-A pipeline that only posts releases can skip the account page: the **CI/CD** snippet on the application page creates a `release:write` key for that organization in place and writes it into the curl command.
+A pipeline that only posts releases can skip the settings page: the **CI/CD** snippet on the application page creates a `release:write` key in place, asks whether it should belong to you or to the organization, and writes it into the curl command.
 
-If you ever lose the key, revoke it and create a new one. The old one stops working immediately. See [Authentication](/en/api/authentication) for what a key can and cannot do.
+If the key leaks, revoke it; if you just need a fresh secret, rotate it (the successor keeps name, scopes, and expiry, with an optional grace window for the switchover). See [Authentication](/en/api/authentication) for what a key can and cannot do.
 
 ## 2. Find the site ID
 

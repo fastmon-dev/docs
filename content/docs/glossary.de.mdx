@@ -63,7 +63,11 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Invite**: Schwebende Mitgliedschaft, wartet auf Annahme.
 
-**API-Key**: Secret mit Präfix `fm_…`, als Bearer-Token gesendet, für programmatischen Zugriff. Auf Berechtigungen beschränkt, an Organisationen gebunden, optional mit Ablaufdatum. Server-seitig gehasht; verlorene Keys nicht wiederherstellbar. Siehe [Authentication](/en/api/authentication) (nur auf Englisch).
+**API-Key**: Secret, als Bearer-Token gesendet, für programmatischen Zugriff. Auf Berechtigungen beschränkt, an Organisationen gebunden, optional mit Ablaufdatum; bearbeitbar und rotierbar an Ort und Stelle. Server-seitig gehasht; verlorene Keys nicht wiederherstellbar. Persönliche Keys (`fm_…`) folgen der Rolle ihres Besitzers; Organisations-Keys (`fmo_…`) gehören der Organisation. Siehe [Authentication](/en/api/authentication) (nur auf Englisch).
+
+**Organisations-Key**: Ein API-Key (`fmo_…`), der der Organisation gehört. Kein Besitzer, seine Scopes sind seine ganze Autorität; er überlebt die Person, die ihn angelegt hat. Verwaltet unter Organisationseinstellungen → Zugriff mit `org_key:manage`. Siehe [Authentication](/en/api/authentication#two-kinds-of-key) (nur auf Englisch).
+
+**Verbundene App**: Eine First-Party-Integration, per OAuth autorisiert. Hält einen Grant (meist im Besitz der Organisation) mit kurzlebigen Access-Tokens und rotierenden Refresh-Tokens statt eines API-Keys. Siehe [OAuth apps](/en/api/oauth) (nur auf Englisch).
 
 ## Storage und Infrastruktur
 

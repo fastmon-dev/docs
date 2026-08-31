@@ -9,13 +9,13 @@ Wenn du Performance-Regressionen sauber erwischen willst, taggst du jeden Deploy
 
 ## 1. API-Key erstellen
 
-1. Öffne in fastmon **Account → API-Keys** und klicke **Key erstellen**.
-2. Wähle die Organisation, zu der die Site gehört, und hake `release:write` und `analytics:read` an; mehr brauchen der Release-Call und die Vergleichs-Query unten nicht. Wähle ein Ablaufdatum.
-3. Kopier den Wert: beginnt mit `fm_` und wird nur einmal angezeigt. Leg ihn im Secret-Store deines CI als `FASTMON_API_KEY` ab.
+1. Öffne in fastmon die Einstellungen deiner Organisation, dann **Zugriff**, und klicke **Key erstellen**. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) gehört der Organisation und gilt darum auch dann noch, wenn die Person geht, die ihn angelegt hat: die richtige Form für eine Pipeline. (Ein persönlicher Key unter **Account → Zugriff** geht auch, folgt aber deiner Rolle und deinen Mitgliedschaften.)
+2. Hake `release:write` und `analytics:read` an; mehr brauchen der Release-Call und die Vergleichs-Query unten nicht. Wähle ein Ablaufdatum.
+3. Kopier den Wert: Er wird nur einmal angezeigt. Leg ihn im Secret-Store deines CI als `FASTMON_API_KEY` ab.
 
-Eine Pipeline, die nur Releases meldet, kommt ohne die Account-Seite aus: Der **CI/CD**-Schnipsel auf der Application-Seite erstellt direkt dort einen `release:write`-Key für diese Organisation und schreibt ihn in den curl-Befehl.
+Eine Pipeline, die nur Releases meldet, kommt ohne die Einstellungen aus: Der **CI/CD**-Schnipsel auf der Application-Seite erstellt direkt dort einen `release:write`-Key, fragt, ob er dir oder der Organisation gehören soll, und schreibt ihn in den curl-Befehl.
 
-Key verloren? Widerrufe ihn und erstell einen neuen. Der alte funktioniert sofort nicht mehr. Was ein Key darf und was nicht, steht unter [Authentication](/en/api/authentication) (nur auf Englisch).
+Key geleakt? Widerrufe ihn. Brauchst du nur ein frisches Secret, rotiere ihn (der Nachfolger behält Name, Scopes und Ablaufdatum, mit optionalem Übergangsfenster für den Wechsel). Was ein Key darf und was nicht, steht unter [Authentication](/en/api/authentication) (nur auf Englisch).
 
 ## 2. Site-ID finden
 

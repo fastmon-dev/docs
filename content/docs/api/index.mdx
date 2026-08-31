@@ -16,7 +16,8 @@ The fastmon REST API is the same surface the dashboard uses. The endpoint refere
 ## Cross-cutting topics
 
 <Cards>
-  <Card title="Authentication" href="/en/api/authentication" description="fm_… Bearer token on every endpoint." />
+  <Card title="Authentication" href="/en/api/authentication" description="API keys as Bearer tokens: personal (fm_…) and organization-owned (fmo_…)." />
+  <Card title="OAuth apps" href="/en/api/oauth" description="How first-party integrations connect: PKCE, short-lived tokens, rotating refresh." />
   <Card title="Errors" href="/en/api/errors" description="Error envelope, status codes, and what each common code means." />
   <Card title="Pagination" href="/en/api/pagination" description="Offset by default, cursor for high-volume endpoints." />
 </Cards>
@@ -28,6 +29,8 @@ Pages are auto-generated per OpenAPI tag. Each operation has its own page with s
 <Cards>
   <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container: members, plans, billing." />
   <Card title="Members" href="/en/api/members/listOrganizationMembers" description="Organization membership: list, remove, transfer ownership." />
+  <Card title="Organization keys" href="/en/api/org-keys/listOrgApiKeys" description="API keys the organization owns: mint, edit, rotate, revoke." />
+  <Card title="Connections" href="/en/api/connections/listOrgConnections" description="The apps connected to an organization, and how to disconnect one." />
   <Card title="Applications" href="/en/api/applications/listApplications" description="The tracking embed: source and collector hashes, collection config, hash rotation." />
   <Card title="Sites" href="/en/api/sites/listSites" description="The domains an application runs on. Each has its own dashboard and traffic." />
   <Card title="Releases" href="/en/api/releases/listReleases" description="Versioned markers on a site, used for before/after comparisons." />

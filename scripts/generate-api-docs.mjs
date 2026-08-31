@@ -28,6 +28,8 @@ const PRESERVE = new Set([
   "errors.de.mdx",
   "pagination.mdx",
   "pagination.de.mdx",
+  "oauth.mdx",
+  "oauth.de.mdx",
 ]);
 const snapshot = path.join(root, ".fastmon-openapi.json");
 
@@ -241,6 +243,7 @@ const apiMeta = {
     "index",
     "---Concepts---",
     "authentication",
+    "oauth",
     "errors",
     "pagination",
     "---Endpoints---",
@@ -250,6 +253,8 @@ const apiMeta = {
     // folders by the guard at the bottom of this script.
     "organizations",
     "members",
+    "org-keys",
+    "connections",
     "applications",
     "sites",
     "releases",
@@ -338,7 +343,7 @@ console.log(`Post-processed ${touched} MDX file(s) — description rendered in-l
  * ------------------------------------------------------------------------ */
 const SEPARATOR = /^---.*---$/;
 // Hand-written narrative pages; they have no generated folder by design.
-const NARRATIVE = new Set(["index", "authentication", "errors", "pagination"]);
+const NARRATIVE = new Set(["index", "authentication", "oauth", "errors", "pagination"]);
 
 const generatedTags = (await rd(outDir, { withFileTypes: true }))
   .filter((e) => e.isDirectory())

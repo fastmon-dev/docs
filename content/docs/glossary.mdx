@@ -63,7 +63,11 @@ Compact definitions. For depth, follow the link on each term.
 
 **Invite**: Pending membership awaiting acceptance.
 
-**API key**: `fm_…`-prefixed secret sent as a Bearer token for programmatic access. Scoped to permissions, bound to organizations, optionally expiring. Hashed server-side; lost keys are unrecoverable. See [Authentication](/en/api/authentication).
+**API key**: Secret sent as a Bearer token for programmatic access. Scoped to permissions, bound to organizations, optionally expiring; editable and rotatable in place. Hashed server-side; lost keys are unrecoverable. Personal keys (`fm_…`) follow their owner's role; organization keys (`fmo_…`) belong to the organization. See [Authentication](/en/api/authentication).
+
+**Organization key**: An API key (`fmo_…`) the organization owns. No owner, so its scopes are its whole authority; it survives the person who created it. Managed under Organization settings → Access with `org_key:manage`. See [Authentication](/en/api/authentication#two-kinds-of-key).
+
+**Connected app**: A first-party integration authorized via OAuth. Holds a grant (usually organization-owned) with short-lived access tokens and rotating refresh tokens instead of an API key. See [OAuth apps](/en/api/oauth).
 
 ## Storage and infrastructure
 

@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: API requests authenticate with an fm_… API key sent as a Bearer token. Keys are scoped to permissions and bound to organizations.
+description: API requests authenticate with an API key sent as a Bearer token. Personal keys (fm_…) follow their owner's role; organization keys (fmo_…) stand on their own scopes.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -8,20 +8,37 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Every `/v1/` endpoint requires authentication. The public API uses a single scheme: an API key sent as a Bearer token.
 
 <Callout type="info">
-  The dashboard uses session cookies, which are only valid for the dashboard's own origin. Programmatic clients (CI jobs, scripts, backend services) use an API key.
+  The dashboard uses session cookies, which are only valid for the dashboard's own origin. Programmatic clients (CI jobs, scripts, backend services) use an API key. First-party integrations (a shop plugin, an assistant) connect via [OAuth](/en/api/oauth) instead of holding a key.
 </Callout>
+
+## Two kinds of key
+
+|                          | Personal key                              | Organization key                                                    |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------------------- |
+| Prefix                   | `fm_`                                     | `fmo_`                                                               |
+| Belongs to               | you                                       | the organization                                                     |
+| Managed under            | **Account → Access**                      | **Organization settings → Access**, needs `org_key:manage`          |
+| Authority per request    | its scopes ∩ your current role            | its scopes, fixed when issued                                        |
+| When its creator leaves  | narrows or dies with your memberships     | keeps working                                                        |
+
+A personal key acts as you: demoting or removing you narrows or cuts off your keys immediately. An organization key belongs to nobody, so there is no role to intersect with; **its scopes are its whole authority**, bounded once at issue time by what the person issuing held in that organization.
+
+Rule of thumb: a personal key for things that should act as you (local scripts, exploration), an organization key for anything a team depends on (CI pipelines, cron jobs, long-running automation).
 
 ## Creating a key
 
-Create a key in the dashboard under **Account → API keys → Create key**. Every key names three things:
+- **Personal**: **Account → Access → Create key**, or `POST /v1/account/api-keys`.
+- **Organization**: **Organization settings → Access → Create key**, or `POST /v1/organizations/{org_id}/api-keys`. Needs `org_key:manage`, which members and owners hold and viewers do not; partner access never holds it.
 
-- **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time, so a key never gains a permission that ships later.
-- **Organizations**: the organizations the key may act in. At least one. A key never reaches an organization that was not on its list, even if you join more later.
+Every key names three things:
+
+- **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time, so a key never gains a permission that ships later. No key can carry `org_key:manage`: a credential must not be able to mint credentials.
+- **Where it acts**: a personal key lists at least one organization and never reaches one that was not on its list, even if you join more later. An organization key is bound to the organization it was created in. On a `partner`-plan organization, a key can instead be issued with `audience: "clients"`: it acts in whatever organizations are your clients right now, resolved on every request and capped at the member bundle.
 - **Expiry**: a date, or never. An expired key answers `401 credential_expired` (distinct from a wrong key, so a pipeline log says what to do).
 
-Creating a key asks for your password again and sends a security notification mail. The secret looks like `fm_<long-random-suffix>` and is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
+Creating a key asks for your password again and sends a security notification mail. The secret (`fm_…` or `fmo_…`) is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
 
-The same call is `POST /v1/account/api-keys` (session only, not with another key). An application's **CI/CD** snippet in the dashboard creates a `release:write` key for that application's organization in place and writes it into the curl command. `GET /v1/permissions` lists every permission with a description and the roles that hold it.
+An application's **CI/CD** snippet in the dashboard creates a `release:write` key in place and writes it into the curl command; it asks whether the key should belong to you or to the organization. `GET /v1/permissions` lists every permission with a description and the roles that hold it.
 
 ## Sending it
 
@@ -36,18 +53,27 @@ curl https://api.fastmon.eu/v1/sites \
 
 ## What a key can do
 
-- **Never more than its owner.** On every request the key's scopes are intersected with your current [role](/en/concepts/organizations#roles) in that organization. Demoting or removing you narrows or cuts off your keys immediately.
-- **Only in the organizations it names.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /v1/organizations` and the Ask conversations) are filtered to the key's organizations.
-- **Not for credential or account management.** Creating or revoking keys, passkeys, 2FA, password, e-mail, account deletion, creating an organization, and accepting an invite need a dashboard session. So do the platform `/admin` routes.
+- **A personal key: never more than its owner.** On every request the key's scopes are intersected with your current [role](/en/concepts/organizations#roles) in that organization. Demoting or removing you narrows or cuts off your keys immediately.
+- **An organization key: exactly its scopes.** There is no owner to follow, so nothing changes it after issue except an explicit edit. A `clients` key follows the partner relationship instead: an organization taken on later is included, one handed back drops out on the next request.
+- **Only where it was issued for.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /v1/organizations` and the Ask conversations) are filtered to the key's organizations.
+- **Not for credential or account management.** Creating, editing, rotating, or revoking keys, passkeys, 2FA, password, e-mail, account deletion, creating an organization, and accepting an invite need a dashboard session. So do the platform `/admin` routes.
 - **Missing scope**: `403 permission_denied`, with the missing permission in `details.permission`. See [Errors](/en/api/errors#authorization).
 
-`GET /v1/permissions/self` reports what the calling key can actually do per organization (scopes intersected with your current role) next to the organizations it was issued for. An organization you have since left shows up as the difference between the two.
+`GET /v1/permissions/self` reports what the calling key can actually do per organization next to the reach it was issued for. For a personal key, an organization you have since left shows up as the difference between the two.
+
+## Editing and rotating a key
+
+A key's name, scopes, and expiry change in place with `PATCH`; the secret stays. Re-authentication is asked only when the edit hands the key more than it had: a scope it did not carry, or a later expiry. Narrowing and renaming pass without a factor.
+
+**Rotating** (`POST …/rotate`) issues a successor with the same name, scopes, and reach and a fresh secret, then retires the old one: immediately by default, or after a grace window of up to 24 hours for the ordinary case where a deploy has to reach every consumer of the secret first. Rotating never extends the expiry.
+
+For organization keys, both are gated on standing: only someone who holds everything the key holds may edit, rotate, or rename it. The list reports this per key as `editable`. Revoking is deliberately not gated this way; containment must not wait for an owner to be reachable.
 
 ## Managing keys
 
-**Account → API keys** lists every key with its organizations, its scopes grouped by resource, its expiry, and its last use (`last_used_at`, updated at most every five minutes). Revoking takes effect immediately and needs no re-authentication. Revoked keys stay listed in their own section as the record that the key existed and when it was pulled; the API returns them with `GET /v1/account/api-keys?include_revoked=true`.
+**Account → Access** lists your personal keys; **Organization settings → Access** lists the organization's keys, next to its [connected apps](/en/api/oauth). Each key shows where it acts, its scopes grouped by resource, its expiry, its last use (`last_used_at`, updated at most every five minutes), and whether it can act right now. Revoking takes effect immediately and needs no re-authentication; on the organization list, anyone with `org_key:manage` may revoke any key. Revoked keys stay listed in their own section as the record that the key existed and when it was pulled; the API returns them with `?include_revoked=true`.
 
-Keys are hashed server-side; only the `fm_` prefix is queryable. To rotate, create a new key and revoke the old one.
+Keys are hashed server-side; only the prefix is queryable.
 
 <Callout type="warn">
   Repeated failed attempts with a key lock the source address out of that key for 15 minutes. A wrong key in one pipeline never locks out the same key elsewhere.
@@ -55,12 +81,13 @@ Keys are hashed server-side; only the `fm_` prefix is queryable. To rotate, crea
 
 ## Common surprises
 
-- **You can't manage another user's key.** Even an `owner` can only see and revoke their own. Every organization a key names records its creation and revocation in its audit log (`api_key.issued`, `api_key.revoked`).
+- **You can't manage another user's personal key.** Even an `owner` can only see and revoke their own. A shared job that must survive people is what organization keys are for. Every organization a key names records its creation, changes, and revocation in its audit log.
 - **Registration hands out no key.** A key needs an organization to be bound to; create it once your organization exists.
-- **Connected apps hold keys too.** A first-party integration authorized via OAuth receives a key with your permissions and organizations as of that moment. Reconnect it to grant an organization you joined later.
+- **Connected apps don't hold keys anymore.** A first-party integration authorized via OAuth holds a connection with short-lived tokens of its own; see [OAuth apps](/en/api/oauth). Connections made before this change keep their key until you reconnect the app.
 
 ## Related
 
 - [API overview](/en/api): base URL and conventions.
+- [OAuth apps](/en/api/oauth): how first-party integrations connect without a key.
 - [Organizations → Roles](/en/concepts/organizations#roles): the role bundles keys are cut from.
 - [Errors](/en/api/errors): `401` and `403` responses.

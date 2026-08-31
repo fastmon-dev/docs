@@ -17,6 +17,47 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-08-31" type="new" area="api" title="API-Keys, die der Organisation gehören">
+
+Bisher gehörte jeder Key der Person, die ihn angelegt hat; der Key einer Pipeline starb also mit dem Account, aus dem er kam. Eine Organisation kann jetzt eigene Keys haben.
+
+- **Erstellen unter Organisationseinstellungen → Zugriff** oder mit `POST /v1/organizations/{org_id}/api-keys`, hinter der neuen Berechtigung `org_key:manage` (Member und Owner, nicht Viewer, nie Partner-Zugriff). Das Secret beginnt mit `fmo_` und wird einmal angezeigt.
+- **Die Scopes sind die ganze Autorität.** Ein Organisations-Key hat keinen Besitzer, dessen Rolle ihn beschneiden könnte; er darf genau das, wofür er ausgestellt wurde. Die Obergrenze beim Erstellen ist, was die ausstellende Person in dieser Organisation hält; `org_key:manage` kann kein Key tragen.
+- **Offboarding ändert nichts.** Der Key gilt weiter, wenn die Person geht, die ihn angelegt hat. Widerrufen darf jeder mit `org_key:manage`, ohne erneute Anmeldung.
+- **Agenturen bekommen einen Key für alle Kunden.** Eine Partner-Organisation kann einen Key mit `audience: "clients"` ausstellen: Er gilt in den Organisationen, die gerade ihre Clients sind, pro Request aufgelöst und auf das Member-Bündel begrenzt.
+- **Das Audit-Log nennt den Handelnden.** Ausstellen und Widerrufen verzeichnen die Person, die geklickt hat; was ein Key oder eine verbundene App später tut, steht unter ihrem eigenen Namen.
+
+Doku: [API → Authentication](/en/api/authentication#two-kinds-of-key) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="platform" title="Verbundene Apps werden OAuth-Verbindungen der Organisation">
+
+Eine verbundene App hielt bisher einen API-Key, ausgestellt auf die Person, die auf „Verbinden" geklickt hat. Jetzt hält sie eine OAuth-Verbindung, die der Organisation gehört und jeden Account überlebt.
+
+- **Kurzlebige Tokens statt Key.** Die App authentifiziert sich mit einem Access-Token, das 15 Minuten gilt, und erneuert es mit einem rotierenden Refresh-Token. Jedes Refresh-Token funktioniert genau einmal; ein wiederverwendetes trennt die App, eine gestohlene Kopie bleibt also nicht unbemerkt.
+- **Der Consent-Screen sagt, was genehmigt wird**: welcher Account zustimmt (mit der Option zu wechseln), an welche Organisation die Verbindung gebunden wird (nur echte Mitgliedschaften) und welche Berechtigungen die App bekommt, mit Beschreibung und vor der Zustimmung einschränkbar.
+- **Trennen unter Organisationseinstellungen → Zugriff** oder mit `DELETE /v1/organizations/{org_id}/connections/{id}`. Bereits ausgestellte Access-Tokens laufen binnen Minuten von selbst ab. Dieselbe App erneut zu genehmigen aktualisiert die bestehende Verbindung, statt eine zweite anzulegen.
+- **Eine Verbindung kann stattdessen einer Person gehören**, wenn die Integration das deklariert (etwa ein Assistent, der in deinem Namen liest). Ihre Autorität folgt bei jedem Request deiner aktuellen Rolle, und sie endet mit deiner Mitgliedschaft; verwaltet wird sie unter Account → Zugriff.
+- **Für App-Entwickler**: Selbst-Registrierung, Authorization Code mit PKCE, Discovery unter `/.well-known/oauth-authorization-server`. Verbindungen von vor dieser Änderung behalten ihren Key, bis du sie neu verbindest.
+
+Doku: [API → OAuth apps](/en/api/oauth) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="api" title="API-Keys lassen sich bearbeiten und rotieren">
+
+Einen Key um eine Berechtigung zu erweitern hieß bisher: neues Secret in jeder Pipeline, die ihn benutzt. Keys ändern sich jetzt an Ort und Stelle, persönliche wie Organisations-Keys.
+
+- **Bearbeiten** von Name, Scopes und Ablaufdatum mit `PATCH`. Dein Passwort wird nur abgefragt, wenn die Änderung den Key erweitert (neuer Scope, späterer Ablauf); Einschränken und Umbenennen kommen ohne aus.
+- **Rotieren** (`POST …/rotate`) stellt einen Nachfolger mit demselben Namen, denselben Scopes und Organisationen und frischem Secret aus. Ein optionales Übergangsfenster (bis 24 Stunden) hält das alte Secret gültig, bis ein Deploy jeden Nutzer des Secrets erreicht hat. Rotieren verlängert nie das Ablaufdatum.
+- **Ein Organisations-Key über deinem Stand ist read-only.** Bearbeiten und Rotieren kann nur, wer alles hält, was der Key hält; Widerrufen wartet nie darauf.
+- **Die Key-Liste beantwortet „kann das gerade handeln?"** Ein Status sagt aktiv, läuft bald ab, abgelaufen oder widerrufen; ein abgelaufener Key steht nicht mehr zwischen den gültigen.
+
+Doku: [API → Authentication](/en/api/authentication#editing-and-rotating-a-key) (nur auf Englisch).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-28" type="new" area="platform" title="Rollen sind Bündel von Berechtigungen, und ein Viewer nur zum Lesen kommt dazu">
 
 Die Zugriffskontrolle wechselt von „ist dieser User Owner?" zu benannten Berechtigungen (`resource:action`), und eine dritte Rolle kommt dazu.
