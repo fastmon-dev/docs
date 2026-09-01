@@ -44,7 +44,7 @@ The beacon ships the raw entries; the wire is forgeable, so the tracker's filter
 
 **Three tiers.** What survives is sorted into:
 
-1. **Promoted scalars** (always kept): the eight [backend phases](#backend-phases), the two [cache statuses](#cache-status), and the [page type](#page-type). These become dedicated columns.
+1. **Promoted scalars** (always kept): the eight [backend phases](#backend-phases), the two [cache statuses](#cache-status), the [page type](#page-type), and the two [labeled dimensions](#origin-host-and-logged-in) (`origin_host`, `logged_in`). These become dedicated columns.
 2. **Tier-2 catalog** (uncapped): a known set of names (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
 3. **Tier-3 custom** (≤ 8 per pageview): any other valid name you invent.
 
@@ -118,6 +118,29 @@ Server-Timing: pageType;desc="checkout"
 ```
 
 Fastmon accepts `pageType` / `page_type` and the first-party `fm-pagetype`, lowercases the label, and caps it at 32 chars. The header value always wins over the body-class detection you can enable with [`pagetype_ruleset`](/en/tracker#pagetype-ruleset), so it's the authoritative source whenever you can set it server-side.
+
+## Origin host and logged-in
+
+Two more reserved metrics carry a label instead of a duration, and both become dimensions you can filter and group by. Unlike every other promoted column they have **no vendor aliases**: `host`, `node`, `server`, or `user` from an unknown framework could mean anything, so your site opts in by emitting the unambiguous first-party name.
+
+```http
+Server-Timing: fm-host;desc="web-03", fm-loggedin;desc="no"
+```
+
+**`fm-host` → `origin_host`** names the machine of your origin tier that rendered exactly this pageview. The value of the split shows in a cluster: when one node of five runs hot (a bad deploy, a full disk, a noisy neighbor), the aggregate `backend_dur` only shows a p95 that drifted, while the per-node split names the box to look at. Rules for the value:
+
+- Send the **short, stable hostname**, not the FQDN and not a URL. On Kubernetes, use a stable name (StatefulSet ordinal, node name, deployment slot), never the pod name with its random suffix: that changes on every deploy and fills the dimension with values that are dead by the time you read them.
+- A value over **32 characters is dropped, not truncated**: `gethostname()` returns the full internal FQDN on AWS and k8s, and a truncated hostname is a *wrong* node name (two machines differing only after character 32 would merge into one bucket). If the column stays empty, your value is too long.
+
+**`fm-loggedin` → `logged_in`** says whether the page was rendered for a signed-in visitor. That's the line that explains cache behavior: a personalized request bypasses the full-page cache by design, so it reports `MISS`/`PASS` and a multiple of the anonymous backend time. Without the flag both populations sit in one average and every cache-hit-rate number is quietly wrong; with it, "our TTFB got worse" resolves into "the logged-in share grew".
+
+`yes` / `no` is enough; `true`/`false`, `1`/`0`, `y`/`n`, `in`/`out`, and `anonymous` are normalized onto them. A third state of your own (say `b2b`) passes through if it is slug-shaped (`^[a-z][a-z0-9_-]{0,15}$`); anything else is dropped rather than guessed at.
+
+<Callout type="warn" title="The coarse flag only">
+  `fm-loggedin` may carry the render mode and nothing else: no customer number, no customer-group ID, no role, no username. `fm-host` describes your server, never the visitor; keep request and session IDs out of it. The collector enforces the shape (length caps, ID heuristic); keeping identifiers out is your side of the contract.
+</Callout>
+
+Pageviews that report neither key show as **Not reported**; the empty string is a real filter value for exactly that slice, and `logged_in ≠ yes` is the "anonymous, cacheable traffic only" query.
 
 ## Emitting the header
 

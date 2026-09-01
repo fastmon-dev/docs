@@ -1,7 +1,7 @@
 {
   "backend": {
     "repo": "../backend",
-    "since": "2026.8.25"
+    "since": "2026.8.27"
   },
   "frontend": {
     "repo": "../frontend",

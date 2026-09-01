@@ -17,6 +17,19 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-08-31" type="new" area="api" title="Server-Timing: welcher Server hat gerendert, und war es ein eingeloggter Render">
+
+Zwei neue Server-Timing-Dimensionen, beide opt-in über den First-Party-Key `fm-*` (keine Vendor-Aliase, weil ein bloßes `host` oder `user` aus einem unbekannten Framework alles bedeuten könnte). Beide sind filterbar und gruppierbar und stehen auf der Beacon-Zeile und in der Visitor-Journey.
+
+- **`fm-host;desc=web-03` wird `origin_host`**: der Origin-Knoten, der den Pageview gerendert hat. Läuft ein Knoten von fünf heiß, zeigt die aggregierte Backend-Zeit nur ein verschobenes p95; die Aufteilung pro Knoten benennt die Kiste. Sende den kurzen, stabilen Hostnamen: Werte über 32 Zeichen werden verworfen, nicht gekürzt (ein abgeschnittener Hostname wäre ein falscher Knotenname).
+- **`fm-loggedin;desc=no` wird `logged_in`**: ob der Render personalisiert war. Authentifizierte Requests umgehen den Full-Page-Cache per Definition; ohne das Flag stehen sie im selben Mittelwert wie der cachebare Traffic, und jede Cache-Hit-Rate ist still verfälscht. Werte werden auf `yes`/`no` normalisiert; ein eigener dritter Zustand in Slug-Form (`b2b`) wird durchgereicht.
+- **Nur das grobe Flag**: keine Kundennummer, Gruppen-ID, Rolle oder Benutzername in `fm-loggedin`, und keine Request- oder Session-Kennungen in `fm-host`. Der Collector erzwingt die Form; die Absicht ist dein Teil des Vertrags.
+- **Nebenbei behoben**: Ein reservierter Key mit numerischem Label (`fm-loggedin;desc=1`, `pagetype;desc=404`) wurde als Dauer fehlgedeutet und leerte genau die Dimension, für die er gesendet wurde.
+
+Doku: [Server-Timing → Origin-Host und Logged-in](/de/guides/server-timing#origin-host-und-logged-in).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-31" type="new" area="api" title="API-Keys, die der Organisation gehören">
 
 Bisher gehörte jeder Key der Person, die ihn angelegt hat; der Key einer Pipeline starb also mit dem Account, aus dem er kam. Eine Organisation kann jetzt eigene Keys haben.

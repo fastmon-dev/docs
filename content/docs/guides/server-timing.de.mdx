@@ -44,7 +44,7 @@ Der Beacon schickt die rohen Einträge; die Leitung ist fälschbar, also wird de
 
 **Drei Tiers.** Was überlebt, wird einsortiert in:
 
-1. **Hochgestufte Skalare** (immer behalten): die acht [Backend-Phasen](#backend-phasen), die zwei [Cache-Status](#cache-status) und den [Seitentyp](#seitentyp). Sie werden zu dedizierten Spalten.
+1. **Hochgestufte Skalare** (immer behalten): die acht [Backend-Phasen](#backend-phasen), die zwei [Cache-Status](#cache-status), den [Seitentyp](#seitentyp) und die zwei [Label-Dimensionen](#origin-host-und-logged-in) (`origin_host`, `logged_in`). Sie werden zu dedizierten Spalten.
 2. **Tier-2-Katalog** (ohne Cap): ein bekannter Satz von Namen (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime` sowie die Mitglieder der summierten Phasen unten) landet in den Dauer-/Description-Maps des Pageviews.
 3. **Tier-3-Custom** (≤ 8 pro Pageview): jeder andere gültige Name, den du dir ausdenkst.
 
@@ -118,6 +118,29 @@ Server-Timing: pageType;desc="checkout"
 ```
 
 Fastmon akzeptiert `pageType` / `page_type` und das First-Party `fm-pagetype`, schreibt das Label klein und kappt es bei 32 Zeichen. Der Header-Wert gewinnt immer gegen die Body-Class-Erkennung, die du mit [`pagetype_ruleset`](/de/tracker#pagetype-ruleset) aktivieren kannst, und ist damit die maßgebliche Quelle, sobald du ihn serverseitig setzen kannst.
+
+## Origin-Host und Logged-in
+
+Zwei weitere reservierte Metriken tragen ein Label statt einer Dauer, und beide werden zu Dimensionen, nach denen du filtern und gruppieren kannst. Anders als jede andere hochgestufte Spalte haben sie **keine Vendor-Aliase**: `host`, `node`, `server` oder `user` aus einem unbekannten Framework könnten alles bedeuten, deine Site steigt also ein, indem sie den eindeutigen First-Party-Namen sendet.
+
+```http
+Server-Timing: fm-host;desc="web-03", fm-loggedin;desc="no"
+```
+
+**`fm-host` → `origin_host`** benennt die Maschine deines Origin-Tiers, die genau diesen Pageview gerendert hat. Der Wert der Aufteilung zeigt sich im Cluster: Läuft ein Knoten von fünf heiß (schlechter Deploy, volle Platte, lauter Nachbar), zeigt das aggregierte `backend_dur` nur ein verschobenes p95, die Aufteilung pro Knoten dagegen die Kiste, in die du schauen musst. Regeln für den Wert:
+
+- Sende den **kurzen, stabilen Hostnamen**, nicht den FQDN und keine URL. In Kubernetes nimm einen stabilen Namen (StatefulSet-Ordinal, Node-Name, Deployment-Slot), nie den Pod-Namen mit Zufalls-Suffix: Der wechselt bei jedem Deploy und füllt die Dimension mit Werten, die schon tot sind, wenn du sie liest.
+- Ein Wert über **32 Zeichen wird verworfen, nicht gekürzt**: `gethostname()` liefert auf AWS und in k8s den vollen internen FQDN, und ein abgeschnittener Hostname wäre ein *falscher* Knotenname (zwei Maschinen, deren Namen sich erst nach Zeichen 32 unterscheiden, würden zu einem Eintrag verschmelzen). Bleibt die Spalte leer, ist dein Wert zu lang.
+
+**`fm-loggedin` → `logged_in`** sagt, ob die Seite für einen eingeloggten Besucher gerendert wurde. Das ist die Trennlinie, die Cache-Verhalten erklärt: Ein personalisierter Request umgeht den Full-Page-Cache per Definition, meldet also `MISS`/`PASS` und ein Vielfaches der anonymen Backend-Zeit. Ohne das Flag landen beide Gruppen in einem Mittelwert und jede Cache-Hit-Rate ist still verfälscht; mit ihm löst sich „unser TTFB ist schlechter geworden" in „der eingeloggte Anteil ist gewachsen" auf.
+
+`yes` / `no` reicht; `true`/`false`, `1`/`0`, `y`/`n`, `in`/`out` und `anonymous` werden darauf normalisiert. Ein eigener dritter Zustand (etwa `b2b`) wird durchgereicht, wenn er Slug-Form hat (`^[a-z][a-z0-9_-]{0,15}$`); alles andere wird verworfen statt geraten.
+
+<Callout type="warn" title="Nur das grobe Flag">
+  `fm-loggedin` darf den Render-Modus tragen und sonst nichts: keine Kundennummer, keine Kundengruppen-ID, keine Rolle, kein Benutzername. `fm-host` beschreibt deinen Server, nie den Besucher; Request- und Session-Kennungen gehören nicht hinein. Der Collector erzwingt die Form (Längen-Caps, ID-Heuristik); die Identifier draußen zu halten ist dein Teil des Vertrags.
+</Callout>
+
+Pageviews, die keinen der beiden Keys melden, erscheinen als **Not reported**; der Leerstring ist ein echter Filterwert für genau diese Gruppe, und `logged_in ≠ yes` ist die Abfrage „nur anonymer, cachebarer Traffic".
 
 ## Den Header senden
 

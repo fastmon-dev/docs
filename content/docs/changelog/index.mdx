@@ -12,6 +12,19 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-08-31" type="new" area="api" title="Server-Timing: which server rendered it, and was it a logged-in render">
+
+Two new Server-Timing dimensions, both opt-in via the first-party `fm-*` key (no vendor aliases, because a bare `host` or `user` from an unknown framework could mean anything). Both are filterable and groupable and appear on the beacon row and the visitor journey.
+
+- **`fm-host;desc=web-03` becomes `origin_host`**: the origin node that rendered the pageview. When one node of five runs hot, the aggregate backend time only shows a drifted p95; the per-node split names the box. Send the short, stable hostname: values over 32 characters are dropped, not truncated (a truncated hostname would be a wrong node name).
+- **`fm-loggedin;desc=no` becomes `logged_in`**: whether the render was personalized. Authenticated requests bypass the full-page cache by design; without the flag they sit in the same average as the cacheable traffic and every cache-hit-rate number is quietly wrong. Values fold onto `yes`/`no`; a slug-shaped third state of your own (`b2b`) passes through.
+- **The coarse flag only**: no customer number, group ID, role, or username in `fm-loggedin`, and no request or session IDs in `fm-host`. The collector enforces the shape; the intent is your side of the contract.
+- **Fixed alongside**: a reserved key with a numeric label (`fm-loggedin;desc=1`, `pagetype;desc=404`) was misread as a duration and blanked the dimension it was sent for.
+
+Docs: [Server-Timing → Origin host and logged-in](/en/guides/server-timing#origin-host-and-logged-in).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-31" type="new" area="api" title="API keys the organization owns">
 
 Every key used to belong to the person who created it, so a pipeline's key died with the account that made it. An organization can now own keys directly.
