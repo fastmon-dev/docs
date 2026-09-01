@@ -1,0 +1,10 @@
+{
+  "title": "Org keys",
+  "pages": [
+    "listOrgApiKeys",
+    "createOrgApiKey",
+    "updateOrgApiKey",
+    "revokeOrgApiKey",
+    "rotateOrgApiKey"
+  ]
+}

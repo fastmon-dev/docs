@@ -10,6 +10,8 @@
     "---Endpoints---",
     "organizations",
     "members",
+    "org-keys",
+    "connections",
     "applications",
     "sites",
     "releases",
