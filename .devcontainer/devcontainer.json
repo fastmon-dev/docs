@@ -84,7 +84,14 @@
     // than silently attributing commits to someone else.
     "GIT_CONFIG_VALUE_2": "${localEnv:FASTMON_GIT_EMAIL}",
     "GIT_CONFIG_KEY_3": "commit.gpgsign",
-    "GIT_CONFIG_VALUE_3": "true"
+    "GIT_CONFIG_VALUE_3": "true",
+    // GitHub token for the gh CLI (issues, PRs). gh reads GH_TOKEN directly,
+    // no `gh auth login` needed. Per-developer: export FASTMON_GH_TOKEN in
+    // your host shell (fine-grained PAT scoped to this repo with Issues,
+    // Pull requests and Contents read/write). Empty fallback is intentional:
+    // unset surfaces as a gh auth error instead of silent misuse of another
+    // account's token.
+    "GH_TOKEN": "${localEnv:FASTMON_GH_TOKEN}"
   },
   "runArgs": ["--init", "--add-host=host.docker.internal:host-gateway", "--name=fastmon-docs"]
 }
