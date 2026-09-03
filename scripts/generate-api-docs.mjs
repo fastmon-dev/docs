@@ -33,7 +33,7 @@ const PRESERVE = new Set([
 ]);
 const snapshot = path.join(root, ".fastmon-openapi.json");
 
-const OPENAPI_URL = "https://api.fastmon.eu/v1/openapi.json";
+const OPENAPI_URL = "https://api.fastmon.eu/openapi.json";
 
 console.log(`Fetching OpenAPI from ${OPENAPI_URL} ...`);
 const res = await fetch(OPENAPI_URL);

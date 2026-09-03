@@ -18,15 +18,17 @@ The grant is the consent itself and outlives every token issued under it. It is 
 
 ## Who owns the connection
 
-The integration declares `credential_owner` at registration, and it decides two different lifetimes:
+The integration declares `credential_owner` at registration, and it decides two different lifetimes. Leaving it out declares `either`:
 
 | Value                    | What it means                                                                                                     | Who lists and ends it                                              |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `organization` (default) | The connection belongs to the tenant. Its scopes are frozen at consent, and it keeps working after the approver's account is gone. | **Organization settings → Access**, or `/v1/organizations/{org_id}/connections` (needs `org_key:manage`) |
-| `user`                   | The connection belongs to the approver. Its authority is re-derived from their current role on every request, and it ends with their membership or account. | **Account → Access**, or `/v1/account/connections` (session only) |
-| `either`                 | The integration works both ways; the consent screen asks. Default is `user`, the narrower answer.                   | whichever was chosen                                               |
+| `organization`           | The connection belongs to the tenant. Its scopes are frozen at consent, and it keeps working after the approver's account is gone. | **Organization settings → Access**, or `/organizations/{org_id}/connections` (needs `org_key:manage`) |
+| `user`                   | The connection belongs to the approver. Its authority is re-derived from their current role on every request, and it ends with their membership or account. | **Account → Access**, or `/account/connections` (session only) |
+| `either` (default)       | The integration works both ways; the consent screen asks. With no choice made, it resolves to `user`, the narrower answer. | whichever was chosen                                               |
 
-A shop plugin is `organization`: the shop has to keep reporting after an employee leaves. A personal assistant is `user`: it reads on one person's behalf, so demoting them narrows it and removing them ends it.
+A shop plugin is `organization`: the shop has to keep reporting after an employee leaves. A personal assistant is `user`: it reads on one person's behalf, so demoting them narrows it and removing them ends it. Declare the one you mean; the default is the narrow answer, because the integration that says nothing is usually a stock client that has never heard of this field.
+
+An [MCP client](/en/mcp) is `user` and nothing else. Declaring `organization` and then naming an MCP endpoint is refused at consent.
 
 Approving an org-owned connection requires `org_key:manage` (members and owners, not viewers), because it produces a credential that outlives every person: the same authority as issuing an [organization key](/en/api/authentication#two-kinds-of-key).
 
@@ -62,6 +64,8 @@ Returns the issuer, the authorize, token, and registration endpoints, the scope 
 
 The response echoes everything back plus your `client_id`. There is no client secret. Redirect URIs must be absolute `https` without wildcards or fragments (plain `http` only on loopback). Ask for the scopes setup and display need and nothing more: this list is the ceiling for everyone who can trigger the connect flow, and the approver may narrow it further.
 
+**Read the `scope` you get back.** A registration that names none declares `analytics:read` alone, which is the narrowest thing worth having and rarely what a setup flow needs.
+
 ### 2. Send the person to fastmon
 
 Generate a PKCE verifier, keep it, and send only its hash:
@@ -74,7 +78,13 @@ GET /auth/app/authorize
   &state=<random, bound to their session in your app>
   &code_challenge=<base64url(sha256(verifier))>
   &code_challenge_method=S256
+  &scope=<space-separated, subset of what you registered>
+  &resource=<the endpoint this token is for, if it is not the dashboard API>
 ```
+
+`scope` is optional and asks for less than you declared, which is what a client should do when one flow needs less than the full installation. Names we do not implement (`openid`, `offline_access`) are dropped rather than refused; a request where nothing survives comes back as `invalid_scope`. Omitting it asks for your whole declaration.
+
+`resource` (RFC 8707) names the endpoint the token is for, and only an [MCP client](/en/mcp#developers) needs it today. The value is bound to the connection at consent, so the token request may present the same value again and nothing else: naming an audience there for the first time is refused with `invalid_target`.
 
 They log in if needed, then land on the consent screen: it names the account approving, offers the organizations they are a member of, and lists the requested permissions, which they may narrow. Approval redirects back to your callback with `code` and `state`; declining returns `error=access_denied`.
 
@@ -118,7 +128,7 @@ Same shape back, with a **new refresh token**. Each refresh token works exactly 
 
 | Response                                  | Meaning                                                                | What to do                                                        |
 | ----------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `400 invalid_grant` at the token endpoint | Code or refresh token spent, expired, or revoked; or PKCE proof failed | Send the person through consent again                              |
+| `400 invalid_grant` at the token endpoint | Code or refresh token spent, expired, or revoked; PKCE proof failed; or a refresh that named an audience the approval did not | Send the person through consent again                              |
 | `401` on a normal API call                | The access token expired (it is meant to)                              | Refresh, then retry once; invisible to the person                  |
 | `403 permission_denied` on an API call    | The connection's scopes do not cover it; `details.permission` names it | A configuration problem on the integration side                    |
 | `403 organization_not_approved`           | New organizations start under review                                    | Tell the person the account is being reviewed; the connection stays valid |
@@ -135,6 +145,7 @@ Approving the same integration for the same organization a second time **updates
 
 ## Related
 
+- [MCP server](/en/mcp): the read-only analytics surface for the customer's own AI client, and the one place `resource` is required.
 - [Authentication](/en/api/authentication): API keys, the credential for everything that cannot refresh.
 - [Organizations → Roles](/en/concepts/organizations#roles): the permissions scopes are drawn from.
 - [Errors](/en/api/errors): the envelope everything outside the OAuth endpoints uses.

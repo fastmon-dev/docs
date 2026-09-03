@@ -1,0 +1,121 @@
+---
+title: MCP server
+description: Read your organization's real-user data from an AI client you run yourself (Claude, Cursor) over the Model Context Protocol. Read-only, opt-in per organization, connected with OAuth.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The Model Context Protocol (MCP) lets an AI client you run yourself ask questions about your fastmon data. Connect Claude Desktop, Claude.ai, or Cursor once, and the model can then pull the same numbers the dashboard shows: Web Vitals, traffic, errors, Server-Timing phases, Lighthouse results.
+
+The model is yours. Fastmon answers the questions from its own data; the provider behind your client runs the model, and we neither choose that provider nor have a contract with it. That is why the server stays closed until an owner opens it.
+
+<Callout type="info">
+  Every tool is **read-only**. Nothing on this surface changes a setting, deletes anything, or starts a run.
+</Callout>
+
+## Turning it on [#turning-it-on]
+
+**Organization settings → MCP server → Access from your own AI clients.** Only an organization owner (`org:update`) can flip it, and the change lands in the audit log as a consent change.
+
+While it is off, an organization cannot be approved for MCP on the consent screen, and a token that was approved for it earlier gets `403 mcp_disabled` at the endpoint, before a single query runs. The refusal says an owner can turn it on.
+
+<Callout type="warn" title="A consent switch, not a kill switch">
+  Switching MCP off closes the MCP endpoint and nothing else. An app that already holds a connection keeps reading this organization through the ordinary API, which is the only access it ever asked for. What ends a connection is the person who approved it: they disconnect it under **Account → Access**, their role narrows, or they leave the organization. If you need somebody's access gone, offboard them.
+</Callout>
+
+## Connecting a client [#connecting]
+
+One address, the same for everybody:
+
+```
+https://api.fastmon.eu/mcp
+```
+
+Add it in your client as a remote MCP server or connector (Claude under **Settings → Connectors**, Cursor under **MCP**). The client sends you to fastmon to sign in and approve. There is no key to paste and no secret to keep anywhere.
+
+What the consent screen asks you to approve:
+
+- **The organization**, from those you can reach. A connection reads that one and nothing else, so if you work in two, you connect twice. One that has MCP switched off is marked as such and cannot be approved, rather than approving cleanly and then failing every call.
+- **`analytics:read`**, which is what it takes to connect at all.
+- **`synthetic:read`**, which you may untick. Three of the tools read Lighthouse reports and need it; the other 16 work without it.
+
+The screen also names the connection as an MCP one, next to the address it sends you back to, because that is the fact worth seeing: what you release here can reach an AI model.
+
+The connection belongs to **you**, not to the organization. What it may do is re-derived from your current role on every request, so it narrows the moment you are demoted and ends with your membership or your account. A connection the organization owns is refused here on purpose: a credential nobody holds could not end when its owner leaves, and an organization must not stay connected to the AI client of somebody who left months ago.
+
+Manage what you have connected under **Account → Access**. Disconnecting there is immediate, and access tokens already issued expire within minutes on their own.
+
+<Callout type="info">
+  Copy the address exactly as shown, with no trailing slash. Your client names it when it asks for a token, and the endpoint accepts only a token addressed to it in that spelling. Nothing is served below `/mcp`.
+</Callout>
+
+## What the model can read [#tools]
+
+19 tools, all read-only, all scoped to the organization the connection was approved for:
+
+| Area | Tools |
+| ---- | ----- |
+| Discovery | `list_sites`, `get_data_freshness` |
+| Traffic and Web Vitals | `get_overview`, `get_timeseries`, `get_breakdown`, `get_experience_score` |
+| Change over time | `compare_periods`, `detect_changes` |
+| Errors | `get_errors`, `get_error_detail` |
+| Performance detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
+| Synthetic (lab) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
+
+They answer with aggregates and ranked lists, the same ones behind the dashboard. There is no tool that returns raw beacon rows, and no tool takes an organization: it comes off the connection, so a model that names one gets nowhere.
+
+A call that names no site covers the whole organization, which is the default here: an MCP connection has no "current site" the way a dashboard tab does. `list_sites` is what a model should ask first when the question is about one site.
+
+`list_sites` also reports what each site actually **collects**, because half the catalog answers an empty result when a collection switch is off, and a model reads empty as "no problem". Each site carries whether fetch/XHR collection, page-type detection, checkout tracking, session collection, and error messages and stack frames are on, plus which visitor identifier a visitor count for that site uses. Distinct-visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites that store different identifiers says so rather than quietly mixing them.
+
+The three synthetic tools need two things: `synthetic:read` on the connection, and [Synthetic Monitoring](/en/synthetic) enabled for the organization. Missing either one is a refusal with a reason, never an empty report.
+
+## Limits [#limits]
+
+- **90 days** is the longest period one call may span, and a breakdown returns at most 50 rows.
+- **120 requests per minute**, counted per person rather than per organization, so one client in a loop cannot lock out a colleague. Over the limit the endpoint answers 429 with the number of seconds to wait.
+- **Minute buckets** are capped at a 6-hour window, because minute resolution always reads the raw beacon table. Longer periods use hourly buckets or coarser.
+- **30 seconds** per query. A query that runs longer is cancelled and the tool says so, which usually means a high-cardinality breakdown (URL, browser version, origin host) over a long period.
+
+## What leaves fastmon [#privacy]
+
+The answers to the model's questions do: page URLs, referrers and UTM parameters, country-level geography, device and browser, timings, error signatures. It is the same field-level data your dashboard shows, and no tool reaches data a member could not already see in the dashboard.
+
+Where those answers go is the part to assess. The recipient is whoever runs the model behind your client, which is your relationship rather than ours: fastmon does not choose that provider, has no contract with it, and does not list it as a sub-processor. Whether that transfer is one your organization can make, and on what basis, is your assessment. That is the whole reason this is a separate, owner-level switch with an audit entry, rather than something a member turns on.
+
+It is also a different decision from the built-in **Ask** assistant. That one sends data to our own sub-processor under our DPA, and consenting to it says nothing about an external model. Two recipients, two switches, neither implies the other.
+
+Fastmon's own [collection rules](/en/privacy) do not change here. A field the tracker never collected is a field the model cannot ask for.
+
+## Agencies [#agencies]
+
+A partner organization can connect an AI client to a client organization, personally: the client organizations show up among the choices on the consent screen. Partner access is resolved on every request, so the connection stops working the moment the partnership does, and there is nothing left to revoke.
+
+`mcp_enabled` stays with the customer: it hangs on `org:update`, which partner access deliberately does not carry. Consenting to send data to an external model is the customer's decision even when the agency picks the model, so onboarding contains one click on the customer's side. The approval shows up in the customer's audit log marked as partner access.
+
+## Building an MCP client [#developers]
+
+The endpoint is Streamable HTTP (JSON-RPC 2.0), stateless, plain JSON responses. No SSE, no session id to hold.
+
+**OAuth is the only way in.** The endpoint takes an `fmt_` access token and nothing else: not a personal `fm_` key, not an organization `fmo_` key, not a session cookie. A key carries no audience, so it cannot answer the question a resource server has to ask about a token, which is whether it was issued for this endpoint.
+
+Point your client at `https://api.fastmon.eu/mcp` and it discovers the rest:
+
+1. The unauthenticated call answers `401` with `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read", resource_metadata="…"`.
+2. That document (`/.well-known/oauth-protected-resource/mcp`, RFC 9728) names the authorization server and the scopes this resource uses.
+3. Register (RFC 7591), run authorization code with PKCE, and name the endpoint in the `resource` parameter (RFC 8707) **on the authorization request and on the token request**. It is one string, the same for every customer. The audience is decided by the authorization request and bound to the connection at consent; the token request may only present the same value again.
+
+The tenant is settled at consent and nowhere else. A client cannot name an organization anywhere in the flow, and no request it sends afterwards changes the answer, which is why there is nothing tenant-shaped in the tool arguments either.
+
+Two defaults are worth knowing. A registration that names no `scope` declares `analytics:read` alone, and reads back what it got in the response, so a client that needs the Lighthouse tools has to ask for `synthetic:read`. A registration that says nothing about `credential_owner` gets a personal connection, which is what this endpoint requires; declaring `organization` and naming an MCP resource is refused at consent with a message saying so.
+
+One refusal to handle specially: `403 mcp_disabled` means the organization has the server switched off. It carries no `WWW-Authenticate` header, because re-authorizing cannot fix it. Show the message rather than starting a new authorization flow.
+
+The full OAuth contract, including refresh rotation and the errors to branch on, is on [OAuth apps](/en/api/oauth).
+
+## Related [#related]
+
+- [OAuth apps](/en/api/oauth): registration, PKCE, tokens, disconnecting.
+- [Organizations → Roles](/en/concepts/organizations#roles): the roles a connection is cut against.
+- [Privacy](/en/privacy): what fastmon collects in the first place.
+- [Synthetic Monitoring](/en/synthetic): the opt-in the three lab tools also need.

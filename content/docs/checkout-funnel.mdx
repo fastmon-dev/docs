@@ -85,9 +85,9 @@ The stage is a four-value label computed from the URL the site already stores; t
 
 ## API
 
-- `POST /v1/organizations/{org_id}/analytics/funnels/checkout`: the steps with visitor counts and conversion rates, the cart interaction counts by kind, and the series bucketed by funnel entry. Accepts the usual `time_range`, `filters`, and `identity`. See the [reference](/en/api/analytics/queryAnalyticsCheckoutFunnel).
-- `POST /v1/organizations/{org_id}/analytics/funnels/checkout/journeys`: the pageviews around a visitor's hit on a given step. See the [reference](/en/api/analytics/queryAnalyticsCheckoutJourneys).
-- `POST /v1/organizations/{org_id}/analytics/visitors` accepts `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` (`true`/`false`) as filters; the visitor detail and the pageview list carry `checkout_stage` and the cart interaction fields per pageview.
+- `POST /organizations/{org_id}/analytics/funnels/checkout`: the steps with visitor counts and conversion rates, the cart interaction counts by kind, and the series bucketed by funnel entry. Accepts the usual `time_range`, `filters`, and `identity`. See the [reference](/en/api/analytics/queryAnalyticsCheckoutFunnel).
+- `POST /organizations/{org_id}/analytics/funnels/checkout/journeys`: the pageviews around a visitor's hit on a given step. See the [reference](/en/api/analytics/queryAnalyticsCheckoutJourneys).
+- `POST /organizations/{org_id}/analytics/visitors` accepts `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` (`true`/`false`) as filters; the visitor detail and the pageview list carry `checkout_stage` and the cart interaction fields per pageview.
 - `checkout_stage` is a filter and exclude dimension on every analytics endpoint that takes `filters` (`exclude: {checkout_stage: ['']}` keeps only funnel pageviews), and a group-by dimension in `POST /analytics/query`. `cart_interactions` and `cart_interaction_errors` are metrics there (and therefore usable in notification rules) and metric ranges (`{metric: 'cart_interactions', gte: 1}` scopes any query to pageviews that used the cart). `POST /analytics/beacons` projects `checkout_stage`, the two counters, and the `cart_interaction_kinds` map onto each row. Grouping or filtering on these reads the pageview source, not the aggregate tiers.
 
 ## What's next

@@ -12,6 +12,64 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-02" type="new" area="platform" title="Connect your own AI client over MCP">
+
+An organization's real-user data can now be read by an AI client you run yourself (Claude Desktop, Claude.ai, Cursor) over the Model Context Protocol: 19 read-only tools serving the same numbers the dashboard shows.
+
+- **Off until an owner turns it on**, under Organization settings → MCP server. While it is off, nobody can approve a connection to the organization and a token approved earlier is refused with `403 mcp_disabled`. It is its own consent decision with its own audit entry, because the model behind your client belongs to a provider we neither choose nor contract with.
+- **One address for everybody**: `https://api.fastmon.eu/mcp`, shown with a copy button once the switch is on. Add it in your client as a remote MCP server or connector; it sends you back here to sign in and approve. There is no key to paste and no secret to store.
+- **You pick the organization while approving**, not in the address. A connection reads exactly the one you picked, so somebody who works in two connects twice. The consent screen says that this connection is an MCP one, and an organization with the server switched off cannot be approved for it.
+- **The connection belongs to you, not to the organization.** What it may do is re-derived from your current role on every request, so it narrows when you are demoted and ends with your membership. Manage it under Account → Access.
+- **Nothing writes.** Traffic and Web Vitals, breakdowns and time series, errors, LoAF and resource attribution, Server-Timing phases, Lighthouse results. Periods are capped at 90 days, breakdowns at 50 rows, and requests at 120 per minute per person. The three Lighthouse tools also need `synthetic:read` and the organization's Synthetic Monitoring opt-in.
+- **Switching MCP off is not a way to cut somebody off.** It closes the MCP endpoint; a connection already approved keeps reading through the ordinary API, which is all it ever asked for. Ending one is the member's move, or offboarding.
+- **Agencies connect personally.** A partner can connect a client organization, and the access ends when the partnership does. The switch itself stays with the customer, so onboarding costs them one click.
+
+Docs: [MCP server](/en/mcp).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="changed" area="api" title="An app gets the permissions it asked for, and a token bound to one endpoint">
+
+Several changes to how an integration connects, all of which narrow what a connection ends up carrying.
+
+- **`/auth/app/authorize` takes `scope`.** A client can ask for less than it declared at registration, and the consent screen shows exactly that. Send no parameter and the screen offers the full declaration as before. Scope names we do not implement (`openid`, `offline_access`) are dropped; a request where nothing survives comes back as `invalid_scope`.
+- **A registration that names no scope declares `analytics:read`**, instead of the full permission catalog. Existing registrations keep what they have. Read the `scope` in the response to see what you got.
+- **A registration that names no `credential_owner` gets a personal connection**, which used to be an organization-owned one. Declare `organization` explicitly where the connection has to outlive the person; a shop plugin already does.
+- **A token can name the endpoint it is for** (`resource`, RFC 8707), on the authorization request and again on the token request. The consent screen reads that value, shows what kind of connection it makes, and hands it back untouched; the endpoint then refuses a token addressed elsewhere, and one addressed nowhere. Grants approved before this cannot be addressed until they are approved again.
+- **Fixed: an agency saw only its own organization on the consent screen.** The client organizations of a partnership are offered now, and belonging to two agency organizations no longer ends the screen in an error.
+
+Docs: [API → OAuth apps](/en/api/oauth).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="changed" area="dashboard" title="The Explorer's table is one screen with one scrollbar">
+
+The column labels were meant to stay put while the rows move under them, and they did not. The table owns the vertical scroll now, so the header sticks without the table escaping its card.
+
+- **One scroll area on the page.** From tablet width up, the page itself stops scrolling and hands whatever height is left to the table. Below that nothing changes, because there is not enough height to divide.
+- **Maximize** sits at the right end of the line heading the result and trades page chrome for rows: the page heading, the Hits strip and the drill-down hint fold away, the query panel and the result filters stay. The choice is remembered per person rather than put in the URL, since it is how you read the page and not part of the query a shared link is about.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="fixed" area="dashboard" title="The Explorer's column filter closed in the frame it opened">
+
+Picking Filter on a column header put the little form on screen and took it away again immediately, from the funnel in the aggregated table as well as from the "..." menu over the raw pageview list. Every route into that popover hands focus to it from outside, and it was reading that as a dismissal. It no longer treats focus as a dismissal at all; a click outside, Escape and its own buttons still close it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-01" type="new" area="dashboard" title="Origin host and logged-in, on the Server-Timing page">
+
+The two dimensions promoted from `fm-host` and `fm-loggedin` now have a dashboard to read them in. Both are group-by, filter and column choices wherever the other categorical dimensions are, and both ride along on the beacon row and on the visitor journey.
+
+- **The request path is cut both ways at once.** The cache status says where a request stopped, the login state says why it stopped there. Both are on the card as partitions of their own, side by side where the width allows, with the pageview count beside each share.
+- **A cluster gets a verdict, not just a table.** A panel names the host running at least half again the median of its peers, with the numbers it got there by, and says nothing when the spread is ordinary. It stays quiet below three hosts and states what share of pageviews reported no host at all.
+- **The phase trend splits by host or by login.** The same chart with one line per value instead of one per phase, so a box that drifts away from its peers drifts here with the day it started. Which cut is on screen lives in the URL.
+- **"Not reported" is a bucket with a name.** On a half-instrumented cluster that group is one you have to be able to see, not missing data. A third state of your own (`b2b`) is shown as stored rather than mapped onto yes or no.
+
+Docs: [Server-Timing → Origin host and logged-in](/en/guides/server-timing#origin-host-and-logged-in).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-31" type="new" area="api" title="Server-Timing: which server rendered it, and was it a logged-in render">
 
 Two new Server-Timing dimensions, both opt-in via the first-party `fm-*` key (no vendor aliases, because a bare `host` or `user` from an unknown framework could mean anything). Both are filterable and groupable and appear on the beacon row and the visitor journey.
@@ -63,6 +121,18 @@ Adding one permission to a key used to mean a new secret in every pipeline that 
 - **The key list answers "can this act right now".** A status says active, expires soon, expired, or revoked; an expired key no longer sits among the live ones.
 
 Docs: [API → Authentication](/en/api/authentication#editing-and-rotating-a-key).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="api" title="The API drops its /v1 prefix and keeps answering under it">
+
+Endpoints now sit directly under `https://api.fastmon.eu`: `GET /organizations`, `POST /sites/{site_id}/releases`. The base URL in the docs and every example follow.
+
+- **Nothing has to move.** Every path also answers under a leading `/v1`, permanently, so a pipeline or plugin built against the old URLs keeps working untouched. Leave the prefix off in new code.
+- **The OpenAPI document is at `/openapi.json`**, and the reference here is generated from it, so the paths you read are the ones without the prefix.
+- Public ingest (`POST /c/{collector_hash}`, `GET /s/{source_hash}.js`) never carried a prefix and is unchanged.
+
+Docs: [API → Base URL](/en/api#base-url).
 
 </ChangelogEntry>
 
