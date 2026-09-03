@@ -17,6 +17,64 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-02" type="new" area="platform" title="Deinen eigenen KI-Client über MCP verbinden">
+
+Die Real-User-Daten einer Organisation lassen sich jetzt aus einem KI-Client lesen, den du selbst betreibst (Claude Desktop, Claude.ai, Cursor), über das Model Context Protocol: 19 rein lesende Tools mit denselben Zahlen, die auch das Dashboard zeigt.
+
+- **Aus, bis ein Owner es einschaltet**, unter Organisationseinstellungen → MCP-Server. Solange es aus ist, kann niemand eine Verbindung zu dieser Organisation genehmigen, und ein früher genehmigtes Token wird mit `403 mcp_disabled` abgelehnt. Es ist eine eigene Consent-Entscheidung mit eigenem Audit-Eintrag, denn das Modell hinter deinem Client läuft bei einem Anbieter, den wir weder aussuchen noch unter Vertrag haben.
+- **Eine Adresse für alle**: `https://api.fastmon.eu/mcp`, mit Kopier-Button, sobald der Schalter an ist. Trag sie in deinem Client als Remote-MCP-Server oder Connector ein; er schickt dich hierher zurück, zum Anmelden und Bestätigen. Kein Key zum Einfügen, kein Secret, das irgendwo liegen bleibt.
+- **Die Organisation wählst du beim Genehmigen**, nicht in der Adresse. Eine Verbindung liest genau die gewählte, wer in zweien arbeitet, verbindet also zweimal. Der Consent-Screen sagt, dass es eine MCP-Verbindung ist, und eine Organisation mit ausgeschaltetem Server lässt sich dafür nicht genehmigen.
+- **Die Verbindung gehört dir, nicht der Organisation.** Was sie darf, wird bei jedem Request neu aus deiner aktuellen Rolle abgeleitet: Sie wird enger, wenn du herabgestuft wirst, und endet mit deiner Mitgliedschaft. Verwaltet wird sie unter Account → Zugriff.
+- **Nichts schreibt.** Traffic und Web Vitals, Breakdowns und Zeitreihen, Fehler, LoAF- und Ressourcen-Attribution, Server-Timing-Phasen, Lighthouse-Ergebnisse. Zeiträume sind auf 90 Tage begrenzt, Breakdowns auf 50 Zeilen, Requests auf 120 pro Minute und Person. Die drei Lighthouse-Tools brauchen zusätzlich `synthetic:read` und das Synthetic-Monitoring-Opt-In der Organisation.
+- **MCP auszuschalten nimmt niemandem den Zugriff.** Es schließt den MCP-Endpunkt; eine bereits genehmigte Verbindung liest weiter über die normale API, mehr hat sie nie verlangt. Beenden kann sie das Mitglied selbst, oder das Offboarding.
+- **Agenturen verbinden persönlich.** Eine Partner-Organisation kann eine Kunden-Organisation verbinden, und der Zugriff endet mit der Partnerschaft. Der Schalter selbst bleibt beim Kunden, dessen Onboarding also einen Klick kostet.
+
+Doku: [MCP-Server](/de/mcp).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="changed" area="api" title="Eine App bekommt die Rechte, die sie angefragt hat, und ein Token für genau einen Endpunkt">
+
+Mehrere Änderungen daran, wie eine Integration sich verbindet. Alle schränken ein, was eine Verbindung am Ende trägt.
+
+- **`/auth/app/authorize` nimmt `scope`.** Ein Client kann weniger anfragen, als er bei der Registrierung deklariert hat, und der Consent-Screen zeigt genau das. Ohne den Parameter bietet der Screen wie bisher die volle Deklaration an. Scope-Namen, die wir nicht implementieren (`openid`, `offline_access`), werden verworfen; bleibt nichts übrig, kommt `invalid_scope` zurück.
+- **Eine Registrierung ohne `scope` deklariert `analytics:read`** statt des vollen Rechtekatalogs. Bestehende Registrierungen behalten, was sie haben. Lies das `scope` in der Antwort, um zu sehen, was du bekommen hast.
+- **Eine Registrierung ohne `credential_owner` bekommt eine persönliche Verbindung**, bisher war es eine der Organisation. Deklariere `organization` ausdrücklich, wo die Verbindung die Person überleben muss; ein Shop-Plugin tut das bereits.
+- **Ein Token kann den Endpunkt nennen, für den es gilt** (`resource`, RFC 8707), im Authorization-Request und noch einmal im Token-Request. Der Consent-Screen liest den Wert, zeigt an, welche Art Verbindung daraus wird, und gibt ihn unverändert zurück; der Endpunkt lehnt danach ein Token ab, das woanders hin adressiert ist, und ebenso eines ohne Adresse. Grants von vor dieser Änderung lassen sich erst adressieren, wenn sie neu genehmigt wurden.
+- **Behoben: Eine Agentur sah auf dem Consent-Screen nur die eigene Organisation.** Die Kunden-Organisationen einer Partnerschaft stehen jetzt zur Auswahl, und die Mitgliedschaft in zwei Agentur-Organisationen endet den Screen nicht mehr im Fehler.
+
+Doku: [API → OAuth apps](/en/api/oauth) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="changed" area="dashboard" title="Die Tabelle im Explorer ist ein Screen mit einer Scrollbar">
+
+Die Spaltenüberschriften sollten stehen bleiben, während die Zeilen darunter laufen, und taten es nicht. Jetzt gehört das vertikale Scrollen der Tabelle, der Header bleibt also stehen, ohne dass die Tabelle aus ihrer Karte läuft.
+
+- **Ein Scrollbereich auf der Seite.** Ab Tablet-Breite scrollt die Seite selbst nicht mehr und gibt die verbleibende Höhe an die Tabelle. Darunter ändert sich nichts, weil es keine Höhe zu verteilen gibt.
+- **Maximieren** sitzt am rechten Ende der Zeile über dem Ergebnis und tauscht Seiten-Chrome gegen Zeilen: Überschrift, Hits-Leiste und Drill-down-Hinweis klappen weg, Query-Panel und Ergebnisfilter bleiben. Die Wahl wird pro Person gemerkt statt in die URL geschrieben, denn sie gehört dazu, wie jemand die Seite liest, und nicht zur Query, um die es in einem geteilten Link geht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-02" type="fixed" area="dashboard" title="Der Spaltenfilter im Explorer schloss sich im selben Frame, in dem er aufging">
+
+„Filter“ auf einer Spaltenüberschrift brachte das kleine Formular auf den Schirm und nahm es sofort wieder weg, aus dem Trichter in der aggregierten Tabelle ebenso wie aus dem „...“-Menü über der rohen Pageview-Liste. Jeder Weg dorthin übergibt den Fokus von außen, und genau das las das Popover als Abbruch. Es wertet einen Fokuswechsel jetzt gar nicht mehr so; ein Klick daneben, Escape und die eigenen Buttons schließen es weiterhin.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-01" type="new" area="dashboard" title="Origin-Host und Logged-in auf der Server-Timing-Seite">
+
+Die beiden Dimensionen aus `fm-host` und `fm-loggedin` haben jetzt ein Dashboard, in dem man sie lesen kann. Beide sind Group-by, Filter und Spalte überall dort, wo die anderen kategorialen Dimensionen es sind, und beide stehen auf der Beacon-Zeile und in der Visitor-Journey.
+
+- **Der Weg des Requests wird auf einen Blick zweifach zerlegt.** Der Cache-Status sagt, wo ein Request stehen geblieben ist, der Login-Zustand sagt, warum dort. Beides steht als eigene Aufteilung auf der Karte, nebeneinander, wo die Breite reicht, mit der Pageview-Zahl neben jedem Anteil.
+- **Ein Cluster bekommt ein Urteil, nicht nur eine Tabelle.** Ein Panel benennt den Host, der mindestens die Hälfte über dem Median seiner Nachbarn liegt, samt der Zahlen dahinter, und schweigt, wenn die Streuung normal ist. Unter drei Hosts bleibt es still, und es nennt den Anteil der Pageviews, die gar keinen Host gemeldet haben.
+- **Der Phasen-Trend lässt sich nach Host oder Login aufteilen.** Derselbe Chart, eine Linie pro Wert statt pro Phase. Eine Kiste, die sich von ihren Nachbarn löst, tut das hier mit dem Tag, an dem es anfing. Welcher Schnitt zu sehen ist, steht in der URL.
+- **„Nicht gemeldet“ ist eine Gruppe mit Namen.** Auf einem halb instrumentierten Cluster ist das eine Gruppe, die man sehen können muss, und keine fehlenden Daten. Ein eigener dritter Zustand (`b2b`) wird gezeigt, wie er gespeichert ist, statt auf yes oder no gebogen zu werden.
+
+Doku: [Server-Timing → Origin-Host und Logged-in](/de/guides/server-timing#origin-host-und-logged-in).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-08-31" type="new" area="api" title="Server-Timing: welcher Server hat gerendert, und war es ein eingeloggter Render">
 
 Zwei neue Server-Timing-Dimensionen, beide opt-in über den First-Party-Key `fm-*` (keine Vendor-Aliase, weil ein bloßes `host` oder `user` aus einem unbekannten Framework alles bedeuten könnte). Beide sind filterbar und gruppierbar und stehen auf der Beacon-Zeile und in der Visitor-Journey.
@@ -68,6 +126,18 @@ Einen Key um eine Berechtigung zu erweitern hieß bisher: neues Secret in jeder 
 - **Die Key-Liste beantwortet „kann das gerade handeln?"** Ein Status sagt aktiv, läuft bald ab, abgelaufen oder widerrufen; ein abgelaufener Key steht nicht mehr zwischen den gültigen.
 
 Doku: [API → Authentication](/en/api/authentication#editing-and-rotating-a-key) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-08-31" type="changed" area="api" title="Die API verliert ihr /v1-Präfix und antwortet weiter darunter">
+
+Endpunkte liegen jetzt direkt unter `https://api.fastmon.eu`: `GET /organizations`, `POST /sites/{site_id}/releases`. Die Basis-URL in der Doku und alle Beispiele ziehen mit.
+
+- **Nichts muss umgestellt werden.** Jeder Pfad antwortet zusätzlich mit führendem `/v1`, und zwar dauerhaft. Eine Pipeline oder ein Plugin auf den alten URLs läuft unverändert weiter. In neuem Code lässt du das Präfix weg.
+- **Das OpenAPI-Dokument liegt unter `/openapi.json`**, und die Referenz hier wird daraus erzeugt. Die Pfade, die du liest, sind also die ohne Präfix.
+- Der öffentliche Ingest (`POST /c/{collector_hash}`, `GET /s/{source_hash}.js`) hatte nie ein Präfix und bleibt, wie er ist.
+
+Doku: [API → Base URL](/en/api#base-url) (nur auf Englisch).
 
 </ChangelogEntry>
 

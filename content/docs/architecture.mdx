@@ -47,7 +47,7 @@ Three spots in the pipeline matter if you want to understand the behavior:
 | Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
 | EU edge           | Strips IP and User-Agent at the network boundary, derives country from the IP, computes the bounded `stitch`. Raw IP and UA never reach the application. |
 | Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, server-side sanitization. |
-| API               | `/v1/...`: authenticated REST. Powers the dashboard.                   |
+| API               | Authenticated REST at the root (`/organizations/…`). Powers the dashboard. |
 | Dashboard         | Single-page app. Reads via the API. Static assets only.                     |
 | Configuration DB  | Users, organizations, sites, settings, billing.                             |
 | Analytics store   | Beacon events, aggregated metrics, error logs.                              |
@@ -71,10 +71,13 @@ All three are operated in the EU with versioned, idempotent migrations applied o
 | --------------------------------- | -------------------------------------------------------------- | ------------- |
 | `GET  /s/{source_hash}.js`        | Public beacon script delivery. Strong cache, ETag.            | Public        |
 | `POST /c/{collector_hash}`        | Public beacon ingestion.                                       | Public        |
-| `/v1/...`                     | Authenticated REST API.                                        | Cookie or token |
+| `/organizations/…`, `/sites/…` | Authenticated REST API.                                       | Cookie or token |
+| `/mcp`                            | MCP server for the customer's own AI client.                   | OAuth token   |
 | `/openapi.json`                   | OpenAPI document for the v1 API.                               | Public        |
 
-The two public roots stay outside the `/v1` prefix on purpose: short URLs keep the beacon payload smaller, and the cache rules are different (the beacon script is aggressively cached; API responses typically aren't).
+The API mounts at the root. Every path also answers under a leading `/v1`, which is a permanent alias for the URLs minted before the prefix was dropped, so nothing built against it has to move. New code should leave it off.
+
+The two public ingest roots are short on purpose: it keeps the beacon payload smaller, and the cache rules are different (the beacon script is aggressively cached; API responses typically aren't).
 
 ## What's kept where, briefly
 

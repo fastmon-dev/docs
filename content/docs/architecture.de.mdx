@@ -47,7 +47,7 @@ Drei Stellen in der Pipeline sind wichtig, wenn du das Verhalten verstehen wills
 | Beacon-Script     | Vanilla JS, ~10 KB komprimiert. Beobachtet Web Vitals, batcht, postet.       |
 | EU-Edge           | Entfernt IP und User-Agent an der Netzwerkgrenze, leitet das Land aus der IP ab, berechnet den begrenzten `stitch`. Rohe IP und UA erreichen die Anwendung nie. |
 | Collector         | Öffentlicher Ingest unter `/c/{collector_hash}`. Validation, Rate-Limit, serverseitige Sanitisierung. |
-| API               | `/v1/...`: authentifizierte REST. Versorgt das Dashboard.               |
+| API               | Authentifizierte REST direkt im Root (`/organizations/…`). Versorgt das Dashboard. |
 | Dashboard         | Single-Page-App. Liest über die API. Nur Static-Assets.                      |
 | Config-DB         | User, Organisationen, Sites, Einstellungen, Billing.                         |
 | Analytics-Store   | Beacon-Events, aggregierte Metriken, Error-Logs.                             |
@@ -71,10 +71,13 @@ Alle drei werden in der EU betrieben mit versionierten, idempotenten Migrations 
 | --------------------------------- | -------------------------------------------------------------- | ------------- |
 | `GET  /s/{source_hash}.js`        | Öffentliche Beacon-Script-Auslieferung. Strong-Cache, ETag.    | Public        |
 | `POST /c/{collector_hash}`        | Öffentlicher Beacon-Ingest.                                    | Public        |
-| `/v1/...`                     | Authentifizierte REST-API.                                     | Cookie oder Token |
+| `/organizations/…`, `/sites/…` | Authentifizierte REST-API.                                    | Cookie oder Token |
+| `/mcp`                            | MCP-Server für den eigenen KI-Client des Kunden.               | OAuth-Token   |
 | `/openapi.json`                   | OpenAPI-Dokument der v1-API.                                   | Public        |
 
-Die beiden öffentlichen Roots stehen bewusst nicht unter `/v1`: kurze URLs halten den Beacon-Payload klein, und die Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv gecached; API-Responses typischerweise nicht).
+Die API liegt im Root. Jeder Pfad antwortet zusätzlich mit führendem `/v1`, einem dauerhaften Alias für die URLs aus der Zeit vor dem Wegfall des Präfixes. Bestehende Integrationen müssen also nichts umstellen, neuer Code lässt es weg.
+
+Die beiden öffentlichen Ingest-Roots sind bewusst kurz: Das hält den Beacon-Payload klein, und die Cache-Regeln unterscheiden sich (das Beacon-Script aggressiv gecached; API-Responses typischerweise nicht).
 
 ## Was wo liegt, kurz
 

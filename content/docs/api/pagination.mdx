@@ -16,7 +16,7 @@ List endpoints in the fastmon API use one of two pagination schemes. You don't c
 Most list endpoints use offset pagination. Pass `?limit` and `?offset`; the response carries `meta.total` and `meta.has_more`.
 
 ```bash
-curl 'https://api.fastmon.eu/v1/organizations/$ORG/sites?limit=50&offset=100' \
+curl 'https://api.fastmon.eu/organizations/$ORG/sites?limit=50&offset=100' \
   -H "Authorization: Bearer fm_…"
 ```
 
@@ -48,7 +48,7 @@ Sessions, beacon records, and a few other event feeds use cursor pagination beca
 The response carries `meta.next_cursor` (and no `total`). Send the cursor back as `?cursor=<token>` to get the next page.
 
 ```bash
-curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
+curl 'https://api.fastmon.eu/organizations/$ORG/analytics/sessions' \
   -X POST \
   -H "Authorization: Bearer fm_…" \
   -H "Content-Type: application/json" \
@@ -68,7 +68,7 @@ curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
 Next page:
 
 ```bash
-curl 'https://api.fastmon.eu/v1/organizations/$ORG/analytics/sessions' \
+curl 'https://api.fastmon.eu/organizations/$ORG/analytics/sessions' \
   -X POST \
   -H "Authorization: Bearer fm_…" \
   -H "Content-Type: application/json" \

@@ -26,7 +26,7 @@ In fastmon, open the site, then **Settings**. Copy the site's `id` (UUID v7, loo
 The release call goes at the **end** of your deploy job, after the deploy has finished. The minimum payload is just `version`:
 
 ```bash
-curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
@@ -46,7 +46,7 @@ The `-fsS` flags make curl fail loudly on non-2xx responses without spamming pro
     FASTMON_API_KEY: ${{ secrets.FASTMON_API_KEY }}
     FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
   run: |
-    curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+    curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
       -H "Authorization: Bearer $FASTMON_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{ \"version\": \"${{ github.sha }}\" }"
@@ -60,7 +60,7 @@ fastmon-release:
   needs: ["deploy"]
   script:
     - |
-      curl -fsS https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+      curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
         -H "Authorization: Bearer $FASTMON_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
@@ -78,7 +78,7 @@ Vercel doesn't run arbitrary post-deploy commands inside the build itself. Two o
 Reload your site's release list:
 
 ```bash
-curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
@@ -91,7 +91,7 @@ In the dashboard, the release picker on the **Performance** view will list it.
 The dashboard has a release picker on **Performance**: pick the release and the chart overlays before/after. For programmatic comparison, pass `compare_to_release_id`:
 
 ```bash
-curl https://api.fastmon.eu/v1/organizations/$ORG_ID/analytics/query \
+curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
   -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

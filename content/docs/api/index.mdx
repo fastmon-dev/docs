@@ -18,6 +18,7 @@ The fastmon REST API is the same surface the dashboard uses. The endpoint refere
 <Cards>
   <Card title="Authentication" href="/en/api/authentication" description="API keys as Bearer tokens: personal (fm_…) and organization-owned (fmo_…)." />
   <Card title="OAuth apps" href="/en/api/oauth" description="How first-party integrations connect: PKCE, short-lived tokens, rotating refresh." />
+  <Card title="MCP server" href="/en/mcp" description="Read-only analytics for the customer's own AI client, over the Model Context Protocol." />
   <Card title="Errors" href="/en/api/errors" description="Error envelope, status codes, and what each common code means." />
   <Card title="Pagination" href="/en/api/pagination" description="Offset by default, cursor for high-volume endpoints." />
 </Cards>
@@ -43,15 +44,17 @@ Pages are auto-generated per OpenAPI tag. Each operation has its own page with s
 ## Base URL
 
 ```
-https://api.fastmon.eu/v1
+https://api.fastmon.eu
 ```
 
-Public ingest endpoints (`POST /c/{collector_hash}` and `GET /s/{source_hash}.js`) live **outside** the `/v1/` prefix and have their own contract.
+Endpoints sit directly under it: `GET /organizations`, `POST /sites/{site_id}/releases`.
+
+Every path also answers under a leading `/v1`. That is a permanent alias for the URLs minted before the prefix was dropped, kept so nothing built against it has to move; leave it off in new code. Public ingest (`POST /c/{collector_hash}` and `GET /s/{source_hash}.js`) has never carried a prefix and has its own contract, and so does the [MCP server](/en/mcp) at `POST /mcp`.
 
 ## Quick example
 
 ```bash
-curl https://api.fastmon.eu/v1/organizations \
+curl https://api.fastmon.eu/organizations \
   -H "Authorization: Bearer fm_$YOUR_TOKEN"
 ```
 
@@ -74,4 +77,4 @@ curl https://api.fastmon.eu/v1/organizations \
 
 ## Schema document
 
-The raw OpenAPI document lives at [`api.fastmon.eu/v1/openapi.json`](https://api.fastmon.eu/v1/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`) for a typed client.
+The raw OpenAPI document lives at [`api.fastmon.eu/openapi.json`](https://api.fastmon.eu/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`) for a typed client.

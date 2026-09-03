@@ -5,7 +5,7 @@ description: API requests authenticate with an API key sent as a Bearer token. P
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Every `/v1/` endpoint requires authentication. The public API uses a single scheme: an API key sent as a Bearer token.
+Every endpoint requires authentication. The public API uses a single scheme: an API key sent as a Bearer token.
 
 <Callout type="info">
   The dashboard uses session cookies, which are only valid for the dashboard's own origin. Programmatic clients (CI jobs, scripts, backend services) use an API key. First-party integrations (a shop plugin, an assistant) connect via [OAuth](/en/api/oauth) instead of holding a key.
@@ -27,8 +27,8 @@ Rule of thumb: a personal key for things that should act as you (local scripts, 
 
 ## Creating a key
 
-- **Personal**: **Account → Access → Create key**, or `POST /v1/account/api-keys`.
-- **Organization**: **Organization settings → Access → Create key**, or `POST /v1/organizations/{org_id}/api-keys`. Needs `org_key:manage`, which members and owners hold and viewers do not; partner access never holds it.
+- **Personal**: **Account → Access → Create key**, or `POST /account/api-keys`.
+- **Organization**: **Organization settings → Access → Create key**, or `POST /organizations/{org_id}/api-keys`. Needs `org_key:manage`, which members and owners hold and viewers do not; partner access never holds it.
 
 Every key names three things:
 
@@ -38,7 +38,7 @@ Every key names three things:
 
 Creating a key asks for your password again and sends a security notification mail. The secret (`fm_…` or `fmo_…`) is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
 
-An application's **CI/CD** snippet in the dashboard creates a `release:write` key in place and writes it into the curl command; it asks whether the key should belong to you or to the organization. `GET /v1/permissions` lists every permission with a description and the roles that hold it.
+An application's **CI/CD** snippet in the dashboard creates a `release:write` key in place and writes it into the curl command; it asks whether the key should belong to you or to the organization. `GET /permissions` lists every permission with a description and the roles that hold it.
 
 ## Sending it
 
@@ -47,7 +47,7 @@ Authorization: Bearer fm_abcdef…
 ```
 
 ```bash title="Example"
-curl https://api.fastmon.eu/v1/sites \
+curl https://api.fastmon.eu/sites \
   -H "Authorization: Bearer fm_abcdef…"
 ```
 
@@ -55,11 +55,11 @@ curl https://api.fastmon.eu/v1/sites \
 
 - **A personal key: never more than its owner.** On every request the key's scopes are intersected with your current [role](/en/concepts/organizations#roles) in that organization. Demoting or removing you narrows or cuts off your keys immediately.
 - **An organization key: exactly its scopes.** There is no owner to follow, so nothing changes it after issue except an explicit edit. A `clients` key follows the partner relationship instead: an organization taken on later is included, one handed back drops out on the next request.
-- **Only where it was issued for.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /v1/organizations` and the Ask conversations) are filtered to the key's organizations.
+- **Only where it was issued for.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /organizations` and the Ask conversations) are filtered to the key's organizations.
 - **Not for credential or account management.** Creating, editing, rotating, or revoking keys, passkeys, 2FA, password, e-mail, account deletion, creating an organization, and accepting an invite need a dashboard session. So do the platform `/admin` routes.
 - **Missing scope**: `403 permission_denied`, with the missing permission in `details.permission`. See [Errors](/en/api/errors#authorization).
 
-`GET /v1/permissions/self` reports what the calling key can actually do per organization next to the reach it was issued for. For a personal key, an organization you have since left shows up as the difference between the two.
+`GET /permissions/self` reports what the calling key can actually do per organization next to the reach it was issued for. For a personal key, an organization you have since left shows up as the difference between the two.
 
 ## Editing and rotating a key
 

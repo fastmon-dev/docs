@@ -33,7 +33,7 @@ Mehr ist da nicht. Releases sind mit Absicht minimal; wir wollen Korrelation, ke
 Zuverlässigste Form: ein Schritt am Ende deines Deploy-Jobs:
 
 ```bash
-curl https://api.fastmon.eu/v1/sites/$FASTMON_SITE_ID/releases \
+curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   -H "Authorization: Bearer fm_$FASTMON_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{ \"version\": \"$DEPLOY_VERSION\", \"released_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" }"

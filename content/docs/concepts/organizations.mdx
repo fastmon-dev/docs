@@ -23,7 +23,7 @@ Most accounts only ever have one organization. Multiple is mostly a thing for ag
 
 | Field             | Type                                      | Notes                                                                 |
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
-| `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/v1/organizations/{id}/…`). |
+| `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/organizations/{id}/…`). |
 | `name`            | string                                    | Human-readable. Shows in the org switcher.                            |
 | `plan`            | enum                                      | `beta`, `starter`, `pro`, `partner`, or `enterprise`.                 |
 | `members`         | list of `{ user_id, role }`               | Roles: `owner`, `member`, `viewer`. The payload also carries your own `role` and `permissions`. |
@@ -42,17 +42,17 @@ The plan gates features and quotas. Which Web Vitals get collected isn't tied to
 
 ## Roles
 
-A role is a fixed bundle of **permissions**. A permission is one capability in `resource:action` form (`analytics:read`, `release:write`, `member:manage`); every API route names the one it needs, and the dashboard shows or hides actions by the same list. `GET /v1/permissions` lists every permission with a description and the roles that hold it.
+A role is a fixed bundle of **permissions**. A permission is one capability in `resource:action` form (`analytics:read`, `release:write`, `member:manage`); every API route names the one it needs, and the dashboard shows or hides actions by the same list. `GET /permissions` lists every permission with a description and the roles that hold it.
 
 | Role     | Can do                                                                                       |
 | -------- | -------------------------------------------------------------------------------------------- |
 | `owner`  | Everything a member can, plus: organization settings (name, AI and synthetic monitoring consent), members and their roles, notification rules, partner relationships, the audit log, billing, transfer, and deletion. |
-| `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; triage issues; invite people. |
+| `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; invite people. |
 | `viewer` | Read-only. Sees dashboards, analytics, releases, synthetic results, notification rules, and the member list. Changes nothing and triggers nothing that costs money or sends mail. |
 
 The bundles nest: a member holds everything a viewer holds, an owner everything a member holds. [Personal API keys](/en/api/authentication) are cut from the same bundles: a key's scopes are permissions, intersected with your current role on every request. An [organization key](/en/api/authentication#two-kinds-of-key) belongs to the organization instead and stands on its scopes alone, capped at issue time. Managing organization keys and [connected apps](/en/api/oauth) takes `org_key:manage`, which members and owners hold and viewers do not.
 
-An organization can have several owners. Owners change roles under **Members** (`PATCH /v1/members/{member_id}`); only an owner can hand out the owner role. The last owner cannot be demoted or leave while other members remain (`last_owner`). **Transfer ownership** hands the organization to another member in one step.
+An organization can have several owners. Owners change roles under **Members** (`PATCH /members/{member_id}`); only an owner can hand out the owner role. The last owner cannot be demoted or leave while other members remain (`last_owner`). **Transfer ownership** hands the organization to another member in one step.
 
 ## Common scenarios
 
@@ -70,9 +70,9 @@ Use the `partner` plan. Each client is a **partner client**: a sub-organization 
 
 ## Common surprises
 
-- **The org switcher is just UI.** API requests scope by the URL (`/v1/organizations/{id}/…`), not by whichever tab you've got open.
+- **The org switcher is just UI.** API requests scope by the URL (`/organizations/{id}/…`), not by whichever tab you've got open.
 - **Members are global fastmon users.** Invite an existing user and the existing account gets reused; no duplicate.
-- **Adding a member directly needs an owner.** `POST /v1/organizations/{id}/members` requires `member:manage`. Members invite instead, and an invite carries the role.
+- **Adding a member directly needs an owner.** `POST /organizations/{id}/members` requires `member:manage`. Members invite instead, and an invite carries the role.
 - **Sites can't move between organizations.** If you genuinely need this, ping support. No self-serve action for it.
 
 ## Related

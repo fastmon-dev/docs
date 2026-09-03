@@ -85,9 +85,9 @@ Die Stufe ist ein Label mit vier Werten, berechnet aus der URL, die die Site sow
 
 ## API
 
-- `POST /v1/organizations/{org_id}/analytics/funnels/checkout`: die Schritte mit Besucherzahlen und Conversion-Raten, die Warenkorb-Interaktionen nach Art und die Zeitreihe, gebucketet nach Funnel-Einstieg. Nimmt die üblichen `time_range`, `filters` und `identity`. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutFunnel) (nur auf Englisch).
-- `POST /v1/organizations/{org_id}/analytics/funnels/checkout/journeys`: die Pageviews rund um den Treffer eines Besuchers auf einem Schritt. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutJourneys).
-- `POST /v1/organizations/{org_id}/analytics/visitors` nimmt `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` (`true`/`false`) als Filter; Besucher-Detail und Pageview-Liste tragen `checkout_stage` und die Warenkorb-Interaktionsfelder pro Pageview.
+- `POST /organizations/{org_id}/analytics/funnels/checkout`: die Schritte mit Besucherzahlen und Conversion-Raten, die Warenkorb-Interaktionen nach Art und die Zeitreihe, gebucketet nach Funnel-Einstieg. Nimmt die üblichen `time_range`, `filters` und `identity`. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutFunnel) (nur auf Englisch).
+- `POST /organizations/{org_id}/analytics/funnels/checkout/journeys`: die Pageviews rund um den Treffer eines Besuchers auf einem Schritt. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutJourneys).
+- `POST /organizations/{org_id}/analytics/visitors` nimmt `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` (`true`/`false`) als Filter; Besucher-Detail und Pageview-Liste tragen `checkout_stage` und die Warenkorb-Interaktionsfelder pro Pageview.
 - `checkout_stage` ist auf jedem Analytics-Endpunkt, der `filters` annimmt, eine Filter- und Ausschlussdimension (`exclude: {checkout_stage: ['']}` behält nur Funnel-Pageviews) und in `POST /analytics/query` eine Gruppierungsdimension. `cart_interactions` und `cart_interaction_errors` sind dort Metriken (und damit in Benachrichtigungsregeln nutzbar) sowie Metrikbereiche (`{metric: 'cart_interactions', gte: 1}` grenzt jede Abfrage auf Pageviews ein, die den Warenkorb benutzt haben). `POST /analytics/beacons` projiziert `checkout_stage`, die beiden Zähler und die Map `cart_interaction_kinds` auf jede Zeile. Gruppieren oder Filtern darauf liest die Pageview-Quelle, nicht die Aggregat-Tiers.
 
 ## Weiterlesen
