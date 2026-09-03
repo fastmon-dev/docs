@@ -5,22 +5,22 @@ description: Die Real-User-Daten deiner Organisation aus einem KI-Client lesen, 
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Über das Model Context Protocol (MCP) kann ein KI-Client, den du selbst betreibst, Fragen zu deinen fastmon-Daten stellen. Du verbindest Claude Desktop, Claude.ai oder Cursor einmal, danach holt sich das Modell dieselben Zahlen, die das Dashboard zeigt: Web Vitals, Traffic, Fehler, Server-Timing-Phasen, Lighthouse-Ergebnisse.
+Über das Model Context Protocol (MCP) kann ein KI-Client, den du selbst betreibst, Fragen zu deinen fastmon-Daten stellen. Du verbindest Claude, Claude Code oder Cursor einmal, danach liest das Modell dieselben Zahlen wie das Dashboard: Web Vitals, Traffic, Fehler, Server-Timing-Phasen, Lighthouse-Ergebnisse.
 
-Das Modell ist deins. Fastmon beantwortet die Fragen aus den eigenen Daten; das Modell läuft beim Anbieter hinter deinem Client, und den wählen wir weder aus noch haben wir einen Vertrag mit ihm. Deshalb bleibt der Server zu, bis ein Owner ihn öffnet.
+Das Modell ist deins. Fastmon antwortet aus den eigenen Daten, aber das Modell läuft beim Anbieter hinter deinem Client, und den wählen wir weder aus noch haben wir einen Vertrag mit ihm. Deshalb muss ein Owner den Server erst öffnen.
 
 <Callout type="info">
-  Alle Tools sind **read-only**. Nichts auf dieser Oberfläche ändert eine Einstellung, löscht etwas oder startet einen Run.
+  Alle Tools sind **read-only**. Nichts hier ändert eine Einstellung, löscht etwas oder startet einen Run.
 </Callout>
 
 ## Einschalten [#turning-it-on]
 
-**Organisationseinstellungen → MCP-Server → Zugriff aus deinen eigenen KI-Clients.** Nur ein Owner der Organisation (`org:update`) kann den Schalter umlegen, und die Änderung landet als Consent-Änderung im Audit-Log.
+**Organisationseinstellungen → MCP-Server → Zugriff aus deinen eigenen KI-Clients.** Nur Owner (`org:update`), und das Audit-Log hält es als Consent-Änderung fest.
 
-Solange er aus ist, lässt sich die Organisation auf dem Consent-Screen nicht für MCP genehmigen, und ein Token, das früher dafür genehmigt wurde, bekommt am Endpunkt `403 mcp_disabled`, bevor eine einzige Query läuft. Die Ablehnung sagt, dass ein Owner den Schalter umlegen kann.
+Solange er aus ist, lässt sich die Organisation auf dem Consent-Screen nicht genehmigen, und ein früher genehmigtes Token bekommt `403 mcp_disabled`, bevor eine Query läuft.
 
 <Callout type="warn" title="Ein Consent-Schalter, kein Not-Aus">
-  Den MCP-Server auszuschalten schließt den MCP-Endpunkt und sonst nichts. Eine App, die bereits eine Verbindung hält, liest diese Organisation weiter über die normale API, mehr hat sie ohnehin nie verlangt. Eine Verbindung endet durch die Person, die sie genehmigt hat: Sie trennt sie unter **Account → Zugriff**, ihre Rolle wird eingeschränkt, oder sie verlässt die Organisation. Wenn jemand keinen Zugriff mehr haben soll, ist Offboarding der Weg.
+  Den MCP-Server auszuschalten schließt den MCP-Endpunkt und sonst nichts. Eine App, die bereits eine Verbindung hält, liest diese Organisation weiter über die normale API, mehr hat sie ohnehin nie verlangt. Eine Verbindung endet durch die Person, die sie genehmigt hat: Sie trennt sie unter **Account → Zugriff**, ihre Rolle wird eingeschränkt, oder sie geht. Wenn jemand keinen Zugriff mehr haben soll, ist Offboarding der Weg.
 </Callout>
 
 ## Client verbinden [#connecting]
@@ -31,19 +31,25 @@ Eine Adresse, für alle dieselbe:
 https://api.fastmon.eu/mcp
 ```
 
-Trag sie in deinem Client als Remote-MCP-Server oder Connector ein (Claude unter **Einstellungen → Connectors**, Cursor unter **MCP**). Der Client schickt dich zu fastmon, zum Anmelden und Bestätigen. Es gibt keinen Key zum Einfügen und kein Secret, das irgendwo liegen bleibt.
+Claude Code trägt sie im Terminal ein:
 
-Was der Consent-Screen dir zur Genehmigung vorlegt:
+```bash
+claude mcp add --transport http fastmon https://api.fastmon.eu/mcp
+```
 
-- **Die Organisation**, aus denen, die du erreichst. Eine Verbindung liest genau diese eine, wer in zweien arbeitet, verbindet also zweimal. Eine mit ausgeschaltetem MCP ist markiert und lässt sich nicht genehmigen, statt sauber genehmigt zu werden und danach bei jedem Aufruf zu scheitern.
+Jeder andere Client nimmt dieselbe Adresse als Remote-MCP-Server oder Connector (Claude unter **Einstellungen → Connectors**, Cursor unter **MCP**). Danach schickt dich der Client zu fastmon, zum Anmelden und Bestätigen. Kein Key zum Einfügen, kein Secret, das irgendwo liegen bleibt.
+
+Der Consent-Screen fragt nach:
+
+- **Einer Organisation**, aus denen, die du erreichst. Die Verbindung liest genau diese eine, zwei Organisationen heißt also zwei Verbindungen. Eine mit ausgeschaltetem MCP ist markiert und lässt sich nicht genehmigen.
 - **`analytics:read`**, ohne das kommt keine Verbindung zustande.
-- **`synthetic:read`**, abwählbar. Drei der Tools lesen Lighthouse-Reports und brauchen es; die anderen 16 funktionieren auch ohne.
+- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 16 funktionieren auch ohne.
 
-Der Screen benennt die Verbindung außerdem als MCP-Verbindung, direkt neben der Adresse, an die er dich zurückschickt. Das ist die Tatsache, die man sehen sollte: Was du hier freigibst, kann ein KI-Modell erreichen.
+Der Screen benennt die Verbindung als MCP-Verbindung, direkt neben der Adresse, an die er dich zurückschickt. Das ist die Tatsache, die man sehen sollte: Was du hier freigibst, kann ein KI-Modell erreichen.
 
-Die Verbindung gehört **dir**, nicht der Organisation. Was sie darf, wird bei jedem Request neu aus deiner aktuellen Rolle abgeleitet: Sie wird enger, sobald du herabgestuft wirst, und endet mit deiner Mitgliedschaft oder deinem Account. Eine Verbindung, die der Organisation gehört, wird hier bewusst abgelehnt. Ein Credential, das niemandem gehört, könnte nicht enden, wenn sein Besitzer geht, und eine Organisation darf nicht mit dem KI-Client von jemandem verbunden bleiben, der vor Monaten gegangen ist.
+Die Verbindung gehört **dir**. Ihre Rechte kommen bei jedem Request aus deiner aktuellen Rolle: Sie werden enger, sobald du herabgestuft wirst, und enden mit deiner Mitgliedschaft oder deinem Account. Eine Verbindung, die der Organisation gehört, wird bewusst abgelehnt. Ein Credential, das niemandem gehört, könnte nicht enden, wenn sein Besitzer geht.
 
-Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt sofort, und bereits ausgestellte Access-Tokens laufen binnen Minuten von selbst ab.
+Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt sofort, und bereits ausgestellte Access-Tokens laufen binnen Minuten ab.
 
 <Callout type="info">
   Kopiere die Adresse genau so, ohne Slash am Ende. Dein Client nennt sie, wenn er ein Token anfordert, und der Endpunkt akzeptiert nur ein Token, das in dieser Schreibweise an ihn adressiert ist. Unterhalb von `/mcp` wird nichts ausgeliefert.
@@ -62,54 +68,54 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 | Performance im Detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
 | Synthetic (Labor) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
-Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Ein Tool, das rohe Beacon-Zeilen zurückgibt, existiert nicht, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung, ein Modell, das eine nennt, kommt damit also nirgendwohin.
+Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Rohe Beacon-Zeilen gibt kein Tool zurück, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung.
 
-Ein Aufruf ohne Site umfasst die ganze Organisation, und das ist hier der Normalfall: Eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. `list_sites` ist das, wonach ein Modell zuerst fragen sollte, wenn es um eine bestimmte Site geht.
+Ein Aufruf ohne Site umfasst die ganze Organisation, denn eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. Geht es um eine bestimmte Site, sollte ein Modell zuerst `list_sites` aufrufen.
 
-`list_sites` meldet außerdem, was jede Site tatsächlich **sammelt**. Die Hälfte des Katalogs liefert ein leeres Ergebnis, wenn ein Sammel-Schalter aus ist, und ein Modell liest „leer“ als „kein Problem“. Pro Site steht deshalb dabei, ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung sowie Fehlermeldungen und Stack-Frames an sind, und welche Besucher-Kennung eine Besucherzahl für diese Site benutzt. Distinct-Visitor-Zahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites hinweg, die verschiedene Kennungen speichern, sagt das dazu, statt beides still zu vermischen.
+`list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung sowie Fehlermeldungen und Stack-Frames an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Ohne das liest ein Modell das leere Ergebnis eines ausgeschalteten Schalters als „kein Problem“. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
 
-Die drei Synthetic-Tools brauchen zweierlei: `synthetic:read` auf der Verbindung und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
+Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
 
 ## Grenzen [#limits]
 
-- **90 Tage** ist der längste Zeitraum, den ein Aufruf abdecken darf, und ein Breakdown liefert höchstens 50 Zeilen.
-- **120 Requests pro Minute**, gezählt pro Person statt pro Organisation, damit ein Client in der Schleife keine Kollegen aussperrt. Über der Grenze antwortet der Endpunkt mit 429 und der Wartezeit in Sekunden.
-- **Minuten-Buckets** gehen nur über maximal 6 Stunden, weil Minutenauflösung immer die rohe Beacon-Tabelle liest. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
-- **30 Sekunden** pro Query. Wer länger läuft, wird abgebrochen und das Tool sagt es. Meist steckt ein Breakdown mit hoher Kardinalität (URL, Browser-Version, Origin-Host) über einen langen Zeitraum dahinter.
+- **90 Tage** pro Aufruf, und 50 Zeilen pro Breakdown.
+- **120 Requests pro Minute**, gezählt pro Person statt pro Organisation, damit ein Client in der Schleife keine Kollegen aussperrt. Darüber: 429 mit der Wartezeit in Sekunden.
+- **Minuten-Buckets** gehen über maximal 6 Stunden, weil Minutenauflösung die rohe Beacon-Tabelle liest. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
+- **30 Sekunden** pro Query, danach wird abgebrochen und das Tool sagt es. Meist steckt ein Breakdown mit hoher Kardinalität (URL, Browser-Version, Origin-Host) über einen langen Zeitraum dahinter.
 
 ## Was fastmon verlässt [#privacy]
 
-Die Antworten auf die Fragen des Modells: Seiten-URLs, Referrer und UTM-Parameter, Geografie auf Länderebene, Gerät und Browser, Zeiten, Fehlersignaturen. Es sind dieselben Felddaten, die dein Dashboard zeigt, und kein Tool erreicht Daten, die ein Mitglied nicht ohnehin im Dashboard sehen könnte.
+Die Antworten: Seiten-URLs, Referrer und UTM-Parameter, Geografie auf Länderebene, Gerät und Browser, Zeiten, Fehlersignaturen. Es sind dieselben Felddaten, die dein Dashboard zeigt, und kein Tool erreicht Daten, die ein Mitglied nicht ohnehin dort sehen könnte.
 
-Zu prüfen ist, wohin diese Antworten gehen. Empfänger ist, wer das Modell hinter deinem Client betreibt, und das ist deine Beziehung, nicht unsere: Fastmon wählt diesen Anbieter nicht aus, hat keinen Vertrag mit ihm und führt ihn nicht als Unterauftragsverarbeiter. Ob deine Organisation diese Übermittlung vornehmen kann und auf welcher Grundlage, ist deine Bewertung. Genau deshalb ist das ein eigener Schalter auf Owner-Ebene mit Audit-Eintrag und nichts, was ein Mitglied nebenbei anschaltet.
+Zu prüfen ist, wohin diese Antworten gehen. Empfänger ist, wer das Modell hinter deinem Client betreibt, und das ist deine Beziehung, nicht unsere: Fastmon wählt diesen Anbieter nicht aus, hat keinen Vertrag mit ihm und führt ihn nicht als Unterauftragsverarbeiter. Ob deine Organisation diese Übermittlung vornehmen darf und auf welcher Grundlage, ist deine Bewertung. Daher der Schalter auf Owner-Ebene mit Audit-Eintrag.
 
-Es ist außerdem eine andere Entscheidung als der eingebaute **Ask**-Assistent. Der gibt Daten an unseren eigenen Unterauftragsverarbeiter unter unserer DPA, und die Zustimmung dazu sagt nichts über ein externes Modell. Zwei Empfänger, zwei Schalter, keiner impliziert den anderen.
+Der eingebaute **Ask**-Assistent ist eine eigene Entscheidung: Er gibt Daten an unseren eigenen Unterauftragsverarbeiter unter unserer DPA. Zwei Empfänger, zwei Schalter, keiner impliziert den anderen.
 
 An dem, was fastmon [überhaupt sammelt](/de/privacy), ändert sich hier nichts. Ein Feld, das der Tracker nie erfasst hat, kann das Modell auch nicht abfragen.
 
 ## Agenturen [#agencies]
 
-Eine Partner-Organisation kann einen KI-Client mit einer Kunden-Organisation verbinden, persönlich: Die Kunden-Organisationen stehen auf dem Consent-Screen zur Auswahl. Partner-Zugriff wird bei jedem Request aufgelöst, die Verbindung hört also in dem Moment auf zu funktionieren, in dem die Partnerschaft endet, und es bleibt nichts zu widerrufen.
+Eine Partner-Organisation kann sich persönlich mit einer Kunden-Organisation verbinden: Die Kunden-Organisationen stehen auf dem Consent-Screen zur Auswahl. Partner-Zugriff wird bei jedem Request aufgelöst, die Verbindung hört also auf zu funktionieren, sobald die Partnerschaft endet, und es bleibt nichts zu widerrufen.
 
-`mcp_enabled` bleibt beim Kunden: Es hängt an `org:update`, und das trägt Partner-Zugriff bewusst nicht. Der Übermittlung an ein externes Modell muss der Kunde selbst zustimmen, auch wenn die Agentur das Modell aussucht. Das Onboarding kostet auf Kundenseite also einen Klick. Die Genehmigung steht im Audit-Log des Kunden, gekennzeichnet als Partner-Zugriff.
+`mcp_enabled` bleibt beim Kunden, denn es hängt an `org:update`, und das trägt Partner-Zugriff bewusst nicht. Das Onboarding kostet auf Kundenseite also einen Klick, und die Genehmigung landet im Audit-Log des Kunden, gekennzeichnet als Partner-Zugriff.
 
 ## Einen MCP-Client bauen [#developers]
 
-Der Endpunkt spricht Streamable HTTP (JSON-RPC 2.0), zustandslos, mit reinen JSON-Antworten. Kein SSE, keine Session-ID, die gehalten werden muss.
+Streamable HTTP (JSON-RPC 2.0), zustandslos, reine JSON-Antworten. Kein SSE, keine Session-ID, die gehalten werden muss.
 
-**OAuth ist der einzige Weg hinein.** Der Endpunkt nimmt ein `fmt_`-Access-Token und sonst nichts: keinen persönlichen `fm_`-Key, keinen Organisations-Key `fmo_`, kein Session-Cookie. Ein Key trägt keine Audience und kann deshalb die Frage nicht beantworten, die ein Resource Server zu einem Token stellen muss: ob es für diesen Endpunkt ausgestellt wurde.
+**OAuth ist der einzige Weg hinein.** Der Endpunkt nimmt ein `fmt_`-Access-Token und sonst nichts: keinen persönlichen `fm_`-Key, keinen Organisations-Key `fmo_`, kein Session-Cookie. Ein Key trägt keine Audience und kann deshalb nicht sagen, ob er für diesen Endpunkt ausgestellt wurde.
 
 Richte deinen Client auf `https://api.fastmon.eu/mcp`, den Rest findet er selbst:
 
 1. Der unauthentifizierte Aufruf antwortet mit `401` und `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read", resource_metadata="…"`.
 2. Dieses Dokument (`/.well-known/oauth-protected-resource/mcp`, RFC 9728) nennt den Authorization Server und die Scopes, die diese Ressource benutzt.
-3. Registrieren (RFC 7591), Authorization Code mit PKCE ausführen und den Endpunkt im Parameter `resource` (RFC 8707) nennen, **im Authorization-Request und im Token-Request**. Es ist ein String, für jeden Kunden derselbe. Die Audience entscheidet der Authorization-Request und wird beim Consent an die Verbindung gebunden; der Token-Request darf denselben Wert nur noch einmal vorlegen.
+3. Registrieren (RFC 7591), Authorization Code mit PKCE ausführen und den Endpunkt im Parameter `resource` (RFC 8707) nennen, **im Authorization-Request und im Token-Request**. Ein String, für jeden Kunden derselbe. Die Audience entscheidet der Authorization-Request, der Consent bindet sie an die Verbindung, und der Token-Request darf denselben Wert nur wiederholen.
 
-Der Mandant wird beim Consent festgelegt und sonst nirgends. Ein Client kann an keiner Stelle des Flows eine Organisation benennen, und kein Request danach ändert die Antwort. Deshalb gibt es auch in den Tool-Argumenten nichts, was nach Mandant aussieht.
+Der Mandant wird beim Consent festgelegt und sonst nirgends. Ein Client kann an keiner Stelle des Flows eine Organisation benennen, deshalb gibt es auch in den Tool-Argumenten nichts, was nach Mandant aussieht.
 
-Zwei Defaults solltest du kennen. Eine Registrierung ohne `scope` deklariert allein `analytics:read` und liest in der Antwort zurück, was sie bekommen hat. Wer die Lighthouse-Tools braucht, muss also `synthetic:read` anfordern. Eine Registrierung ohne Angabe zu `credential_owner` bekommt eine persönliche Verbindung, und genau die verlangt dieser Endpunkt. `organization` zu deklarieren und dabei eine MCP-Ressource zu nennen, wird beim Consent mit einer entsprechenden Meldung abgelehnt.
+Zwei Defaults solltest du kennen. Eine Registrierung ohne `scope` bekommt allein `analytics:read`, nachzulesen in der Antwort. Wer die Lighthouse-Tools braucht, muss `synthetic:read` also ausdrücklich anfordern. Eine Registrierung ohne Angabe zu `credential_owner` bekommt eine persönliche Verbindung, und genau die verlangt dieser Endpunkt. `organization` plus MCP-Ressource wird beim Consent mit einer entsprechenden Meldung abgelehnt.
 
-Eine Ablehnung braucht besondere Behandlung: `403 mcp_disabled` heißt, die Organisation hat den Server ausgeschaltet. Sie trägt keinen `WWW-Authenticate`-Header, weil eine neue Autorisierung daran nichts ändert. Zeig die Meldung, statt einen neuen Authorization-Flow zu starten.
+`403 mcp_disabled` heißt, die Organisation hat den Server ausgeschaltet. Die Antwort trägt keinen `WWW-Authenticate`-Header, weil eine neue Autorisierung daran nichts ändert. Zeig die Meldung, statt einen neuen Flow zu starten.
 
 Der vollständige OAuth-Vertrag, inklusive Refresh-Rotation und der Fehler, auf die du verzweigen musst, steht unter [OAuth apps](/en/api/oauth) (nur auf Englisch).
 
