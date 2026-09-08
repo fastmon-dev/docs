@@ -99,6 +99,19 @@ Eine Opt-in-Allow-List (max. 20 Einträge) von Parameternamen, deren **Wert** zu
 
 ## Fehler
 
+### Was als Fehler zählt [#what-counts]
+
+Der Tracker zählt zwei Populationen getrennt, und sie mischen sich nie:
+
+- **JavaScript-Fehler** (`errc` im Beacon): nicht abgefangene Exceptions und unbehandelte Promise-Rejections. Daraus wird die Fehlerrate gebildet.
+- **Fehlgeschlagene Ressourcen** (`frc`): ein `<img>`, `<script>` oder `<link>`, das nicht geladen hat. Ein eigenes Signal mit eigener Rate und eigener Liste, denn diese Population wird von Ad-Blockern und Tracking-Schutz dominiert und nicht von Defekten der Seite. Siehe [Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
+
+Beide Zähler erfassen jedes Vorkommen. Das Beacon trägt bis zu acht sortierte Einträge: die fünf häufigsten JavaScript-Fehler, danach die drei häufigsten fehlgeschlagenen Ressourcen, jeweils innerhalb des eigenen Kanals sortiert. So kann eine Seite voller kaputter Bilder keine echte Exception vom Draht drängen.
+
+**First Party heißt: dieselbe registrierbare Domain wie die Seite.** Ein Skript, das von `cdn.shop.example` an eine Seite auf `www.shop.example` ausgeliefert wird, ist deins, und dieselbe Regel gilt für die Fehlerrate, das First-Party-Flag je Fehler, die Fehler-Herkunft des Pageviews, den Fetch/XHR-Split und die Ressourcen-Liste. Was der Privacy-Strip behält, ist eine strengere Regel und unverändert: ohne [`collect_error_frames`](#collect-error-frames) behält ein Frame außerhalb des exakten Seiten-Hosts seinen Host und sonst nichts.
+
+**`ScriptError`** ist der Typ für eine Exception, die der Browser maskiert. Ein Skript von einem anderen Origin, geladen ohne CORS-Opt-in, wird als wortwörtliches `Script error.` gemeldet, ohne Dateiname, Zeile oder Error-Objekt. Es ist damit keiner Datei zuzuordnen und teilte bisher einen Fingerprint mit jedem anderen Fehler ohne Frames. Mit dem Tracker-Bundle, das diese Änderung trägt, ist es ein eigener Typ; vorher geschriebene Zeilen behalten ihren alten Fingerprint. Ein Vergleich über den Rollout hinweg vergleicht also zwei Gruppierungen. Lade das Skript mit `crossorigin="anonymous"` von einem Host, der `Access-Control-Allow-Origin` sendet, dann meldet der Browser den echten Fehler. Setz das Attribut nicht, wo der Header fehlt, denn dann führt der Browser das Skript nicht aus.
+
 ### `collect_error_messages` [#collect-error-messages]
 
 Behält den freien Fehlermessage-Text (`Cannot read property 'x' of undefined`) statt nur Fehlertyp und -Count. Aus wird die Message serverseitig verworfen, und Dashboards sehen Aggregate wie „5 TypeErrors, 2 ReferenceErrors" plus Stack-Positionen. Aus per Default, auch auf Standard; das Preset Full schaltet es an.

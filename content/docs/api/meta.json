@@ -8,6 +8,7 @@
     "errors",
     "pagination",
     "---Endpoints---",
+    "search",
     "organizations",
     "members",
     "org-keys",

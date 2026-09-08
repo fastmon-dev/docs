@@ -90,6 +90,8 @@ The payload is JSON with deliberately short keys to keep the wire size down. The
   "lcp":  1820,
   "inp":  140,
   "cls":  0.05,
+  "errc": 1,
+  "frc":  0,
   "errs": [ { "t": "TypeError", "n": 1, "m": "...", "fr": "..." } ],
   "tv":   "260508-a1b2c3d",
   "dlv":  "b"
@@ -111,11 +113,12 @@ Key abbreviations:
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
 - Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. `frs` is `finalResponseHeadersStart` (stored as `ttfb_final`, `null` outside Chromium), the first byte of the final response where 103 Early Hints make `ttfb` point at the interim one. They were previously opaque numbered slots (`t1`…`t36`); cached older bundles still send those names, which the collector maps onto the same fields.
-- `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames). `t` and `n` ship in every configuration, and so does each frame's host (plus the path and line/column for frames in your own first-party external scripts). The message `m` is opt-in via [`collect_error_messages`](/en/tracker#collect-error-messages), and the path/line/column of inline and third-party frames via [`collect_error_frames`](/en/tracker#collect-error-frames); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings.
+- `errc`, `frc`: the two error counters, kept apart. `errc` counts JavaScript errors (exceptions and unhandled rejections), `frc` counts failed `<img>`/`<script>`/`<link>` loads. Both count every occurrence, not just the entries that fit below, and both are absent rather than zero when the beacon reported nothing for their channel (the pixel fallback and the oversized-payload path send fewer fields than a normal beacon). See [what counts as an error](/en/tracker#what-counts).
+- `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames), up to eight: the top five JavaScript errors followed by the top three failed resources, each ranked inside its own channel. `t` and `n` ship in every configuration, and so does each frame's host (plus the path and line/column for frames in your own first-party external scripts). The message `m` is opt-in via [`collect_error_messages`](/en/tracker#collect-error-messages), and the path/line/column of inline and third-party frames via [`collect_error_frames`](/en/tracker#collect-error-frames); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings. A pageview's **error origin** is derived server-side from the entries that arrived: `first` when any JavaScript entry has a frame on the page's own registrable domain, `third` when none does and a foreign host was seen, and empty when there was no error or no host to compare.
 - `snl`: **Route Load** for soft navigations (`soft_nav_load`): the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
-- Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs.
+- Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs. The promoted `Server-Timing` fields include the two cache ages, `cdn_age` and `origin_age` in seconds, next to the cache statuses they qualify; see [Server-Timing](/en/guides/server-timing#cache-age).
 
 Soft navigations (SPA route changes) produce no native paint or navigation-timing entries, so their loading vitals come from two places: the `snl` network proxy (every browser) and, on Chromium once its Soft Navigations API ships, real LCP/FCP written into the usual `lcp`/`fcp` keys and attributed to the route.
 

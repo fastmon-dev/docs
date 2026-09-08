@@ -83,7 +83,7 @@ Keys are hashed server-side; only the prefix is queryable.
 
 - **You can't manage another user's personal key.** Even an `owner` can only see and revoke their own. A shared job that must survive people is what organization keys are for. Every organization a key names records its creation, changes, and revocation in its audit log.
 - **Registration hands out no key.** A key needs an organization to be bound to; create it once your organization exists.
-- **Connected apps don't hold keys anymore.** A first-party integration authorized via OAuth holds a connection with short-lived tokens of its own; see [OAuth apps](/en/api/oauth). Connections made before this change keep their key until you reconnect the app.
+- **Connected apps don't hold keys anymore.** A first-party integration authorized via OAuth holds a connection with short-lived tokens of its own; see [OAuth apps](/en/api/oauth). The key kind those connections used to end in is gone, so there are exactly two kinds left, `personal` and `org`, and a key entry no longer carries an `oauth_client_id`. Read connections at `/account/connections` and under the organization's connections instead.
 
 ## Related
 

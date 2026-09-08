@@ -43,7 +43,7 @@ The consent screen asks for:
 
 - **One organization**, from those you can reach. The connection reads that one and nothing else, so two organizations mean two connections. One with MCP switched off is marked and cannot be approved.
 - **`analytics:read`**, required to connect at all.
-- **`synthetic:read`**, optional. Three tools read Lighthouse reports and need it; the other 16 work without.
+- **`synthetic:read`**, optional. Three tools read Lighthouse reports and need it; the other 17 work without.
 
 The screen labels the connection as an MCP one, next to the address it returns you to, because that is the fact worth seeing: what you release here can reach an AI model.
 
@@ -57,14 +57,14 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 
 ## What the model can read [#tools]
 
-19 tools, all read-only, all scoped to the organization the connection was approved for:
+20 tools, all read-only, all scoped to the organization the connection was approved for:
 
 | Area | Tools |
 | ---- | ----- |
 | Discovery | `list_sites`, `get_data_freshness` |
 | Traffic and Web Vitals | `get_overview`, `get_timeseries`, `get_breakdown`, `get_experience_score` |
 | Change over time | `compare_periods`, `detect_changes` |
-| Errors | `get_errors`, `get_error_detail` |
+| Errors | `get_errors`, `get_failed_resources`, `get_error_detail` |
 | Performance detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
 | Synthetic (lab) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
@@ -75,6 +75,10 @@ A call without a site covers the whole organization, since an MCP connection has
 `list_sites` also reports what each site **collects**: whether fetch/XHR collection, page-type detection, checkout tracking, session collection, and error messages and stack frames are on, plus which visitor identifier its counts use. Without that, a model reads the empty result of a switched-off feature as "no problem". Visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites with different identifiers says so rather than quietly mixing them.
 
 The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/synthetic) enabled for the organization. Missing either one is a refusal with a reason, never an empty report.
+
+**How answers are qualified.** Every p75 carries the measurement count behind it (`samples`), which is not the pageview count: the vital columns are nullable, so an LCP p75 can rest on a handful of measurements. It also makes a null legible, since `inp_p75_ms: null` beside `samples.inp: 0` reads as "nothing measured here" rather than as a disabled feature. Where a tool applies a sample floor it reports the floor it used, so an empty result under a floor is a different finding from an empty dimension. Whether a number is too thin to quote stays the caller's judgement.
+
+**How filters match.** A `url` written as a path (`/checkout*`) matches the path, and text filter values match case-insensitively, so `browser: ["chrome"]` and `device_type: ["Desktop"]` find the stored `Chrome` and `desktop`. `country` takes codes, not names, and repairs the ones ISO does not assign (`UK` and `EN` to `GB`, `EL` to `GR`). A tag no site carries is refused rather than answered as a scope of zero sites. There is no per-site timezone: a period without an offset is read as UTC.
 
 ## Limits [#limits]
 

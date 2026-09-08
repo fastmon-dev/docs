@@ -43,7 +43,7 @@ Der Consent-Screen fragt nach:
 
 - **Einer Organisation**, aus denen, die du erreichst. Die Verbindung liest genau diese eine, zwei Organisationen heißt also zwei Verbindungen. Eine mit ausgeschaltetem MCP ist markiert und lässt sich nicht genehmigen.
 - **`analytics:read`**, ohne das kommt keine Verbindung zustande.
-- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 16 funktionieren auch ohne.
+- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 17 funktionieren auch ohne.
 
 Der Screen benennt die Verbindung als MCP-Verbindung, direkt neben der Adresse, an die er dich zurückschickt. Das ist die Tatsache, die man sehen sollte: Was du hier freigibst, kann ein KI-Modell erreichen.
 
@@ -57,14 +57,14 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 ## Was das Modell lesen kann [#tools]
 
-19 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
+20 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
 
 | Bereich | Tools |
 | ------- | ----- |
 | Discovery | `list_sites`, `get_data_freshness` |
 | Traffic und Web Vitals | `get_overview`, `get_timeseries`, `get_breakdown`, `get_experience_score` |
 | Veränderung über die Zeit | `compare_periods`, `detect_changes` |
-| Fehler | `get_errors`, `get_error_detail` |
+| Fehler | `get_errors`, `get_failed_resources`, `get_error_detail` |
 | Performance im Detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
 | Synthetic (Labor) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
@@ -75,6 +75,10 @@ Ein Aufruf ohne Site umfasst die ganze Organisation, denn eine MCP-Verbindung ha
 `list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung sowie Fehlermeldungen und Stack-Frames an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Ohne das liest ein Modell das leere Ergebnis eines ausgeschalteten Schalters als „kein Problem“. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
 
 Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
+
+**Wie Antworten qualifiziert werden.** Jedes p75 trägt die Anzahl der Messungen mit, auf denen es steht (`samples`), und das ist nicht die Zahl der Pageviews: die Vitals-Spalten sind nullable, ein LCP-p75 kann also auf einer Handvoll Messungen ruhen. Damit wird auch ein `null` lesbar, denn `inp_p75_ms: null` neben `samples.inp: 0` heißt „hier wurde nichts gemessen" und nicht „das Feature ist aus". Wo ein Tool eine Mindestzahl an Messungen anwendet, nennt es diese Schwelle: ein leeres Ergebnis unter einer Schwelle ist ein anderer Befund als eine leere Dimension. Ob eine Zahl zu dünn ist, um sie zu zitieren, bleibt die Entscheidung des Aufrufers.
+
+**Wie Filter matchen.** Eine `url` als Pfad geschrieben (`/checkout*`) matcht den Pfad, und Textfilter matchen ohne Rücksicht auf Groß- und Kleinschreibung: `browser: ["chrome"]` und `device_type: ["Desktop"]` finden also das gespeicherte `Chrome` und `desktop`. `country` nimmt Codes, keine Namen, und repariert die, die ISO nicht vergibt (`UK` und `EN` zu `GB`, `EL` zu `GR`). Ein Tag, das keine Site trägt, wird abgewiesen, statt als Scope über null Sites beantwortet zu werden. Es gibt keine Zeitzone pro Site: ein Zeitraum ohne Offset wird als UTC gelesen.
 
 ## Grenzen [#limits]
 
