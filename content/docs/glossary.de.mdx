@@ -19,6 +19,14 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP, INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate. Gemappt auf Schulnoten A+ bis F. Siehe [Experience Score](/de/web-vitals/experience-score).
 
+**Fehlerrate**: Anteil der Pageviews mit mindestens einem JavaScript-Fehler (eine nicht abgefangene Exception oder eine unbehandelte Rejection). Fehlgeschlagene Ressourcen stecken nicht darin. Siehe [Fehler-Analytics](/de/analytics#error-analytics).
+
+**Fehlgeschlagene Ressource**: Ein `<img>`, `<script>` oder `<link>`, das nicht geladen hat. Ein eigenes Signal mit eigener Rate (`failed_resource_rate`), geteilt in eigene und fremde Hosts, denn die fremde Hälfte wird von Ad-Blockern dominiert. Siehe [Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
+
+**First Party**: Dieselbe registrierbare Domain wie die Seite. `cdn.shop.example` ist First Party zu `www.shop.example`. Das ist die Regel hinter Fehlerrate, Fehler-Herkunft, Fetch/XHR-Split und Ressourcen-Liste.
+
+**`ScriptError`**: Der Fehlertyp für eine Exception, die der Browser als `Script error.` maskiert, geworfen von einem Skript aus einem anderen Origin ohne CORS-Opt-in. Kein Dateiname, keine Zeile, keine Meldung, also keiner Datei zuzuordnen. Siehe [Fehler](/de/tracker#what-counts).
+
 **Core Web Vitals**: Googles Drei-Metrik-Set: LCP, INP, CLS. Die Metriken, die das Suchranking beeinflussen.
 
 ## Beacon und Ingestion
@@ -45,7 +53,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Application**: Ein Tracking-Snippet. Ihr gehören das ausgelieferte Bundle, beide Hashes und jede [Tracker-Einstellung](/de/tracker); sie bedient eine oder mehrere Sites. Siehe [Applications](/de/concepts/applications).
 
-**Plan**: Organisations-Tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Steuert Features und Quotas.
+**Plan**: Organisations-Tier: `none`, `beta`, `light`, `standard`, `partner`, `enterprise`. Steuert Features und Quotas. Eine neue Organisation startet auf `none`; abgerechnet wird die Production-[Application](/de/concepts/applications). Siehe [Organisationen → Pläne](/de/concepts/organizations#plans).
 
 **Site**: Eine Domain unter einer Application, mit eigenem Dashboard und eigenem Traffic. Hashes und Erfassungseinstellungen liegen an der Application; eine Site trägt nur Per-Domain-Overrides. Siehe [Sites](/de/concepts/sites).
 

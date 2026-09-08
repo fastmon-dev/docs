@@ -3,24 +3,20 @@ title: Analytics
 description: Traffic, visitors, errors, and the Experience Score. The field-data dashboards on top of your beacons.
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
 Analytics is the exploration layer on top of everything your beacons collect: who's on the site right now, where traffic comes from, which pages get viewed, which errors fire, and how whole visits unfold. It complements the [Web Vitals dashboard](/en/web-vitals): same data, different question. Web Vitals asks "how fast is the site?"; Analytics asks "what's happening on it?"
-
-<Callout type="warn" title="Beta">
-  Analytics is in beta and open to every member of the organization. Layout and metrics may still change.
-</Callout>
 
 ## The dashboard
 
 The main Analytics view for a site shows:
 
-- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15. On shops the card also shows how many of them are at the cart, checkout, and success stage.
-- **Headline metrics**: Unique Visitors, Pageviews, Views per Visit, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range, so a day and a month compare on the same footing.
-- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. With Checkouts selected, cart and checkout are drawn underneath as context lines.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on).
-- **Checkout numbers**: visitors, visitors with a cart interaction, with a checkout page, and with a completed checkout, plus cart requests by kind. Counts only, no derived rates; see [Checkout funnel](/en/checkout-funnel).
-- **Campaigns & attribution**: UTM coverage and source/medium/campaign lists, including ad-platform click-ID labels.
+- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the pages being viewed right now and the sources they came through. On shops the card also shows how many of them are at the cart, checkout, and success stage.
+- **Headline metrics**: Unique Visitors, Pageviews, Views per Visit, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range, so a day and a month compare on the same footing. Clicking a tile explains what it counts.
+- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. The legend sits above the chart, in a row with the bar/area switch, and each series can be switched off on its own: with Checkouts selected, cart runs an order of magnitude above completed purchases, and hiding it lets the axis scale to the rest. Every series carries its own previous-period value and its own switch for it.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
+- **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
+- **Traffic quality**: the split from bot classification, first as one bar, then as clickable rows.
+- **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
+- **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. Deliberately not a bounce rate: whether somebody left afterwards is not in the data.
 
 Visitor counts are anonymous by construction; see [Privacy](/en/privacy) for what a "visitor" can and cannot mean here.
 
@@ -32,20 +28,48 @@ Filters live in the URL, so they survive a reload, are shareable, and carry acro
 
 Every chip also has an on/off switch. Switched off, the chip keeps its values and stays in place, drawn struck through, and the query runs without it: the quickest way to answer "what does this look like without the country filter" and then put it back. A switched-off filter narrows nothing and is not counted in the badge; clicking the same country on the map or the same device segment switches it back on instead of adding a second filter. The state travels in the URL too, so a shared link opens with the same filters on and off.
 
-## Navigating with the command palette
+## The Explorer [#explorer]
+
+The Explorer is the table underneath everything else: group pageviews by any dimension and chart the metrics, or read the raw rows. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a row adds its value to the filters rather than replacing them, so drilling in from a page filtered to Germany narrows instead of emptying the table.
+
+Results can be copied as Markdown or downloaded as CSV: same rows in the same order, values unformatted, the unit in the header, so a spreadsheet can compute with them.
+
+## Navigating with the command palette [#command-palette]
 
 Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to open a searchable command menu that drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add, remove, or clear filters. Start typing to search everything at once, or drill into a category with `Enter` or `→`; `←` or `Backspace` steps back and `Esc` closes.
 
-## Error Analytics
+Typing searches **across every organization you can reach**, not just the one you have open: your own memberships, the client organizations of any agency you belong to, and applications and domains inside them. Each hit says which organization it lives in, so reaching a domain in another one no longer means remembering where it is and switching there first. Applications lead the results, and picking one sets the application filter on the page you are on, the way picking a page always has. Inactive sites and applications are listed and flagged, because reactivating one starts with finding it.
+
+The same search is available from a script as [`GET /search`](/en/api/search/search).
+
+## Error Analytics [#error-analytics]
 
 The Errors view tracks JavaScript errors across the site:
 
-- **Error rate over time**: the share of pageviews with at least one error.
+- **Error rate over time**: the share of pageviews with at least one JavaScript error. A failed image, script, or stylesheet is not an error here; it belongs to [failed resource loads](#failed-resources) and runs as its own curve on the same chart.
 - **Error types**: errors grouped by fingerprint (type + message
   + stack shape), ranked by count.
 - **Detail drill-down**: for one fingerprint: total count, visitors affected, first/last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames.
+- **Error origin**: how pageviews with an error split between your own hosts and foreign ones. The third bar, "No error or not attributable", holds pageviews without an error plus errors that arrived with no host to attribute them to.
+
+**Your own subdomains count as yours.** First party means the same registrable domain as the page, so a bundle served from `cdn.shop.example` on a page at `www.shop.example` is your own script, in the error rate, the error origin, the Fetch/XHR split, and the resource list alike.
+
+`ScriptError` is a group worth knowing: an uncaught exception in a script from another origin loaded without CORS opt-in. The browser hides the filename, the line, and the message, so the group cannot be attributed to a file. To resolve it, load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin`; the browser then reports the real error. Do not set the attribute on a host that lacks the header, because the browser will refuse to run the script. Where `ScriptError` is present, the error-types response also lists `own_subdomain_hosts`: hosts on your own domain that served scripts in this scope, which is where the attribute and the header are usually missing.
 
 How much detail you see depends on the site's [tracker settings](/en/tracker): error **type and count** arrive always. The error **message** needs [`collect_error_messages`](/en/tracker#collect-error-messages), and full **stack frames** need [`collect_error_frames`](/en/tracker#collect-error-frames).
+
+### Failed resource loads [#failed-resources]
+
+A failed `<img>`, `<script>`, or `<link>` is its own signal, with its own rate (`failed_resource_rate`), its own curve beside the error rate, and its own block at the bottom of the page. It is split into two buckets:
+
+- **Your own hosts**: the actionable half. A broken image path, a bundle that 404s after a deploy.
+- **Foreign hosts**: dominated by ad blockers and tracking protection, so not a defect of the site.
+
+Ownership is the registrable-domain rule above. The list ranks hosts and paths by failed loads and by the pageviews they affected; the totals cover the whole scope, so the top rows do not sum to them. The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames).
+
+Ad-blocked requests to known tracker hosts stay visible as a subset of the foreign bucket, and the error-types panel reports them as `blocked_count`: read it as "N excluded as ad-blocked", not as a failure.
+
+The endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here, because an empty list would read as "you have none".
 
 ## Visitors
 
@@ -56,6 +80,8 @@ A visitor is counted along an identity axis: `stitch` (present when [`store_stit
 ## Fetch/XHR and Server-Timing
 
 Beyond page navigations, the dashboard surfaces in-page request telemetry: a Fetch/XHR view with an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, and a status-error distribution), plus a per-beacon detail, and a Server-Timing view that breaks out the `Server-Timing` metrics your backend reports. Both are driven by fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
+
+The Fetch/XHR error rate counts failures on your own hosts, by the same registrable-domain rule as the [error rate](#failed-resources), so a call from `www.shop.example` to `api.shop.example` is your own. Failures on foreign hosts are reported beside it as their own number, because that population is mostly the visitor's ad blocker. The panel's own 1P/3P filter follows the same rule.
 
 The Server-Timing view is new: the beacon already reads the header on every pageview, and the dashboards on top of it are still being tuned. To emit the header and learn how fastmon splits it into backend phases, cache status, and custom keys, see [Server-Timing headers](/en/guides/server-timing).
 

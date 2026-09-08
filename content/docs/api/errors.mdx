@@ -42,6 +42,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | ------ | ----------------------------------------------------------------------------------- |
 | `400`  | The body or query was malformed. See `code` for specifics.                          |
 | `401`  | Authentication failed or wasn't provided. See [Authentication](/en/api/authentication). |
+| `402`  | Allowed, but the organization is not entitled to it. See [Entitlement](#entitlement). |
 | `403`  | Authenticated, but not allowed. Missing permission, wrong organization, or paused resource. |
 | `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
 | `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
@@ -116,6 +117,17 @@ The full list, grouped by category.
 | `self_transfer_forbidden`     | Can't transfer ownership to yourself.                                            |
 | `last_owner`                  | Demoting or removing the organization's last owner would leave nobody who can administer it. |
 | `conflict`                    | Catch-all conflict without a more specific code.                                 |
+
+### Entitlement [#entitlement]
+
+Answered with `402`. The permission was there; what the organization is on does not cover the action. Creating a **production** [application](/en/concepts/applications), or promoting a development one to production, is the route a script meets these on. A development application is free and takes no slot.
+
+| Code                | Meaning                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `billing_required`  | No active subscription, valid trial, or free plan. Nothing to create against.               |
+| `trial_expired`     | The trial has lapsed and no payment has taken its place.                                    |
+| `app_limit_reached` | The plan's production application slots are used up. Buy a slot, upgrade, or create the application as development. |
+| `billing_disabled`  | Billing is switched off platform-wide. Nothing for the caller to fix.                       |
 
 ### Input
 

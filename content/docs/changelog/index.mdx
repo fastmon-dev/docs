@@ -12,6 +12,141 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-08" type="changed" area="tracker" title="The error rate counts errors again">
+
+The error rate said "share of pageviews with at least one error" and counted every failed image, script and stylesheet into it. The server could only subtract the hosts it recognised from a list of about 50 trackers, and ad-block lists carry tens of thousands, so shops with healthy JavaScript saw error rates around 60 percent. The tracker now counts the two populations apart.
+
+- **The error rate is JavaScript errors only**: the share of pageviews with at least one uncaught exception or unhandled rejection.
+- **Failed resource loads are their own signal**, with their own rate (`failed_resource_rate`), their own curve beside the error rate, their own block at the bottom of the error page, and their own list at `POST /analytics/failed-resources`. Each row says whose host it was, yours or a foreign one. The MCP server gained `get_failed_resources`. The error-types endpoint now refuses `error_type: ["ResourceLoadError"]` with a 400 pointing there, because an empty list would read as "you have none".
+- **The beacon ships two ranked lists.** Up to five JavaScript errors followed by up to three failed resources, each ranked inside its own channel, so a page full of broken images cannot push a real exception off the wire. Two counters, `errc` and `frc`, count every occurrence rather than only the entries that fit.
+- **Your own subdomains count as yours.** First party used to mean the exact page host, so a shop serving its bundle from `cdn.shop.example` had its own errors attributed to a third party and no file path to look at. The rule is now the registrable domain, in one place, for the error rate, the error origin, the Fetch/XHR split and the resource list alike.
+- **The Fetch/XHR error rate follows the same rule.** It counts failures on your own hosts and reports failures on foreign hosts as a separate number beside it. A blocked tracker call used to leave the rate only when its host happened to be on our list.
+- **Three numbers change meaning on the deploy day.** The error rate, because it stops counting resource failures. The error origin, because one own frame anywhere on the pageview now makes it yours, while an error whose origin cannot be determined at all stays unattributed instead of counting against a third party. And the first-party flag on each error, because of the subdomain rule. A comparison spanning that day compares two definitions.
+- **No backfill.** Old beacons carry resource failures inside the error count and at most five error entries, so the split cannot be reconstructed from them.
+
+Docs: [Analytics → Failed resource loads](/en/analytics#failed-resources), [Tracker → What counts as an error](/en/tracker#what-counts).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-07" type="new" area="tracker" title="Browser-masked cross-origin errors get their own type">
+
+An uncaught exception in a script from another origin loaded without CORS opt-in is reported by the browser as the literal `Script error.`, with no filename, line or error object. The tracker used to file it as a nameless `Error` with one empty frame, where it shared a fingerprint with every other frameless error and could not be told apart. Measured across production sites it was one sixth of all JavaScript errors.
+
+- **It arrives as the type `ScriptError`.** Existing rows keep their old fingerprint, so the new name applies from the next tracker load and a comparison spanning the rollout compares two groupings.
+- **To resolve the bucket**, load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin`. The browser then reports the real error. Do not set the attribute on a host that lacks the header, because the browser refuses to run the script.
+- **The breakdown names the hosts to look at.** Where `ScriptError` rows are present, `POST /analytics/error-types` also lists `own_subdomain_hosts`: hosts on your own domain, other than the page host, that served scripts or slow resources in the same scope. A hint from the hosts the beacons happened to see, not a complete list.
+- The error rate keeps counting them, because it counts every JavaScript error by design.
+
+Docs: [Tracker → What counts as an error](/en/tracker#what-counts).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-07" type="new" area="platform" title="Find any organization, application or domain from one box">
+
+The command palette (`Cmd`/`Ctrl`+`K`) could only offer the sites of the organization already selected. Reaching a domain in another one meant knowing which organization it was in and switching there first, and an agency had no way to type a domain and land on it.
+
+- **One search across everything you reach**: your own memberships, the client organizations of every agency you belong to, and the applications and domains inside them. Each hit carries the organization it lives in and what you are there, so a click navigates straight to it.
+- **Applications lead the results**, and picking one sets the application filter on the page you are on, the way picking a page always has. It used to drop you into that application's settings whatever you were looking at.
+- **Inactive sites and applications are listed and flagged.** Reactivating one starts with finding it. Inactive organizations never appear.
+- **The same search from a script**: `GET /search`, with `q` (substring, case-insensitive), `kinds` to narrow, and `limit` (max 50 per kind). Results come grouped per kind, best match first: exact name, then prefix, then substring, then alphabetical. A key is cut to the organizations it was issued for and to its scopes, so a key without `site:read` gets no sites whatever its owner's role is.
+
+Docs: [API → Search](/en/api/search/search), [Analytics → Navigating with the command palette](/en/analytics#command-palette).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-07" type="new" area="dashboard" title="The Analytics page says what its numbers mean">
+
+A pass over the whole page, aimed at the panels that showed a number without saying what it counted or where to go next.
+
+- **Two new panels.** Active hours puts hour of day against weekday, so it is visible when something actually happens on the site. Engagement shows the share of visitors who saw a single page, with the distribution of pages per visitor and its median. Deliberately not a bounce rate: whether somebody left afterwards is not in the data.
+- **The checkout panel is a funnel** instead of four numbers side by side: one bar per stage on a shared edge, with the share of the stage before it. Where people drop out was not visible before.
+- **Every breakdown panel explains itself.** The title says what it counts, the footer says how many values sit behind the eight rows shown, and "Show all" leads into the Explorer carrying the page's filters, including exclusions, metric ranges and the bot switches. A single row opens there too, and clicking one adds its value to the filters instead of throwing the others away.
+- **The chart legend moved above the chart** and switches series on and off, each on its own. With Checkouts selected, cart runs an order of magnitude above completed purchases and hid the smaller series in the shared scale. Every series now carries its own previous-period value and its own switch for it.
+- **New tabs**: Hosts under Pages, Viewport under Devices, Campaign, Ad platform and UTM medium under Sources. The UTM tabs also say what share of pageviews carries the parameter at all, since a top list of the tagged traffic says nothing about how big that part is.
+- **The live strip expands.** "Last 5 minutes" opens to show which pages are being viewed and which sources the visitors came through.
+- **Traffic quality reads as a split**, first as one bar, then as clickable rows, on the dashboard as well. The Bots and Datacenter metrics are gone from the chart switcher: no query filled them and they drew a zero line.
+- **KPI tiles explain what they count** on click, and the map, the filter chips, the Explorer and the device legend now carry the same icons per source, channel, platform, page type, device, browser and OS.
+- The beta badge is gone from the page heading.
+
+Docs: [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-07" type="changed" area="dashboard" title="The map opens on your traffic, and an unfinished bucket looks unfinished">
+
+- **The map frames the countries that carry the traffic** instead of a fixed view. A shop selling into DACH opens on Europe rather than on a frame stretching from the Americas to China. The frame follows pageviews rather than country count, so a single visit from the far side of the world does not pull it back out to the globe while a market holding a fifth of the traffic still does.
+- **The map is readable in both themes.** Countries without data were painted black, because the fill was invalid CSS and SVG paints an invalid fill black. Traffic shading now has five clearly separated steps with a legend that puts numbers on them, chosen separately for light and dark, and borders follow the theme instead of a fixed black. The map also has a maximum width and a fixed two-to-one shape, so a full-width map no longer pushes everything under it off the screen.
+- **The bucket that is still filling looks the same in every chart**: a dashed line whose dashes crawl forward, so it reads as a line still being drawn. Seven charts drew it standing still, among them the error rate and the request trend, and the percentile charts (LCP, TTFB, the Fetch/XHR trends, the synthetic trend) drew no dashed bucket at all and let the unfinished value fall to the floor at the right edge.
+- **The traffic chart no longer drops to the floor at its right edge.** Zero-filling reached into the hour that is still running, so a five-minute-old hour arrived as a hard zero. A bucket containing the current moment is never invented: it is drawn dashed when the backend has it, and left to the hatched band when it does not.
+- **The Explorer downloads as CSV**, next to "Copy as Markdown": same rows in the same order, values unformatted, the unit in the header, so a spreadsheet can compute with them. A bot filter now also survives the jump into the Explorer.
+- The Active hours grid only shows the weekdays the selected window actually reached, instead of a full week with five empty rows that read as "nothing happened on Wednesday".
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-07" type="fixed" area="dashboard" title="A deleted domain stayed on the applications page">
+
+Deleting a domain now removes its row right away, instead of leaving it there until the page was reloaded. The rows are read through the query cache and the delete only refreshed the sidebar's site list, so the page went on showing what it had. Adopting a detected domain refreshes the same reads now, which keeps the domain count on the application in step as well.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-06" type="new" area="platform" title="Plans, and the application as the billed unit">
+
+Self-service billing. A customer picks a plan, checks out, and pays a fixed monthly or yearly base by card or bank transfer.
+
+- **The application is what gets billed, and only a production one.** A development application is free and unlimited, and the environment is switchable on the create form and in the application's settings. A plan includes a number of production slots; creating or promoting one past them is refused with `402 app_limit_reached`, and the create form warns at the environment switch before the click, offering a development application or an extra slot instead.
+- **A new organization has no plan.** `plan` starts at `none` and leaves it by exactly three routes: an approval starts its trial, a checkout buys a plan, or a partner provisions it. Organization creation used to hard-set a tariff nobody had chosen. The wire values are `none`, `beta`, `light`, `standard`, `partner` and `enterprise`; `pro` is now `standard` and `starter` is now `light`.
+- **Capacity is bought in advance, never billed after a spike.** Pageview volume comes in permanent blocks, in the increments the plan sells, and extra production slots are their own add-on. Plan, blocks and slots go into the same first payment and into the recurring amount. A monthly job snapshots each site's pageviews per period so the quota meter and the per-application usage have numbers to show.
+- **Every price is shown net and gross**, with the VAT rate, reverse charge named where it applies. Invoices list what was booked line by line (plan, pageview blocks with their quantity, application slots) with the VAT breakdown and a PDF download.
+- **Billing is sold within the EU for now.** A billing profile with a seat outside the EU is refused when it is saved, with the error code `billing_country_not_supported`. Country, postal code and VAT id are validated against each other when the profile is saved rather than costing something silently later.
+- **Billing has its own two permissions.** `billing:read` opens the invoices, the address and the VAT id and is a member permission, deliberately outside the viewer bundle, so a read-only seat does not see the Billing tab at all rather than opening it onto a row of 403s. `billing:manage` moves the money and stays with the owner. An agency reading its client's invoices resolves to member there, which is exactly read without manage.
+- **Three surfaces instead of one dense tab**, cut along the question: "Plan & usage" for what the organization is on and how much is in use, "Billing" for who pays and how, and a separate plans page for choosing, because the feature lists need the room.
+- **Trials** start when an organization is approved, with the days left in the header banner and in the billing tab.
+- **The payment method on file is visible and replaceable**, with brand, last four and expiry. It is flagged 30 days before it expires and named as expired afterwards.
+- **Every gated action carries its reason**: a tooltip on hover plus one visible notice per page, with a jump link to whatever is incomplete. An organization without a plan is sent to plan selection rather than into a checkout for the cheapest one.
+
+Docs: [Organizations → Plans](/en/concepts/organizations#plans), [Errors → Entitlement](/en/api/errors#entitlement).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-04" type="new" area="api" title="How old the cache hit was, per tier">
+
+The cache status says whether the visitor got a cached object. Two new `Server-Timing` keys say how old it was, which is the other half of the question: a shop with a 95 percent hit rate whose objects average four hours old is serving fast and stale.
+
+- **`fm-cdn-age;desc=42` fills `cdn_age`, `fm-origin-age;desc=312` fills `origin_age`**, both in seconds. Emit them on a cache hit only, because on a miss the age is 0 and drags every percentile down. The value rides `desc`, not `dur`: `dur` is specified in milliseconds and DevTools draws it as a bar in the document request's timing view, so an age there would render as a backend phase that never happened. Values above a year are dropped rather than clamped, since a number that large is a timestamp.
+- **Two columns, not one.** A shop behind a CDN has both ages in the same pageview. The origin's header freezes inside the CDN object, so under a CDN hit the origin value is the age at the moment the CDN fetched, and only the sum is the age the visitor saw. The Server-Timing panel reports three rows, `cdn`, `origin` and `content` (the sum under a CDN hit), computed server-side because the p75 of a sum is not the sum of the p75s.
+- Both are metrics with the usual avg and p50 to p99, fields on the beacon rows and in the pageview detail next to the cache status they qualify, and available through the MCP server's `get_server_timing`.
+- **`fm-fpc` is renamed to `fm-origin-cache`** and the old name is no longer recognized. It was the only first-party key calling the origin tier something other than `origin`, which next to `fm-origin-age` would have put two words for one tier in a single header. A header still sending `fm-fpc` shows it in the panel's top-keys list instead of silently filling nothing. `fm-cdn` keeps working; `fm-cdn-cache` is the documented spelling.
+
+Docs: [Server-Timing → Cache age](/en/guides/server-timing#cache-age).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-03" type="removed" area="api" title="The pre-grant connected-app key is gone">
+
+`api_keys.kind` no longer has `oauth_app`, and `oauth_client_id` is dropped with it, so two kinds remain: `personal` and `org`. The app consent flow used to end in a long-lived key owned by whoever clicked "connect"; it has ended in an OAuth grant since connected apps became OAuth connections of the organization, and the old shape was never issued in production.
+
+- `GET /account/api-keys` entries no longer carry `oauth_client_id`. Connected apps were never meant to be read from that list; they are at `/account/connections` and under the organization's connections.
+- Every key now audits as `api_key.issued` and `api_key.revoked`. The `app_token.*` entries belong to grants alone, which is what they described on the reading side all along.
+
+Docs: [API → Authentication](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-03" type="changed" area="platform" title="The MCP tools answer with their denominators, and their filters match">
+
+Two rounds of feedback from MCP clients working through the catalog against a live organization. Everything here answered plausibly rather than failing, which is what makes it worth a note: nothing in the response said the question had not been asked the way the caller meant it.
+
+- **Every p75 now carries the measurement count behind it.** `get_overview` gained a `samples` block, `compare_periods` and `detect_changes` one per period. It is not the pageview count: the vital columns are nullable, so a client quoted an LCP p75 built from seven pageviews with nothing to warn it. It also makes a null legible, since `inp_p75_ms: null` beside `samples.inp: 0` is "nothing measured here" rather than a disabled feature.
+- **A `url` filter written as a path matches the path.** Every tool description offers `/checkout*` as its example and the column stores the absolute URL, so it matched nothing on every site and answered a clean zero.
+- **Filter values match case-insensitively**, every text field of them. `browser: ["chrome"]`, `device_type: ["Desktop"]` and `utm_source: "Google"` each answered zero on data holding exactly what was asked for, because the stored spelling is `Chrome` but `desktop`. `country` refuses a name outright and repairs the codes ISO does not assign (`UK` and `EN` to `GB`, `EL` to `GR`).
+- **`get_breakdown` reports the floor it applied and stops flooring counters.** `min_samples` dropped rows invisibly, and an empty result under a floor of 50 is a different finding from an empty dimension. It also hit `pageviews`, where the value is the sample count, so "top pages by traffic" on a small site returned one row and dropped nine.
+- **`get_error_detail` stops inventing a signature.** An aggregate over no rows returned type `Error` with 1970-01-01 timestamps; responses now carry `found`, and a false one nulls the signature. A tag no site carries is refused rather than answered as a scope of zero sites.
+- The server instructions now state that there is no per-site timezone, since a period without an offset is read as UTC and a client had been guessing `+02:00`.
+
+Docs: [MCP server → What the model can read](/en/mcp#tools).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-02" type="new" area="platform" title="Connect your own AI client over MCP">
 
 An organization's real-user data can now be read by an AI client you run yourself (Claude Desktop, Claude.ai, Cursor) over the Model Context Protocol: 19 read-only tools serving the same numbers the dashboard shows.

@@ -25,20 +25,25 @@ Most accounts only ever have one organization. Multiple is mostly a thing for ag
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
 | `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/organizations/{id}/…`). |
 | `name`            | string                                    | Human-readable. Shows in the org switcher.                            |
-| `plan`            | enum                                      | `beta`, `starter`, `pro`, `partner`, or `enterprise`.                 |
+| `plan`            | enum                                      | `none`, `beta`, `light`, `standard`, `partner`, or `enterprise`.      |
 | `members`         | list of `{ user_id, role }`               | Roles: `owner`, `member`, `viewer`. The payload also carries your own `role` and `permissions`. |
 
 ## Plans
 
 | Plan          | When you'd be on it                                          |
 | ------------- | ------------------------------------------------------------ |
+| `none`        | The starting state. Nobody has chosen anything yet.          |
 | `beta`        | Early access during onboarding. Limited quota.               |
-| `starter`     | Single-product teams. Default retention.                     |
-| `pro`         | Production teams. Higher retention.                          |
+| `light`       | Single-product teams. Default retention.                     |
+| `standard`    | Production teams. Higher retention.                          |
 | `partner`     | Agencies. Manage **partner clients** (sub-organizations you operate on behalf of someone else). |
 | `enterprise`  | Custom limits, custom retention, signed DPA.                 |
 
+A new organization starts on `none` and leaves it by exactly three routes: an approval starts its trial, a checkout buys a plan, or a partner provisions it.
+
 The plan gates features and quotas. Which Web Vitals get collected isn't tied to the plan; every plan collects the same metrics.
+
+**What a plan is measured in.** The billed unit is the [application](/en/concepts/applications), and only a **production** application takes a slot: a development application is free and unlimited. A plan includes a number of production slots and a monthly pageview volume; both can be extended with permanent add-ons, bought in advance rather than billed after a spike. Creating or promoting a production application past the included slots is refused with `402 app_limit_reached` (see [Errors](/en/api/errors)), and an organization with no entitlement at all gets `402 billing_required` or `402 trial_expired`.
 
 ## Roles
 
@@ -46,9 +51,11 @@ A role is a fixed bundle of **permissions**. A permission is one capability in `
 
 | Role     | Can do                                                                                       |
 | -------- | -------------------------------------------------------------------------------------------- |
-| `owner`  | Everything a member can, plus: organization settings (name, AI and synthetic monitoring consent), members and their roles, notification rules, partner relationships, the audit log, billing, transfer, and deletion. |
-| `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; invite people. |
-| `viewer` | Read-only. Sees dashboards, analytics, releases, synthetic results, notification rules, and the member list. Changes nothing and triggers nothing that costs money or sends mail. |
+| `owner`  | Everything a member can, plus: organization settings (name, AI and synthetic monitoring consent), members and their roles, notification rules, the audit log, paying (`billing:manage`), transfer, and deletion. |
+| `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; invite people; read the invoices (`billing:read`); on a `partner` organization, manage its clients (`partner:manage`). |
+| `viewer` | Read-only. Sees dashboards, analytics, releases, synthetic results, notification rules, and the member list. Changes nothing, triggers nothing that costs money or sends mail, and does not see billing. |
+
+**Billing is two permissions, not one role.** `billing:read` opens the invoices, the billing address, and the VAT id; `billing:manage` moves the money. Reading is a member permission and deliberately outside the viewer bundle, so a read-only seat does not see the Billing tab at all rather than opening it onto a row of 403s. Paying stays with the owner. An agency reading its client's invoices resolves to member there, which is exactly `billing:read` without `billing:manage`.
 
 The bundles nest: a member holds everything a viewer holds, an owner everything a member holds. [Personal API keys](/en/api/authentication) are cut from the same bundles: a key's scopes are permissions, intersected with your current role on every request. An [organization key](/en/api/authentication#two-kinds-of-key) belongs to the organization instead and stands on its scopes alone, capped at issue time. Managing organization keys and [connected apps](/en/api/oauth) takes `org_key:manage`, which members and owners hold and viewers do not.
 
@@ -67,6 +74,8 @@ Run two unrelated brands and want billing and access cleanly separated? Create t
 ### Agency running client sites
 
 Use the `partner` plan. Each client is a **partner client**: a sub-organization the agency runs. Agency users see all clients; the client sees only itself. A partner organization can also issue [one API key that follows its client list](/en/api/authentication#creating-a-key) instead of one key per client.
+
+Any **member** of the partner organization can create a client, hand it to the customer with `owner_email`, and detach one again; on the other side, a member of the client organization can revoke the agency's access. What guards those routes is direct membership: an agency reaching an organization through a partnership can neither manage that organization's own clients nor revoke a partner link there.
 
 ## Common surprises
 

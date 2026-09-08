@@ -19,6 +19,14 @@ Compact definitions. For depth, follow the link on each term.
 
 **Experience Score**: Composite score from 0.0 to 10.0, weighted across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate. Mapped to letter grades A+ through F. See [Experience Score](/en/web-vitals/experience-score).
 
+**Error rate**: Share of pageviews with at least one JavaScript error (an uncaught exception or an unhandled rejection). Failed resource loads are not in it. See [Error Analytics](/en/analytics#error-analytics).
+
+**Failed resource load**: An `<img>`, `<script>`, or `<link>` that did not load. Its own signal with its own rate (`failed_resource_rate`), split into your own hosts and foreign ones, because the foreign half is dominated by ad blockers. See [Failed resource loads](/en/analytics#failed-resources).
+
+**First party**: Same registrable domain as the page. `cdn.shop.example` is first party to `www.shop.example`. The rule behind the error rate, the error origin, the Fetch/XHR split, and the resource list.
+
+**`ScriptError`**: The error type for an exception the browser masks as `Script error.`, thrown by a script from another origin loaded without CORS opt-in. No filename, line, or message, so it cannot be attributed to a file. See [Errors](/en/tracker#what-counts).
+
 **Core Web Vitals**: Google's three-metric set: LCP, INP, CLS. The metrics that affect search ranking.
 
 ## Beacon and ingestion
@@ -45,7 +53,7 @@ Compact definitions. For depth, follow the link on each term.
 
 **Application**: One tracking snippet. Owns the served bundle, both hashes, and every [tracker setting](/en/tracker), and serves one or more sites. See [Applications](/en/concepts/applications).
 
-**Plan**: Organization tier: `beta`, `starter`, `pro`, `partner`, `enterprise`. Gates features and quotas.
+**Plan**: Organization tier: `none`, `beta`, `light`, `standard`, `partner`, `enterprise`. Gates features and quotas. A new organization starts on `none`; the billed unit is the production [application](/en/concepts/applications). See [Organizations → Plans](/en/concepts/organizations#plans).
 
 **Site**: One domain under an application, with its own dashboard and traffic. The hashes and collection settings live on the application; a site carries only per-domain overrides. See [Sites](/en/concepts/sites).
 

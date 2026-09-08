@@ -99,6 +99,19 @@ An opt-in allow-list (max 20 entries) of parameter names whose **value** is addi
 
 ## Errors
 
+### What counts as an error [#what-counts]
+
+The tracker counts two populations apart, and they never mix:
+
+- **JavaScript errors** (`errc` on the beacon): uncaught exceptions and unhandled promise rejections. This is what the error rate is built from.
+- **Failed resource loads** (`frc`): an `<img>`, `<script>`, or `<link>` that did not load. Their own signal, with their own rate and their own list, because the population is dominated by ad blockers and tracking protection rather than by defects of the site. See [Failed resource loads](/en/analytics#failed-resources).
+
+Both counters count every occurrence. The beacon carries up to eight ranked entries, the top five JavaScript errors followed by the top three failed resources, each ranked inside its own channel, so a page full of broken images cannot push a real exception off the wire.
+
+**First party means the same registrable domain as the page.** A script served from `cdn.shop.example` to a page on `www.shop.example` is your own, and the rule is the same one for the error rate, the per-error first-party flag, the pageview's error origin, the Fetch/XHR split, and the resource list. What the privacy strip keeps is a stricter rule and unchanged: without [`collect_error_frames`](#collect-error-frames), a frame outside the exact page host keeps its host and nothing else.
+
+**`ScriptError`** is the type for an exception the browser masks. A script from another origin loaded without CORS opt-in reports as the literal `Script error.` with no filename, line, or error object, so it cannot be attributed to a file and used to share a fingerprint with every other frameless error. It became its own type with the tracker bundle that carries this change; rows written before that keep their old fingerprint, so a comparison spanning the rollout compares two groupings. Load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin` and the browser reports the real error instead. Do not set the attribute where the header is missing, because the browser then refuses to run the script.
+
 ### `collect_error_messages` [#collect-error-messages]
 
 Keeps the free-form error message text (`Cannot read property 'x' of undefined`) instead of just the error type and count. Off, the message is dropped server-side and dashboards see aggregates like "5 TypeErrors, 2 ReferenceErrors" plus stack locations. Off by default, including on Standard; the Full preset turns it on.

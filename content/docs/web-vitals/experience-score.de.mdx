@@ -42,6 +42,8 @@ Jede Metrik wird per linearer Interpolation gegen ihre Gut-/Schlecht-Schwellen a
 
 Die gewichtete Summe der Sub-Scores ist der Experience Score. Fehlt für ein Segment ein Wert (z. B. INP, wenn niemand interagiert hat), wird das Gewicht anteilig auf die vorhandenen Metriken verteilt.
 
+Die Fehlerrate ist hier der Anteil der Pageviews mit mindestens einem **JavaScript**-Fehler. Fehlgeschlagene Ressourcen sind ein eigenes Signal und gehen nicht in den Score ein, eine Seite wird also nicht dafür abgewertet, dass ihre Besucher einen Tracker blocken. Siehe [Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
+
 ## Wann der Score berechnet wird
 
 Pro Pageview, beim Verstecken der Seite. Das ist derselbe Trigger, der die zugrundeliegenden Metriken finalisiert. Die Aggregat-Scores im Dashboard sind Durchschnitte über den gewählten Zeitraum.

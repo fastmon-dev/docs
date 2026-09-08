@@ -42,6 +42,8 @@ Each metric is mapped to a 0–10 sub-score by linear interpolation against its 
 
 The weighted sum of sub-scores is the Experience Score. If a metric is missing for a segment (e.g. INP when no one interacted), its weight is redistributed proportionally across the metrics that do have values.
 
+The error rate here is the share of pageviews with at least one **JavaScript** error. Failed resource loads are a separate signal and carry no weight in the score, so a site whose visitors block a tracker is not scored down for it. See [Failed resource loads](/en/analytics#failed-resources).
+
 ## When the score is computed
 
 Per page-view, when the page is hidden. That's the same trigger that finalizes the underlying metrics. Aggregate scores you see in the dashboard are averages over your selected time range.

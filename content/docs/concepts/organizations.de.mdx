@@ -25,20 +25,25 @@ Die meisten Accounts haben genau eine Organisation. Mehrere lohnen sich vor alle
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
 | `id`              | UUID v7                                   | Stabiler Identifier. Verwendet in API-URLs (`/organizations/{id}/…`). |
 | `name`            | string                                    | Menschenlesbar. Erscheint im Org-Switcher.                            |
-| `plan`            | enum                                      | `beta`, `starter`, `pro`, `partner` oder `enterprise`.                |
+| `plan`            | enum                                      | `none`, `beta`, `light`, `standard`, `partner` oder `enterprise`.     |
 | `members`         | Liste von `{ user_id, role }`             | Rollen: `owner`, `member`, `viewer`. Die Antwort trägt außerdem deine eigene `role` und deine `permissions`. |
 
-## Pläne
+## Pläne [#plans]
 
 | Plan          | Wann passt er                                                |
 | ------------- | ------------------------------------------------------------ |
+| `none`        | Der Startzustand. Es hat noch niemand etwas gewählt.         |
 | `beta`        | Early Access während Onboarding. Limitierte Quota.           |
-| `starter`     | Single-Produkt-Teams. Default-Retention.                     |
-| `pro`         | Production-Teams. Höhere Retention.                          |
+| `light`       | Single-Produkt-Teams. Default-Retention.                     |
+| `standard`    | Production-Teams. Höhere Retention.                          |
 | `partner`     | Agenturen. **Partner-Clients** verwalten (Sub-Organisationen, die die Agentur für jemand anderen betreibt). |
 | `enterprise`  | Custom-Limits, Custom-Retention, AVV.                        |
 
+Eine neue Organisation startet auf `none` und verlässt diesen Zustand über genau drei Wege: eine Freigabe startet ihre Testphase, ein Checkout kauft einen Plan, oder ein Partner richtet sie ein.
+
 Der Plan steuert Features und Quotas. Welche Web Vitals erfasst werden, hängt nicht am Plan; gemessen wird in jedem Plan dasselbe.
+
+**Worin ein Plan gemessen wird.** Abgerechnet wird die [Application](/de/concepts/applications), und nur eine **Production**-Application belegt einen Platz: eine Development-Application ist kostenlos und unbegrenzt. Ein Plan enthält eine Anzahl Production-Plätze und ein monatliches Pageview-Volumen; beides lässt sich über dauerhafte Add-ons erweitern, die im Voraus gekauft werden und nicht nach einem Ausschlag abgerechnet. Eine Production-Application über die enthaltenen Plätze hinaus anzulegen oder hochzustufen wird mit `402 app_limit_reached` abgewiesen (siehe [Fehler](/de/api/errors)); eine Organisation ohne jede Berechtigung bekommt `402 billing_required` oder `402 trial_expired`.
 
 ## Rollen
 
@@ -46,9 +51,11 @@ Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist 
 
 | Rolle    | Darf                                                                                         |
 | -------- | -------------------------------------------------------------------------------------------- |
-| `owner`  | Alles, was ein Mitglied darf, und dazu: Organisationseinstellungen (Name, Einwilligung zu KI und Synthetic Monitoring), Mitglieder und ihre Rollen, Notification Rules, Partnerbeziehungen, Audit-Log, Billing, Übergabe und Löschung. |
-| `member` | Die tägliche Arbeit: Sites, Applications, Releases und Synthetic-Seiten anlegen und ändern; Synthetic-Runs starten; den KI-Assistenten fragen; Leute einladen. |
-| `viewer` | Nur lesen. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und die Mitgliederliste. Ändert nichts und löst nichts aus, was Geld kostet oder Mails verschickt. |
+| `owner`  | Alles, was ein Mitglied darf, und dazu: Organisationseinstellungen (Name, Einwilligung zu KI und Synthetic Monitoring), Mitglieder und ihre Rollen, Notification Rules, Audit-Log, Bezahlen (`billing:manage`), Übergabe und Löschung. |
+| `member` | Die tägliche Arbeit: Sites, Applications, Releases und Synthetic-Seiten anlegen und ändern; Synthetic-Runs starten; den KI-Assistenten fragen; Leute einladen; die Rechnungen lesen (`billing:read`); in einer `partner`-Organisation deren Clients verwalten (`partner:manage`). |
+| `viewer` | Nur lesen. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und die Mitgliederliste. Ändert nichts, löst nichts aus, was Geld kostet oder Mails verschickt, und sieht kein Billing. |
+
+**Billing sind zwei Berechtigungen, nicht eine Rolle.** `billing:read` öffnet die Rechnungen, die Rechnungsadresse und die USt-IdNr.; `billing:manage` bewegt das Geld. Lesen ist eine Member-Berechtigung und bewusst außerhalb des Viewer-Bündels: ein Nur-Lese-Platz sieht den Billing-Tab also gar nicht, statt ihn auf eine Reihe von 403ern zu öffnen. Bezahlen bleibt beim Owner. Eine Agentur, die die Rechnungen ihres Kunden liest, ist dort Member, und das ist genau `billing:read` ohne `billing:manage`.
 
 Die Bündel sind ineinander geschachtelt: Ein Mitglied hat alles, was ein Viewer hat, ein Owner alles, was ein Mitglied hat. [Persönliche API-Keys](/en/api/authentication) werden aus denselben Bündeln geschnitten: Die Scopes eines Keys sind Berechtigungen, bei jedem Request mit deiner aktuellen Rolle geschnitten. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) gehört stattdessen der Organisation und steht allein auf seinen Scopes, begrenzt beim Ausstellen. Organisations-Keys und [verbundene Apps](/en/api/oauth) verwaltet, wer `org_key:manage` hält: Member und Owner, nicht Viewer.
 
@@ -66,7 +73,9 @@ Wenn du zwei eigenständige Brands betreibst und Billing wie Zugriffe sauber tre
 
 ### Agentur, die Kunden-Sites betreibt
 
-Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-Organisation, die die Agentur verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst. Eine Partner-Organisation kann außerdem [einen API-Key ausstellen, der ihrer Client-Liste folgt](/en/api/authentication#creating-a-key), statt eines Keys pro Client.
+Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-Organisation, die die Agentur verwaltet. Agentur-User sehen alle Clients, der Kunde nur sich selbst. Eine Partner-Organisation kann außerdem [einen API-Key ausstellen, der ihrer Client-Liste folgt](/de/api/authentication#creating-a-key), statt eines Keys pro Client.
+
+Jedes **Mitglied** der Partner-Organisation kann einen Client anlegen, ihn per `owner_email` an den Kunden übergeben und ihn wieder ablösen; umgekehrt kann ein Mitglied der Kunden-Organisation den Zugriff der Agentur entziehen. Diese Routen schützt die direkte Mitgliedschaft: eine Agentur, die eine Organisation über eine Partnerschaft erreicht, kann dort weder deren eigene Clients verwalten noch eine Partner-Verbindung entziehen.
 
 ## Häufige Überraschungen
 

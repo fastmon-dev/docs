@@ -247,10 +247,12 @@ const apiMeta = {
     "errors",
     "pagination",
     "---Endpoints---",
-    // Curated order, not alphabetic: account scope first, then the tracking
-    // model (an application owns the embed, its sites are the domains it runs
-    // on), then what you read back off it. Kept in sync with the generated tag
-    // folders by the guard at the bottom of this script.
+    // Curated order, not alphabetic: search first (it is how you find what you
+    // can reach), then account scope, then the tracking model (an application
+    // owns the embed, its sites are the domains it runs on), then what you read
+    // back off it. Kept in sync with the generated tag folders by the guard at
+    // the bottom of this script.
+    "search",
     "organizations",
     "members",
     "org-keys",

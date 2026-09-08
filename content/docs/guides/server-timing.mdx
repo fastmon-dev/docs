@@ -56,7 +56,7 @@ When the same phase could be filled by more than one metric, fastmon resolves it
 
 > **`fm-*` first-party alias  ›  your site's mapping  ›  built-in vendor alias (`cf…`)  ›  built-in generic alias**
 
-Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn`, `fm-fpc`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
+Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
 
 ## Backend phases
 
@@ -83,12 +83,16 @@ All eight phases appear on the Server-Timing page, in the response breakdown wat
 
 A cache verdict is carried as a description, not a duration (e.g. `Server-Timing: cdn-cache;desc="HIT"`). Fastmon tracks **two layers** independently:
 
-| Layer    | Recognized names (in precedence order)            |
-| -------- | ------------------------------------------------- |
-| `cdn`    | `fm-cdn`, `cfcachestatus`, `cdn-cache`, `hit-state` |
-| `origin` | `fm-fpc`, `fpc`, `x-cache`, `cache`               |
+| Layer    | Recognized names (in precedence order)                            |
+| -------- | ----------------------------------------------------------------- |
+| `cdn`    | `fm-cdn-cache`, `fm-cdn`, `cfcachestatus`, `cdn-cache`, `hit-state` |
+| `origin` | `fm-origin-cache`, `fpc`, `x-cache`, `cache`                      |
 
-CloudFront's bare flags are recognized as a fallback for the CDN layer: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (an explicit `fm-cdn` still overrides them).
+CloudFront's bare flags are recognized as a fallback for the CDN layer: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (an explicit CDN key still overrides them).
+
+<Callout type="warn" title="fm-fpc is gone">
+  The origin-status key is `fm-origin-cache`. `fm-fpc` was the old spelling and is no longer recognized: it was the only first-party key calling the origin tier something other than `origin`, which next to `fm-origin-age` would have put two words for one tier in a single header. A header still sending `fm-fpc` shows it in the panel's top-keys list instead of silently filling nothing, so the mistake is visible. `fm-cdn` keeps working; `fm-cdn-cache` is the documented spelling.
+</Callout>
 
 The value is uppercased and normalized to one of the statuses fastmon stores. Fastly's compound forms collapse first (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); anything outside the list below passes through as-is, capped to 12 characters, so a vendor-specific status is never silently dropped.
 
@@ -106,6 +110,30 @@ The value is uppercased and normalized to one of the statuses fastmon stores. Fa
 | `NONE`        | No caching applied or configured for the response.                        |
 
 Both layers use the same vocabulary. A pageview that reports no cache status is stored empty and shows as **Unknown** in the dashboard (it counts as `unreported` in the per-status share metrics). Together they give the fastest read on whether your edge cache is doing its job, right next to [TTFB](/en/web-vitals/ttfb).
+
+## Cache age [#cache-age]
+
+The status says whether the visitor got a cached object; the age says how old it was. That is the other half of the question: a shop with a 95 % hit rate whose objects average four hours old is serving fast and stale.
+
+```http
+Server-Timing: fm-cdn-cache;desc="HIT", fm-cdn-age;desc=42, fm-origin-age;desc=312
+```
+
+| Key             | Column       | Meaning                                     |
+| --------------- | ------------ | ------------------------------------------- |
+| `fm-cdn-age`    | `cdn_age`    | Age of the delivered CDN object, in seconds |
+| `fm-origin-age` | `origin_age` | Age of the delivered origin object, in seconds |
+
+Rules for the value:
+
+- **First-party keys only, no vendor aliases.** A bare `age` says nothing about which tier it measured, and without the prefix we would not own the unit: a framework emitting `cache-age;dur=500` means milliseconds and the value would be stored as 500 seconds.
+- **Seconds, in `desc`, not `dur`.** `dur` is specified as a duration in milliseconds and DevTools draws it as a bar in the document request's timing view, so an age there would render as a backend phase that never happened. A `dur` spelling is still accepted, since it is what a site tries first. Send the bare number: `fm-origin-age;desc=312` is read, `desc=312s` is discarded.
+- **Emit it on a cache hit only.** On a miss the age is 0 and drags every percentile down.
+- Values above a year are dropped rather than clamped, because a number that large is a timestamp or a millisecond value sent as seconds, not an age. `desc=0` is a valid value: an object stored a moment ago.
+
+**Two columns, not one.** A shop behind a CDN has both ages in the same pageview and they do not mean the same thing. The origin's header freezes inside the CDN object, so under a CDN hit the origin value is the age at the moment the CDN fetched, and only the sum is the age the visitor saw. The Server-Timing panel therefore reports three rows, `cdn`, `origin`, and `content` (the sum under a CDN hit), all in seconds and computed server-side, because the p75 of a sum is not the sum of the p75s.
+
+Both ages are available as metrics (`cdn_age`, `origin_age`, with the usual avg and p50 to p99), as fields on the beacon rows and in the pageview detail next to the cache status they qualify, and through the MCP server's `get_server_timing`.
 
 ## Page type
 
