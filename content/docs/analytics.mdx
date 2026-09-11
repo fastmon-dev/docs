@@ -12,7 +12,7 @@ The main Analytics view for a site shows:
 - **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the pages being viewed right now and the sources they came through. On shops the card also shows how many of them are at the cart, checkout, and success stage.
 - **Headline metrics**: Unique Visitors, Pageviews, Views per Visit, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range, so a day and a month compare on the same footing. Clicking a tile explains what it counts.
 - **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. The legend sits above the chart, in a row with the bar/area switch, and each series can be switched off on its own: with Checkouts selected, cart runs an order of magnitude above completed purchases, and hiding it lets the axis scale to the rest. Every series carries its own previous-period value and its own switch for it.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). The Pages panel's third tab lists the **domains** out of the page URLs; the serving node your backend reports through `fm-host` is in the Explorer and on the Backend time page, where it answers a performance question. Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
 - **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
 - **Traffic quality**: the split from bot classification, first as one bar, then as clickable rows.
 - **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
@@ -47,16 +47,30 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 The Errors view tracks JavaScript errors across the site:
 
 - **Error rate over time**: the share of pageviews with at least one JavaScript error. A failed image, script, or stylesheet is not an error here; it belongs to [failed resource loads](#failed-resources) and runs as its own curve on the same chart.
-- **Error types**: errors grouped by fingerprint (type + message
-  + stack shape), ranked by count.
-- **Detail drill-down**: for one fingerprint: total count, visitors affected, first/last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames.
+- **Which errors, over time**: the five biggest signatures per time bucket as a stacked chart, named by what broke rather than by their hash, with everything past the fifth summed into one band. The error rate is one line for all errors together, so a signature that doubled overnight does not show in it. Clicking a name in the legend opens that signature in the list below.
+- **Error types**: errors grouped by fingerprint (type + message shape + stack shape), ranked by count. A row leads with what broke and carries its whole stack: the throw site at full strength, the callers under it dimmer, in the order you read a stack.
+- **Detail drill-down**: for one fingerprint: total count, visitors affected, first and last seen, a time series, breakdowns by URL, browser, device, OS, and country, and sample pageviews with stack frames. The opened signature is in the address bar, so reload, back, and a shared link all land on the same row.
+- **Pages with the most errors**: ranked by how many errors a page threw, not by its error rate. A page with one pageview that threw once has a rate of 100 % and is not the broken checkout. The rate is still a column and still sortable. A row expands to its stack.
 - **Error origin**: how pageviews with an error split between your own hosts and foreign ones. The third bar, "No error or not attributable", holds pageviews without an error plus errors that arrived with no host to attribute them to.
+
+### What broke, and where [#error-detail]
+
+**An error says what broke in a sentence**, even where the site keeps no error messages. The tracker recognizes the browser's wording and sends its [shape](/en/tracker#message-shape) rather than the text, so a row reads "`uc.setServiceAlias` was called, but `uc` does not exist at this point" instead of showing a stack alone. The same shape is part of the fingerprint, which is what makes one fault one group across Chrome and Safari.
+
+**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side: a minifier keeps class and method names. It is a button rather than something a row does by itself, because it fetches your bundle.
+
+- A run of frames in the same vendor bundle folds into one row naming the library, so somebody else's code does not fill the panel. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames, and the message is what identifies it.
+- A frame that only passes the error on is marked as a rethrow, and the cause sits further down. The top frame of a minified stack is regularly a rethrow inside a promise polyfill.
+- A frame that cannot be read says why: no path was stored, the file sits on somebody else's host, the file is the fastmon tracker, or you deployed again under the same name and the position is gone.
+- The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/analytics/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
+
+**An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list, so LCP, browsers, countries, or the checkout funnel can be read over the traffic where one thing breaks. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`). A query using it reads the raw rows rather than a rollup, and costs accordingly.
 
 **Your own subdomains count as yours.** First party means the same registrable domain as the page, so a bundle served from `cdn.shop.example` on a page at `www.shop.example` is your own script, in the error rate, the error origin, the Fetch/XHR split, and the resource list alike.
 
 `ScriptError` is a group worth knowing: an uncaught exception in a script from another origin loaded without CORS opt-in. The browser hides the filename, the line, and the message, so the group cannot be attributed to a file. To resolve it, load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin`; the browser then reports the real error. Do not set the attribute on a host that lacks the header, because the browser will refuse to run the script. Where `ScriptError` is present, the error-types response also lists `own_subdomain_hosts`: hosts on your own domain that served scripts in this scope, which is where the attribute and the header are usually missing.
 
-How much detail you see depends on the site's [tracker settings](/en/tracker): error **type and count** arrive always. The error **message** needs [`collect_error_messages`](/en/tracker#collect-error-messages), and full **stack frames** need [`collect_error_frames`](/en/tracker#collect-error-frames).
+How much detail you see depends on the site's [tracker settings](/en/tracker): error **type**, **count**, and [**message shape**](/en/tracker#message-shape) arrive always. The error **message** needs [`collect_error_messages`](/en/tracker#collect-error-messages), and full **stack frames** need [`collect_error_frames`](/en/tracker#collect-error-frames).
 
 ### Failed resource loads [#failed-resources]
 
@@ -65,11 +79,19 @@ A failed `<img>`, `<script>`, or `<link>` is its own signal, with its own rate (
 - **Your own hosts**: the actionable half. A broken image path, a bundle that 404s after a deploy.
 - **Foreign hosts**: dominated by ad blockers and tracking protection, so not a defect of the site.
 
-Ownership is the registrable-domain rule above. The list ranks hosts and paths by failed loads and by the pageviews they affected; the totals cover the whole scope, so the top rows do not sum to them. The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames).
+Ownership is the registrable-domain rule above. **The list groups by host**, each with its share of all failed loads, and opening a host shows the individual resources under it. One tracker that every ad blocker kills used to take ten rows and bury the one broken image of your own. A second view ranks pages by the share of their pageviews that lost a resource.
 
-Ad-blocked requests to known tracker hosts stay visible as a subset of the foreign bucket, and the error-types panel reports them as `blocked_count`: read it as "N excluded as ad-blocked", not as a failure.
+**Hide a host and the list becomes readable.** `host` and `exclude_hosts` narrow the totals as well, unlike `bucket`, so the share bars and the big number keep agreeing with the rows.
 
-The endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here, because an empty list would read as "you have none".
+**Opening a resource drills into it** the way opening an error signature does: the file (host, path, owner), a time series, breakdowns over page URL, browser, device, OS, and country, the visitors affected, and recent sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/analytics/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key, because its percentage divides by the JavaScript-only error count.
+
+`Failed resources` is a filter and a metric of its own, so `>= 1` scopes any view to pageviews where something did not load, the way `Error count >= 1` always did. In the pageview drill-down the failed loads have their own block, separate from the JavaScript errors.
+
+The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames). A failed load can also be a shaky connection or a request the visitor interrupted, not necessarily something wrong on your server.
+
+Ad-blocked requests to known tracker hosts stay visible as a subset of the foreign bucket, reported as `blocked_count`: read it as "N excluded as ad-blocked", not as a failure.
+
+The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here, because an empty list would read as "you have none".
 
 ## Visitors
 
