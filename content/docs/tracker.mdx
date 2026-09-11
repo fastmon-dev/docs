@@ -112,11 +112,29 @@ Both counters count every occurrence. The beacon carries up to eight ranked entr
 
 **`ScriptError`** is the type for an exception the browser masks. A script from another origin loaded without CORS opt-in reports as the literal `Script error.` with no filename, line, or error object, so it cannot be attributed to a file and used to share a fingerprint with every other frameless error. It became its own type with the tracker bundle that carries this change; rows written before that keep their old fingerprint, so a comparison spanning the rollout compares two groupings. Load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin` and the browser reports the real error instead. Do not set the attribute where the header is missing, because the browser then refuses to run the script.
 
+### What a message says [#message-shape]
+
+The browser's own wording is the diagnosis for a whole class of errors, and it is also the only free text the tracker ever collects. So the tracker recognizes the wording instead of sending it. A message that matches one of the engines' own phrasings yields a **shape** from a closed list, plus the identifier that shape names, where it names one:
+
+| Shape                                              | What it says                                    |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `undefined_read`, `null_read`, `undefined_write`   | a property read or written on nothing, with the property name |
+| `not_defined`, `not_a_function`                    | a name that does not exist, or is not callable, with the name |
+| `json_empty`, `json_invalid`                       | a response parsed as JSON that was empty, or was not JSON     |
+| `selector_invalid`                                 | a selector the browser rejected, with the selector            |
+| `readonly_write`, `stack_overflow`, `fetch_failed`, `syntax_unexpected_token` | a write to a read-only property, infinite recursion, a request that never completed, a parse error |
+
+The shape travels in **every** configuration, Minimal included, so an error reads as "`uc.setServiceAlias` was called, but `uc` does not exist at this point" on a site that keeps no messages at all. The raw message travels only with [`collect_error_messages`](#collect-error-messages) on.
+
+Recognition runs in the browser, before anything is sent, which is what lets the message be gated at all. The name that travels with a shape is checked there too: an identifier has to look like code, a selector has its quoted parts blanked and is capped at 80 characters, and anything else is dropped rather than sent.
+
+The shape is part of the error fingerprint, which is what makes the same fault one group across engines: Chrome and Safari word the same fault differently, and grouping used to follow the wording. Signatures were regrouped once when this arrived, so a group from before that day keeps its key and stops growing while the same fault reappears under a new one. There is no backfill, because the messages the new grouping reads were never stored.
+
 ### `collect_error_messages` [#collect-error-messages]
 
-Keeps the free-form error message text (`Cannot read property 'x' of undefined`) instead of just the error type and count. Off, the message is dropped server-side and dashboards see aggregates like "5 TypeErrors, 2 ReferenceErrors" plus stack locations. Off by default, including on Standard; the Full preset turns it on.
+Keeps the free-form error message text (`Cannot read property 'x' of undefined`) on top of the error type, the count, and the [message shape](#message-shape). Off, the message is never assembled: the switch is baked into the served bundle, so on a site that did not ask for it the message does not reach the wire at all. Off by default, including on Standard; the Full preset turns it on.
 
-**PII:** the highest free-text personal-data vector in the beacon, because messages can contain user input. It is consent-relevant (a "consent-only" field). An always-on scrubber replaces URLs, emails, numeric ids, and quoted strings with `*` before transmission even when the message is kept, but that is defense in depth: the operator's obligation not to pass raw user input into thrown errors still stands. Turn it on only where you have handled consent.
+**PII:** the highest free-text personal-data vector in the beacon, because messages can contain user input. It is consent-relevant (a "consent-only" field). An always-on scrubber replaces URLs, emails, numeric ids, and quoted strings with `*` before transmission even when the message is kept, but that is defense in depth: the operator's obligation not to pass raw user input into thrown errors still stands. The [message shape](#message-shape) is not this field: it is a name from a closed list plus a checked identifier, and it is what the dashboards read where this switch is off. Turn it on only where you have handled consent.
 
 ### `collect_error_frames` [#collect-error-frames]
 
@@ -136,7 +154,7 @@ Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, er
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The page type says what kind of page it is; the [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone, and it works without a ruleset.
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Where your theme renamed one of the framework's classes, name it yourself with [`pagetype_rules`](#pagetype-rules). Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The page type says what kind of page it is; the [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone, and it works without a ruleset.
 
 **PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
 
@@ -155,6 +173,26 @@ Each ruleset maps the framework's page-controller token to one of a fixed set of
 | **account**  | `frontend-account-*`, `is-ctl-account*` | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
 
 <sup>1</sup> Each cell lists the current token first: Shopware's `is-active-route-*` classes with the fixed prefix stripped, emitted since about 6.6 and the only page marker left in 6.8, which removes the `is-ctl-*` and `is-act-*` classes. The `is-ctl-*` tokens after it are the legacy fallback for older shops and browser-cached trackers, with `*` standing for any action tail. Home needs the exact legacy class pair, because the home page renders through the navigation controller like any category page (Shopware 6 has no `is-ctl-index`). On the legacy classes, cart and checkout share `is-ctl-checkout` and both report the coarser `cart`; `is-ctl-account*` also covers the account controller family (`is-ctl-accountorder`, `is-ctl-accountprofile`). <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware 5 shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
+
+### `pagetype_rules` [#pagetype-rules]
+
+Names the body classes of **your own theme**, for the themes that renamed what the shop system ships. A built-in ruleset matches the classes its framework emits, so an OXID theme that writes `c-body--details` where the ruleset expects `cl-details` records no page type at all, and nothing says so. Each rule maps one exact class name to one page type (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Empty by default.
+
+The rules sit in front of the ruleset instead of replacing it, in both steps (reading the token and mapping it), so you fix the one page type your theme renamed and the other six keep coming from the ruleset. With rules set and [`pagetype_ruleset`](#pagetype-ruleset) empty, the tracker reads only the classes you named, which is how a shop system or CMS that has no ruleset gets a page type at all. A `Server-Timing: pageType` header still wins over both.
+
+Class names are exact and compared as whole tokens, never patterns: the comparison runs in every visitor's browser, and a pattern there would be a hazard on your own page. At most 24 rules, `[a-z0-9_-]` and at most 32 characters per class name, each class only once. Upper and lower case do not matter (names are lowercased on both sides), unlike in the built-in rulesets.
+
+Set it through the application API (`pagetype_rules` on [`POST`](/en/api/applications/createApplication) or [`PATCH /applications`](/en/api/applications/updateApplication)) or in the page-type setting in the dashboard, which can also [work the class names out for you](#pagetype-discovery).
+
+**PII:** the narrowest form of the body-class read. With rules and no ruleset, the only token that can ever leave the browser is one you named yourself. The full `class` attribute is never read, and the read stays one token per pageview.
+
+#### Finding your theme's class names [#pagetype-discovery]
+
+Two setup helpers answer the two questions the setting asks. Both run from the dashboard next to the setting and from the API, both read only the application's own domains, and both are limited to ten runs per organization per hour. Neither writes anything: each one proposes, and you confirm by saving.
+
+- **Which shop system is this?** [`POST /applications/{id}/detect-pagetype`](/en/api/applications/detectApplicationPageType) reads the application's own home page and names the matching ruleset, with the evidence it used and the page type it would have recorded for that page. Shopify and PrestaShop are recognized and flagged as not selectable: Shopify reports its page type through [`Server-Timing`](/en/guides/server-timing#page-type) instead, PrestaShop has no ruleset yet. A home page that answers with a bot challenge is reported as a failed probe, not as "shop system not recognized".
+- **Which class means "product"?** [`POST /applications/{id}/pagetype/discover`](/en/api/applications/discoverApplicationPageTypeRules) takes up to four of your pages, each labeled with what it is, reads them plus your home page as the contrast, and proposes the class that only that kind of page carries. Two examples of one type give the surest answer, because whatever differs between them cannot be the marker. A page type with exactly one candidate comes back ready to save; several candidates are listed and not turned into a rule, and a type whose theme marks nothing comes back empty rather than guessed.
+
 
 ## Ingest and routing
 

@@ -17,6 +17,122 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-11" type="changed" area="tracker" title="Fehler sagen, was kaputt ist, auch ohne gespeicherte Message">
+
+Die meisten Sites sammeln keine Fehlermeldungen, die meisten Fehler lesen sich also als Typ plus Stack und sonst nichts. Der Tracker erkennt die Formulierung des Browsers jetzt gegen einen festen Katalog und schickt ihre Form statt des Texts.
+
+- **Die Form reist in jeder Konfiguration mit**, auch in Minimal: eine Art aus einer geschlossenen Liste, dazu der Name, auf den diese Art zeigt. Eine leere JSON-Antwort, ein Request, der mit HTML statt JSON beantwortet wurde, eine Variable, die es nicht gibt, ein Selektor, den der Browser abgelehnt hat. Ein Fehler ist damit lesbar, wo vorher nur ein Stack stand.
+- **Derselbe Fehler auf Chrome und auf Safari ist jetzt eine Signatur.** Die beiden Engines formulieren ihn unterschiedlich, und die Gruppierung folgte bisher der Formulierung.
+- **Eine Site, die keine Messages sammelt, schickt auch keine mehr.** `collect_error_messages` ist ins ausgelieferte Bundle eingebacken, die Message wird also gar nicht erst zusammengebaut. Bisher verließ sie den Browser und wurde beim Empfang verworfen.
+- **Die Signaturen werden einmalig neu gruppiert.** Alte Gruppen behalten ihren Key und wachsen nicht weiter, derselbe Fehler taucht ab dem Deploy unter einem neuen Key auf, und die Vorkommen davor und danach lassen sich nicht addieren. Kein Backfill: Die Messages, die die neue Gruppierung liest, wurden nie gespeichert.
+
+Doku: [Tracker → Was eine Message sagt](/de/tracker#message-shape).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="changed" area="dashboard" title="Die Fehlerliste sagt, was kaputt ist, und löst den Stack auf">
+
+Eine Fehlerzeile begann mit der Datei, in der geworfen wurde, und las sich damit wie „die URL, auf der das passiert ist". Und ein minifizierter Frame wie `bundle.6a2ce3.js:1:6800` sagte überhaupt nichts.
+
+- **Die Zeile ist die Message**, oder der Satz aus ihrer [Form](/de/tracker#message-shape), wo es keine gibt, mit Typ, Zugehörigkeit und Wurfstelle darunter. Der ganze Stack steht ebenfalls in der Zeile: die Wurfstelle in voller Stärke, die Aufrufer darunter blasser.
+- **„Stack auflösen" liest die Datei, die deine Besucher tatsächlich ausgeführt haben.** Jeder Frame kommt mit der Methode zurück, in der er steht, dem umgebenden Modul und dem Code an dieser Spalte, syntaxgefärbt und zum fehlerhaften Aufruf gescrollt. Ohne Source-Map und ohne Setup auf deiner Seite, denn ein Minifier behält Klassen- und Methodennamen. Mehrere aufeinanderfolgende Frames aus demselben Vendor-Bundle klappen zu einer Zeile zusammen, die die Library nennt, ein Frame, der den Fehler nur weiterreicht, ist als Rethrow markiert, und ein Frame, der sich nicht lesen lässt, sagt warum. Es ist ein Button und nichts, was eine Zeile von selbst tut, denn dabei wird dein Bundle abgerufen. Der Endpunkt ist `POST /analytics/error-types/symbolicate`.
+- **Ein neues Chart sagt, welcher Fehler gestiegen ist.** „Welche Fehler, über Zeit" stapelt die fünf größten Signaturen je Bucket, benannt nach ihrer Message statt nach ihrem Hash. Ein Klick auf einen Namen in der Legende öffnet diese Signatur darunter.
+- **Eine Fehlersignatur ist ein Filter wie jeder andere.** LCP, Browser, Länder oder der Funnel lassen sich also über den Traffic lesen, auf dem eine Sache kaputt ist.
+- **Eine aufgeklappte Signatur zeigt alles, was wir haben**: Vorkommen, betroffene Besucher, erstes und letztes Auftreten, ihren Verlauf, die Seiten, Browser, Länder, Geräte und Betriebssysteme, auf denen sie auftritt, und die letzten Pageviews, die sie getragen haben. Die offene Zeile steht in der Adresszeile.
+- **Seiten sind danach sortiert, wie viele Fehler sie geworfen haben**, nicht nach ihrer Fehlerrate. Eine Seite mit einem Pageview, der einmal geworfen hat, hat eine Rate von 100 % und ist nicht der kaputte Checkout.
+- Dasselbe Panel steckt in der Zeilen-Detailansicht des Explorers, und eine `Script error.`-Zeile sagt jetzt, warum sie leer ist.
+
+Doku: [Analytics → Was kaputt ist, und wo](/de/analytics#error-detail).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="new" area="tracker" title="Page-Type-Detection für Themes, die ihre Klassen umbenannt haben">
+
+Die eingebauten Rulesets matchen die Klassen, die ein Shop-System ausliefert, und ein eigenes Theme darf sie umbenennen. Ein OXID-Theme mit `c-body--details` statt des erwarteten `cl-details` erfasste gar keinen Page-Type, und nichts sagte das.
+
+- **`pagetype_rules` bildet exakte Klassennamen auf Page-Types ab** (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`), in der Page-Type-Einstellung und über `POST`/`PATCH /applications`. Die Regeln stehen vor der Ruleset, statt sie zu ersetzen. Du reparierst also den einen Page-Type, den dein Theme umbenannt hat, und die anderen sechs kommen weiter aus der Ruleset. Regeln ohne Ruleset sind ein eigener Modus: Ein Shop-System oder CMS, für das wir keine Ruleset haben, bekommt einen Page-Type, sobald du seine Klassen benennst.
+- **Klassennamen sind exakt, nie Muster.** Der Vergleich läuft im Browser jedes Besuchers, und ein Muster wäre dort ein Risiko auf deiner eigenen Seite. Höchstens 24 Regeln, höchstens 32 Zeichen pro Klasse, und Groß- und Kleinschreibung spielt keine Rolle, anders als bei den eingebauten Rulesets.
+- **Detect nennt dein Shop-System**, Detection einzuschalten fängt also nicht mehr damit an, die eigene Body-Klasse in den DevTools zu lesen. Es liest die Startseite der ältesten Domain der Applikation und sagt, was es gefunden hat, mit den Belegen dafür und dem Page-Type, den es erfasst hätte. Shopify und PrestaShop werden erkannt und als nicht wählbar markiert: Shopify meldet seinen Page-Type stattdessen über [`Server-Timing`](/de/guides/server-timing#page-type), PrestaShop hat noch keine Ruleset.
+- **Discover findet die Klassennamen.** Benenne eine Beispielseite je Page-Type, deine Startseite wird als Kontrast mitgelesen, und daraus lässt sich die Klasse vorschlagen, die nur dieser Page-Type trägt. Zwei Beispiele desselben Typs geben die sicherste Antwort, denn was sich zwischen ihnen unterscheidet, kann nicht das Merkmal sein. Ein Typ mit genau einem Kandidaten kommt fertig zum Speichern zurück.
+- Keiner der beiden Probes schreibt etwas, beide lesen nur die eigenen Domains der Applikation, und beide sind auf zehn Läufe pro Organisation und Stunde begrenzt.
+- Der Read bleibt, was er war: ein Token pro Pageview, nur wo du die Klasse benannt hast oder eine Ruleset sie kennt, und nie das volle `class`-Attribut. OXID-Shops melden außerdem die Bestellabschluss-Seite (`cl-thankyou`) jetzt als `checkout`.
+
+Doku: [Tracker → `pagetype_rules`](/de/tracker#pagetype-rules).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="changed" area="api" title="Eine Zeitreihe mit Dimension behält ihre ganze Zeitachse">
+
+Eine Query, die nach Zeit und nach einer Dimension gruppiert, verlor bisher das Ende ihrer Achse, weil das Zeilenlimit das Ergebnis abschnitt, bevor das Fenster abgedeckt war. Sechs Stunden im Minutentakt über zwanzig Fehlersignaturen zeichneten die ersten zwei Stunden und sahen vollständig aus.
+
+- **`group_by.top_n` begrenzt, wie viele Dimensionswerte eine Query liest**, sortiert nach Pageview-Volumen über das angefragte Fenster. Setz es bei jeder Query, die nach Zeit und nach einer Dimension gruppiert, dann konkurriert das Zeilenlimit nicht mehr mit der Zeitachse.
+- **Gruppieren von `/analytics/query` nach einer `errors.*`-Dimension funktioniert wieder.** Die Zeilenzahl, die das Ergebnis paginiert, fragte ClickHouse nach einer Spalte, die die Query nicht selektiert hatte, jede solche Query schlug also fehl, statt Daten zu liefern.
+- **Eine gruppierte Query meldet den Wert, nach dem sie gruppiert hat.** Beide strukturierten Dimensionen wurden unter dem falschen Namen gelesen: `errors.*` kam leer zurück, und eine Map-Dimension wie `third_parties` ließ den Request scheitern.
+
+Doku: [API → Analytics](/en/api/analytics/queryAnalytics) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="Analytics passt aufs Handy">
+
+Die Karte der aktiven Stunden war so breit wie die Woche, die sie zeichnet, auf dem Handy schob sie damit die Stundenachse und den Schalter Pageviews / Besucher aus dem Viewport, ohne dass sich etwas scrollen ließ. Das Raster scrollt jetzt innerhalb der Karte. Ein Tipp auf das Info-Icon einer KPI-Kachel wechselt nicht mehr die Metrik des Charts, und die Fehlerliste behält Anzahl und Anteil auf einem 390 px breiten Screen, statt sie abzuschneiden.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="Der Login landet im Dashboard">
+
+Wer die App-Wurzel angemeldet öffnete, wurde auf die Login-Seite geworfen. `/` stand noch auf der Liste der öffentlichen Marketing-Seiten, aus der Zeit, als dort die Landingpage lag, die Session wurde also nie geprüft, bevor der Route-Guard lief, und nur ein Reload brachte einen ins Dashboard.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="Ein kurzer Zeitraum im Explorer zeigt wieder Uhrzeiten">
+
+Jedes Fenster, das im Minutentakt bucketet, also 15 Minuten bis 6 Stunden, zeichnete an jedem Tick dasselbe Datum und gar keine Uhrzeit. Das Chart nutzt jetzt das gemeinsame Tick-Raster der App: Schritte, an lokaler Mitternacht ausgerichtet, und das Datum auf dem Tick, der auf Mitternacht fällt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="new" area="api" title="Fehlgeschlagene Ressourcen lassen sich aufschlüsseln und filtern">
+
+Die Liste der fehlgeschlagenen Ressourcen konnte Hosts und Pfade sortieren und sonst nichts, und ein Tracker, den jeder Ad-Blocker killt, besetzte die oberen Zeilen.
+
+- **Die Liste gruppiert nach Host**, jeder mit seinem Anteil an allen fehlgeschlagenen Ladevorgängen, und ein geöffneter Host zeigt die einzelnen Ressourcen darunter. Eine zweite Ansicht sortiert Seiten nach dem Anteil ihrer Pageviews, die eine Ressource verloren haben.
+- **Einen Host auszublenden macht die Liste lesbar.** `host` und `exclude_hosts` grenzen auch die Summen ein, anders als `bucket`, die Anteilsbalken und die große Zahl bleiben also mit den Zeilen konsistent.
+- **Eine geöffnete Ressource lässt sich aufschlüsseln** wie eine geöffnete Fehlersignatur: die Datei, eine Zeitreihe, Breakdowns nach Seite, Browser, Gerät, Betriebssystem und Land, betroffene Besucher und Beispiel-Beacons. `POST /analytics/failed-resources/detail`, mit dem `fingerprint`, den jede Zeile jetzt trägt.
+- **Die Beacon-Detailansicht hält die zwei Populationen auseinander.** `errors` trägt JavaScript-Fehler, `failed_resource_loads` die fehlgeschlagenen Ladevorgänge mit Host, Pfad und Eigentümer, und `failed_resources` ist eine Spalte, die du projizieren und mit `>= 1` eingrenzen kannst. `error_fingerprint` nimmt ein `error_fingerprint_kind` (`error` oder `failed_resource`), denn beide Listen vergeben Keys aus einem Raum.
+- Der Assistent und der MCP-Server haben `get_failed_resource_detail` bekommen, das Gegenstück zu `get_error_detail` für die andere Population.
+
+Doku: [Analytics → Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="new" area="dashboard" title="Hinweise von fastmon erscheinen im Dashboard">
+
+Nachrichten, die fastmon-Mitarbeiter schreiben, erscheinen jetzt als Streifen oben im Dashboard, an derselben Stelle und in derselben Form wie der Abrechnungsstreifen „Aktion erforderlich". Die beiden lesen sich damit als ein System.
+
+- **Ein Hinweis richtet sich an alle oder an eine Organisation**, liest sich als Info, Warnung oder kritisch, und erscheint nur, solange er veröffentlicht ist und in seinem Zeitfenster liegt. Die Hinweise einer Organisation sieht jeder, der sie öffnen darf, auch Agenturmitarbeiter, die über eine Partnerschaft daran arbeiten.
+- **Ein Titel allein ist ein vollständiger Hinweis.** Die Beschreibung ist optional, und Zeilenumbrüche darin bleiben so, wie sie getippt wurden.
+- **Ein weggeklickter Hinweis bleibt pro Person auf dem Server gespeichert**, er bleibt also auf jedem Gerät und in jedem Browser weg.
+- **Mehrere gleichzeitig blättern einzeln durch**, mit Pfeil und Zähler („2/3") statt zu stapeln. Der schwerwiegendste steht vorn, und nichts bewegt sich von allein.
+- **Deutsch, wo es geschrieben wurde.** Ein Hinweis kann einen deutschen Titel und eine deutsche Beschreibung tragen; wer Deutsch als Kontosprache hat, liest diese Fassung, alle anderen den Basistext.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="changed" area="dashboard" title="Eigene und Dritte stehen ausgeschrieben da">
+
+Überall, wo das Dashboard danach trennt, auf wessen Host etwas lag, schreibt es das Wort aus. Deutsch heißt das „Eigene" und „Dritte", Englisch „First-party" und „Third-party". Das betrifft das Fetch/XHR-Panel, die Fehlerliste, die Balken der Fehler-Herkunft, den Block der fehlgeschlagenen Ressourcen, die Dimension Fehler-Herkunft im Explorer und die Lighthouse-Ressourcentabelle.
+
+- **Wo eine Zeile für ein Wort zu eng ist, wird nur die Dritt-Seite markiert**, und eine unmarkierte Zeile ist deine eigene. Der Fetch/XHR-Wasserfall und die Skriptlisten auf den INP- und TBT-Seiten lesen sich dadurch deutlich ruhiger.
+- Aufrufe auf denselben Origin erscheinen im Fetch/XHR-Panel nicht mehr als „1P" vor einem Pfad. Ein Pfad ohne Host ist deine eigene Domain, so wie eine URL sich liest.
+- Unverändert: „First-Party-Proxy" und das Party-Badge des Collectors im Setup. Dort benennt das Wort einen Konfigurationsmodus und nicht, wem ein Host gehört.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="changed" area="dashboard" title="Der dritte Tab im Seiten-Panel listet Domains">
+
+Er gruppierte nach dem ausliefernden Knoten aus dem optionalen Server-Timing-Key `fm-host`, auf jeder Site, die diesen Header nicht sendet, war der Tab also eine einzige Zeile „(nicht gemeldet)". Er listet jetzt die Domains aus den Seiten-URLs und heißt Domains. Der ausliefernde Knoten steht weiterhin im Explorer und auf der Backend-Zeit-Seite, wo er eine Performance-Frage beantwortet.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-08" type="changed" area="tracker" title="Die Fehlerrate zählt wieder Fehler">
 
 Die Fehlerrate hieß „Anteil der Pageviews mit mindestens einem Fehler" und zählte jedes fehlgeschlagene Bild, Skript und Stylesheet mit hinein. Der Server konnte nur die Hosts abziehen, die er aus einer Liste von rund 50 Trackern kannte, und Ad-Block-Listen tragen Zehntausende, also sahen Shops mit gesundem JavaScript Fehlerraten um 60 Prozent. Der Tracker zählt die beiden Populationen jetzt getrennt.

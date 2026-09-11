@@ -12,6 +12,122 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-11" type="changed" area="tracker" title="Errors say what broke, even where no message is kept">
+
+Most sites do not collect error messages, so most errors read as a type and a stack and nothing else. The tracker now recognizes the browser's own wording against a fixed catalogue and sends the shape of it instead of the text.
+
+- **The shape travels in every configuration**, Minimal included: a kind from a closed list plus the name that kind points at. An empty JSON response, a request answered with HTML instead of JSON, a variable that does not exist, a selector the browser rejected. An error is readable where it previously showed only a stack.
+- **The same fault on Chrome and on Safari is one signature now.** The two engines word it differently, and the grouping used to follow the wording.
+- **A site that does not collect messages no longer sends them.** `collect_error_messages` is baked into the served bundle, so the message is never assembled. It used to leave the browser and be discarded on arrival.
+- **Signatures regroup once.** Old groups keep their key and stop growing, the same fault reappears under a new key from the deploy onwards, and occurrence counts from before and after cannot be added up. There is no backfill, because the messages the new grouping reads were never stored.
+
+Docs: [Tracker → What a message says](/en/tracker#message-shape).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="changed" area="dashboard" title="The error list says what broke, and resolves the stack">
+
+An error row led with the file it was thrown in, which read as "the URL this happened on", and a minified frame like `bundle.6a2ce3.js:1:6800` said nothing at all.
+
+- **The row is the message**, or the sentence built from its [shape](/en/tracker#message-shape) where there is none, with type, ownership and throw site under it. The whole stack is in the row too: the throw site at full strength, the callers under it dimmer.
+- **"Resolve this stack" reads the file your visitors actually ran.** Each frame comes back with the method it sits in, its enclosing module and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side, because a minifier keeps class and method names. A run of frames in the same vendor bundle folds into one row naming the library, a frame that only passes the error on is marked as a rethrow, and a frame that cannot be read says why. It is a button rather than something a row does by itself, because it fetches your bundle. The endpoint is `POST /analytics/error-types/symbolicate`.
+- **A new chart says which error rose.** "Which errors, over time" stacks the five biggest signatures per bucket, named by their message rather than by their hash. Clicking a name in the legend opens that signature below.
+- **An error signature is a filter like any other**, so LCP, browsers, countries or the funnel can be read over the traffic where one thing breaks.
+- **Expanding a signature shows everything we have**: occurrences, visitors affected, first and last seen, its shape over time, the pages, browsers, countries, devices and operating systems it hits, and the last pageviews that carried it. The open row is in the address bar.
+- **Pages are ranked by how many errors they threw**, not by error rate. A page with one pageview that threw once has a rate of 100 % and is not the broken checkout.
+- The same panel sits in the Explorer's row drawer, and a `Script error.` row now says why it is empty.
+
+Docs: [Analytics → What broke, and where](/en/analytics#error-detail).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="new" area="tracker" title="Page-type detection for themes that renamed their classes">
+
+The built-in rulesets match the classes a shop system ships with, and a custom theme is free to rename them. An OXID theme writing `c-body--details` where the ruleset expects `cl-details` recorded no page type at all, and nothing said so.
+
+- **`pagetype_rules` maps exact class names to page types** (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`), in the page-type setting and on `POST`/`PATCH /applications`. The rules sit in front of the ruleset instead of replacing it, so you fix the one page type your theme renamed and the other six keep coming from the ruleset. Rules without a ruleset are a mode of their own: a shop system or CMS we have no ruleset for gets a page type as soon as you name its classes.
+- **Class names are exact, never patterns.** The comparison runs in every visitor's browser, and a pattern there would be a hazard on your own page. At most 24 rules, at most 32 characters per class, and case does not matter, unlike in the built-in rulesets.
+- **Detect names your shop system**, so switching detection on no longer starts with reading your own body class in DevTools. It reads the home page of the application's oldest domain and says what it found, with the evidence and the page type it would have recorded. Shopify and PrestaShop are recognized and flagged as not selectable: Shopify reports its page type through [`Server-Timing`](/en/guides/server-timing#page-type) instead, PrestaShop has no ruleset yet.
+- **Discover works out the class names.** Name one example page per page type and your home page is read alongside as the contrast, so the class that only that page type carries can be proposed. Two examples of one type give the surest answer, because whatever differs between them cannot be the marker. A type with exactly one candidate comes back ready to save.
+- Neither probe writes anything, both read only the application's own domains, and both are limited to ten runs per organization per hour.
+- The read is unchanged: one token per pageview, only where you named the class or a ruleset knows it, and never the full class attribute. OXID shops also report the order-completed page (`cl-thankyou`) as `checkout` now.
+
+Docs: [Tracker → `pagetype_rules`](/en/tracker#pagetype-rules).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="changed" area="api" title="A time series with a dimension keeps its whole time axis">
+
+A query that groups by time and by a dimension used to lose the end of its axis, because the row limit cut the result before the window was covered. Six hours by minute over twenty error signatures drew the first two hours and looked complete.
+
+- **`group_by.top_n` limits how many dimension values a query reads**, ranked by pageview volume over the requested window. Set it on every query that groups by time and by a dimension, and the row limit stops competing with the time axis.
+- **Grouping `/analytics/query` by an `errors.*` dimension works again.** The row count that paginates the result asked ClickHouse for a column the query had not selected, so every such query failed instead of returning data.
+- **A grouped query reports the dimension value it grouped by.** Both structured dimensions were read under the wrong name: `errors.*` came back empty, and a map dimension such as `third_parties` failed the request.
+
+Docs: [API → Analytics](/en/api/analytics/queryAnalytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="Analytics fits on a phone">
+
+The Active hours card was as wide as the week it draws, so on a phone it pushed the hour axis and the Pageviews / Visitors switch out of the viewport with nothing to scroll. The grid scrolls inside the card now. Tapping the info icon on a KPI tile no longer switches the chart's metric, and the error list keeps its count and share on a 390 px screen instead of cutting them off.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="Signing in lands on the dashboard">
+
+Opening the app root while signed in bounced you to the login page. `/` was still on the list of public marketing pages, from back when it served the landing page, so the session was never checked before the route guard ran, and only a reload got you to the dashboard.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="fixed" area="dashboard" title="A short Explorer range shows times on its axis">
+
+Every window that buckets by minute, which is 15 minutes through 6 hours, drew the same date on every tick and no time at all. The chart now uses the app's shared tick grid: steps aligned to local midnight, with the date on the tick that lands on midnight.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="new" area="api" title="Failed resources can be drilled into and filtered">
+
+The failed-resource list could rank hosts and paths and nothing else, and one tracker that every ad blocker kills owned the top rows.
+
+- **The list groups by host**, each with its share of all failed loads, and opening a host shows the individual resources under it. A second view ranks pages by the share of their pageviews that lost a resource.
+- **Hiding a host makes the list readable.** `host` and `exclude_hosts` narrow the totals as well, unlike `bucket`, so the share bars and the big number keep agreeing with the rows.
+- **Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS and country, visitors affected, and sample beacons. `POST /analytics/failed-resources/detail`, keyed by the `fingerprint` each row now carries.
+- **The beacon drill-down tells the two populations apart.** `errors` carries JavaScript errors, `failed_resource_loads` carries the failed loads with host, path and owner, and `failed_resources` is a column you can project and scope with `>= 1`. `error_fingerprint` takes an `error_fingerprint_kind` (`error` or `failed_resource`), because both lists hand out keys from one space.
+- The assistant and the MCP server gained `get_failed_resource_detail`, the counterpart of `get_error_detail` for the other population.
+
+Docs: [Analytics → Failed resource loads](/en/analytics#failed-resources).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="new" area="dashboard" title="Notices from fastmon appear in the dashboard">
+
+Messages written by fastmon staff now show as a strip at the top of the dashboard, in the same place and the same shape as the billing "action required" strip, so the two read as one system.
+
+- **A notice is addressed to everyone or to one organization**, reads as info, warning or critical, and only shows while it is published and inside its own time window. An organization's notices are visible to everyone who may open it, agency staff working on it through a partnership included.
+- **A title on its own is a complete notice.** The description is optional, and line breaks in it are kept as typed.
+- **Clicking one away is remembered per person on the server**, so it stays gone on every device and in every browser.
+- **Several at once page one at a time** with an arrow and a count ("2/3") instead of stacking. The most severe one is shown first, and nothing moves on its own.
+- **German where it was written.** A notice can carry a German title and description; everyone whose account language is German reads that version, everyone else reads the base text.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="changed" area="dashboard" title="First-party and third-party are written out">
+
+Everywhere the dashboard splits by whose host something was on, it writes the word. English says "First-party" and "Third-party", German says "Eigene" and "Dritte". That covers the fetch/XHR panel, the error list, the error-origin bars, the failed-resource block, the Explorer's error-origin dimension and the Lighthouse resource table.
+
+- **Where a row is too cramped for a word, only the third-party side is marked**, and an unmarked row is your own. The fetch/XHR waterfall and the script lists on the INP and TBT pages read a lot quieter for it.
+- Same-origin calls in the fetch/XHR panel no longer show up as "1P" in front of a path. A path without a host is your own domain, the way a URL reads.
+- Unchanged: "First-party proxy" and the collector party badge in the setup. There the word names a configuration mode, not who a host belongs to.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-09" type="changed" area="dashboard" title="The Pages panel's third tab lists domains">
+
+It grouped by the serving node from the optional `fm-host` Server-Timing key, so on every site that does not send that header the tab was a single "(not reported)" row. It lists the domains out of the page URLs now, and is called Domains. The serving node is still in the Explorer and on the Backend time page, where it answers a performance question.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-08" type="changed" area="tracker" title="The error rate counts errors again">
 
 The error rate said "share of pageviews with at least one error" and counted every failed image, script and stylesheet into it. The server could only subtract the hosts it recognised from a list of about 50 trackers, and ad-block lists carry tens of thousands, so shops with healthy JavaScript saw error rates around 60 percent. The tracker now counts the two populations apart.

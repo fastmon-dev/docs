@@ -112,11 +112,29 @@ Beide Zähler erfassen jedes Vorkommen. Das Beacon trägt bis zu acht sortierte 
 
 **`ScriptError`** ist der Typ für eine Exception, die der Browser maskiert. Ein Skript von einem anderen Origin, geladen ohne CORS-Opt-in, wird als wortwörtliches `Script error.` gemeldet, ohne Dateiname, Zeile oder Error-Objekt. Es ist damit keiner Datei zuzuordnen und teilte bisher einen Fingerprint mit jedem anderen Fehler ohne Frames. Mit dem Tracker-Bundle, das diese Änderung trägt, ist es ein eigener Typ; vorher geschriebene Zeilen behalten ihren alten Fingerprint. Ein Vergleich über den Rollout hinweg vergleicht also zwei Gruppierungen. Lade das Skript mit `crossorigin="anonymous"` von einem Host, der `Access-Control-Allow-Origin` sendet, dann meldet der Browser den echten Fehler. Setz das Attribut nicht, wo der Header fehlt, denn dann führt der Browser das Skript nicht aus.
 
+### Was eine Message sagt [#message-shape]
+
+Die Formulierung des Browsers ist für eine ganze Klasse von Fehlern die Diagnose, und sie ist zugleich der einzige Freitext, den der Tracker überhaupt erfasst. Also erkennt der Tracker die Formulierung, statt sie zu senden. Eine Message, die auf eine der Formulierungen der Engines passt, ergibt eine **Form** aus einer geschlossenen Liste, dazu den Bezeichner, den diese Form benennt, sofern sie einen benennt:
+
+| Form                                               | Was sie sagt                                    |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `undefined_read`, `null_read`, `undefined_write`   | ein Property-Zugriff auf nichts, mit dem Property-Namen |
+| `not_defined`, `not_a_function`                    | ein Name, den es nicht gibt oder der nicht aufrufbar ist, mit dem Namen |
+| `json_empty`, `json_invalid`                       | eine als JSON geparste Antwort, die leer war oder kein JSON war |
+| `selector_invalid`                                 | ein Selektor, den der Browser abgelehnt hat, mit dem Selektor |
+| `readonly_write`, `stack_overflow`, `fetch_failed`, `syntax_unexpected_token` | ein Schreibzugriff auf ein Read-only-Property, Endlos-Rekursion, ein Request, der nie fertig wurde, ein Parse-Fehler |
+
+Die Form reist in **jeder** Konfiguration mit, auch in Minimal. Ein Fehler liest sich also als „`uc.setServiceAlias` wurde aufgerufen, aber `uc` existiert an dieser Stelle nicht" auch auf einer Site, die gar keine Messages behält. Die rohe Message reist nur mit eingeschaltetem [`collect_error_messages`](#collect-error-messages).
+
+Die Erkennung läuft im Browser, bevor irgendetwas gesendet wird, und genau das macht es überhaupt erst möglich, die Message zu sperren. Der Bezeichner, der mit einer Form mitreist, wird dort ebenfalls geprüft: Ein Identifier muss wie Code aussehen, bei einem Selektor werden die Teile in Anführungszeichen geleert und er wird auf 80 Zeichen begrenzt, alles andere wird verworfen statt gesendet.
+
+Die Form ist Teil des Fehler-Fingerprints, und das macht denselben Fehler über Engines hinweg zu einer Gruppe: Chrome und Safari formulieren denselben Fehler unterschiedlich, und die Gruppierung folgte bisher der Formulierung. Die Signaturen wurden dabei einmalig neu gruppiert, eine Gruppe von davor behält also ihren Key und wächst nicht weiter, während derselbe Fehler unter einem neuen Key wieder auftaucht. Es gibt kein Backfill, denn die Messages, die die neue Gruppierung liest, wurden nie gespeichert.
+
 ### `collect_error_messages` [#collect-error-messages]
 
-Behält den freien Fehlermessage-Text (`Cannot read property 'x' of undefined`) statt nur Fehlertyp und -Count. Aus wird die Message serverseitig verworfen, und Dashboards sehen Aggregate wie „5 TypeErrors, 2 ReferenceErrors" plus Stack-Positionen. Aus per Default, auch auf Standard; das Preset Full schaltet es an.
+Behält den freien Fehlermessage-Text (`Cannot read property 'x' of undefined`) zusätzlich zu Fehlertyp, Count und [Message-Form](#message-shape). Aus wird die Message nie zusammengebaut: Der Schalter ist ins ausgelieferte Bundle eingebacken, auf einer Site, die sie nicht angefragt hat, kommt sie also gar nicht erst auf den Draht. Aus per Default, auch auf Standard; das Preset Full schaltet es an.
 
-**PII:** der höchste Freitext-Vektor für personenbezogene Daten im Beacon, weil Messages Nutzereingaben enthalten können. Einwilligungsrelevant (ein „consent-only"-Feld). Ein stets aktiver Scrubber ersetzt URLs, E-Mails, numerische IDs und Strings in Anführungszeichen durch `*` vor dem Versand, auch wenn die Message behalten wird, aber das ist Defense-in-Depth: die Betreiberpflicht, keine rohen Nutzereingaben in geworfene Fehler zu geben, bleibt bestehen. Nur dort einschalten, wo du Consent geklärt hast.
+**PII:** der höchste Freitext-Vektor für personenbezogene Daten im Beacon, weil Messages Nutzereingaben enthalten können. Einwilligungsrelevant (ein „consent-only"-Feld). Ein stets aktiver Scrubber ersetzt URLs, E-Mails, numerische IDs und Strings in Anführungszeichen durch `*` vor dem Versand, auch wenn die Message behalten wird, aber das ist Defense-in-Depth: die Betreiberpflicht, keine rohen Nutzereingaben in geworfene Fehler zu geben, bleibt bestehen. Die [Message-Form](#message-shape) ist nicht dieses Feld: Sie ist ein Name aus einer geschlossenen Liste plus ein geprüfter Bezeichner, und sie ist das, was die Dashboards lesen, wo dieser Schalter aus ist. Nur dort einschalten, wo du Consent geklärt hast.
 
 ### `collect_error_frames` [#collect-error-frames]
 
@@ -136,7 +154,7 @@ Erfasst aggregierte Fetch/XHR-Telemetrie: Aufruf-Counts pro Endpunkt, Dauern, Fe
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Ordnet jeden Pageview in einen **Page-Type** ein (Product, Category, Cart, Checkout und so weiter), für Shop-Systeme, indem die Body-Controller-Klasse des Shop-Frameworks gelesen wird. Standardmäßig aus (`""`), dann wird nichts aus dem DOM gelesen. Setz es auf eine eingebaute Ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`), und der Tracker extrahiert nur den Seiten-Token des Frameworks (bei Shopware 6 die `is-active-route-*`-Route-Klasse, sonst einen Controller-Token wie `is-ctl-product`), den der Collector auf die Page-Type-Kategorie mappt. Ein `Server-Timing: pageType`-Header hat, falls du einen sendest, immer Vorrang. Pro Site, und auch auf org-weiten Trackern verfügbar. Siehe [Server-Timing → Page-Type](/de/guides/server-timing#page-type). Der Page-Type sagt, welche Art Seite es ist; die [Checkout-Stufe](/de/checkout-funnel) ist ein eigenes Label, das allein aus der URL abgeleitet wird und ohne Ruleset funktioniert.
+Ordnet jeden Pageview in einen **Page-Type** ein (Product, Category, Cart, Checkout und so weiter), für Shop-Systeme, indem die Body-Controller-Klasse des Shop-Frameworks gelesen wird. Standardmäßig aus (`""`), dann wird nichts aus dem DOM gelesen. Setz es auf eine eingebaute Ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`), und der Tracker extrahiert nur den Seiten-Token des Frameworks (bei Shopware 6 die `is-active-route-*`-Route-Klasse, sonst einen Controller-Token wie `is-ctl-product`), den der Collector auf die Page-Type-Kategorie mappt. Ein `Server-Timing: pageType`-Header hat, falls du einen sendest, immer Vorrang. Wo dein Theme eine der Framework-Klassen umbenannt hat, benennst du sie selbst mit [`pagetype_rules`](#pagetype-rules). Pro Site, und auch auf org-weiten Trackern verfügbar. Siehe [Server-Timing → Page-Type](/de/guides/server-timing#page-type). Der Page-Type sagt, welche Art Seite es ist; die [Checkout-Stufe](/de/checkout-funnel) ist ein eigenes Label, das allein aus der URL abgeleitet wird und ohne Ruleset funktioniert.
 
 **PII:** das Einzige, was aus dem DOM gelesen wird, ist ein einzelner Framework-Klassen-Token, gematcht über ein ruleset-spezifisches Muster; nie das volle `class`-Attribut, nie Seiteninhalt oder Formularwerte, und die rohe Klasse verlässt den Browser nie. Aus ist der Default, eine Site entscheidet sich also bewusst für diesen einen DOM-Read.
 
@@ -155,6 +173,26 @@ Jede Ruleset mappt den Page-Controller-Token des Frameworks auf einen aus einem 
 | **account**  | `frontend-account-*`, `is-ctl-account*` | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
 
 <sup>1</sup> Jede Zelle nennt zuerst den aktuellen Token: Shopwares `is-active-route-*`-Klassen ohne das feste Präfix, die Shops seit etwa 6.6 ausgeben und die in 6.8, das die `is-ctl-*`- und `is-act-*`-Klassen entfernt, die einzig verbliebene Seiten-Markierung sind. Die `is-ctl-*`-Tokens dahinter sind der Legacy-Fallback für ältere Shops und im Browser gecachte Tracker, `*` steht für einen beliebigen Action-Teil. Home braucht das exakte Legacy-Klassenpaar, weil die Startseite wie jede Kategorieseite über den Navigation-Controller rendert (ein `is-ctl-index` gibt es in Shopware 6 nicht). Über die Legacy-Klassen teilen sich Warenkorb und Checkout `is-ctl-checkout` und beide melden das gröbere `cart`; `is-ctl-account*` deckt auch die Account-Controller-Familie ab (`is-ctl-accountorder`, `is-ctl-accountprofile`). <sup>2</sup> WooCommerce nutzt für Home- und Suchseiten generische WordPress-Klassen, die zu breit sind, um sie zuverlässig zu typisieren, also bleiben sie untypisiert. <sup>3</sup> Shopware 5 teilt sich einen Controller-Token über Warenkorb- und Bestätigungsschritt, daher melden beide das gröbere `cart` statt eines geratenen `checkout`.
+
+### `pagetype_rules` [#pagetype-rules]
+
+Benennt die Body-Klassen **deines eigenen Themes**, für Themes, die umbenannt haben, was das Shop-System ausliefert. Eine eingebaute Ruleset matcht die Klassen ihres Frameworks, ein OXID-Theme mit `c-body--details` statt des erwarteten `cl-details` erfasst also gar keinen Page-Type, und nichts sagt das. Jede Regel bildet genau einen exakten Klassennamen auf einen Page-Type ab (`home`, `product`, `category`, `cart`, `checkout`, `search`, `account`). Standardmäßig leer.
+
+Die Regeln stehen vor der Ruleset, statt sie zu ersetzen, und zwar in beiden Schritten (Token lesen und Token mappen). Du reparierst also den einen Page-Type, den dein Theme umbenannt hat, und die anderen sechs kommen weiter aus der Ruleset. Mit Regeln und leerem [`pagetype_ruleset`](#pagetype-ruleset) liest der Tracker nur die Klassen, die du benannt hast: so bekommt ein Shop-System oder CMS ohne Ruleset überhaupt einen Page-Type. Ein `Server-Timing: pageType`-Header hat weiterhin vor beidem Vorrang.
+
+Klassennamen sind exakt und werden als ganzer Token verglichen, nie als Muster: Der Vergleich läuft im Browser jedes Besuchers, und ein Muster wäre dort ein Risiko auf deiner eigenen Seite. Höchstens 24 Regeln, pro Klassenname `[a-z0-9_-]` und höchstens 32 Zeichen, jede Klasse nur einmal. Groß- und Kleinschreibung spielt keine Rolle (die Namen werden auf beiden Seiten kleingeschrieben), anders als bei den eingebauten Rulesets.
+
+Gesetzt wird das über die Applikations-API (`pagetype_rules` bei [`POST`](/de/api/applications/createApplication) oder [`PATCH /applications`](/de/api/applications/updateApplication)) oder in der Page-Type-Einstellung im Dashboard, die die Klassennamen auch [für dich herausfinden kann](#pagetype-discovery).
+
+**PII:** die engste Form des Body-Class-Reads. Mit Regeln und ohne Ruleset kann nur ein Token den Browser verlassen, das du selbst benannt hast. Das volle `class`-Attribut wird nie gelesen, und es bleibt bei einem Token pro Pageview.
+
+#### Die Klassennamen deines Themes finden [#pagetype-discovery]
+
+Zwei Setup-Helfer beantworten die zwei Fragen, die die Einstellung stellt. Beide laufen aus dem Dashboard neben der Einstellung und über die API, beide lesen nur die eigenen Domains der Applikation, und beide sind auf zehn Läufe pro Organisation und Stunde begrenzt. Keiner schreibt etwas: Sie schlagen vor, bestätigt wird durch Speichern.
+
+- **Welches Shop-System ist das?** [`POST /applications/{id}/detect-pagetype`](/de/api/applications/detectApplicationPageType) liest die eigene Startseite der Applikation und nennt die passende Ruleset, mit den Belegen dafür und dem Page-Type, den sie für diese Seite erfasst hätte. Shopify und PrestaShop werden erkannt und als nicht wählbar markiert: Shopify meldet seinen Page-Type stattdessen über [`Server-Timing`](/de/guides/server-timing#page-type), PrestaShop hat noch keine Ruleset. Eine Startseite, die mit einer Bot-Challenge antwortet, wird als fehlgeschlagener Probe-Lauf gemeldet und nicht als „Shop-System nicht erkannt".
+- **Welche Klasse heißt „Product"?** [`POST /applications/{id}/pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules) nimmt bis zu vier deiner Seiten, jede mit der Angabe, was sie ist, liest sie zusammen mit deiner Startseite als Kontrast und schlägt die Klasse vor, die nur diese Art Seite trägt. Zwei Beispiele desselben Typs geben die sicherste Antwort, denn was sich zwischen ihnen unterscheidet, kann nicht das Merkmal sein. Ein Page-Type mit genau einem Kandidaten kommt fertig zum Speichern zurück; mehrere Kandidaten werden aufgelistet und nicht zu einer Regel gemacht, und ein Typ, den das Theme gar nicht markiert, kommt leer zurück statt geraten.
+
 
 ## Ingest und Routing
 

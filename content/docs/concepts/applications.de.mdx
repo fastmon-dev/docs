@@ -96,6 +96,18 @@ aus der `<body>`-Klasse der Seite, ohne Server-Timing-Integration.
 Default aus (leer); ein per Server-Timing-Header geschickter
 Page-Type hat immer Vorrang vor der Body-Class-Vermutung.
 
+Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
+`pagetype_rules` benennt deine eigenen: eine Liste von bis zu 24 exakten
+Klassennamen, jeder auf einen Page-Type abgebildet. Die Regeln werden vor
+der Ruleset gelesen und funktionieren auch ohne eine, was Shop-Systeme und
+CMS ohne Ruleset abdeckt. Zwei Endpunkte schlagen vor, was zu setzen ist,
+und schreiben nichts:
+[`POST /applications/{id}/detect-pagetype`](/de/api/applications/detectApplicationPageType)
+nennt das Shop-System, und
+[`POST /applications/{id}/pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules)
+findet die Klassennamen aus Beispielseiten. Siehe
+[Tracker → `pagetype_rules`](/de/tracker#pagetype-rules).
+
 ## Checkout-Funnel [#checkout-funnel]
 
 Standardmäßig an. Der Collector markiert jeden Pageview, dessen URL auf
@@ -144,6 +156,7 @@ Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
 | `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
 | `collector_endpoint`  | string · nullable    | Eigener Collector-Host (nur bei `custom`).                            |
 | `pagetype_ruleset`    | enum · optional      | Shop-System-Ruleset für Page-Type-Detection, oder leer (aus).         |
+| `pagetype_rules`      | list · nullable      | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen; `null` oder leer heißt keine. |
 | `checkout_tracking`   | bool                 | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |
 | `checkout_cart_paths`, `checkout_paths`, `checkout_success_paths` | list · nullable | URL-Muster pro Funnel-Stufe. `null` erbt die eingebauten Muster; eine Liste ersetzt sie. |
 | `site_policy`         | enum                 | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
