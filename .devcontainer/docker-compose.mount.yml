@@ -1,0 +1,9 @@
+# Mount-mode overlay: bind the host checkout over the workspace volume so edits
+# land on the host directly. Enabled by default in devcontainer.json.
+# node_modules stays on its named volume so the Linux install never touches
+# virtiofs.
+services:
+  docs:
+    volumes:
+      # Same target as the base's named volume, so this entry replaces it.
+      - ..:/workspaces/docs

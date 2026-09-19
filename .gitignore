@@ -48,3 +48,6 @@ yarn-error.log*
 .env*.local
 .vercel
 next-env.d.ts
+# Dev container: the filled-in .env stays local, the template is committed
+.devcontainer/.env
+!.devcontainer/.env.example

@@ -1,97 +1,15 @@
 {
   "name": "fastmon-docs",
-  "build": {
-    "dockerfile": "Dockerfile"
-  },
+  // Workspace mode: with docker-compose.mount.yml the host checkout is bind-mounted
+  // (default). Drop it to work on a named volume that the bootstrap clones into.
+  "dockerComposeFile": ["docker-compose.yml", "docker-compose.mount.yml"],
+  "service": "docs",
   "workspaceFolder": "/workspaces/docs",
-  // Workspace as a virtiofs BIND MOUNT of the host docs checkout, so edits land
-  // on the host directly. virtiofs does not make rename() atomic, so a concurrent
-  // reader (Zed's worktree/git scanner) used to see files briefly vanish during
-  // atomic-save/index rewrites — the "flashing git status" (#58069) and
-  // empty-tree-commit data loss. That race is now defused by core.checkStat=minimal
-  // (set system-wide in the Dockerfile), so the bind mount is safe as the default.
-  // To fall back to a clone-isolated named volume instead, swap this line for
-  //   "source=fastmon-docs-src,target=/workspaces/docs,type=volume"
-  // (bootstrapped by the git init+fetch guard in postCreateCommand on first create).
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/docs,type=bind",
-  "mounts": [
-    // Sibling repos, mounted read-write so docs scripts can read
-    // OpenAPI / type sources directly from backend and frontend without
-    // leaving the container. Edits land on the host checkouts.
-    "source=${localWorkspaceFolder}/../backend,target=/workspaces/backend,type=bind",
-    "source=${localWorkspaceFolder}/../frontend,target=/workspaces/frontend,type=bind",
-    "source=fastmon-docs-node_modules,target=/workspaces/docs/node_modules,type=volume",
-    "source=${localEnv:HOME}/.claude-fastmon-docs,target=/home/dev/.claude,type=bind",
-    // Claude Code persists OAuth credentials in ~/.claude/.credentials.json
-    // (covered by the bind above) AND account / onboarding state in
-    // ~/.claude.json (a sibling file, NOT inside ~/.claude). Both must
-    // persist or Claude re-prompts for login on every rebuild. Host file
-    // is auto-created by initializeCommand below.
-    "source=${localEnv:HOME}/.claude-fastmon-docs.json,target=/home/dev/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly",
-    // Per-repo deploy key (auth for git push/pull to this one repo only — no
-    // access to other repos, no ssh-agent forwarding).
-    "source=${localEnv:HOME}/.ssh/id_fastmon_docs,target=/home/dev/.ssh/id_fastmon_docs,type=bind,readonly",
-    // Dedicated SSH signing key. Registered on the user account as a
-    // "Signing key" (not an authentication key) — GitHub's REST API splits
-    // /user/keys vs /user/ssh_signing_keys, so this key cannot authenticate
-    // git push. Pub-file is mounted because git's user.signingkey points at
-    // it and ssh-keygen -Y sign derives the private path from there.
-    "source=${localEnv:HOME}/.ssh/id_fastmon_signing,target=/home/dev/.ssh/id_fastmon_signing,type=bind,readonly",
-    "source=${localEnv:HOME}/.ssh/id_fastmon_signing.pub,target=/home/dev/.ssh/id_fastmon_signing.pub,type=bind,readonly"
-  ],
-  "appPort": [3000],
-  // Auto-create the bind sources on the host so Docker doesn't error with
-  // "bind source path does not exist" on first up. Idempotent. Array form
-  // forces shell invocation regardless of how the devcontainer client
-  // dispatches initializeCommand. The .json is seeded with `{}` (not an empty
-  // file): Claude Code parses ~/.claude.json on startup and bails with
-  // "Unexpected EOF" on a zero-byte file before it ever shows the login prompt.
-  "initializeCommand": ["sh", "-c", "mkdir -p \"$HOME/.claude-fastmon-docs\" && [ -s \"$HOME/.claude-fastmon-docs.json\" ] || echo '{}' > \"$HOME/.claude-fastmon-docs.json\""],
-  // postCreate, in order:
-  //  1. chown the volume mountpoints to the *runtime* dev user. devcontainer
-  //     remaps dev to the host UID (e.g. 501 on macOS), but the volumes are
-  //     created owned by the image build UID (1000), so without this the dev
-  //     user can't write to them. Paths/order must match the sudoers entry in
-  //     the Dockerfile exactly (NOPASSWD arg match).
-  //  2. Bootstrap the empty workspace volume by cloning. Idempotent: skipped
-  //     once .git exists, so rebuilds keep the existing checkout (incl. any
-  //     uncommitted work). git init + fetch (not `git clone`, which refuses a
-  //     non-empty dir) because the node_modules sub-volume is already mounted
-  //     here. Auth is the repo-scoped deploy key via ~/.ssh/config.
-  //  3. Install deps.
-  //  Array form (["sh", "-c", …]) for the same reason as initializeCommand:
-  //  a string-form command is not guaranteed to reach a shell. Zed splits it
-  //  and runs only the first token, so `sudo` arrives argument-less and the
-  //  whole postCreate fails with sudo's usage text (DevContainerScriptsFailed).
-  //  Also pins the shell: dev's login shell is fish, which cannot parse
-  //  `if …; then …; fi`.
-  "postCreateCommand": [
-    "sh",
-    "-c",
-    "sudo chown dev:dev /workspaces/docs /workspaces/docs/node_modules /home/dev/.claude && if [ ! -d /workspaces/docs/.git ]; then git init -q -b main && git remote add origin git@github.com:fastmon-dev/docs.git && git fetch --tags origin && git checkout -f -B main origin/main; fi && npm ci"
-  ],
-  "remoteUser": "dev",
-  "containerEnv": {
-    "GIT_CONFIG_COUNT": "4",
-    "GIT_CONFIG_KEY_0": "gpg.format",
-    "GIT_CONFIG_VALUE_0": "ssh",
-    "GIT_CONFIG_KEY_1": "user.signingkey",
-    "GIT_CONFIG_VALUE_1": "/home/dev/.ssh/id_fastmon_signing.pub",
-    "GIT_CONFIG_KEY_2": "user.email",
-    // Per-developer — set FASTMON_GIT_EMAIL in your host shell. Empty
-    // fallback is intentional: unset surfaces as a git config error rather
-    // than silently attributing commits to someone else.
-    "GIT_CONFIG_VALUE_2": "${localEnv:FASTMON_GIT_EMAIL}",
-    "GIT_CONFIG_KEY_3": "commit.gpgsign",
-    "GIT_CONFIG_VALUE_3": "true",
-    // GitHub token for the gh CLI (issues, PRs). gh reads GH_TOKEN directly,
-    // no `gh auth login` needed. Per-developer: export FASTMON_GH_TOKEN in
-    // your host shell (fine-grained PAT scoped to this repo with Issues,
-    // Pull requests and Contents read/write). Empty fallback is intentional:
-    // unset surfaces as a gh auth error instead of silent misuse of another
-    // account's token.
-    "GH_TOKEN": "${localEnv:FASTMON_GH_TOKEN}"
-  },
-  "runArgs": ["--init", "--add-host=host.docker.internal:host-gateway", "--name=fastmon-docs"]
+  // Next.js dev server; start it with `npm run dev -- --hostname 0.0.0.0` so the forward works.
+  "forwardPorts": [3000],
+  // Baked into the image (see bootstrap.sh). Idempotent, re-run it manually if
+  // your editor skips lifecycle hooks: `fastmon-docs-bootstrap`.
+  "postCreateCommand": "fastmon-docs-bootstrap",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "dev"
 }

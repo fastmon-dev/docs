@@ -1,0 +1,61 @@
+# Dev container for the fastmon docs site (Next.js). The API reference is
+# generated from the sibling backend and frontend checkouts, so both are
+# mounted.
+#
+# Per-developer values (GH_TOKEN, GIT_EMAIL) come from .devcontainer/.env, which
+# Compose loads automatically. See .env.example.
+services:
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    command: sleep infinity
+    container_name: fastmon-docs
+    hostname: fastmon-docs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Cap the container so a Next.js build cannot starve the other dev stacks.
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4g
+    environment:
+      # Claude Code keeps credentials, settings and .claude.json in this
+      # directory, which is a named volume so the login survives rebuilds.
+      CLAUDE_CONFIG_DIR: /home/dev/.claude
+      # GitHub: one token for gh and for git (via the credential helper below).
+      GH_TOKEN: ${GH_TOKEN:-}
+      # Git: user.name from the mounted ~/.gitconfig, everything else here.
+      # Every git@github.com: remote is rewritten to HTTPS, so the mounted
+      # sibling checkouts push with the token too while the host keeps SSH.
+      # Commits are not signed in the container.
+      GIT_CONFIG_COUNT: "4"
+      GIT_CONFIG_KEY_0: user.email
+      GIT_CONFIG_VALUE_0: ${GIT_EMAIL:-}
+      GIT_CONFIG_KEY_1: commit.gpgsign
+      GIT_CONFIG_VALUE_1: "false"
+      GIT_CONFIG_KEY_2: url.https://github.com/.insteadOf
+      GIT_CONFIG_VALUE_2: "git@github.com:"
+      GIT_CONFIG_KEY_3: credential.https://github.com.helper
+      GIT_CONFIG_VALUE_3: "!gh auth git-credential"
+    volumes:
+      # Workspace (clone mode). docker-compose.mount.yml replaces this with a
+      # bind mount of the host checkout.
+      - fastmon-docs-src:/workspaces/docs
+      # Linux install on its own volume in both modes.
+      - fastmon-docs-node_modules:/workspaces/docs/node_modules
+      # Sibling repos, read-write: the docs scripts read the OpenAPI schema and
+      # type sources from them.
+      - ../../backend:/workspaces/backend
+      - ../../frontend:/workspaces/frontend
+      # Claude Code store, separate from the host's ~/.claude.
+      - fastmon-docs-claude:/home/dev/.claude
+      # Host git identity (user.name). Git auth is GH_TOKEN, no SSH keys.
+      - ${HOME}/.gitconfig:/home/dev/.gitconfig:ro
+
+volumes:
+  fastmon-docs-src:
+  fastmon-docs-node_modules:
+  fastmon-docs-claude:
