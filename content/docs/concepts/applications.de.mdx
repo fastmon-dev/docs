@@ -4,49 +4,40 @@ description: "Eine Application ist ein Tracking-Snippet: ihre Hashes, Erfassungs
 ---
 
 Eine **Application** ist der Tracking-Embed: ein Snippet, ein Satz
-Erfassungseinstellungen und die zwei Hashes, die sie identifizieren.
-Sie bedient eine Domain oder zwanzig. Jede Domain ist eine **Site**
-mit eigenem Dashboard und eigenem Traffic. Die meisten brauchen genau
-eine Application mit einer Site.
+Erfassungseinstellungen, zwei Hashes. Sie bedient eine oder viele
+Domains, jede davon eine **Site**. Die meisten brauchen eine
+Application mit einer Site.
 
 Die Hierarchie ist **Organization → Application → Site**:
 
 - Eine **Organization** besitzt Applications, Members und Tokens.
 - Eine **Application** besitzt das ausgelieferte
   `/s/{source_hash}.js`-Bundle, die komplette Erfassungs-Config und
-  den `collector_hash`, an den Beacons posten. Sie hat eine oder
-  mehrere Sites.
-- Eine **Site** ist eine einzelne Domain unter der Application: eine
-  reine Analytics-Einheit mit eigenem Dashboard. Siehe
-  [Sites](/de/concepts/sites).
-
-Es gibt keinen „Single vs. Multi"-Modus: eine Application mit einer
-Site ist der Normalfall; weitere Sites kommen dazu, wenn sich mehrere
-Domains ein Snippet und eine Erfassungs-Config teilen sollen.
+  den `collector_hash`, an den Beacons posten.
+- Eine **Site** ist eine einzelne Domain unter der Application, mit
+  eigenem Dashboard. Siehe [Sites](/de/concepts/sites).
 
 ## Die zwei Hashes
 
-Eine Application hat zwei kurze Hashes (beide auf der Application,
-nicht auf der Site):
+Eine Application hat zwei kurze Hashes, beide auf der Application:
 
 - **`source_hash`** steht in der **Script-URL** (`/s/{source_hash}.js`)
-  und sagt, welches Application-Bundle an den Browser geliefert wird.
+  und wählt das Bundle, das an den Browser geht.
 - **`collector_hash`** steht in der **Ingest-URL** (`/c/{collector_hash}`)
-  und sagt, zu welcher Application ein eingehender Beacon gehört. Er
-  ist im Script eingebacken; du kopierst ihn nie von Hand.
+  und sagt, zu welcher Application ein Beacon gehört. Er ist im Script
+  eingebacken.
 
 Beide findest du auf der Karte der Application unter
-**··· → IDs & Hashes**. Beim Rotieren werden beide neu erzeugt und
-das ausgelieferte Script wird invalidiert.
+**··· → IDs & Hashes**. Beim Rotieren werden beide neu erzeugt, das
+ausgelieferte Script wird invalidiert, und ein eingefügtes
+[Shopify-Pixel](/de/guides/shopify-checkout) geht kaputt.
 
 ## Was erfasst wird: Presets
 
 Die Erfassungs-Config lebt auf der Application: ein
-[Preset](/de/tracker) (`minimal` / `standard` / `full`,
-Default `standard`), das sich in Einzelflags entfaltet: Sessions,
-der Besucher-`stitch`, Fehlerdetail, Query-Keys, fetch/XHR. Alles
-davon wird ins ausgelieferte Bundle gebacken. Die volle
-Aufschlüsselung steht unter [Presets](/de/tracker).
+[Preset](/de/tracker) (`minimal` / `standard` / `full`, Default
+`standard`), das sich in Einzelflags entfaltet, alle ins
+ausgelieferte Bundle gebacken.
 
 ## Wohin die Beacons gehen: der Collector
 
@@ -59,69 +50,79 @@ Aufschlüsselung steht unter [Presets](/de/tracker).
 - **`custom`**: ein absoluter `collector_endpoint`-Host, den du
   kontrollierst.
 
-Der Browser entscheidet First- vs. Third-Party zur Laufzeit, indem er
-den Host mit der Seiten-Origin vergleicht. Den Collector später zu
-wählen hieße, das schon eingebettete Snippet zu tauschen. Deshalb
-wird er beim Anlegen gesetzt. Siehe [Implementierung](/de/install/html).
+Den Collector später zu wählen hieße, das schon eingebettete Snippet
+zu tauschen. Deshalb wird er beim Anlegen gesetzt. Siehe
+[Implementierung](/de/install/html).
 
 ## Unbekannte Domains: `site_policy`
 
 Kommt ein Beacon von einem Hostnamen, der keine registrierte Site
-ist, entscheidet die **`site_policy`** der Application:
+ist, entscheidet die **`site_policy`**:
 
-- **`open`** (Default): der Beacon wird verworfen, aber der Hostname
+- **`open`** (Default): der Beacon wird verworfen, der Hostname aber
   als **vorgeschlagene Domain** vermerkt, die du mit einem Klick
-  adoptierst (sie wird eine Site und erbt die Config der Application).
-- **`auto`**: für den Hostnamen wird automatisch eine Site angelegt,
-  und ihr Traffic wird ab dann behalten.
-- **`strict`**: der Beacon wird verworfen, ohne Vorschlag und ohne
-  Auto-Provisioning; nur exakt registrierte Domains werden bedient.
+  adoptierst.
+- **`auto`**: für den Hostnamen wird eine Site angelegt, ihr Traffic
+  wird ab dann behalten.
+- **`strict`**: der Beacon wird verworfen, ohne Vorschlag; nur
+  registrierte Domains werden bedient.
 
-Das ersetzt die alte `allowed_origins`-Liste und das per-Site
-`enforce_domain_match`. Mit `strict` nagelst du den Ingest auf
-explizit registrierte Domains fest.
+Mit `strict` nagelst du den Ingest auf registrierte Domains fest.
 
 ## Environment
 
 `environment` markiert eine Application als **`prod`** oder **`dev`**
-(Default `prod`). Nutze `dev`, um Staging-, Preview- oder
-Wegwerf-Apps klar von deinem Produktions-Traffic zu trennen.
+(Default `prod`). Nutze `dev`, um Staging und Preview aus deinem
+Produktions-Traffic herauszuhalten.
+
+## Plattform, Shop und SPA
+
+`platform` nennt das Shopsystem oder CMS, auf dem die Application
+läuft, etwa `shopware6`, `shopify` oder `prestashop`. Eine selbst
+gesetzte Plattform ist `manual` und wird von späterer Erkennung nicht
+überschrieben.
+
+`shop.active` sagt, ob die Application ein Shop ist, dazu
+`shop.source` für die Herkunft. Ohne Einstellung folgt der Wert der
+Plattform; bei unbekannter Plattform bleibt er `null`. `spa` markiert
+eine Single-Page-App und wird von Hand gesetzt.
+
+Eine Shopify-Application liefert zusätzlich das
+[Checkout-Event-Pixel](/de/guides/shopify-checkout) aus, gebaut aus
+`source_hash` und den Collector-Einstellungen.
 
 ## Page-Type-Detection
 
-Optional. Setz `pagetype_ruleset` auf dein Shop-System (`shopware6`,
-`shopware5`, `oxid`, `magento` oder `woocommerce`), und der Tracker
-klassifiziert jeden Pageview (Home / Product / Cart / Checkout / …)
-aus der `<body>`-Klasse der Seite, ohne Server-Timing-Integration.
-Default aus (leer); ein per Server-Timing-Header geschickter
-Page-Type hat immer Vorrang vor der Body-Class-Vermutung.
+Zwei unabhängige Einstellungen. `platform` sagt, worauf die
+Application läuft; `page_type.body_class` schaltet das Lesen des
+Page-Types (Home, Product, Cart, Checkout) aus der `<body>`-Klasse
+ein. Eine Plattform zu wählen schaltet das Lesen nicht ein, und für
+Shopify und PrestaShop bleibt es aus, weil es für sie kein Ruleset
+gibt. `pagetype_ruleset` liest und schreibt weiter, abgeleitet aus
+beiden. Server-Timing hat immer Vorrang vor der Body-Class.
 
 Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
-`pagetype_rules` benennt deine eigenen: eine Liste von bis zu 24 exakten
-Klassennamen, jeder auf einen Page-Type abgebildet. Die Regeln werden vor
-der Ruleset gelesen und funktionieren auch ohne eine, was Shop-Systeme und
-CMS ohne Ruleset abdeckt. Zwei Endpunkte schlagen vor, was zu setzen ist,
-und schreiben nichts:
-[`POST /applications/{id}/detect-pagetype`](/de/api/applications/detectApplicationPageType)
-nennt das Shop-System, und
-[`POST /applications/{id}/pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules)
-findet die Klassennamen aus Beispielseiten. Siehe
+`pagetype_rules` benennt deine eigenen: bis zu 24 exakte Klassennamen,
+jeder auf einen Page-Type abgebildet. Die Regeln werden vor der
+Ruleset gelesen und funktionieren auch ohne eine. Zwei Endpunkte
+schlagen vor, was zu setzen ist, und schreiben nichts:
+[`detect-pagetype`](/de/api/applications/detectApplicationPageType)
+nennt das Shop-System,
+[`pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules)
+findet die Klassennamen. Siehe
 [Tracker → `pagetype_rules`](/de/tracker#pagetype-rules).
 
 ## Checkout-Funnel [#checkout-funnel]
 
-Standardmäßig an. Der Collector markiert jeden Pageview, dessen URL auf
-ein Warenkorb-, Checkout- oder Abschluss-Muster passt, mit dieser Stufe
-und registriert Warenkorb-Requests, die die Shopseiten per Fetch/XHR
-senden. `checkout_tracking` ist das Opt-out; die drei Pfadlisten
-(`checkout_cart_paths`, `checkout_paths`, `checkout_success_paths`) erben
-jeweils entweder die eingebauten Muster (`null`) oder ersetzen sie komplett
-durch bis zu 10 eigene, wobei `*` das einzige Wildcard-Zeichen ist und ein
-Muster den ganzen Pfad beschreiben muss. Die Markierung wirkt nur
-vorwärts: Pfade oder Schalter zu ändern klassifiziert nichts neu, was
-schon gespeichert ist. Besucher pro Stufe zu zählen braucht eine
-gespeicherte Besucher-Identität (`store_stitch`). Die eingebauten Muster
-und was die Zahlen bedeuten stehen unter
+Standardmäßig an, unter `shop.checkout`. Der Collector markiert jeden
+Pageview, dessen URL auf ein Warenkorb-, Checkout- oder
+Abschluss-Muster passt, und registriert die Warenkorb-Requests der
+Shopseiten aus Fetch/XHR. `checkout_tracking` ist das Opt-out; die
+drei Pfadlisten erben jeweils die eingebauten Muster (`null`) oder
+ersetzen sie komplett. Die Markierung wirkt nur vorwärts, und
+Besucher pro Stufe zu zählen braucht `store_stitch`. Ein
+Shopify-Shop ergänzt seinen Checkout über das
+[Pixel](/de/guides/shopify-checkout). Siehe
 [Checkout-Funnel](/de/checkout-funnel).
 
 ## Per-Domain-Defaults
@@ -131,54 +132,62 @@ Mitglieds-Site erbt und pro Domain überschreiben kann:
 
 - **`data_retention_days`** (Default `90`): wie lange Rohdaten
   behalten werden.
-- **`store_stitch`**: den Edge-Besucher-`stitch` persistieren
-  (treibt Unique-Visitor-Zahlen). Folgt dem Preset der Application;
-  eine Site kann ihn trotzdem selbst abschalten.
+- **`store_stitch`**: den Edge-Besucher-`stitch` persistieren, der
+  die Unique-Visitor-Zahlen treibt. Eine Site kann ihn selbst
+  abschalten.
 - **`count_visitors_by`** (`stitch` / `session`): nach welcher
-  Kennung die **Visitors**-Metrik in Reports zählt. Eine
-  Reporting-Präferenz, die zur Query-Zeit auf das begrenzt wird, was
-  die Site tatsächlich speichert.
+  Kennung die **Visitors**-Metrik zählt. Zur Query-Zeit begrenzt auf
+  das, was die Site speichert.
 
 Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
 [Sites](/de/concepts/sites).
 
-## Was eine Application hat
+## Was eine Application hat [#application-fields]
 
-| Feld                  | Typ                  | Hinweise                                                              |
-| --------------------- | -------------------- | --------------------------------------------------------------------- |
-| `id`                  | UUID v7              | Stabiler Identifier.                                                  |
-| `organization_id`     | UUID v7              | Die besitzende Organisation.                                          |
-| `name`                | string               | Wie die Application im UI erscheint.                                  |
-| `environment`         | enum                 | `prod` oder `dev`. Default `prod`. Markiert Nicht-Produktions-Apps.    |
-| `source_hash`         | string               | Global eindeutig; in der Script-URL (`/s/{source_hash}.js`).          |
-| `collector_hash`      | string               | Global eindeutig; in der Ingest-URL (`/c/{collector_hash}`).          |
-| Preset-Flags          | bool · enum          | `collect_sessions`, `collect_fetch_xhr`, `session_consent`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`. Siehe [Presets](/de/tracker). |
-| `collector_mode`      | enum                 | `default` / `relative` / `custom`.                                    |
-| `collector_endpoint`  | string · nullable    | Eigener Collector-Host (nur bei `custom`).                            |
-| `pagetype_ruleset`    | enum · optional      | Shop-System-Ruleset für Page-Type-Detection, oder leer (aus).         |
-| `pagetype_rules`      | list · nullable      | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen; `null` oder leer heißt keine. |
-| `checkout_tracking`   | bool                 | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |
-| `checkout_cart_paths`, `checkout_paths`, `checkout_success_paths` | list · nullable | URL-Muster pro Funnel-Stufe. `null` erbt die eingebauten Muster; eine Liste ersetzt sie. |
-| `site_policy`         | enum                 | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
-| `data_retention_days` | int                  | Per-Domain-Default (`90`); eine Site kann überschreiben.              |
-| `store_stitch`        | bool                 | Per-Domain-Default; eine Site kann überschreiben.                     |
-| `count_visitors_by`   | enum                 | Per-Domain-Default (`stitch` / `session`); eine Site kann überschreiben. |
-| `source_version`      | string               | Gepinnte Beacon-Template-Version (`v1`).                              |
-| `is_active`           | bool                 | Bei `false` werden Beacons angenommen, aber nicht geschrieben.        |
+Die Response gruppiert ihre Felder in `page_type`, `shop`, `collection`,
+`collector`, `script` und `site_defaults`. Create und Update nehmen dieselben
+Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab. Die flachen
+Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
+
+| Feld                         | Typ               | Hinweise                                                              |
+| ---------------------------- | ----------------- | --------------------------------------------------------------------- |
+| `id`                         | UUID v7           | Stabiler Identifier.                                                  |
+| `organization_id`            | UUID v7           | Die besitzende Organisation.                                          |
+| `name`                       | string            | Wie die Application im UI erscheint.                                  |
+| `environment`                | enum              | `prod` oder `dev`. Default `prod`. Markiert Nicht-Produktions-Apps.    |
+| `platform`                   | object · nullable | Shopsystem oder CMS: `key`, `source`, `detected_via`, `detected_at`.  |
+| `shop.active`                | bool · nullable   | Ob das ein Shop ist. `null` folgt der Plattform.                      |
+| `spa`                        | bool              | Single-Page-App. Von Hand gesetzt, Default `false`.                   |
+| `collection.*`               | bool · enum       | Die Preset-Flags: Sessions, Fetch/XHR, Fehlermessages und -Frames, Query-Keys und -Werte, `session_consent`, `template_url_ids`. Siehe [Presets](/de/tracker). |
+| `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
+| `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
+| `shop.checkout.tracking`     | bool              | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |
+| `shop.checkout.*_paths`      | list · nullable   | URL-Muster pro Funnel-Stufe. `null` erbt die eingebauten Muster; eine Liste ersetzt sie. |
+| `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |
+| `collector.endpoint`         | string · nullable | Eigener Collector-Host (nur bei `custom`).                            |
+| `collector.proxy_secret`     | object            | Das gemeinsame Secret für einen [First-Party-Proxy](/de/guides/first-party-proxy). |
+| `script.source_hash`         | string            | Global eindeutig; in der Script-URL (`/s/{source_hash}.js`).          |
+| `script.collector_hash`      | string            | Global eindeutig; in der Ingest-URL (`/c/{collector_hash}`).          |
+| `script.source_version`      | string            | Gepinnte Beacon-Template-Version (`v1`).                              |
+| `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. Eine Site kann jedes überschreiben. |
+| `site_policy`                | enum              | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
+| `is_active`                  | bool              | Bei `false` werden Beacons angenommen, aber nicht geschrieben.        |
+
+Sechs Felder bleiben für das Shopware-Plugin flach: `source_hash`,
+`collector_hash`, `proxy_secret`, `collector_mode`, `collector_endpoint`
+und `pagetype_ruleset`.
 
 ## Sites: adoptieren, verschieben, löschen
 
-- **Domain hinzufügen**: eine Site unter der Application anlegen oder
-  eine vorgeschlagene Domain adoptieren (siehe `site_policy` oben).
-- **Site verschieben**: eine Site einer anderen Application zuweisen;
-  sie übernimmt deren Config. Es gibt kein „Unassign": eine Domain
-  gehört immer zu genau einer Application.
-- **Site löschen**: entfernt die Daten dieser Domain (mit
-  Bestätigung).
+- **Domain hinzufügen**: eine Site anlegen oder eine vorgeschlagene
+  Domain adoptieren.
+- **Site verschieben**: sie übernimmt die Config der neuen
+  Application. Eine Domain gehört immer zu genau einer Application.
+- **Site löschen**: entfernt die Daten dieser Domain, mit Bestätigung.
 
 ## Verwandt
 
-- [Sites](/de/concepts/sites): die Per-Domain-Einheit unter einer Application.
+- [Sites](/de/concepts/sites): die Per-Domain-Einheit.
 - [Presets](/de/tracker): was der Beacon erfasst.
-- [Implementierung](/de/install): eine Application anlegen und das Snippet einbetten.
+- [Implementierung](/de/install): eine anlegen und das Snippet einbetten.
 - [Der RUM-Beacon](/de/concepts/beacon): was das ausgelieferte Script tut.

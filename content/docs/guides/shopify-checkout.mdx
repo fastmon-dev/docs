@@ -1,0 +1,119 @@
+---
+title: Track the Shopify checkout
+description: Paste a custom pixel so the checkout funnel of a Shopify shop reaches past the cart, with the two privacy declarations Shopify asks for.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+The Shopify checkout runs on Shopify's infrastructure, where a theme script never loads. The tracker on your storefront stops at the cart, so the funnel shows no checkout and no purchase. A custom pixel closes that gap.
+
+| Shopify event | What fastmon records |
+| --- | --- |
+| Checkout started | The visitor reached the checkout |
+| Payment info submitted | The visitor submitted payment details |
+| Checkout completed | The order was placed |
+
+The pixel measures nothing else. No Web Vitals, no page load and no error data come from the Shopify checkout.
+
+## Before you paste
+
+- **Set the application's platform to Shopify.** The switch takes up to five minutes to reach the collector, so wait before you test.
+- **[`store_stitch`](/en/tracker#store-stitch) has to be on.** Checkout events carry no session id, so the edge identifier is the only thing that ties a purchase to the visitor's storefront pageviews. With it off the checkout numbers stay empty.
+- **Leave the checkout host alone** for an application with one registered domain and the default [`site_policy`](/en/tracker#site-policy). It binds its single site whatever host a beacon carries.
+- **Register the checkout host** when the application already has several domains, or when its site policy is not the permissive default. Both drop or split off a host nobody registered. Read the host in the address bar during a test checkout.
+- **Read the funnel at application scope** once a second domain is registered. The events then sit on the checkout host's site, the pageviews on the storefront's.
+
+## Paste the pixel
+
+<InstallConfigPanel />
+
+1. In the Shopify admin, go to **Settings → Customer events → Add custom pixel**.
+2. Name it `fastmon` and paste the code below.
+3. **Save**, then **Connect**.
+
+The dashboard links here from the application, with your hashes already in the URL, so the snippet below is ready to paste.
+
+<InstallSnippet kind="shopify-pixel" />
+
+Script updates happen at the URL the snippet loads, so a new tracker version needs nothing from you.
+
+<Callout type="warn" title="Rotating hashes breaks the pixel">
+  The snippet carries the application's source hash. After a rotation, <InstallValue of="events-script-url" /> answers 404 with no error anywhere, and the checkout half of the funnel goes empty while the storefront half keeps reporting. Copy the new snippet and replace the whole custom pixel code.
+</Callout>
+
+## Set the two declarations
+
+On the same page, under **Permissions**:
+
+- **Customer privacy → Permission: Not required.**
+- **Data sale: Does not qualify as data sale.**
+
+Both are your declaration about your own pixel, and Shopify holds you responsible for it. They are correct for fastmon: the pixel reads no customer data, writes nothing on the device, and the events leave with no identifier that could be sold or joined to a profile. What an event carries is listed under [Shopify checkout events](/en/checkout-funnel#shopify).
+
+With Shopify's defaults instead, the pixel requires Marketing and Analytics consent. It then runs only for visitors who consented, and your checkout numbers cover a different population than your storefront numbers.
+
+## If your beacons go through your own domain
+
+An application on a [custom collector endpoint](/en/tracker#collector-endpoint) keeps it for the checkout events. The pixel script and the events both travel your own host, so the checkout makes no third-party request at all. Your proxy has to do two things for `/s/e/*` and `/c/e/*` as well:
+
+- **Relay both paths.** A proxy that only forwards `/s/{hash}` and `/c/{hash}` never serves the script and swallows every event. The recipe from the [onboarding guide](/en/guides/first-party-proxy), `location ~ ^/(s|c)/`, already covers them.
+- **Pass the `Access-Control-Allow-Origin: null` answer through unchanged.** The pixel iframe has an opaque origin, so it sends `Origin: null` and the browser rejects any other value. A rejected response makes the send path retry, and every event goes out three times.
+
+See [First-party proxy](/en/guides/first-party-proxy).
+
+## Check that it works
+
+Place a test order with a Bogus Gateway payment, in a browser without a content blocker. In the network tab, look for requests to <InstallValue of="events-collector-url" />: one on entry, one after the payment step, one on the thank-you page. The data reaches the dashboard within a few minutes.
+
+## What the numbers mean [#numbers]
+
+The checkout numbers are a floor, not an exact count. Two things cost you
+events: content blockers and wallet payments.
+
+### Content blockers [#blockers]
+
+Shopify does not run your custom pixel on the checkout page itself. It loads
+the pixel into a sandbox, from a URL on your own shop domain that looks like
+this:
+
+```text
+https://your-shop.example/web-pixels@<hash>/custom/web-pixel-<id>@1/sandbox/modern/checkouts/…
+```
+
+That URL is the problem. **EasyPrivacy**, one of the filter lists from the
+**EasyList** project, blocks exactly this path. It carries four rules for
+Shopify's pixel machinery, among them
+`/web-pixels@*/web-pixel-*/sandbox/modern/*` and
+`/web-pixel-shopify-custom-pixel@`. **uBlock Origin** enables EasyPrivacy out
+of the box, and other blockers ship the same list.
+
+For a visitor with such a blocker the sandbox never loads. No custom pixel
+runs at all, neither ours nor any other one your shop has installed, so no
+checkout event is sent.
+
+**You cannot route around this.** The blocked URL already sits on your own
+domain, and the rules match the path rather than the host, so moving the
+collector to your own domain changes nothing.
+
+What it does to your numbers: your storefront tag is a normal script on a
+normal path, so it keeps counting these visitors. Their checkout events are
+missing. The conversion rate therefore reads low, by roughly the blocker share
+of your audience.
+
+### Wallet payments [#wallets]
+
+Shopify does not fire its checkout completed event for most Shop Pay and Apple
+Pay orders, and it also stays silent when the thank-you page fails to load or
+the buyer closes the tab after the bank confirmation. How much you lose follows
+your wallet share.
+
+The payment step is what makes this visible. A visitor who submitted payment
+and shows no purchase most likely bought through a wallet.
+
+### Repeated entries [#repeat-entries]
+
+Shopify fires its checkout started event every time a visitor enters the
+checkout. The funnel counts visitors rather than events, so this inflates
+nothing.
+
+How the events change the funnel's own numbers is in [Checkout funnel → Shopify checkout events](/en/checkout-funnel#shopify).

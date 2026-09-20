@@ -3,20 +3,21 @@ title: Analytics
 description: Traffic, Besucher, Fehler und der Experience Score. Die Felddaten-Dashboards über deinen Beacons.
 ---
 
-Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist gerade auf der Site, woher kommt der Traffic, welche Seiten werden aufgerufen, welche Fehler treten auf, und wie verlaufen ganze Besuche. Es ergänzt das [Web-Vitals-Dashboard](/de/web-vitals): gleiche Daten, andere Frage. Web Vitals fragt „wie schnell ist die Site?", Analytics fragt „was passiert auf ihr?".
+Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist gerade auf der Site, woher kommt der Traffic, welche Seiten werden aufgerufen, welche Fehler treten auf, und wie verlaufen ganze Besuche.
 
 ## Das Dashboard
 
 Die Analytics-Hauptansicht einer Site zeigt:
 
 - **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde plus den Seiten, die gerade angesehen werden, und den Quellen, über die die Besucher kommen. Bei Shops zeigt die Karte zusätzlich, wie viele davon gerade im Warenkorb, im Checkout oder auf der Abschlussseite sind.
-- **Zentrale Kennzahlen**: Unique Visitors, Pageviews, Views per Visit und Checkouts, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum, damit sich ein Tag und ein Monat vergleichen lassen. Ein Klick auf die Kachel erklärt, was sie zählt.
-- **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`), ein geteilter Link öffnet also dieselbe Kennzahl. Die Legende steht über dem Chart, in einer Reihe mit dem Umschalter für Balken und Fläche, und jede Serie lässt sich einzeln abschalten: bei Checkouts liegt der Warenkorb eine Größenordnung über den abgeschlossenen Käufen, und ohne ihn skaliert die Achse auf den Rest. Jede Serie hat ihren eigenen Vorperioden-Wert und ihren eigenen Schalter dafür.
-- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem und so weiter). Der dritte Tab des Seiten-Panels listet die **Domains** aus den Seiten-URLs; der ausliefernde Knoten, den dein Backend über `fm-host` meldet, steht im Explorer und auf der Backend-Zeit-Seite, wo er eine Performance-Frage beantwortet. Jedes Panel erklärt am Titel, was es zählt, nennt in der Fußzeile, wie viele Werte hinter den acht angezeigten Zeilen stecken, und führt über „Alle anzeigen" in den [Explorer](#explorer). Einzelne Zeilen öffnen sich dort ebenfalls direkt.
+- **Zentrale Kennzahlen**: Besucher, Pageviews, Pageviews pro Besucher und Checkouts, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum, damit sich ein Tag und ein Monat vergleichen lassen. Ein Klick auf die Kachel erklärt, was sie zählt.
+- **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`), ein geteilter Link öffnet also dieselbe Kennzahl. Es startet immer als Liniendiagramm, egal welcher Zeitraum. Die Legende steht darüber, zusammen mit dem Umschalter für Balken und Fläche, und jede Serie lässt sich einzeln abschalten und trägt ihren eigenen Vorperioden-Wert.
+- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem und so weiter). Der dritte Tab des Seiten-Panels listet die **Domains** aus den Seiten-URLs. Jedes Panel erklärt am Titel, was es zählt, nennt in der Fußzeile, wie viele Werte hinter den acht angezeigten Zeilen stecken, und führt über „Alle anzeigen" in den [Explorer](#explorer). Einzelne Zeilen öffnen sich dort ebenfalls direkt.
+- **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
 - **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
 - **Traffic-Qualität**: die Aufteilung aus der Bot-Klassifizierung, zuerst als eine Leiste, dann als klickbare Zeilen.
 - **Aktive Stunden**: Stunde des Tages nach Wochentag, damit sichtbar wird, wann auf der Seite wirklich etwas passiert. Das Raster zeigt nur die Wochentage, die der gewählte Zeitraum erreicht hat.
-- **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Bewusst keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
+- **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
 
 Besucherzahlen sind anonym per Konstruktion; was ein „Besucher" hier bedeuten kann und was nicht, steht unter [Privacy](/de/privacy).
 
@@ -26,11 +27,15 @@ Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem Dashboard, der Übers
 
 Filter leben in der URL, überstehen also ein Neuladen, sind teilbar und wandern beim Wechsel zwischen Views mit. Mehrere Chips werden mit UND verknüpft; ein Komma in einem Wert bedeutet „eines von". Klick einen Chip zum Bearbeiten, das X entfernt ihn. Der „Filter"-Button trägt ein Badge mit der Anzahl aktiver Filter.
 
-Jeder Chip hat außerdem einen Ein/Aus-Schalter. Ausgeschaltet behält der Chip seine Werte und bleibt an seinem Platz, durchgestrichen dargestellt, und die Abfrage läuft ohne ihn: der schnellste Weg, „wie sieht das ohne den Länderfilter aus?" zu beantworten und ihn danach wieder einzuschalten. Ein ausgeschalteter Filter grenzt nichts ein und zählt nicht im Badge; ein Klick auf dasselbe Land in der Karte oder dasselbe Gerätesegment schaltet ihn wieder ein, statt einen zweiten Filter anzulegen. Auch dieser Zustand steht in der URL, ein geteilter Link öffnet also mit denselben ein- und ausgeschalteten Filtern.
+**Jede Seite startet ohne Bot-Traffic**, die Zahlen beschreiben also echte Besucher, solange du nichts anderes sagst. Die Traffic-Auswahl im Filtermenü wechselt zwischen Keine Bots, Nur Bots und Alle, und der Seitenkopf sagt neben dem Zeitraum, was gerade gilt. Der gewählte Bereich zählt nicht als Filter und überlebt „Alle entfernen", denn er sagt, was eine Seite zählt.
+
+Jeder Chip hat außerdem einen Ein/Aus-Schalter. Ausgeschaltet behält der Chip seine Werte und bleibt an seinem Platz, durchgestrichen dargestellt, und die Abfrage läuft ohne ihn. Ein ausgeschalteter Filter grenzt nichts ein und zählt nicht im Badge, und ein Klick auf dasselbe Land in der Karte schaltet ihn wieder ein, statt einen zweiten anzulegen. Auch dieser Zustand steht in der URL, ein geteilter Link öffnet also mit denselben ein- und ausgeschalteten Filtern.
 
 ## Der Explorer [#explorer]
 
-Der Explorer ist die Tabelle unter allem anderen: Pageviews nach jeder Dimension gruppieren und die Metriken charten, oder die Rohzeilen lesen. „Alle anzeigen" und die Zeilen-Links aus den Dashboard-Panels tragen die Filter der Seite mit hinein, samt Ausschlüssen, Metrik-Bereichen und Bot-Schaltern, und er öffnet mit den Zahlen, um die es auf der Seite geht (Pageviews und Besucher, bei Seiten zusätzlich LCP p75). Ein Klick auf eine Zeile ergänzt ihren Wert in den Filtern statt die anderen zu verwerfen: aus einer auf Deutschland gefilterten Seite heraus wird also eingeengt und nicht die Tabelle geleert.
+Der Explorer gruppiert Pageviews nach jeder Dimension und chartet die Metriken, oder zeigt die Rohzeilen. Maximieren gibt ihm das ganze Fenster samt Sidebar, solange du auf der Seite bist. „Alle anzeigen" und die Zeilen-Links aus den Dashboard-Panels tragen die Filter der Seite mit hinein, samt Ausschlüssen, Metrik-Bereichen und Bot-Schaltern, und er öffnet mit den Zahlen, um die es auf der Seite geht (Pageviews und Besucher, bei Seiten zusätzlich LCP p75). Ein Klick auf eine Zeile ergänzt ihren Wert in den Filtern statt die anderen zu verwerfen: aus einer auf Deutschland gefilterten Seite heraus wird also eingeengt und nicht die Tabelle geleert.
+
+Neben der Tabelle sitzt eine **Events**-Seite, eine Zeile pro Event, das der Tracker gemeldet hat, filterbar nach Typ und mit einem Sprung zum Besucher der Zeile. Sie erscheint für Organisationen, deren Applications Events erzeugen können, heute also für einen Shopify-Shop mit seinen [Checkout-Events](/de/checkout-funnel#shopify).
 
 Ergebnisse lassen sich als Markdown kopieren oder als CSV herunterladen: dieselben Zeilen in derselben Reihenfolge, Werte unformatiert, die Einheit im Header, damit eine Tabellenkalkulation damit rechnen kann.
 
@@ -38,54 +43,66 @@ Ergebnisse lassen sich als Markdown kopieren oder als CSV herunterladen: dieselb
 
 Drück `Cmd`/`Ctrl`+`K` (oder den Befehls-Button oben), um ein durchsuchbares Befehlsmenü zu öffnen, das die ganze App steuert: zu jeder Seite springen, Organisation oder Site wechseln, Zeitraum und Auflösung ändern sowie Filter hinzufügen, entfernen oder löschen. Tipp einfach los, um alles auf einmal zu durchsuchen, oder geh mit `Enter` oder `→` in eine Kategorie; `←` oder `Backspace` geht zurück, `Esc` schließt.
 
-Getippt wird **über alle Organisationen gesucht, die du erreichst**, nicht nur über die gerade geöffnete: eigene Mitgliedschaften, die Kunden-Organisationen jeder Agentur, zu der du gehörst, und die Applikationen und Domains darin. Jeder Treffer nennt die Organisation, in der er liegt. Eine Domain in einer anderen Organisation zu erreichen heißt also nicht mehr, sich zu erinnern wo sie liegt und vorher dorthin zu wechseln. Applikationen stehen zuerst, und eine Auswahl setzt den Applikations-Filter auf der Seite, auf der du bist, so wie eine Seite es schon immer getan hat. Inaktive Sites und Applikationen werden gelistet und gekennzeichnet, denn eine wieder zu aktivieren fängt damit an, sie zu finden.
+Getippt wird **über alle Organisationen gesucht, die du erreichst**: eigene Mitgliedschaften, die Kunden-Organisationen jeder Agentur, zu der du gehörst, und die Applikationen und Domains darin. Jeder Treffer nennt die Organisation, in der er liegt. Applikationen stehen zuerst, und eine Auswahl setzt den Applikations-Filter auf der Seite, auf der du bist. Inaktive Sites und Applikationen werden gelistet und gekennzeichnet.
+
+Jede Seite ist mit ihrer Gruppe gelistet, tippst du eine Gruppe („Netzwerk"), erscheint alles darunter, und eine Seite wird auch unter ihrem anderen Namen gefunden („API" findet Fetch/XHR). Öffnest du eine Organisation, stehen ihre Applications über ihren Domains.
 
 Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
 
 ## Fehler-Analytics [#error-analytics]
 
-Die Fehleransicht verfolgt JavaScript-Fehler über die ganze Site:
+Die Fehleransicht hat zwei Tabs, JavaScript-Fehler und [fehlgeschlagene Ressourcen](#failed-resources), jeder mit eigener Überschrift, eigenem Chart und eigener Liste. Im Fehler-Tab:
 
-- **Fehlerrate über Zeit**: der Anteil der Pageviews mit mindestens einem JavaScript-Fehler. Ein fehlgeschlagenes Bild, Skript oder Stylesheet ist hier kein Fehler, sondern zählt zu den [fehlgeschlagenen Ressourcen](#failed-resources) und läuft als eigene Kurve im selben Chart.
-- **Welche Fehler, über Zeit**: die fünf größten Signaturen je Zeitbucket als gestapeltes Chart, benannt nach dem, was kaputt ist, statt nach ihrem Hash, alles ab dem sechsten zu einem Band summiert. Die Fehlerrate ist eine Linie für alle Fehler zusammen, eine Signatur, die sich über Nacht verdoppelt hat, ist darin also nicht zu sehen. Ein Klick auf einen Namen in der Legende öffnet diese Signatur in der Liste darunter.
-- **Fehlertypen**: Fehler gruppiert nach Fingerprint (Typ + Message-Form + Stack-Form), sortiert nach Häufigkeit. Eine Zeile beginnt mit dem, was kaputt ist, und trägt ihren ganzen Stack: die Wurfstelle in voller Stärke, die Aufrufer darunter blasser, in der Reihenfolge, in der man einen Stack liest.
-- **Detailansicht**: pro Fingerprint: Gesamtzahl, betroffene Besucher, erstes und letztes Auftreten, eine Zeitreihe, Breakdowns nach URL, Browser, Gerät, Betriebssystem und Land sowie Beispiel-Pageviews mit Stack-Frames. Die geöffnete Signatur steht in der Adresszeile, Reload, Zurück und ein geteilter Link landen also auf derselben Zeile.
-- **Seiten mit den meisten Fehlern**: sortiert danach, wie viele Fehler eine Seite geworfen hat, nicht nach ihrer Fehlerrate. Eine Seite mit einem Pageview, der einmal geworfen hat, hat eine Rate von 100 % und ist nicht der kaputte Checkout. Die Rate bleibt eine Spalte und bleibt sortierbar. Eine Zeile klappt zu ihrem Stack auf.
-- **Fehler-Herkunft**: wie sich Pageviews mit Fehler auf eigene und fremde Hosts verteilen. Der dritte Balken, „Kein Fehler oder nicht zuordenbar", enthält Pageviews ohne Fehler plus Fehler, die ohne zuordenbaren Host angekommen sind.
+- **Fehlerrate über Zeit**: der Anteil der Pageviews mit mindestens einem JavaScript-Fehler. Ein fehlgeschlagenes Bild, Skript oder Stylesheet läuft als eigene Kurve im selben Chart.
+- **Welche Fehler, über Zeit**: die fünf größten Signaturen je Zeitbucket als gestapeltes Chart, benannt nach dem, was kaputt ist, statt nach ihrem Hash. Ein Klick auf einen Namen in der Legende öffnet diese Signatur in der Liste darunter.
+- **Die Liste zeigt eine Zeile pro Fehler.** Browser melden dieselbe Wurfstelle ein paar Zeichen versetzt, und ein zweiter Aufrufer ist ein zweiter Stack, eine Zeile zählt also alle Varianten und sagt, für wie viele Signaturen sie steht. Auf der API ist das `group_variants` auf `POST /analytics/error-types`.
+- **Eine Zeile beginnt mit dem, was kaputt ist, als Satz**: was passiert ist, wessen Code es ist, die Datei, wie oft und wann zuletzt. Jede Zeile trägt eine Sparkline und ein Abzeichen „Neu" oder „Steigend", sortiert wird nach häufigste, neu, steigend oder zuletzt gesehen.
+- **Sortiert nach erreichten Pageviews**, nicht nach Häufigkeit. Ein einzelner Besuch in einer Schleife ist als Schleife markiert, statt die Liste anzuführen, und „Häufigste" bleibt wählbar.
+- **Jeder Fehler hat seine eigene Seite** unter `/org/<org>/errors/<fingerprint>`, zugleich sein Share-Link. Bestehende `?error=`-Links leiten dorthin weiter.
+- **Seiten mit den meisten Fehlern**: sortiert danach, wie viele Fehler eine Seite geworfen hat, nicht nach ihrer Fehlerrate. Eine Seite mit einem Pageview, der einmal geworfen hat, hat eine Rate von 100 % und ist nicht der kaputte Checkout.
+- **Fehler-Herkunft**: wie sich Pageviews mit Fehler auf eigene und fremde Hosts verteilen. Der dritte Balken enthält Pageviews ohne Fehler plus Fehler ohne zuordenbaren Host.
 
 ### Was kaputt ist, und wo [#error-detail]
 
-**Ein Fehler sagt in einem Satz, was kaputt ist**, auch wo die Site keine Fehlermeldungen behält. Der Tracker erkennt die Formulierung des Browsers und sendet ihre [Form](/de/tracker#message-shape) statt des Texts. Eine Zeile liest sich also als „`uc.setServiceAlias` wurde aufgerufen, aber `uc` existiert an dieser Stelle nicht", statt nur einen Stack zu zeigen. Dieselbe Form ist Teil des Fingerprints, und das macht einen Fehler über Chrome und Safari hinweg zu einer Gruppe.
+**Ein Fehler sagt in einem Satz, was kaputt ist**, auch wo die Site keine Fehlermeldungen behält. Der Tracker erkennt die Formulierung des Browsers und sendet ihre [Form](/de/tracker#message-shape) statt des Texts. Eine Zeile liest sich also als „`uc.setServiceAlias` wurde aufgerufen, aber `uc` existiert an dieser Stelle nicht", statt nur einen Stack zu zeigen.
 
-**„Stack auflösen" liest die minifizierte Datei, die deine Besucher tatsächlich ausgeführt haben.** Jeder Frame kommt mit der Methode zurück, in der er steht, dem umgebenden Modul und dem Code an dieser Spalte, syntaxgefärbt und zum fehlerhaften Aufruf gescrollt. Ohne Source-Map und ohne Setup auf deiner Seite: Ein Minifier behält Klassen- und Methodennamen. Es ist ein Button und nichts, was eine Zeile von selbst tut, denn dabei wird dein Bundle abgerufen.
+**„Stack auflösen" liest die minifizierte Datei, die deine Besucher tatsächlich ausgeführt haben.** Jeder Frame kommt mit der Methode zurück, in der er steht, dem umgebenden Modul und dem Code an dieser Spalte, syntaxgefärbt und zum fehlerhaften Aufruf gescrollt. Ohne Source-Map und ohne Setup auf deiner Seite: Ein Minifier behält Klassen- und Methodennamen. Es ist ein Button und nichts, was eine Zeile von selbst tut, denn dabei wird dein Bundle abgerufen. Das Snippet ist in Zeilen umbrochen und die werfende Zeile markiert, eingefügt wird nur Whitespace, die gemeldete Spalte zeigt also weiter auf ihren Code.
 
-- Mehrere aufeinanderfolgende Frames aus demselben Vendor-Bundle klappen zu einer Zeile zusammen, die die Library nennt, damit fremder Code nicht das ganze Panel füllt. Sind alle Frames Library, sagt das Panel das: Der Aufruf, der den Fehler gemacht hat, wurde bei fünf Frames abgeschnitten, und die Message ist das, was ihn identifiziert.
+- Mehrere aufeinanderfolgende Frames aus demselben Vendor-Bundle klappen zu einer Zeile zusammen, die die Library nennt. Sind alle Frames Library, sagt das Panel das: Der Aufruf, der den Fehler gemacht hat, wurde bei fünf Frames abgeschnitten.
 - Ein Frame, der den Fehler nur weiterreicht, ist als Rethrow markiert, die Ursache sitzt dann weiter unten. Der oberste Frame eines minifizierten Stacks ist regelmäßig ein Rethrow in einem Promise-Polyfill.
 - Ein Frame, der sich nicht lesen lässt, sagt warum: kein Pfad gespeichert, die Datei liegt auf fremdem Host, die Datei ist der fastmon-Tracker, oder du hast unter demselben Dateinamen neu deployt und die Position ist weg.
 - Der Endpunkt ist [`POST /analytics/error-types/symbolicate`](/de/api/analytics/queryAnalyticsErrorSymbolication). Dasselbe Panel steckt in der Zeilen-Detailansicht des Explorers: Pageview öffnen, Fehler aufklappen, und der Stack löst sich auch dort auf.
 
+**„Wo es auftritt" ist das Aufschlüsselungs-Raster der Metrikseiten**: Seite, Seitentyp, Domain, Land, Gerät, Browser, Betriebssystem, Verbindung, Navigation, Caches, Bots und Netzwerk. Bots und Netzwerk sind dabei, du siehst also, ob ein Fehler echte Besucher erreicht oder nur Crawler.
+
+**Ein Fehler ohne Inhalt sagt, warum.** Eine Signatur kann mit fünfstelliger Zahl, ohne Message und ohne Stack ankommen: Messages oder Frames für diese Application abgeschaltet, ein Drittanbieter-Skript ohne CORS-Opt-in, oder es kam trotz Erfassung nichts an. Chart und Aufschlüsselung funktionieren trotzdem.
+
+**„AI-Prompt" übergibt den ganzen Fall an einen Assistenten**: was kaputt ist, die Zahlen, der aufgelöste Stack mit dem Code an der Wurfstelle, wo es auftritt, und Beispiel-Vorkommen. Er schreibt dazu, was deine Site nicht erfasst, damit nichts als Null gelesen wird, was in Wahrheit eine Einstellung ist.
+
+**Welche API-Calls daneben fehlschlagen.** [`POST /analytics/error-types/correlated-requests`](/de/api/analytics/queryAnalyticsErrorCorrelatedRequests) sortiert die fetch/XHR-Endpunkte, die in denselben Pageviews scheitern, jeweils gegen ihre Fehlerquote in Pageviews ohne diesen Fehler. Gebaut für die Rejection ohne Message und Stack, und die Antwort sagt, dass etwas gemeinsam auftritt, nie dass eines das andere verursacht.
+
 **Eine Fehlersignatur ist ein Filter wie jeder andere.** Jede Fehlerzeile führt in den Explorer, eingegrenzt auf die Pageviews, die sie getragen haben, und „Fehlersignatur" steht in der Filterliste. LCP, Browser, Länder oder der Checkout-Funnel lassen sich also über den Traffic lesen, auf dem eine Sache kaputt ist. `filters.error_fingerprint_kind` sagt, aus welcher Liste der Key stammt (`error` oder `failed_resource`). Eine Query damit liest die Rohzeilen statt eines Rollups und kostet entsprechend.
 
-**Eigene Subdomains zählen als eigene.** First Party heißt: dieselbe registrierbare Domain wie die Seite. Ein Bundle von `cdn.shop.example` auf einer Seite unter `www.shop.example` ist also dein eigenes Skript, und zwar in der Fehlerrate, in der Fehler-Herkunft, im Fetch/XHR-Split und in der Ressourcen-Liste gleichermaßen.
+**Eigene Subdomains zählen als eigene.** First Party heißt: dieselbe registrierbare Domain wie die Seite, und zwar in der Fehlerrate, in der Fehler-Herkunft, im Fetch/XHR-Split und in der Ressourcen-Liste gleichermaßen.
 
-`ScriptError` ist eine Gruppe, die man kennen sollte: eine nicht abgefangene Exception in einem Skript von einem anderen Origin, geladen ohne CORS-Opt-in. Der Browser verbirgt Dateiname, Zeile und Meldung, die Gruppe lässt sich also keiner Datei zuordnen. Auflösen lässt sie sich, indem du das Skript mit `crossorigin="anonymous"` von einem Host lädst, der `Access-Control-Allow-Origin` sendet; dann meldet der Browser den echten Fehler. Setz das Attribut nicht auf einem Host ohne diesen Header, denn dann führt der Browser das Skript nicht aus. Wo `ScriptError` vorkommt, listet die Fehlertypen-Antwort zusätzlich `own_subdomain_hosts`: Hosts auf der eigenen Domain, die in diesem Zeitraum Skripte ausgeliefert haben. Dort fehlen Attribut und Header meist.
+`ScriptError` ist eine nicht abgefangene Exception in einem Skript von einem anderen Origin, geladen ohne CORS-Opt-in, der Browser verbirgt also Dateiname, Zeile und Meldung. Lädst du das Skript mit `crossorigin="anonymous"` von einem Host, der `Access-Control-Allow-Origin` sendet, meldet der Browser den echten Fehler. Siehe [Tracker → Was als Fehler zählt](/de/tracker#what-counts). Wo `ScriptError` vorkommt, listet die Fehlertypen-Antwort `own_subdomain_hosts`, dort fehlt der Header meist.
 
 Wie viel Detail du siehst, hängt von den [Tracker-Einstellungen](/de/tracker) der Site ab: **Fehlertyp**, **Anzahl** und [**Message-Form**](/de/tracker#message-shape) kommen immer. Die Fehler-**Message** braucht [`collect_error_messages`](/de/tracker#collect-error-messages), volle **Stack-Frames** brauchen [`collect_error_frames`](/de/tracker#collect-error-frames).
 
 ### Fehlgeschlagene Ressourcen [#failed-resources]
 
-Ein fehlgeschlagenes `<img>`, `<script>` oder `<link>` ist ein eigenes Signal, mit eigener Rate (`failed_resource_rate`), eigener Kurve neben der Fehlerrate und eigenem Block am Ende der Seite. Es wird in zwei Buckets geteilt:
+Ein fehlgeschlagenes `<img>`, `<script>` oder `<link>` ist ein eigenes Signal, mit eigener Rate (`failed_resource_rate`), eigenem Tab und eigener Kurve neben der Fehlerrate. Es wird in zwei Buckets geteilt:
 
 - **Eigene Hosts**: die Hälfte, an der du etwas tun kannst. Ein kaputter Bildpfad, ein Bundle, das nach einem Deploy 404 liefert.
 - **Fremde Hosts**: dominiert von Ad-Blockern und Tracking-Schutz, also kein Defekt der Seite.
 
-Für die Zuordnung gilt die Regel der registrierbaren Domain von oben. **Die Liste gruppiert nach Host**, jeder mit seinem Anteil an allen fehlgeschlagenen Ladevorgängen; ein geöffneter Host zeigt die einzelnen Ressourcen darunter. Ein Tracker, den jeder Ad-Blocker killt, belegte vorher zehn Zeilen und begrub das eine kaputte Bild von dir. Eine zweite Ansicht sortiert Seiten nach dem Anteil ihrer Pageviews, die eine Ressource verloren haben.
+Für die Zuordnung gilt die Regel der registrierbaren Domain von oben. **Die Liste gruppiert nach Host**, jeder mit seinem Anteil an allen fehlgeschlagenen Ladevorgängen; ein geöffneter Host zeigt die einzelnen Ressourcen darunter. Eine zweite Ansicht sortiert Seiten nach dem Anteil ihrer Pageviews, die eine Ressource verloren haben.
 
-**Blende einen Host aus, und die Liste wird lesbar.** `host` und `exclude_hosts` grenzen auch die Summen ein, anders als `bucket`, die Anteilsbalken und die große Zahl bleiben also mit den Zeilen konsistent.
+**Blende einen Host aus, und die Liste wird lesbar.** `host` und `exclude_hosts` grenzen auch die Summen ein, anders als `ownership`, die Anteilsbalken und die große Zahl bleiben also mit den Zeilen konsistent.
 
-**Eine geöffnete Ressource lässt sich aufschlüsseln** wie eine geöffnete Fehlersignatur: die Datei (Host, Pfad, Eigentümer), eine Zeitreihe, Breakdowns nach Seiten-URL, Browser, Gerät, Betriebssystem und Land, betroffene Besucher und aktuelle Beispiel-Beacons. Übergib den `fingerprint` der Zeile an [`POST /analytics/failed-resources/detail`](/de/api/analytics/queryAnalyticsFailedResourceDetail). Die Fehler-Detailansicht weist einen Ressourcen-Key ab, denn ihr Prozentwert teilt durch die Fehlerzahl, die nur JavaScript zählt.
+**Eine geöffnete Ressource lässt sich aufschlüsseln** wie eine geöffnete Fehlersignatur: die Datei, eine Zeitreihe, Breakdowns nach Seite, Browser, Gerät, Betriebssystem und Land, betroffene Besucher und Beispiel-Beacons. Übergib den `fingerprint` der Zeile an [`POST /analytics/failed-resources/detail`](/de/api/analytics/queryAnalyticsFailedResourceDetail). Die Fehler-Detailansicht weist einen Ressourcen-Key ab.
 
-`Fehlgeschlagene Ressourcen` ist ein eigener Filter und eine eigene Metrik: `>= 1` grenzt jede Ansicht auf Pageviews ein, bei denen etwas nicht geladen hat, so wie `Fehleranzahl >= 1` das immer schon getan hat. In der Pageview-Detailansicht haben die fehlgeschlagenen Ladevorgänge einen eigenen Block, getrennt von den JavaScript-Fehlern.
+`Fehlgeschlagene Ressourcen` ist ein eigener Filter und eine eigene Metrik: `>= 1` grenzt jede Ansicht auf Pageviews ein, bei denen etwas nicht geladen hat. In der Pageview-Detailansicht haben die fehlgeschlagenen Ladevorgänge einen eigenen Block, getrennt von den JavaScript-Fehlern.
 
 Der Pfad ist häufig leer, weil er [`collect_error_frames`](/de/tracker#collect-error-frames) braucht. Ein fehlgeschlagener Ladevorgang kann auch eine wackelige Verbindung oder ein abgebrochener Request auf Besucherseite sein, nicht zwangsläufig etwas Kaputtes auf deinem Server.
 
@@ -95,21 +112,27 @@ Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/q
 
 ## Besucher
 
-Der Besucher-Explorer listet eindeutige Besucher (Start- und Endzeit, Dauer, Seitenanzahl, Land mit Flagge und Name, Geräteinfo, durchschnittliches LCP/FCP, Fehlerzahl) mit Filtern, dazu eine Detailansicht pro Besucher: jeder Pageview in Reihenfolge, jeweils mit seinen Web Vitals, Fehlern, seinem Page-Type und, bei Shops, seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht oder eine Warenkorb-Interaktion ausgelöst haben. Ein Besucher lässt sich per `?visitor=` direkt verlinken; der Kopf der Journey sagt dann, wer der Besucher war (Land, Gerät, Betriebssystem, Browser), und listet auf, was variiert, wenn ein gestitchter Besucher das Gerät wechselt. In der Liste lässt sich die volle ID per Hover kopieren, eine Zeilenaktion grenzt die Seite auf diesen Besucher ein (bei einem Stitch als echter Filter-Chip, bei einer Session-ID über das Suchfeld), und Land, Gerät, Betriebssystem und Browser tragen dasselbe Hover-Plus und -Minus wie die Pageview-Tabelle des Explorers.
+Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen.
 
-Ein Besucher wird entlang einer Identitätsachse gezählt: `stitch` (vorhanden, wenn [`store_stitch`](/de/tracker#store-stitch) an ist) oder `session` (die seitenübergreifende `session_id`, vorhanden, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist). Die `count_visitors_by` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert, der Besucher-Explorer funktioniert also von Anfang an; das Preset `Minimal` speichert keine der beiden Identitäten und lässt ihn leer. Das Replay je Besucher braucht die `session`-Identität. Das ganze Modell steht unter [Besucher und Sessions](/de/concepts/sessions).
+Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht haben. Sie bleiben auf den Seiten Besucher und Sessions und fallen weg, wenn du woanders hin navigierst.
+
+Ein Besucher lässt sich per `?visitor=` direkt verlinken, der Kopf der Journey sagt dann, wer der Besucher war. In der Liste lässt sich die volle ID per Hover kopieren, und eine Zeilenaktion grenzt die Seite auf diesen Besucher ein.
+
+Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
 ## Fetch/XHR und Server-Timing
 
-Über Seitennavigationen hinaus zeigt das Dashboard auch In-Page-Request-Telemetrie: einen Fetch/XHR-View mit aggregiertem Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile sowie eine Statusfehler-Verteilung), dazu ein Per-Beacon-Detail, und einen Server-Timing-View, der die `Server-Timing`-Metriken deines Backends aufschlüsselt. Beide speisen sich aus Feldern, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
+Der Fetch/XHR-View hat einen aggregierten Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile, eine Statusfehler-Verteilung) plus ein Per-Beacon-Detail. Der Server-Timing-View schlüsselt die Metriken deines Backends auf. Beide lesen Felder, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
 
-Die Fetch/XHR-Fehlerrate zählt Fehler auf deinen eigenen Hosts, nach derselben Regel der registrierbaren Domain wie die [Fehlerrate](#failed-resources). Ein Aufruf von `www.shop.example` an `api.shop.example` ist also deiner. Fehler auf fremden Hosts stehen als eigene Zahl daneben, weil diese Population überwiegend aus dem Ad-Blocker des Besuchers stammt. Der 1P/3P-Filter des Panels folgt derselben Regel.
+Eine Seite mit mehr als 24 API-Endpunkten behält 24 davon benannt, der Rest summiert sich in eine namenlose `other`-Zeile. Von Adblockern geblockte Calls zählen darin nicht als Fehler.
 
-Der Server-Timing-View ist neu: Der Beacon liest den Header bereits bei jedem Pageview, und die Dashboards darüber werden noch optimiert. Wie du den Header sendest und wie fastmon ihn in Backend-Phasen, Cache-Status und Custom-Keys zerlegt, steht unter [Server-Timing-Header](/de/guides/server-timing).
+Die Fetch/XHR-Fehlerrate zählt Fehler auf deinen eigenen Hosts, nach derselben Regel der registrierbaren Domain wie die [Fehlerrate](#failed-resources). Fehler auf fremden Hosts stehen als eigene Zahl daneben, überwiegend aus dem Ad-Blocker des Besuchers. Der 1P/3P-Filter des Panels folgt derselben Regel.
+
+Der Beacon liest den Header bei jedem Pageview, und die Dashboards darüber werden noch optimiert. Wie du den Header sendest und wie fastmon ihn in Backend-Phasen, Cache-Status und Custom-Keys zerlegt, steht unter [Server-Timing-Header](/de/guides/server-timing).
 
 ## Experience Score
 
-Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter. Praktisch für den Klassiker: Die Gesamtnote sieht gut aus, aber Mobile über 3G fällt durch.
+Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter. Praktisch, wenn die Gesamtnote gut aussieht, aber Mobile über 3G durchfällt.
 
 ## API
 
@@ -117,7 +140,7 @@ Jedes Panel entspricht einem Query-Endpunkt unter `/organizations/{org_id}/analy
 
 ## Weiterlesen
 
-- [Checkout-Funnel](/de/checkout-funnel): wie Pageviews ihre Stufe Warenkorb, Checkout oder Abschluss bekommen, und was die Zahlen bedeuten.
-- [Tracker-Einstellungen](/de/tracker): was der Tracker pro Einstellung sammelt, und warum die Session-Identität oder Stack-Traces fehlen können.
+- [Checkout-Funnel](/de/checkout-funnel): wie Pageviews ihre Stufe bekommen, und was die Zahlen bedeuten.
+- [Tracker-Einstellungen](/de/tracker): was der Tracker pro Einstellung sammelt.
 - [Besucher und Sessions](/de/concepts/sessions): wie aus Pageviews Besucher und Sessions werden.
 - [Synthetic Monitoring](/de/synthetic): das Labor-Gegenstück zu diesen Feld-Dashboards.
