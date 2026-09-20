@@ -1,0 +1,118 @@
+---
+title: Shopify-Checkout messen
+description: Ein Custom Pixel einfügen, damit der Checkout-Funnel eines Shopify-Shops über den Warenkorb hinausreicht, samt der zwei Erklärungen, die Shopify verlangt.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Der Shopify-Checkout läuft auf Shopifys Infrastruktur, wo ein Theme-Skript nie lädt. Der Tracker auf deinem Storefront endet am Warenkorb, der Funnel zeigt also weder Checkout noch Kauf. Ein Custom Pixel schließt diese Lücke.
+
+| Shopify-Event | Was fastmon festhält |
+| --- | --- |
+| Checkout started | Der Besucher hat den Checkout erreicht |
+| Payment info submitted | Der Besucher hat Zahlungsdaten abgeschickt |
+| Checkout completed | Die Bestellung wurde aufgegeben |
+
+Gemessen wird sonst nichts. Keine Web Vitals, keine Ladezeit und keine Fehlerdaten aus dem Shopify-Checkout.
+
+## Vor dem Einfügen
+
+- **Setze die Plattform der Application auf Shopify.** Die Umstellung braucht bis zu fünf Minuten bis zum Collector, warte also vor dem Test.
+- **[`store_stitch`](/de/tracker#store-stitch) muss an sein.** Checkout-Events tragen keine Session-ID, die Edge-Kennung verbindet einen Kauf also allein mit den Storefront-Pageviews des Besuchers. Ist sie aus, bleiben die Checkout-Zahlen leer.
+- **Lass den Checkout-Host in Ruhe**, wenn die Application eine registrierte Domain und die voreingestellte [`site_policy`](/de/tracker#site-policy) hat. Sie bindet ihre einzige Site, egal welchen Host ein Beacon trägt.
+- **Registriere den Checkout-Host**, wenn die Application schon mehrere Domains hat oder ihre Site-Policy nicht die permissive Voreinstellung ist. Beides verwirft einen unbekannten Host oder gibt ihm eine eigene Site. Den Host liest du während eines Testkaufs in der Adresszeile ab.
+- **Lies den Funnel auf Application-Ebene**, sobald eine zweite Domain registriert ist. Die Events liegen dann auf der Site des Checkout-Hosts, die Pageviews auf der des Storefronts.
+
+## Pixel einfügen
+
+<InstallConfigPanel />
+
+1. Gehe im Shopify-Admin auf **Einstellungen → Kundenereignisse → Custom Pixel hinzufügen**.
+2. Nenne es `fastmon` und füge den Code unten ein.
+3. **Speichern**, dann **Verbinden**.
+
+Das Dashboard verlinkt von der Application hierher, mit deinen Hashes schon in der URL, das Snippet unten ist also fertig zum Einfügen.
+
+<InstallSnippet kind="shopify-pixel" />
+
+Updates passieren an der URL, die das Snippet lädt: Eine neue Tracker-Version braucht nichts von dir.
+
+<Callout type="warn" title="Rotierte Hashes machen das Pixel kaputt">
+  Das Snippet trägt den Source-Hash der Application. Nach einer Rotation antwortet <InstallValue of="events-script-url" /> mit 404, ohne Fehler an irgendeiner Stelle, und die Checkout-Hälfte des Funnels bleibt leer, während die Storefront-Hälfte weiter meldet. Kopiere das neue Snippet und ersetze den gesamten Pixel-Code.
+</Callout>
+
+## Die zwei Erklärungen setzen
+
+Auf derselben Seite unter **Berechtigungen**:
+
+- **Kundendatenschutz → Berechtigung: Nicht erforderlich.**
+- **Datenverkauf: Gilt nicht als Datenverkauf.**
+
+Beides ist deine Erklärung über dein eigenes Pixel, und Shopify nimmt dich dafür in die Pflicht. Für fastmon stimmen sie: Das Pixel liest keine Kundendaten, schreibt nichts auf dem Gerät, und die Events verlassen den Browser ohne Kennung, die sich verkaufen oder zu einem Profil verbinden ließe. Was ein Event trägt, steht unter [Shopify-Checkout-Events](/de/checkout-funnel#shopify).
+
+Mit Shopifys Voreinstellung verlangt das Pixel dagegen Marketing- und Analytics-Einwilligung. Es läuft dann nur für Besucher, die zugestimmt haben, und deine Checkout-Zahlen decken eine andere Gruppe ab als deine Storefront-Zahlen.
+
+## Wenn deine Beacons über deine eigene Domain laufen
+
+Eine Application mit [eigenem Collector-Endpunkt](/de/tracker#collector-endpoint) behält ihn für die Checkout-Events. Pixel-Skript und Events laufen dann über deinen eigenen Host, der Checkout macht also gar keinen Third-Party-Request. Dein Proxy muss dafür zwei Dinge auch für `/s/e/*` und `/c/e/*` tun:
+
+- **Beide Pfade weiterleiten.** Ein Proxy, der nur `/s/{hash}` und `/c/{hash}` weitergibt, liefert das Skript nie aus und schluckt jedes Event. Das Rezept aus dem [Onboarding-Guide](/de/guides/first-party-proxy), `location ~ ^/(s|c)/`, deckt sie schon ab.
+- **Die Antwort `Access-Control-Allow-Origin: null` unverändert durchreichen.** Der Pixel-Iframe hat einen opaken Origin, schickt also `Origin: null`, und der Browser lehnt jeden anderen Wert ab. Eine abgelehnte Antwort lässt den Sendeweg neu versuchen, jedes Event geht dann dreimal raus.
+
+Siehe [First-Party-Proxy](/de/guides/first-party-proxy).
+
+## Prüfen, ob es läuft
+
+Gib eine Testbestellung mit Bogus-Gateway-Zahlung auf, in einem Browser ohne Content-Blocker. Suche im Netzwerk-Tab nach Requests an <InstallValue of="events-collector-url" />: einer beim Einstieg, einer nach dem Zahlungsschritt, einer auf der Danke-Seite. Die Daten sind nach wenigen Minuten im Dashboard.
+
+## Was die Zahlen bedeuten [#numbers]
+
+Die Checkout-Zahlen sind eine Untergrenze, keine exakte Zählung. Zwei Dinge
+kosten dich Events: Content-Blocker und Wallet-Zahlungen.
+
+### Content-Blocker [#blockers]
+
+Shopify führt dein Custom Pixel nicht auf der Checkout-Seite selbst aus. Es
+lädt das Pixel in eine Sandbox, von einer URL auf deiner eigenen Shop-Domain,
+die so aussieht:
+
+```text
+https://dein-shop.example/web-pixels@<hash>/custom/web-pixel-<id>@1/sandbox/modern/checkouts/…
+```
+
+Genau diese URL ist das Problem. **EasyPrivacy**, eine der Filterlisten des
+**EasyList**-Projekts, blockt diesen Pfad. Sie führt vier Regeln gegen
+Shopifys Pixel-Maschinerie, darunter
+`/web-pixels@*/web-pixel-*/sandbox/modern/*` und
+`/web-pixel-shopify-custom-pixel@`. **uBlock Origin** aktiviert EasyPrivacy ab
+Werk, und andere Blocker liefern dieselbe Liste mit aus.
+
+Bei einem Besucher mit so einem Blocker lädt die Sandbox nie. Es läuft gar
+kein Custom Pixel, weder unseres noch ein anderes, das dein Shop installiert
+hat, und damit geht auch kein Checkout-Event raus.
+
+**Umgehen lässt sich das nicht.** Die geblockte URL liegt bereits auf deiner
+eigenen Domain, und die Regeln treffen den Pfad statt des Hosts. Den Collector
+auf deine Domain zu legen, ändert also nichts.
+
+Was das mit deinen Zahlen macht: Dein Storefront-Tag ist ein normales Skript
+auf einem normalen Pfad und zählt diese Besucher weiter. Ihre Checkout-Events
+fehlen. Die Conversion-Rate liest sich deshalb zu niedrig, um etwa den
+Blocker-Anteil deines Publikums.
+
+### Wallet-Zahlungen [#wallets]
+
+Shopify feuert sein Checkout-abgeschlossen-Event bei den meisten Shop-Pay- und
+Apple-Pay-Bestellungen nicht. Es schweigt auch, wenn die Danke-Seite nicht
+lädt oder der Käufer nach der Bankbestätigung den Tab schließt. Wie viel dir
+fehlt, hängt von deinem Wallet-Anteil ab.
+
+Sichtbar macht das der Zahlungsschritt. Ein Besucher mit abgeschickter Zahlung
+und ohne Kauf hat meistens über ein Wallet gekauft.
+
+### Mehrfache Einstiege [#repeat-entries]
+
+Shopify feuert sein Checkout-started-Event bei jedem Einstieg in den Checkout.
+Der Funnel zählt Besucher und keine Events, das bläht also nichts auf.
+
+Wie die Events die Zahlen des Funnels verschieben, steht in [Checkout-Funnel → Shopify-Checkout-Events](/de/checkout-funnel#shopify).

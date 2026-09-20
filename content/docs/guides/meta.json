@@ -7,6 +7,7 @@
     "filter-internal-traffic",
     "first-party-proxy",
     "notification-rules",
-    "server-timing"
+    "server-timing",
+    "shopify-checkout"
   ]
 }

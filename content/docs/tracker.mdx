@@ -3,11 +3,11 @@ title: Tracker settings
 description: Every tracker setting on an application, what it collects, and a short PII read on each.
 ---
 
-Each application carries a set of **tracker settings** that decide what the beacon does in the visitor's browser and what reaches storage. Every behavior is an independent switch, and a [preset](#presets) fills those switches with a sensible starting point.
+Each application carries a set of **tracker settings** that decide what the beacon does in the visitor's browser and what reaches storage. Every behavior is an independent switch, and a [preset](#presets) fills those switches with a starting point.
 
-Settings live on the application and are switchable at any time. The script cache invalidates automatically; you don't redeploy your site or touch the `<script>` tag. A brand-new application starts on the **Standard** preset: unique-visitor analytics through the edge-derived `stitch`, fetch/XHR and query-key telemetry, and full error frames, all with nothing written to the visitor's device.
+Settings live on the application and are switchable at any time. The script cache invalidates automatically; you don't redeploy your site or touch the `<script>` tag. A Shopify application is served a second, much smaller script for its checkout, see [Track the Shopify checkout](/en/guides/shopify-checkout). A brand-new application starts on the **Standard** preset: unique-visitor analytics through the edge-derived `stitch`, fetch/XHR and query-key telemetry, and full error frames, all with nothing written to the visitor's device.
 
-This page is the reference the dashboard links into: each setting has its own section and a stable anchor. Every section ends with a **PII** line, a short read on what the setting means for personal data under GDPR and the TDDDG. For the legal picture as a whole, see [Consent and the TDDDG](#consent-and-the-tdddg) below and the [Privacy](/en/privacy) page.
+Each setting has its own section and a stable anchor, and ends with a **PII** line on what it means for personal data. For the legal picture see [Consent and the TDDDG](#consent-and-the-tdddg) and [Privacy](/en/privacy).
 
 ## Presets
 
@@ -24,8 +24,8 @@ A **preset** is a starting point you pick when you create an application. It fil
 | [`collect_fetch_xhr`](#collect-fetch-xhr) | ✗ | ✓ | ✓ |
 | Nothing stored on device | ✓ | ✓ | ✗ (`sessionStorage._fms`) |
 
-- **Minimal** collects core RUM only: Web Vitals, error type and count, device and connection class. No identifiers, no content, no fetch/XHR. Nothing is written to the visitor's device. This is the leanest posture, the opt-down when you want no visitor identifier at all.
-- **Standard** turns on everything that cannot carry personal data: the edge-derived [`stitch`](#store-stitch) visitor signal, [fetch/XHR](#collect-fetch-xhr) aggregates, query [key names](#collect-query-keys), and full [error stack frames](#collect-error-frames). It still keeps no error message text, no query values, and writes no session id. Still nothing on the device. It's the default a new application starts on, because this data (unique visitors, fetch/XHR and error diagnostics) is a substantial analytical gain.
+- **Minimal** collects core RUM only: Web Vitals, error type and count, device and connection class. No identifiers, no content, no fetch/XHR, and nothing written to the visitor's device. It is the opt-down when you want no visitor identifier at all.
+- **Standard** turns on everything that cannot carry personal data: the edge-derived [`stitch`](#store-stitch) visitor signal, [fetch/XHR](#collect-fetch-xhr) aggregates, query [key names](#collect-query-keys), and full [error stack frames](#collect-error-frames). It keeps no error message text, no query values, and writes no session id or anything else on the device. A new application starts here.
 - **Full** turns everything on: a session id written on load, error messages and full frames, query keys. It is the only preset that writes to the device (`sessionStorage._fms`), so it presumes you have handled consent.
 
 `collect_query_values_for` and the routing, retention, and site-management settings are not part of a preset; they default independently and you set them on the application.
@@ -37,15 +37,18 @@ Whatever an application collects, the beacon reads several browser interfaces on
 - the **Performance API** (navigation, paint, layout-shift, event and long-animation-frame timings) for Web Vitals and timing,
 - the **Network Information API** (`navigator.connection`) for the connection class,
 - the **viewport** width (`window.innerWidth`),
-- the **error** and **unhandled-rejection handlers** (error type and count, collected in every configuration).
+- the **error** and **unhandled-rejection handlers** (error type and count, collected in every configuration),
+- the **`navigator.webdriver`** flag, which a browser under automation sets itself, so a Puppeteer or Selenium run counts as a bot.
 
 fastmon sets **no cookies**, in any configuration. In the default Standard setup it writes nothing to the visitor's device; only when [`collect_sessions`](#collect-sessions) is on does it write a single, tab-scoped `sessionStorage` entry (the session id). It stores no long-lived, cross-site, or cross-device identifier, and aggregation happens at the edge.
 
 Which stored fields are and aren't personal data, and where a residual can't be fully ruled out, is laid out in [Privacy → Personal data](/en/privacy#personal-data).
 
-Reading interfaces like these can be consent-relevant under § 25 TDDDG and the ePrivacy Directive. The readings span a range: from permissive (some RUM providers hold that reading these APIs isn't "accessing information on the device" at all, so no consent is needed) to strict (analytics and performance monitoring aren't "strictly necessary", so consent is required). Germany, and the EDPB (Guidelines 2/2023), lean strict, more so than most other EU or non-EU jurisdictions, and in case of doubt the strict reading governs. In its Guidelines 2/2023 the EDPB also includes locally generated results of a browser API; follow it and a performance measurement is covered too. Against that we hold the German statutory text, which requires information already stored, and we therefore classify Minimal and Standard as consent-free. No court has settled this, so a residual risk remains.
+Reading interfaces like these can be consent-relevant under § 25 TDDDG and the ePrivacy Directive. The readings range from permissive (reading a browser API is not "accessing information on the device") to strict (analytics is not "strictly necessary", so consent is required). Germany and the EDPB lean strict, and EDPB Guidelines 2/2023 cover locally generated results of a browser API too.
 
-fastmon is a German provider, so we assume the strict reading and build and document conservatively. The assessment for your site is not ours to make, though: whether embedding fastmon needs consent is yours to decide, ideally with your data protection officer or legal counsel. It's also always best to run fastmon under your own domain (first-party/1P); see [`collector_mode`](#collector-mode). If you do gate it, categorize fastmon as analytics / performance measurement in your CMP, not as "strictly necessary". Note that § 25 TDDDG (the device access) and the GDPR (the processing that follows) are assessed in parallel; the contractual split sits in our DPA (§ 4) and Terms (§ 7).
+Against that we hold the German statutory text, which requires information already stored, so we classify Minimal and Standard as consent-free. No court has settled this, so a residual risk remains.
+
+The assessment for your site is yours to make, ideally with your data protection officer. If you gate fastmon, categorize it as analytics / performance measurement in your CMP, not as "strictly necessary". § 25 TDDDG and the GDPR are assessed in parallel, and the contractual split sits in our DPA (§ 4) and Terms (§ 7). Running fastmon under your own domain is the better setup either way, see [`collector_mode`](#collector-mode).
 
 When an application writes a session id ([`collect_sessions`](#collect-sessions) on), your CMP switches the on-device write on with a single call after consent:
 
@@ -55,13 +58,17 @@ When an application writes a session id ([`collect_sessions`](#collect-sessions)
 window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();
 ```
 
-`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands (most consent-management platforms do this for you). The `&&` guards matter because the beacon loads asynchronously: on a fast navigation your consent code can run before the script, when `window.fastmon` doesn't exist yet. Guarded, that early call is a harmless no-op and the write happens once the tracker has loaded; unguarded, the bare call would throw a `TypeError`. Whether the write waits for that call or happens on load is the [`session_consent`](#session-consent) switch. There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab, so declining simply means the write never happens.
+`grantConsent()` mints the `sessionStorage._fms` session id and unlocks cross-page linkage from that point on. Call it on every page load while consent stands; most consent-management platforms do this for you.
+
+The `&&` guards matter: the beacon loads asynchronously, so on a fast navigation your consent code can run before `window.fastmon` exists. Guarded, that early call is a no-op and the write happens once the tracker has loaded; unguarded it throws a `TypeError`. Whether the write waits for the call or happens on load is the [`session_consent`](#session-consent) switch.
+
+There is no mid-session revoke: the session id lives in `sessionStorage` and dies with the tab.
 
 ## Session and cross-page linkage
 
 ### `collect_sessions` [#collect-sessions]
 
-Writes a session id (`_fms`) to the visitor's `sessionStorage` so pageviews of the same visit link together: cross-page journeys, funnels, entry and exit pages, return-within-session metrics. The id lives in `sessionStorage` and dies when the tab closes. It is the **only** thing the beacon ever writes to the device; with it off, the served bundle never touches `sessionStorage` at all (the storage step is compiled out, not just dropped server-side), and the collector forces the session id empty as a backstop. Off on the Standard preset new applications start on; the Full preset turns it on.
+Writes a session id (`_fms`) to the visitor's `sessionStorage` so pageviews of the same visit link together: cross-page journeys, funnels, entry and exit pages, return-within-session metrics. The id lives in `sessionStorage` and dies when the tab closes. It is the **only** thing the beacon ever writes to the device; with it off, the served bundle never touches `sessionStorage` at all (the storage step is compiled out rather than dropped server-side), and the collector forces the session id empty as a backstop. Off on the Standard preset new applications start on; the Full preset turns it on.
 
 **PII:** the session id is a visitor identifier and writing it is the only operation by which the beacon puts anything on the device, which makes it consent-relevant under § 25 (1) TDDDG (see [Consent and the TDDDG](#consent-and-the-tdddg)). Leave it off for the leanest posture, or pair it with [`session_consent`](#session-consent) to write only after opt-in. With it off, a row carries no on-device identifier.
 
@@ -73,7 +80,7 @@ Decides *when* the session id is written, and only matters when [`collect_sessio
 
 ### `store_stitch` [#store-stitch]
 
-Keeps the edge-derived `stitch` signal on the stored row. `stitch` is an `HMAC-SHA256` of the visitor's IP, User-Agent, the application's collector hash, and the domain, computed at the edge under a salt that rotates every 24 hours and never leaves edge memory. It gives you unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time) without anything on the device. With it off, the collector forces `stitch` empty at insert time, leaving a row with no visitor identifier at all. It is a per-domain default: a site inherits the application's value unless it sets its own. On by default: the Standard preset new applications start on stores it. The full construction (forward secrecy, ≤24 h joinability, per-application scoping) is in [Privacy → the edge-derived `stitch`](/en/privacy#the-edge-derived-stitch-identifier).
+Keeps the edge-derived `stitch` signal on the stored row. `stitch` is an `HMAC-SHA256` of the visitor's IP, User-Agent and the application's collector hash, computed at the edge under a salt that rotates every 24 hours and never leaves edge memory. It gives you unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time) without anything on the device. With it off, the collector forces `stitch` empty at insert time, leaving a row with no visitor identifier at all. It is a per-domain default: a site inherits the application's value unless it sets its own. On by default: the Standard preset new applications start on stores it. The full construction (forward secrecy, ≤24 h joinability, per-application scoping) is in [Privacy → the edge-derived `stitch`](/en/privacy#the-edge-derived-stitch-identifier).
 
 **PII:** `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment; joinability is bounded to roughly 24 hours and is forward-secret once the salt rotates. Naming it in your privacy notice is the operator's job.
 
@@ -89,13 +96,21 @@ Picks which identifier the dashboard counts distinct visitors by, `stitch` or `s
 
 Keeps the **names** of query parameters on the page URL (for example `?page`, `?variant`), so you can break analytics down by parameterized routes. Parameter **values** are always dropped at collection regardless of this switch. Off drops the query string entirely, storing origin plus path only. On by default (part of the Standard preset).
 
-**PII:** low. Only key names are kept, and they rarely carry visitor-specific data; every value is stripped before the URL leaves the browser. To keep a specific value, you have to opt in explicitly via [`collect_query_values_for`](#collect-query-values-for). A fixed set of ad-attribution and click-id parameters (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, and the `utm_*` and `gad_*` families) is always dropped, key and value, on page URLs and fetch/XHR paths regardless of this switch: they carry no routing signal and their key set changes per inbound link. Naming one in [`collect_query_values_for`](#collect-query-values-for) overrides that and keeps it.
+**PII:** low. Only key names are kept, and every value is stripped before the URL leaves the browser. A fixed set of ad-attribution and click-id parameters (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, and the `utm_*` and `gad_*` families) is always dropped, key and value, on page URLs and fetch/XHR paths. Naming one in [`collect_query_values_for`](#collect-query-values-for) keeps it.
 
 ### `collect_query_values_for` [#collect-query-values-for]
 
 An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`collect_query_keys`](#collect-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset. Shops whose checkout steps differ only in a query parameter (OXID's `cl`) list that key here so the [checkout funnel](/en/checkout-funnel#oxid) can match on it.
 
 **PII:** you own this one. A value is stored only for the exact keys you list, and never "all values". If you list a parameter that carries personal data (an email, a user id, a token), you have chosen to store it, so keep the list to non-personal keys.
+
+### `template_url_ids` [#template-url-ids]
+
+Replaces ID-ish path segments of the stored page URL with `:id`, so `/order/12345` is stored and reported as `/order/:id`. A page report then stops spreading one page over thousands of URLs. Off by default, and not part of a preset. It is the rule the [fetch/XHR](#collect-fetch-xhr) endpoint paths already run: numeric, UUID, long hex and opaque token segments, plus an ID inside a literal segment. Long product slugs stay verbatim.
+
+It applies at ingest and only to new rows, so a report spanning the switch shows both forms for a while. Turning it off later does not bring the raw URLs back. [Checkout funnel](/en/checkout-funnel) matching and the error-frame strip keep seeing the real path, so the switch does not change which pageviews land in a funnel stage.
+
+**PII:** this setting only removes data. An id in a page path is the operator's own doing, and this is the switch that stops it reaching a report.
 
 ## Errors
 
@@ -106,11 +121,13 @@ The tracker counts two populations apart, and they never mix:
 - **JavaScript errors** (`errc` on the beacon): uncaught exceptions and unhandled promise rejections. This is what the error rate is built from.
 - **Failed resource loads** (`frc`): an `<img>`, `<script>`, or `<link>` that did not load. Their own signal, with their own rate and their own list, because the population is dominated by ad blockers and tracking protection rather than by defects of the site. See [Failed resource loads](/en/analytics#failed-resources).
 
-Both counters count every occurrence. The beacon carries up to eight ranked entries, the top five JavaScript errors followed by the top three failed resources, each ranked inside its own channel, so a page full of broken images cannot push a real exception off the wire.
+Both counters count every occurrence, and both stop at 1000 per pageview. A stored count of exactly 1000 means "1000 or more", and past the cap the tracker records no signature it has not already seen on that pageview. The collector clamps beacons from older tracker builds to the same ceiling.
+
+The beacon carries up to eight ranked entries, the top five JavaScript errors followed by the top three failed resources, each ranked inside its own channel, so a page full of broken images cannot push a real exception off the wire.
 
 **First party means the same registrable domain as the page.** A script served from `cdn.shop.example` to a page on `www.shop.example` is your own, and the rule is the same one for the error rate, the per-error first-party flag, the pageview's error origin, the Fetch/XHR split, and the resource list. What the privacy strip keeps is a stricter rule and unchanged: without [`collect_error_frames`](#collect-error-frames), a frame outside the exact page host keeps its host and nothing else.
 
-**`ScriptError`** is the type for an exception the browser masks. A script from another origin loaded without CORS opt-in reports as the literal `Script error.` with no filename, line, or error object, so it cannot be attributed to a file and used to share a fingerprint with every other frameless error. It became its own type with the tracker bundle that carries this change; rows written before that keep their old fingerprint, so a comparison spanning the rollout compares two groupings. Load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin` and the browser reports the real error instead. Do not set the attribute where the header is missing, because the browser then refuses to run the script.
+**`ScriptError`** is the type for an exception the browser masks. A script from another origin loaded without CORS opt-in reports as the literal `Script error.` with no filename, line, or error object, so it cannot be attributed to a file and used to share a fingerprint with every other frameless error. Load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin` and the browser reports the real error instead. Do not set the attribute where the header is missing, because the browser then refuses to run the script.
 
 ### What a message says [#message-shape]
 
@@ -126,6 +143,8 @@ The browser's own wording is the diagnosis for a whole class of errors, and it i
 
 The shape travels in **every** configuration, Minimal included, so an error reads as "`uc.setServiceAlias` was called, but `uc` does not exist at this point" on a site that keeps no messages at all. The raw message travels only with [`collect_error_messages`](#collect-error-messages) on.
 
+Where the raw message does travel, its placeholders stay readable. A stripped literal keeps its quotes, so a sample reads `'*' is not a valid selector`, and a removed email reads `<email>`. Numbers keep the bare `*`, and a URL survives as origin plus path, with query, fragment and numeric path ids removed.
+
 Recognition runs in the browser, before anything is sent, which is what lets the message be gated at all. The name that travels with a shape is checked there too: an identifier has to look like code, a selector has its quoted parts blanked and is capped at 80 characters, and anything else is dropped rather than sent.
 
 The shape is part of the error fingerprint, which is what makes the same fault one group across engines: Chrome and Safari word the same fault differently, and grouping used to follow the wording. Signatures were regrouped once when this arrived, so a group from before that day keeps its key and stops growing while the same fault reappears under a new one. There is no backfill, because the messages the new grouping reads were never stored.
@@ -134,7 +153,7 @@ The shape is part of the error fingerprint, which is what makes the same fault o
 
 Keeps the free-form error message text (`Cannot read property 'x' of undefined`) on top of the error type, the count, and the [message shape](#message-shape). Off, the message is never assembled: the switch is baked into the served bundle, so on a site that did not ask for it the message does not reach the wire at all. Off by default, including on Standard; the Full preset turns it on.
 
-**PII:** the highest free-text personal-data vector in the beacon, because messages can contain user input. It is consent-relevant (a "consent-only" field). An always-on scrubber replaces URLs, emails, numeric ids, and quoted strings with `*` before transmission even when the message is kept, but that is defense in depth: the operator's obligation not to pass raw user input into thrown errors still stands. The [message shape](#message-shape) is not this field: it is a name from a closed list plus a checked identifier, and it is what the dashboards read where this switch is off. Turn it on only where you have handled consent.
+**PII:** the highest free-text personal-data vector in the beacon, and consent-relevant. An always-on scrubber replaces URLs, emails, numeric ids and quoted strings before transmission, but the operator's obligation not to pass user input into thrown errors still stands. The [message shape](#message-shape) is not this field, and it is what the dashboards read where this switch is off. Turn it on only where you have handled consent.
 
 ### `collect_error_frames` [#collect-error-frames]
 
@@ -146,15 +165,17 @@ Keeps full stack-frame detail (script path plus line and column) for every frame
 
 ### `collect_fetch_xhr` [#collect-fetch-xhr]
 
-Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on). The [checkout funnel](/en/checkout-funnel#cart-interactions) reads its cart interactions from this telemetry (a `POST` to a known cart endpoint), so with this off the cart interaction counts stay empty while the URL stages keep working.
+Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, error status codes, and the slowest outliers, so you can see which of your own APIs are slow or failing. A repeated failure with the same status on the same endpoint sends one `fetch_xhr_update`; the repeats only raise the error count that the next beacon carries. Baked into the served bundle at render time. Off suppresses fetch/XHR collection entirely, including the wrapper. On by default (the Standard preset turns it on). The [checkout funnel](/en/checkout-funnel#cart-interactions) reads its cart interactions from this telemetry (a `POST` to a known cart endpoint), so with this off the cart interaction counts stay empty while the URL stages keep working.
 
-**PII:** endpoint paths are sanitized exactly like the page URL (query, fragment, and matrix params stripped; id-like segments templated to `:id`), and are in fact stripped harder than page URLs. On top of the page-URL rules, the collector re-templates fetch/XHR paths server-side to keep the aggregate readable: long content slugs collapse to `:slug`, opaque tokens to `:id`, soft-navigation document fetches to `/:page`, and a third-party host keeps its endpoint row but loses its query string entirely. The counters are aggregate numbers, and the target host is site metadata (which of your APIs, not who called it). The one residual is an alpha path segment like `/users/jane-doe` surviving templating, which is the same operator obligation as page URLs: keep personal data out of paths.
+**PII:** endpoint paths are sanitized like the page URL and in fact stripped harder. The collector re-templates them server-side: long content slugs to `:slug`, opaque tokens to `:id`, soft-navigation document fetches to `/:page`, and a third-party host loses its query string entirely. The counters are aggregate numbers, and the target host is site metadata. The one residual is an alpha segment like `/users/jane-doe` surviving templating, the same operator obligation as page URLs.
 
 ## Page type
 
+In the dashboard and on the API this is two settings: `platform` names the shop system, and `page_type.body_class` turns the read on. `pagetype_ruleset` is derived from the two. See [Applications](/en/concepts/applications#application-fields).
+
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts just the framework's page token (for Shopware 6 the `is-active-route-*` route class, elsewhere a controller token like `is-ctl-product`), which the collector maps to the page-type category. A `Server-Timing: pageType` header, if you send one, always wins over this. Where your theme renamed one of the framework's classes, name it yourself with [`pagetype_rules`](#pagetype-rules). Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The page type says what kind of page it is; the [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone, and it works without a ruleset.
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts the framework's page token, which the collector maps to a page-type category. A `Server-Timing: pageType` header always wins over this. Where your theme renamed one of the framework's classes, name it yourself with [`pagetype_rules`](#pagetype-rules). Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone.
 
 **PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
 
@@ -172,7 +193,7 @@ Each ruleset maps the framework's page-controller token to one of a fixed set of
 | **search**   | `frontend-search-page`, `is-ctl-search*`, `is-ctl-suggest*` | `is--ctl-search`    | `cl-search`                       | `catalogsearch-result-index` | not typed <sup>2</sup>                  |
 | **account**  | `frontend-account-*`, `is-ctl-account*` | `is--ctl-account`       | `cl-account`                      | `customer-account-*`        | `woocommerce-account`                    |
 
-<sup>1</sup> Each cell lists the current token first: Shopware's `is-active-route-*` classes with the fixed prefix stripped, emitted since about 6.6 and the only page marker left in 6.8, which removes the `is-ctl-*` and `is-act-*` classes. The `is-ctl-*` tokens after it are the legacy fallback for older shops and browser-cached trackers, with `*` standing for any action tail. Home needs the exact legacy class pair, because the home page renders through the navigation controller like any category page (Shopware 6 has no `is-ctl-index`). On the legacy classes, cart and checkout share `is-ctl-checkout` and both report the coarser `cart`; `is-ctl-account*` also covers the account controller family (`is-ctl-accountorder`, `is-ctl-accountprofile`). <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware 5 shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
+<sup>1</sup> Each cell lists the current token first: Shopware's `is-active-route-*` classes with the fixed prefix stripped, emitted since about 6.6 and the only page marker left in 6.8, which removes the `is-ctl-*` and `is-act-*` classes. The `is-ctl-*` tokens after it are the legacy fallback for older shops and browser-cached trackers, with `*` standing for any action tail. Home needs the exact legacy class pair, because the home page renders through the navigation controller like any category page. On the legacy classes, cart and checkout share `is-ctl-checkout` and both report the coarser `cart`, and `is-ctl-account*` covers the whole account controller family. <sup>2</sup> WooCommerce reuses generic WordPress classes for the home and search pages that are too broad to type reliably, so they stay untyped. <sup>3</sup> Shopware 5 shares one controller token across the cart and confirmation steps, so both report the coarser `cart` rather than a guessed `checkout`.
 
 ### `pagetype_rules` [#pagetype-rules]
 

@@ -12,6 +12,397 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-20" type="changed" area="api" title="Every API field follows one vocabulary">
+
+One name, one type and one scale per concept, across responses, request bodies and query parameters alike.
+
+- **Time is `timestamp`.** Every series point, event and journey row answers it, in place of `at`, `t`, `bucket` and `ts`.
+- **Shares are fractions, 0 to 1.** `share`, `with_error_share`, `relative_change` and `progress` replace `percentage`, `percentage_of_total`, `share_pct`, `change_percent` and `percent`.
+- **First party versus third party is one field**, `ownership`, with the values `first_party`, `third_party` and `mixed`. It replaces `bucket`, `is_first_party` and `by_bucket`.
+- **Durations and counts carry their unit and their noun**: `duration_ms`, `p75_ms`, `time_to_success_seconds`, `error_count`, `frame_count`, `sample_count`.
+- **Closed vocabularies are enums**, among them the funnel `stage`, `granularity`, `device_type` and `identity`. A generated client gets a type rather than a free string.
+- **No response field is nullable.** 444 declared `T | null` for a value the API never sends, because a field with no value is left out. Nothing on the wire changes, and a generated client now sees an optional field.
+- **Each deprecated name points at its successor** through `x-replaced-by` in the OpenAPI document, so a migration can be driven from the spec.
+
+Docs: [API → Analytics](/en/api/analytics/queryAnalytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="changed" area="api" title="An analytics response separates result, request and paging">
+
+A response used to mix the answer, the paging and an echo of the request in one flat object.
+
+- **`meta` carries the facts about the answer**: `execution_time_ms`, and for a list `total`, `limit`, `offset` and `has_more` in one place.
+- **`request` carries what the server actually used**: the window with a relative range already resolved to its two ends, the bucket width, the identity and the filters.
+- **Every list answers its rows under `data`.** `meta.total` is the rows the list matched before paging, everywhere.
+- **A sum over a top-N has a name of its own** (`frame_count`, `failed_count`, `resource_count`, `size_bytes`, `beacon_count`), so it is never read as the row count.
+- All twenty analytics responses carry the two objects, including `POST /analytics/query` and `POST /analytics/histogram`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="removed" area="api" title="The deprecated API names no longer answer">
+
+228 of them, across analytics, synthetic, notifications, applications, issues and partners. Each had a replacement served since the release that deprecated it, and each is out of the OpenAPI document, so a generated client stops offering it.
+
+- **A request that still sends an old body key is refused.** A stale `id`, `bucket`, `first_party`, `range_days` or `mute_until` is a 422 naming the key, rather than a write that vanishes.
+- **The usage window keeps its old names for two more releases.** `period_start`, `period_end` and `total_beacons` on `GET /organizations/{org_id}/usage` and on the partner usage route still answer, because `usage:read` is a customer scope.
+- **The application keeps six flat fields** for the Shopware plugin: `source_hash`, `collector_hash`, `proxy_secret`, `collector_mode`, `collector_endpoint` and `pagetype_ruleset`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="new" area="dashboard" title="The Shopify checkout in the dashboard">
+
+- **The checkout chart counts the Shopify checkout.** The stage counts come from the checkout events as well as the page URLs, so the chart agrees with the funnel card below it instead of sitting empty above it.
+- **All three stages are compared against the previous period the same way.** They were three separate queries, and a comparison that arrived for one and not the others made the funnel look measured to different standards.
+- **A Shopify application points at its pixel guide**, prefilled with its own hashes. The embed snippet of any application disappears once its first beacon arrives.
+- **The card says when the last checkout event arrived**, so you can see that the pasted pixel reports. It warns first where the visitor signal is off, because the events are unusable without it.
+- **Visitors who submitted payment** show beside the completed checkouts, never as a step of their own. Completed checkouts on a Shopify shop are labelled a lower bound.
+- **A step that comes out above the one before it explains itself.** On Shopify that is routine: a buyer who goes straight into the checkout never loads a cart page.
+- A funnel grouped by session says why its checkout half is missing, because the pixel events carry no session id. Rotating an application's hashes now warns that it breaks an installed pixel.
+- Fixed: the measured conversion rate on the business page was never shown. It read a field the API had renamed, so the page fell back to its estimate even for a shop whose funnel was reporting.
+
+Docs: [Checkout funnel → Shopify checkout events](/en/checkout-funnel#shopify).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="new" area="dashboard" title="Explorer lists the events behind the numbers">
+
+- **An Events page in the Explorer**, one row per event the tracker reported. Filter by type, page through them, and open the visitor a row belongs to.
+- **It appears for an organization whose applications can produce events**, which today means a Shopify shop and its three checkout events.
+- **The funnel links to it**, so "is this number right" has somewhere to go. An empty list says nothing arrived in the window, not that a pixel is missing.
+- On the API the same rows come from `POST /analytics/events`, newest first and cursor paginated.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-19" type="removed" area="api" title="The application's flat fields are gone">
+
+The flat twins of the grouped settings no longer answer. Read them from `collection`, `shop.checkout`, `page_type`, `script`, `site_defaults` and `collector.proxy_secret`, which have carried the same values since 2026.9.27.
+
+- **Removed**: `collect_sessions`, `collect_fetch_xhr`, `collect_error_messages`, `collect_error_frames`, `collect_query_keys`, `collect_query_values_for`, `session_consent`, `template_url_ids`, `checkout_tracking`, the three checkout path lists, `pagetype_rules`, `source_version`, `data_retention_days`, `store_stitch`, `count_visitors_by` and the two proxy-secret fields.
+- **Create and update reject any key they do not know.** A removed flat field is a 422 naming it, so a settings write is never dropped in silence.
+- **That covers read-only fields echoed back from a GET**, such as `id`, `source_hash`, `site_count` or `created_at`. A read-modify-write client has to send only the fields it changes.
+- **The Shopware plugin is unaffected.** Its six fields stay flat, and sending `collector_mode` and `collector_endpoint` flat or under `collector` are both still accepted.
+
+Docs: [Applications → Application fields](/en/concepts/applications#application-fields).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-19" type="new" area="api" title="The Shopify checkout reaches visitors, journeys and a stage trend">
+
+- **The site status reports checkout events**, so a pasted pixel becomes visible. `events_today`, `last_event_at` and `events_available` sit beside the beacon fields, and a non-null `last_event_at` proves the pixel reports.
+- **A visitor's journey carries the checkout.** `POST /analytics/visitors/detail` answers `events` beside `pages`, with the name, the funnel stage, the source and the time of each. Interleave the two arrays by time.
+- **The visitors filter finds a Shopify buyer.** `contains_checkout_stage` counts a checkout event as reaching the stage. Each row is still a pageview row, so a visitor known only from events has none to list.
+- **New `POST /analytics/funnels/checkout/stages`** reports the visitors who reached cart, checkout or success per hour or day, events included. A `compare_to` reaching behind the day the pixel was installed shows the installation as a rise.
+- **New `POST /analytics/events`** lists the events themselves, newest first and cursor paginated, so a test order can be held against the Shopify order list. A filter with no column on the events table is a 422 naming it.
+
+Docs: [Checkout funnel → API](/en/checkout-funnel#api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-19" type="new" area="tracker" title="The Shopify checkout reports its own steps">
+
+Shopify runs its checkout on its own infrastructure, where your theme script never loads, so the funnel ended at the cart.
+
+- **Paste one snippet** in the Shopify admin, under Settings → Customer events → Add custom pixel. It reports three steps: checkout entered, payment submitted, order placed.
+- **The dashboard links to the guide** with your application's hashes in the URL, so the snippet there is ready to paste.
+- **On a first-party collector the pixel is first-party too.** The script loads from your own host, so the checkout makes no third-party request. Your proxy has to relay `/s/e/*` and `/c/e/*`.
+- **It measures nothing else.** No Web Vitals, no page load and no errors come from the Shopify checkout.
+- **An event carries** the step, the visitor's country, device, browser and traffic class, and the edge identifier. No URL, no session id, no order value, nothing Shopify knows about the customer.
+- **[`store_stitch`](/en/tracker#store-stitch) has to be on.** Without the edge identifier the checkout numbers stay empty.
+- **Set Permission to "Not required" and Data sale to "does not qualify".** On Shopify's defaults the pixel waits for marketing consent, and the two halves of your funnel then cover different populations.
+- **Rotating the application's hashes stops the events.** The old script URL answers 404 silently, so paste the new snippet after a rotation.
+- **Content blockers stop the pixel.** EasyList's EasyPrivacy list blocks Shopify's custom-pixel sandbox path, and uBlock Origin ships it by default. Those visitors send storefront pageviews and no checkout events.
+- **Purchases are a lower bound.** Shopify does not fire its checkout completed event for most Shop Pay and Apple Pay orders.
+
+Docs: [Track the Shopify checkout](/en/guides/shopify-checkout).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-19" type="changed" area="api" title="The checkout funnel counts Shopify checkout events">
+
+The funnel reads the pixel's events beside the pageviews, which moves a few numbers for a Shopify shop.
+
+- **An order reaches `success` and an entered checkout reaches `checkout`**, with no pageview on either. Visitors seen only in the checkout join `visitors_total`, so the conversion rate stays at or below 100 %.
+- **New `payment_submitted_visitors`**: visitors who submitted payment, a fact beside the steps rather than a step. It is absent, not 0, where no event was read.
+- **Payment without a success most likely means a wallet order.** That is what makes the success step a lower bound.
+- **A cart to checkout rate above 100 % is normal now.** A buyer who went straight into the checkout never loaded a cart page, and step rates stay unclamped.
+- **A filter the event rows cannot answer leaves them out**: URL, page type, campaign, a metric threshold.
+- **The cohort comparison counts only visitors with a pageview.** A buyer whose whole run is checkout events shows in the success step and in no cohort.
+- The sessions explorer, the session detail and the journey view still read the stage off pageviews.
+
+Docs: [Checkout funnel → Shopify](/en/checkout-funnel#shopify).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-19" type="changed" area="dashboard" title="One word per thing">
+
+The same number went by several names, in both languages. Every concept has one word now.
+
+- **A page load is a pageview, a person is a visitor.** The dashboard also said page views, views, screen views, visits and unique visitors.
+- **Labels that named the wrong number are corrected.** "Views per visit" divided pageviews by visitors and is now "Pageviews per visitor".
+- **German tells a Site from a page.** A Site stays a Seite; a page in a list, a column or a count is a URL.
+- **One rating scale**: Good / Needs improvement / Poor, in German Gut / Verbesserungswürdig / Schlecht.
+- **One word for the measured span.** It is a period, not a window or a range.
+- **Labels are sentence case.** Product and spec names keep their capitals: Core Web Vitals, Largest Contentful Paint, Speed Index, Service Worker, Early Hints, Best Practices.
+- Empty charts say "No data in the selected period". The old wording named visitors on charts that do not count them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-18" type="changed" area="dashboard" title="The error list groups a fault's variants into one row">
+
+One broken script used to fill four of the top five rows. Browsers report the same place in the code a few characters apart, and a second caller is a second stack.
+
+- **A row is a fault, not a signature.** It counts every variant and says how many signatures it stands for.
+- **"New", "Rising", the sparkline and the affected pageviews cover the whole group.** A row no longer reads as new when its biggest signature changed.
+- **A signature's page switches between the variants of its fault.** Stored fingerprints do not change and nothing regroups.
+- **`POST /analytics/error-types` takes `group_variants`**, off by default. A grouped row carries the summed count and lists every fingerprint in `variants`.
+- **Match rows across periods by their variants.** The row's own `fingerprint` is its biggest variant and can change.
+
+Docs: [Analytics → Error Analytics](/en/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-18" type="new" area="api" title="An application says what it runs on">
+
+An application now records its platform, whether it is a shop and whether it is a single-page app.
+
+- **`platform`** holds the shop system or CMS, for example Shopware 6, Shopify or PrestaShop. The last two could not be stored before, having no body-class ruleset.
+- **A platform you set is `manual`**, and later detection leaves it alone. The object carries `key`, `source`, `detected_via` and `detected_at`.
+- **The body-class page-type read is its own switch**, `page_type.body_class`. Picking a platform does not turn it on, and `pagetype_ruleset` is derived from the two.
+- **`shop.active`** says whether an application is a shop, with `shop.source` for where that came from. Without a setting it follows the platform.
+- **`spa`** marks a single-page app, set by hand and off by default. Nothing reads either flag yet.
+- **The response groups its fields**: `page_type`, `shop.checkout`, `collection`, `collector`, `script` and `site_defaults`. Create and update take the same groups as partial objects.
+- **The flat fields are deprecated.** They still work, and an API client should move to the groups.
+- **Saving from the dashboard sends only what you changed.**
+
+Docs: [Applications → Application fields](/en/concepts/applications#application-fields).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-18" type="new" area="platform" title="Shopify pageviews get a page type from the URL">
+
+A soft navigation carries no document header, and Safari before 16.4 does not expose one. Those Shopify pageviews had no page type at all, and the collector now reads it from the URL. The label is Shopify's own (`product`, `collection`, `page`, `index`, `cart`, `search`, `blog`, `article`), the same one a hard load reports. Rows already stored stay empty.
+
+Docs: [Server-Timing → Page type](/en/guides/server-timing#page-type).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-18" type="changed" area="tracker" title="A repeated fetch/XHR failure sends one beacon">
+
+The tracker sends a `fetch_xhr_update` for the first failure with a given status on an endpoint. Repeats only raise the error count, which the next beacon carries anyway. A polled endpoint that an ad blocker rejects used to cost up to 20 collector requests per pageview.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-18" type="fixed" area="tracker" title="A script the browser cannot parse is one error group">
+
+Only Firefox's wording was recognized as `syntax_unexpected_token`, so the same broken script showed up once per engine. Chrome and Safari now get the same kind and the readable sentence with it. The affected `SyntaxError` groups get a new fingerprint and appear as new once. Where a site stores no messages the kind comes from the tracker, so old groups keep growing until browsers fetch the new bundle.
+
+Docs: [Tracker → What a message says](/en/tracker#message-shape).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-17" type="changed" area="api" title="The checkout funnel reports a real conversion rate">
+
+The rate showed anything from 30 % to 130 %. It divided by the cart step, which a drawer cart, an express checkout or a deep link never produces.
+
+- **The conversion rate divides buyers by all visitors.** That is the number GA4 and Shopify report, against the usual 1 to 3 % benchmark.
+- **`visitors_total` sits beside it**, and every point of the series carries its own `visitors`. Bucket visitors do not add up to the window total.
+- **`FunnelStep.conversion_rate` is now `reach_rate`.** Same number, honest name: the share of the first step, which can exceed 100 %.
+- **A conversion rate per time bucket**, measured against that bucket's own first step. The series has a point for every bucket with traffic, so a broken day reads 0 %.
+- **New `POST /analytics/funnels/checkout/cohorts`** compares visitors with an observed success against those who reached the checkout without one. Per group: Web Vitals over the journey and per stage, cart calls, their latency and their failures.
+- **`checkout_no_success` is not a count of lost purchases.** A real buyer lands in it whenever the success page is invisible to the tracker.
+- **Four more numbers**: `cart_interaction_rate` (benchmark 5 to 6 %), `cart_interaction_error_visitors`, `time_to_success_seconds` (p50, p75, p90) and cart interaction kinds per point.
+- **Read the first two as floors** wherever the shop's cart calls are invisible to fetch/XHR collection.
+- **Filters that pick funnel pages no longer narrow the denominator** (`checkout_stage`, the cart thresholds). Audience filters (site, country, device, campaign) narrow both halves.
+- **A visitor count that times out leaves `visitors_total` and `conversion_rate` out** of the response. A rate that could not be measured is absent, never 0 %.
+
+Docs: [Checkout funnel → What the numbers mean](/en/checkout-funnel#what-the-numbers-mean).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-17" type="changed" area="dashboard" title="Bots are hidden by default">
+
+Every page starts without bot traffic, so the numbers describe real visitors unless you say otherwise.
+
+- **"Bots only" is a scope you can pick**, next to "No bots" and "All", in the filter menu's new Traffic control. The two together are all of your traffic and nothing twice.
+- **The scope reads in the page header** next to the period: a crossed-out bot, a bot, or "incl. bots" in words.
+- **It is not counted as a filter** and survives "Clear all". The panels that are about bots keep showing them either way.
+- **Every part of the filter pill opens the filter panel**, the percentile, the device and the bot mark included.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-17" type="changed" area="dashboard" title="The maximized Explorer table takes the whole window">
+
+- **Maximizing folds the sidebar away too.** Only the header row with the logo, the filters and the account menu stays above the table.
+- **Maximized is a reading mode, not a setting.** It lasts as long as you are on the page.
+- **From 1536 px up the query panel and the table toolbar move into the header row.** Narrower, they stay in the page.
+- **Copy, CSV and Maximize share the line that names the result**, instead of taking a line of their own.
+- **The raw pageview list says how many rows matched at the bottom**, next to the page size and the pager.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-17" type="changed" area="dashboard" title="The command palette finds every page">
+
+The menu knew the sidebar groups and not the pages inside them, so searching "fetch" found nothing.
+
+- **Every page is listed with its group.** Typing a group ("network") lists everything under it.
+- **Weekly overview, fastmon AI, Partners and your account are in the menu**, each under the condition that puts it in the sidebar.
+- **Pages are found by what they are called elsewhere.** "API" finds Fetch/XHR, "Largest Contentful Paint" finds LCP.
+- **Opening an organization lists its applications first**, above its domains. Picking one scopes the page you are on to that application.
+
+Docs: [Analytics → Navigating with the command palette](/en/analytics#command-palette).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-17" type="fixed" area="dashboard" title="The Analytics chart always starts as a line chart">
+
+Picking an hourly range used to switch the chart to bars on its own, so the same page changed shape when you changed the period. The bar chart is still there, it just has to be chosen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-14" type="new" area="api" title="Which API calls fail where an error fires">
+
+Built for the rejection that carries no message and no stack: the error says nothing, the failing request says which URL, method and status.
+
+- **`POST /analytics/error-types/correlated-requests`** asks an error signature which fetch/XHR endpoints fail in the same pageviews.
+- **Every endpoint comes with the share it fails at in pageviews without that error.** The list is ranked by the ratio of the two.
+- **The answer says endpoints occur together, never that one caused the other.**
+- **Which failures count follows the error's message.** An empty-response error matches cancelled calls, an invalid-JSON error matches 4xx and 5xx pages.
+- **Applications with fetch/XHR collection off are left out** rather than blanking the answer, and `fetch_xhr_collected: false` says so.
+- **It reads raw pageviews**, so it goes back as far as those are kept, not as far as the rollups.
+
+Docs: [Analytics → What broke, and where](/en/analytics#error-detail).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-14" type="fixed" area="platform" title="Fewer nameless API calls in a pageview">
+
+A page with more than 24 API endpoints keeps 24 of them named instead of 23.
+
+- **The tracker's own overflow row no longer takes a slot.** It sums up dozens of calls, so it always won the contest for the last one.
+- **Failures of a displaced third-party endpoint move back to the third-party column.** They were counted as the site's own.
+- **Ad-blocked calls in the nameless `other` row no longer count as failures.** A busy page with blocked tracker calls reports a slightly lower fetch/XHR error rate.
+- Pageviews collected before the deploy keep the shape they were collected in.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="changed" area="tracker" title="Readable placeholders in error messages">
+
+- **A stripped literal keeps its quotes.** A sample reads `'*' is not a valid selector`, a removed email reads `<email>`, and numbers keep the bare `*`.
+- **A URL in a message survives as origin plus path.** Query, fragment and numeric path IDs are still removed.
+- **Safari selector errors carry their shape again.** WebKit's `'x' is not a valid selector` arrived unclassified, so the same fault grouped separately per engine.
+- **New occurrences classify as `selector_invalid`**, name the selector in `message_value` and share one fingerprint across engines.
+- **Error groups built on message text restart once.** Errors with a recognized shape keep their fingerprint; unclassified ones regroup with the tracker rollout.
+
+Docs: [Tracker → What a message says](/en/tracker#message-shape).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="fixed" area="tracker" title="Error counts stop at 1000 per pageview">
+
+One visitor stuck in a recursion loop used to report hundreds of thousands of errors.
+
+- **The tracker stops counting at 1000 per channel**, errors and failed resources separately. The collector clamps beacons from older builds to the same ceiling.
+- **A stored count of exactly 1000 means "1000 or more"**, and the dashboard writes it as "at least".
+- **A breakdown never exceeds the number it breaks down.** Where a beacon reports more occurrences than the cap, its signatures are scaled into the stored total.
+- **Past the cap the tracker records no signature it has not seen yet.** An error that first occurs after a storm of 1000 others can be missing from the list.
+- **An error the tracker could not record no longer inflates the count.** A revoked Proxy or a throwing `toString` used to bump the count and lose its entry; it lands as "Other" now.
+
+Docs: [Tracker → What counts as an error](/en/tracker#what-counts).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="changed" area="dashboard" title="The weekly overview answers what changed this week">
+
+- **Every finding of the week is in one list at the top**, grouped under its app, each row leading to the chart behind it. The app blocks below carry the week's numbers.
+- **A week in which nothing changed is no longer a good week.** A metric in the poor range for two weeks running is named in the opening sentence.
+- **Errors are back on the page and in the mail.** The error rate is the last column of the table, and a new or spiked error becomes a finding.
+- **Every finding says what a visitor notices.** Layout shifts mean clicks miss; a slower response to clicks means nothing happens after one.
+- **The week is picked in the header bar**, where every other page keeps its period.
+- Every heading is the one the mail uses, and the status colours now follow the two colourblind themes.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="changed" area="dashboard" title="Every error has its own page">
+
+Opening an error used to expand a row inside a table inside a card, with the stack, the breakdowns and the samples in one table cell.
+
+- **A signature lives at `/org/<org>/errors/<fingerprint>`**, which is also its share link. Existing `?error=` links redirect there.
+- **The list leads with what broke, in a sentence**: what happened, whose code it is, the file, how often it occurred and when it last did.
+- **New and rising errors are visible without a click.** Each row carries a spark line and a badge, and the list sorts by most frequent, new, rising or last seen.
+- **The list ranks by the pageviews an error reached**, not by how often it fired. A row whose occurrences come from a handful of visits is marked as a loop.
+- **"Where it happens" is the breakdown grid the metric pages carry**, bots and network among them. Same filter, exclude and Explorer actions as everywhere else.
+- **An error with nothing in it says why**: messages or frames switched off, a third-party script without the CORS opt-in, or nothing sent at all. The chart and the breakdown work either way.
+- **"AI prompt" hands the whole case to an assistant.** It spells out what your site does not collect, and nothing is fetched until you open it.
+- **JavaScript errors and failed resources are two tabs**, each with its own headline, chart and list.
+- Whose code it is reads as a headline, the breadcrumb names the error instead of its hash, and an expanded row writes its anchor into the URL.
+
+Docs: [Analytics → Error Analytics](/en/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="changed" area="dashboard" title="One breakdown, wherever you read it">
+
+- **Every dimension is on screen at once**, one card each, with a share link that reopens that card. A dimension your site sends nothing for hides its card.
+- **A Domain card** says which of your domains a slow page or an error belongs to.
+- **A card of counted things sorts by its count.** Its order is called "Most" and "Fewest" rather than "Worst" and "Best".
+- **One rule for colour.** Every bar is grey and says how much; the number beside it carries the colour and says how good or bad.
+- **Every list says how much of the answer it shows** and leads into the Explorer with the page's filters already applied.
+- **Opening a row keeps the filters you set**, instead of rebuilding them from the row alone.
+- **Error breakdowns count errors again.** Counts are summed and rates averaged, whatever percentile the page is set to.
+- Countries have flags and browsers have marks in the metric panels too.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="changed" area="dashboard" title="The code at the throw site, laid out">
+
+- **The snippet is broken into lines and indented.** It breaks at statements and blocks and keeps closers together (`})`, `};`, a run of `}}}`).
+- **Nothing is reformatted.** The layout inserts whitespace between tokens and changes no character, so the reported column still points at its code.
+- **The line with the error is marked** with a tint and a rule down its left edge. The snippet wraps instead of scrolling sideways.
+- **Snippets grew from 160 to 300 bytes each side** of the error column. Cached resolutions are re-fetched once.
+- **The AI prompt marks the column inside the code** as `/*<<COLUMN>>*/` and names it in words above.
+- **The error-detail response carries its own diagnosis**: `error_type`, `message_kind`, `message_value`, `sample_message` and `messages_collected`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="fixed" area="dashboard" title="The response breakdown lays the backend's phases in sequence">
+
+DB, KV, Search, HTTP and Render each ended at the first byte, so two phases of the same length sat on the same stretch of the timeline and read as parallel work. They now sit inside the backend bar, one after another, in the order a request usually runs. Backend time that no phase accounts for is drawn as "Other app time", and the key-value tier is called "KV" everywhere.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-13" type="fixed" area="dashboard" title="Percentages read the way your language writes them">
+
+The German dashboard printed "20.0 %" and "1.49 %" with a point, next to counts that used a comma. Every percentage goes through one formatter now, and so do the abbreviated counts in the breakdown panels.
+
+On a phone a long breadcrumb truncates instead of widening the page, and an error's actions get their own row. A card's controls keep a hairline of their own, and tab strips scroll instead of wrapping.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="new" area="platform" title="IDs in page URLs can be templated away">
+
+- **New per-application setting `template_url_ids`, off by default.** With it on, `/order/12345` is stored and reported as `/order/:id`.
+- **It is the rule the fetch/XHR endpoint paths already run**: numeric, UUID, long hex and opaque token segments, plus an ID inside a literal segment. Long product slugs stay verbatim.
+- **It applies at ingest, to new rows only.** A report that spans the switch shows both forms for a while.
+- **Turning it off later does not bring the raw URLs back.**
+- Checkout-funnel matching and the error-frame strip keep seeing the real path.
+
+Docs: [Tracker → `template_url_ids`](/en/tracker#template-url-ids).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="new" area="api" title="`lcp_coverage` says how many pageviews reported an LCP">
+
+LCP percentiles skip pageviews without a value, so a country or browser row can rest on a handful of measurements. `lcp_coverage` is the share of pageviews that reported an LCP at all, 0 to 1: the n next to the p75. It is available in the dashboard API, the MCP server and Ask.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-11" type="new" area="tracker" title="A remote-controlled browser counts as a bot">
+
+The tracker reads `navigator.webdriver`, which a browser under automation sets itself. The collector stores it as `ua_anomaly = webdriver`, and `bot_class` puts it under `bot`. The hide-bots switch therefore removes Puppeteer, Playwright and Selenium sessions that run without a stealth layer.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-11" type="changed" area="tracker" title="Errors say what broke, even where no message is kept">
 
 Most sites do not collect error messages, so most errors read as a type and a stack and nothing else. The tracker now recognizes the browser's own wording against a fixed catalogue and sends the shape of it instead of the text.

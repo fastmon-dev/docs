@@ -280,7 +280,7 @@ const FIELDS: readonly Field[] = [
 /* ------------------------------- snippets ------------------------------- */
 
 export type SnippetKind =
-  "script" | "noscript" | "bootstrap" | "consent" | "nginx" | "verify-beacon";
+  "script" | "noscript" | "bootstrap" | "consent" | "nginx" | "verify-beacon" | "shopify-pixel";
 
 // Shiki grammar per snippet, so each block is highlighted like the rest of the
 // docs. Lazy-loaded by fumadocs' highlighter; all of these ship with shiki.
@@ -291,6 +291,7 @@ const SNIPPET_LANG: Record<SnippetKind, string> = {
   consent: "js",
   nginx: "nginx",
   "verify-beacon": "http",
+  "shopify-pixel": "js",
 };
 
 export function snippetFor(kind: SnippetKind, config: InstallConfig): string {
@@ -325,6 +326,27 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();`
     proxy_set_header X-Forwarded-For $remote_addr;
 }`;
     }
+    // Shopify custom pixel. The events script lives at /s/e/, and the loader
+    // subscribes before it arrives so no checkout step is lost in between.
+    case "shopify-pixel":
+      return `(function () {
+  // fastmon checkout events. Paste as a custom pixel, set Permission to
+  // "Not required" and Data sale to "does not qualify".
+  try {
+    var g = self, path;
+    try { path = init.context.document.location.pathname || ""; } catch (e) { return; }
+    if (path.indexOf("/checkouts/") < 0) return;
+    if (g.__fmev) return;
+    var hand = g.__fmev = { q: [], h: null, a: analytics };
+    var names = ["checkout_started", "payment_info_submitted", "checkout_completed"];
+    var relay = function (ev) { if (hand.h) hand.h(ev); else hand.q.push(ev); };
+    for (var i = 0; i < names.length; i++) analytics.subscribe(names[i], relay);
+    var el = document.createElement("script");
+    el.src = "${base}/s/e/${sourceOf(config)}.js";
+    el.async = true;
+    document.head.appendChild(el);
+  } catch (e) { }
+})();`;
     // What the reader should find in DevTools → Network, not something to copy.
     case "verify-beacon":
       return `POST ${base}/c/${collectorOf(config)}     204`;
@@ -336,15 +358,25 @@ window.fastmon && window.fastmon.grantConsent && window.fastmon.grantConsent();`
 /** A single resolved value for use mid-sentence, where a whole snippet would
  *  be too much. Falls back to the `{source_hash}` style placeholders, so a
  *  reader who arrives without a deep link sees exactly what they saw before. */
-export type InstallValueOf = "script-url" | "collector-url" | "source-hash" | "collector-hash";
+export type InstallValueOf =
+  | "script-url"
+  | "events-script-url"
+  | "collector-url"
+  | "events-collector-url"
+  | "source-hash"
+  | "collector-hash";
 
 export function installValue(of: InstallValueOf, config: InstallConfig): string {
   const base = snippetBase(config);
   switch (of) {
     case "script-url":
       return `${base}/s/${sourceOf(config)}.js`;
+    case "events-script-url":
+      return `${base}/s/e/${sourceOf(config)}.js`;
     case "collector-url":
       return `${base}/c/${collectorOf(config)}`;
+    case "events-collector-url":
+      return `${base}/c/e/${collectorOf(config)}`;
     case "source-hash":
       return sourceOf(config);
     case "collector-hash":

@@ -1,7 +1,0 @@
-{
-  "title": "Connections",
-  "pages": [
-    "listOrgConnections",
-    "revokeOrgConnection"
-  ]
-}
