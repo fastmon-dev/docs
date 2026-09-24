@@ -3,21 +3,19 @@ title: Applications
 description: "An application is one tracking snippet: its hashes, collection config, and the sites (domains) it serves."
 ---
 
-An **application** is the tracking embed: one snippet, one set of
-collection settings, two hashes. It serves one or many domains, each
-a **site**. Most people need one application with one site.
+An **application** is the tracking embed. It serves one or many
+domains, each a **site**.
 
 The hierarchy is **Organization → Application → Site**:
 
 - An **organization** owns applications, members, and tokens.
-- An **application** owns the served `/s/{source_hash}.js` bundle,
-  all collection config, and the `collector_hash` beacons post to.
+- An **application** owns the snippet and all collection config.
 - A **site** is a single domain under the application, with its own
   dashboard. See [Sites](/en/concepts/sites).
 
 ## The two hashes
 
-An application has two short hashes, both on the application:
+An application has two short hashes:
 
 - **`source_hash`** sits in the **script URL** (`/s/{source_hash}.js`)
   and picks the bundle to ship to the browser.
@@ -46,8 +44,7 @@ served bundle.
   same-origin via your reverse proxy; first-party.
 - **`custom`**: an absolute `collector_endpoint` host you control.
 
-Picking the collector later means swapping the snippet you already
-embedded, so it's set at create time. See
+It's set at create time. See
 [Implementation](/en/install/html).
 
 ## Unknown domains: `site_policy`
@@ -61,8 +58,6 @@ When a beacon arrives from a hostname that isn't a registered site,
   kept from then on.
 - **`strict`**: the beacon is dropped with no suggestion; only
   registered domains are served.
-
-`strict` is how you lock ingest to domains you've registered.
 
 ## Environment
 
@@ -87,12 +82,11 @@ collector settings.
 
 ## Page-type detection
 
-Two independent settings. `platform` says what the application runs
+`platform` says what the application runs
 on; `page_type.body_class` turns on reading the page type
 (home, product, cart, checkout) from the page's `<body>` class.
 Picking a platform does not turn the read on, and it stays off for
-Shopify and PrestaShop, which have no ruleset. `pagetype_ruleset`
-still reads and writes, derived from the two. Server-Timing always
+Shopify and PrestaShop, which have no ruleset. Server-Timing always
 wins over the body-class read.
 
 A theme that renamed those classes records nothing, so
@@ -113,9 +107,26 @@ records the cart requests the shop's pages send via fetch/XHR.
 `checkout_tracking` is the opt-out; the three path lists each inherit
 the built-in patterns (`null`) or replace them wholesale. Marking is
 forward-only, and counting visitors per stage needs `store_stitch`.
-A Shopify shop adds its checkout through the
-[pixel](/en/guides/shopify-checkout). See [Checkout
+See [Checkout
 funnel](/en/checkout-funnel).
+
+## Traffic sampling [#sampling]
+
+`collection.sampling_rate` stores a share of your visitors instead of all
+of them. The default is `1.0`, and the API refuses a rate below `0.1`.
+The edge keeps or drops a visitor's pageviews together, and a new
+rate applies within about a minute.
+
+Pageviews, visitors, and error counts are scaled back up. Percentiles,
+shares, minimum-sample thresholds, the Beacon explorer, funnel stage
+counts, and histograms stay on the stored rows. Only an application that
+stores `stitch` is sampled, checkout events never are, and every
+analytics response reports the setting in `meta.sampling`.
+
+```json
+PATCH /applications/{app_id}
+{ "collection": { "sampling_rate": 0.5 } }
+```
 
 ## Per-domain defaults
 
@@ -125,12 +136,10 @@ site inherits and can override per domain:
 - **`data_retention_days`** (default `90`): how long raw data is
   kept.
 - **`store_stitch`**: persist the edge visitor `stitch`, which drives
-  unique-visitor counts. A site can still turn it off on its own.
+  unique-visitor counts.
 - **`count_visitors_by`** (`stitch` / `session`): which identifier the
   **visitors** metric counts by. Clamped at query time to what the
-  site stores.
-
-A site inherits these unless it sets its own value. See
+  site stores. See
 [Sites](/en/concepts/sites).
 
 ## What's on an application [#application-fields]
@@ -145,11 +154,12 @@ twins these groups replaced no longer answer.
 | `id`                         | UUID v7           | Stable identifier.                                                    |
 | `organization_id`            | UUID v7           | The owning organization.                                              |
 | `name`                       | string            | How the application appears in the UI.                                |
-| `environment`                | enum              | `prod` or `dev`. Default `prod`. Marks non-production apps.            |
+| `environment`                | enum              | `prod` or `dev`. Default `prod`.                                       |
 | `platform`                   | object · nullable | Shop system or CMS: `key`, `source`, `detected_via`, `detected_at`.   |
 | `shop.active`                | bool · nullable   | Whether this is a shop. `null` follows the platform.                  |
 | `spa`                        | bool              | Single-page app. Set by hand, default `false`.                        |
 | `collection.*`               | bool · enum       | The preset flags: sessions, fetch/XHR, error messages and frames, query keys and values, `session_consent`, `template_url_ids`. See [Presets](/en/tracker). |
+| `collection.sampling_rate`   | number            | Share of visitors stored, `0.1` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
 | `shop.checkout.tracking`     | bool              | Checkout funnel on (`true`, the default) or off. See [Checkout funnel](#checkout-funnel). |

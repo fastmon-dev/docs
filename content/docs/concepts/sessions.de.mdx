@@ -19,7 +19,7 @@ Mit gespeichertem `stitch` (das Default-Preset `Standard`), ohne Cookie und ohne
 - **Drill-down je Besucher.** Verfolge den Pageview-Pfad eines einzelnen Besuchers über die Site, um seine tatsächliche Erfahrung zu debuggen, insbesondere wie die Performance über die Zeit ist.
 - **Besucher-Aggregate:** Pageview-Anzahl, Verweildauer, durchschnittlicher LCP / FCP und Fehler insgesamt je Besucher (der [Besucher-View](#was-auf-einem-besucher-steht) unten).
 
-Was er bewusst nicht liefert: eine Langzeit-Identität (er rotiert), keine domain- oder betreiberübergreifende Verknüpfung (die Domain steckt im Input, er ist also auf jeder Domain anders) und nicht die harte 30-Minuten-**Besuchs**grenze. Diese Grenze und die darauf aufbauenden Per-Besuch-Metriken (Seiten pro Besuch, Bounce Rate) liefert die `session`-Identität ([`collect_sessions`](/de/tracker#collect-sessions)).
+Was er nicht liefert: eine Langzeit-Identität (er rotiert), keine Verknüpfung über Applications hinweg und nicht die harte 30-Minuten-**Besuchs**grenze. Diese Grenze und die darauf aufbauenden Per-Besuch-Metriken (Seiten pro Besuch, Bounce Rate) liefert die `session`-Identität ([`collect_sessions`](/de/tracker#collect-sessions)).
 
 ## Warum zwei Identitäten
 

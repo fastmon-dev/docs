@@ -3,23 +3,20 @@ title: Applications
 description: "Eine Application ist ein Tracking-Snippet: ihre Hashes, Erfassungs-Config und die Sites (Domains), die sie bedient."
 ---
 
-Eine **Application** ist der Tracking-Embed: ein Snippet, ein Satz
-Erfassungseinstellungen, zwei Hashes. Sie bedient eine oder viele
-Domains, jede davon eine **Site**. Die meisten brauchen eine
-Application mit einer Site.
+Eine **Application** ist der Tracking-Embed. Sie bedient eine oder
+viele Domains, jede davon eine **Site**.
 
 Die Hierarchie ist **Organization → Application → Site**:
 
 - Eine **Organization** besitzt Applications, Members und Tokens.
-- Eine **Application** besitzt das ausgelieferte
-  `/s/{source_hash}.js`-Bundle, die komplette Erfassungs-Config und
-  den `collector_hash`, an den Beacons posten.
+- Eine **Application** besitzt das Snippet und die komplette
+  Erfassungs-Config.
 - Eine **Site** ist eine einzelne Domain unter der Application, mit
   eigenem Dashboard. Siehe [Sites](/de/concepts/sites).
 
 ## Die zwei Hashes
 
-Eine Application hat zwei kurze Hashes, beide auf der Application:
+Eine Application hat zwei kurze Hashes:
 
 - **`source_hash`** steht in der **Script-URL** (`/s/{source_hash}.js`)
   und wählt das Bundle, das an den Browser geht.
@@ -50,8 +47,7 @@ ausgelieferte Bundle gebacken.
 - **`custom`**: ein absoluter `collector_endpoint`-Host, den du
   kontrollierst.
 
-Den Collector später zu wählen hieße, das schon eingebettete Snippet
-zu tauschen. Deshalb wird er beim Anlegen gesetzt. Siehe
+Er wird beim Anlegen gesetzt. Siehe
 [Implementierung](/de/install/html).
 
 ## Unbekannte Domains: `site_policy`
@@ -66,8 +62,6 @@ ist, entscheidet die **`site_policy`**:
   wird ab dann behalten.
 - **`strict`**: der Beacon wird verworfen, ohne Vorschlag; nur
   registrierte Domains werden bedient.
-
-Mit `strict` nagelst du den Ingest auf registrierte Domains fest.
 
 ## Environment
 
@@ -93,13 +87,12 @@ Eine Shopify-Application liefert zusätzlich das
 
 ## Page-Type-Detection
 
-Zwei unabhängige Einstellungen. `platform` sagt, worauf die
+`platform` sagt, worauf die
 Application läuft; `page_type.body_class` schaltet das Lesen des
 Page-Types (Home, Product, Cart, Checkout) aus der `<body>`-Klasse
 ein. Eine Plattform zu wählen schaltet das Lesen nicht ein, und für
 Shopify und PrestaShop bleibt es aus, weil es für sie kein Ruleset
-gibt. `pagetype_ruleset` liest und schreibt weiter, abgeleitet aus
-beiden. Server-Timing hat immer Vorrang vor der Body-Class.
+gibt. Server-Timing hat immer Vorrang vor der Body-Class.
 
 Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
 `pagetype_rules` benennt deine eigenen: bis zu 24 exakte Klassennamen,
@@ -120,10 +113,26 @@ Abschluss-Muster passt, und registriert die Warenkorb-Requests der
 Shopseiten aus Fetch/XHR. `checkout_tracking` ist das Opt-out; die
 drei Pfadlisten erben jeweils die eingebauten Muster (`null`) oder
 ersetzen sie komplett. Die Markierung wirkt nur vorwärts, und
-Besucher pro Stufe zu zählen braucht `store_stitch`. Ein
-Shopify-Shop ergänzt seinen Checkout über das
-[Pixel](/de/guides/shopify-checkout). Siehe
+Besucher pro Stufe zu zählen braucht `store_stitch`. Siehe
 [Checkout-Funnel](/de/checkout-funnel).
+
+## Traffic-Sampling [#sampling]
+
+`collection.sampling_rate` speichert nur einen Teil deiner Besucher statt
+aller. Der Default ist `1.0`, eine Rate unter `0.1` lehnt die API ab. Die Edge
+behält oder verwirft die Pageviews eines Besuchers gemeinsam, und eine
+neue Rate greift nach etwa einer Minute.
+
+Pageviews, Besucher und Fehlerzahlen werden hochgerechnet. Perzentile,
+Anteile, Mindeststichproben, der Beacon-Explorer, die Funnel-Stufen und
+Histogramme rechnen mit den gespeicherten Zeilen. Gesampelt wird nur eine
+Application, die `stitch` speichert, Checkout-Events nie, und jede
+Analytics-Antwort nennt die Einstellung in `meta.sampling`.
+
+```json
+PATCH /applications/{app_id}
+{ "collection": { "sampling_rate": 0.5 } }
+```
 
 ## Per-Domain-Defaults
 
@@ -133,13 +142,10 @@ Mitglieds-Site erbt und pro Domain überschreiben kann:
 - **`data_retention_days`** (Default `90`): wie lange Rohdaten
   behalten werden.
 - **`store_stitch`**: den Edge-Besucher-`stitch` persistieren, der
-  die Unique-Visitor-Zahlen treibt. Eine Site kann ihn selbst
-  abschalten.
+  die Unique-Visitor-Zahlen treibt.
 - **`count_visitors_by`** (`stitch` / `session`): nach welcher
   Kennung die **Visitors**-Metrik zählt. Zur Query-Zeit begrenzt auf
-  das, was die Site speichert.
-
-Eine Site erbt diese, solange sie keinen eigenen Wert setzt. Siehe
+  das, was die Site speichert. Siehe
 [Sites](/de/concepts/sites).
 
 ## Was eine Application hat [#application-fields]
@@ -154,11 +160,12 @@ Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
 | `id`                         | UUID v7           | Stabiler Identifier.                                                  |
 | `organization_id`            | UUID v7           | Die besitzende Organisation.                                          |
 | `name`                       | string            | Wie die Application im UI erscheint.                                  |
-| `environment`                | enum              | `prod` oder `dev`. Default `prod`. Markiert Nicht-Produktions-Apps.    |
+| `environment`                | enum              | `prod` oder `dev`. Default `prod`.                                     |
 | `platform`                   | object · nullable | Shopsystem oder CMS: `key`, `source`, `detected_via`, `detected_at`.  |
 | `shop.active`                | bool · nullable   | Ob das ein Shop ist. `null` folgt der Plattform.                      |
 | `spa`                        | bool              | Single-Page-App. Von Hand gesetzt, Default `false`.                   |
 | `collection.*`               | bool · enum       | Die Preset-Flags: Sessions, Fetch/XHR, Fehlermessages und -Frames, Query-Keys und -Werte, `session_consent`, `template_url_ids`. Siehe [Presets](/de/tracker). |
+| `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.1` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
 | `shop.checkout.tracking`     | bool              | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |

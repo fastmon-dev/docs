@@ -153,7 +153,6 @@ By default the tracker keeps request volume low: `init` fires immediately as a p
 
 | Global | Default | Effect |
 | --- | --- | --- |
-| `__FASTMON_SAMPLE_RATE` | `1` | Fraction of page-views that send beacons (0 to 1). `0` skips a page-view entirely. The decision is per page-view; a sampled page-view still sends all of its lifecycle beacons. |
 | `__FASTMON_INIT_COALESCE_MS` | `0` | Delay before the `init` beacon. At `0` (the default) `init` fires immediately, so a pageview that dies before any other beacon (a bot, a crash, an abrupt close) still registers. A positive value re-delays it. |
 | `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | How long the tracker waits for LCP to settle before it sends `loaded`, when no interaction or tab-hide has finalized LCP first. `0` disables the cap. |
 | `__FASTMON_UPDATE_MIN_AGE_MS` | `10000` | Holds mid-page-view update beacons (errors, fetch/XHR) until the page is at least this old; a shorter visit ships them on the final beacon instead. `0` fires them immediately. |

@@ -19,7 +19,7 @@ With `stitch` stored (the default `Standard` preset), and no cookie or consent n
 - **Per-visitor drill-down.** Follow one visitor's page-view path across the site to debug their actual experience, in particular how performance holds up over time.
 - **Visitor-level aggregates:** page count, dwell time, average LCP / FCP and total errors per visitor (the [Visitors view](#whats-on-a-visitor) below).
 
-What it deliberately doesn't give you: a long-term identity (it rotates), any cross-domain or cross-operator link (the domain is in its input, so it differs on every domain), or the strict 30-minute **visit** boundary. That boundary, and the per-visit metrics built on it (pages per visit, bounce rate), come from the `session` identity ([`collect_sessions`](/en/tracker#collect-sessions)).
+What it doesn't give you: a long-term identity (it rotates), a link across applications, or the strict 30-minute **visit** boundary. That boundary, and the per-visit metrics built on it (pages per visit, bounce rate), come from the `session` identity ([`collect_sessions`](/en/tracker#collect-sessions)).
 
 ## Why two identities
 
