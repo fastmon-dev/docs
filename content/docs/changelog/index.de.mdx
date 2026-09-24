@@ -17,6 +17,58 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="Eine Application kann nur einen Teil ihrer Besucher speichern">
+
+`collection.sampling_rate` an der Application legt fest, von welchem Anteil der Besucher die Beacons gespeichert werden, standardmäßig `1.0`.
+
+- **Die Edge entscheidet einmal pro Besucher.** Die Pageviews eines Besuchers bleiben also komplett erhalten oder fallen komplett weg. Eine neue Rate greift nach etwa einer Minute.
+- **Traffic-Zahlen werden hochgerechnet**, auf jedem Analytics-Endpoint, in Ask, im MCP und in der Wochen-Mail. Perzentile, Anteile und Mindeststichproben rechnen weiter mit den gespeicherten Zeilen.
+- **Gespeicherte Zeilen** zählen weiterhin im Beacon-Explorer, bei den Funnel-Stufen und in den Histogrammen.
+- **Die kleinste Rate ist `0.1`.** Alles darunter lehnt die API ab. Gesampelt wird nur eine Application, die `stitch` speichert, Checkout-Events nie.
+- **`meta.sampling`** in jeder Analytics-Antwort nennt die niedrigste Rate, die im Scope konfiguriert ist, und ob sie unter `1.0` liegt.
+
+Doku: [Applications → Traffic-Sampling](/de/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="removed" area="tracker" title="Der Tracker ignoriert `__FASTMON_SAMPLE_RATE`">
+
+Der Tracker liest `window.__FASTMON_SAMPLE_RATE` nicht mehr. Eine Seite, die es noch setzt, sendet jeden Pageview. Sampling ist jetzt die Application-Einstellung `collection.sampling_rate` und wird an der Edge pro Besucher entschieden. Doku: [Applications → Traffic-Sampling](/de/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-23" type="new" area="dashboard" title="Geografische Verteilung als Globus">
+
+Der Abschnitt zeigt die Welt als Globus oder als flache Karte, neben der Länderliste.
+
+- **Der Globus öffnet dort, wo dein Traffic ist.** Ein Shop, der in einen Markt verkauft, landet auf diesem Markt. Ziehen dreht ihn, das Mausrad zoomt, Pfeiltasten und Plus/Minus gehen auch.
+- **Die flache Karte hält die Pole im Maßstab**, Grönland sieht also nicht mehr wie ein Kontinent aus. Zoom- und Reset-Knöpfe sitzen direkt auf der Karte.
+- **Die gewählte Ansicht steht in der URL.** Neu laden oder ein geteilter Link öffnet dieselbe.
+- **Ein Klick auf ein Land zeigt seine Filter-Buttons.** Die Hervorhebung folgt dem Mauszeiger und bleibt nicht mehr hängen.
+- Der Abschnitt hat auf dem Dashboard eine Überschrift.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-21" type="fixed" area="platform" title="Shopify-Checkout-Events landen beim Besucher des Shops">
+
+Die Checkout-Events eines Shopify-Pixels tragen jetzt dieselbe Besucherkennung wie die Pageviews des Shops. Der Funnel zählt einen Käufer nicht mehr doppelt, und die Journey des Besuchers zeigt den Checkout. Events von vor der Umstellung bleiben getrennt.
+
+Bei der Umstellung hat sich jede Besucherkennung einmal geändert, wie bei der täglichen Salt-Rotation. Eine Application mit mehreren Domains zählt einen Besucher jetzt über alle hinweg nur einmal. Doku: [Privacy → stitch](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="new" area="dashboard" title="Die Journey eines Besuchers zeigt den Shopify-Checkout">
+
+Checkout gestartet, Zahlung abgeschickt und Bestellung aufgegeben stehen jetzt zwischen den Pageviews, in der Reihenfolge, in der sie passiert sind. Ein Event von vor dem gewählten Zeitraum steht mit negativem Versatz da. Nach Session gruppiert sagt die Journey, warum die Checkout-Hälfte fehlt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="fixed" area="dashboard" title="Die Besucherliste zeigt wieder jeden Besucher">
+
+Die Liste hatte einen Filter „mindestens 3 Seiten" aktiv, den niemand gesetzt hatte, und Besucher mit einer oder zwei Seiten fehlten. Alle Filter starten jetzt leer, und der Seitenzahl-Filter funktioniert weiter, wenn du ihn setzt.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-20" type="changed" area="api" title="Jedes API-Feld folgt einem Vokabular">
 
 Ein Name, ein Typ und eine Skala pro Begriff, in Responses, Request-Bodies und Query-Parametern gleichermaßen.

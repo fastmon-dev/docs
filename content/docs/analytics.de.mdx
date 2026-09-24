@@ -10,9 +10,10 @@ Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist
 Die Analytics-Hauptansicht einer Site zeigt:
 
 - **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde plus den Seiten, die gerade angesehen werden, und den Quellen, über die die Besucher kommen. Bei Shops zeigt die Karte zusätzlich, wie viele davon gerade im Warenkorb, im Checkout oder auf der Abschlussseite sind.
-- **Zentrale Kennzahlen**: Besucher, Pageviews, Pageviews pro Besucher und Checkouts, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum, damit sich ein Tag und ein Monat vergleichen lassen. Ein Klick auf die Kachel erklärt, was sie zählt.
+- **Zentrale Kennzahlen**: Besucher, Pageviews, Pageviews pro Besucher und Checkouts, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum. Ein Klick auf die Kachel erklärt, was sie zählt.
 - **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`), ein geteilter Link öffnet also dieselbe Kennzahl. Es startet immer als Liniendiagramm, egal welcher Zeitraum. Die Legende steht darüber, zusammen mit dem Umschalter für Balken und Fläche, und jede Serie lässt sich einzeln abschalten und trägt ihren eigenen Vorperioden-Wert.
 - **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem und so weiter). Der dritte Tab des Seiten-Panels listet die **Domains** aus den Seiten-URLs. Jedes Panel erklärt am Titel, was es zählt, nennt in der Fußzeile, wie viele Werte hinter den acht angezeigten Zeilen stecken, und führt über „Alle anzeigen" in den [Explorer](#explorer). Einzelne Zeilen öffnen sich dort ebenfalls direkt.
+- **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Der Globus öffnet dort, wo dein Traffic ist, Ziehen dreht ihn und das Mausrad zoomt. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
 - **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
 - **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
 - **Traffic-Qualität**: die Aufteilung aus der Bot-Klassifizierung, zuerst als eine Leiste, dann als klickbare Zeilen.
@@ -27,13 +28,13 @@ Neben dem Zeitraum-Picker sitzt eine Filterleiste, auf dem Dashboard, der Übers
 
 Filter leben in der URL, überstehen also ein Neuladen, sind teilbar und wandern beim Wechsel zwischen Views mit. Mehrere Chips werden mit UND verknüpft; ein Komma in einem Wert bedeutet „eines von". Klick einen Chip zum Bearbeiten, das X entfernt ihn. Der „Filter"-Button trägt ein Badge mit der Anzahl aktiver Filter.
 
-**Jede Seite startet ohne Bot-Traffic**, die Zahlen beschreiben also echte Besucher, solange du nichts anderes sagst. Die Traffic-Auswahl im Filtermenü wechselt zwischen Keine Bots, Nur Bots und Alle, und der Seitenkopf sagt neben dem Zeitraum, was gerade gilt. Der gewählte Bereich zählt nicht als Filter und überlebt „Alle entfernen", denn er sagt, was eine Seite zählt.
+**Jede Seite startet ohne Bot-Traffic**, die Zahlen beschreiben also echte Besucher, solange du nichts anderes sagst. Die Traffic-Auswahl im Filtermenü wechselt zwischen Keine Bots, Nur Bots und Alle, und der Seitenkopf sagt neben dem Zeitraum, was gerade gilt. Der gewählte Bereich zählt nicht als Filter und überlebt „Alle entfernen".
 
 Jeder Chip hat außerdem einen Ein/Aus-Schalter. Ausgeschaltet behält der Chip seine Werte und bleibt an seinem Platz, durchgestrichen dargestellt, und die Abfrage läuft ohne ihn. Ein ausgeschalteter Filter grenzt nichts ein und zählt nicht im Badge, und ein Klick auf dasselbe Land in der Karte schaltet ihn wieder ein, statt einen zweiten anzulegen. Auch dieser Zustand steht in der URL, ein geteilter Link öffnet also mit denselben ein- und ausgeschalteten Filtern.
 
 ## Der Explorer [#explorer]
 
-Der Explorer gruppiert Pageviews nach jeder Dimension und chartet die Metriken, oder zeigt die Rohzeilen. Maximieren gibt ihm das ganze Fenster samt Sidebar, solange du auf der Seite bist. „Alle anzeigen" und die Zeilen-Links aus den Dashboard-Panels tragen die Filter der Seite mit hinein, samt Ausschlüssen, Metrik-Bereichen und Bot-Schaltern, und er öffnet mit den Zahlen, um die es auf der Seite geht (Pageviews und Besucher, bei Seiten zusätzlich LCP p75). Ein Klick auf eine Zeile ergänzt ihren Wert in den Filtern statt die anderen zu verwerfen: aus einer auf Deutschland gefilterten Seite heraus wird also eingeengt und nicht die Tabelle geleert.
+Der Explorer gruppiert Pageviews nach jeder Dimension und chartet die Metriken, oder zeigt die Rohzeilen. Maximieren gibt ihm das ganze Fenster samt Sidebar, solange du auf der Seite bist. „Alle anzeigen" und die Zeilen-Links aus den Dashboard-Panels tragen die Filter der Seite mit hinein, samt Ausschlüssen, Metrik-Bereichen und Bot-Schaltern, und er öffnet mit den Zahlen, um die es auf der Seite geht (Pageviews und Besucher, bei Seiten zusätzlich LCP p75). Ein Klick auf eine Zeile ergänzt ihren Wert in den Filtern statt die anderen zu verwerfen.
 
 Neben der Tabelle sitzt eine **Events**-Seite, eine Zeile pro Event, das der Tracker gemeldet hat, filterbar nach Typ und mit einem Sprung zum Besucher der Zeile. Sie erscheint für Organisationen, deren Applications Events erzeugen können, heute also für einen Shopify-Shop mit seinen [Checkout-Events](/de/checkout-funnel#shopify).
 
@@ -110,9 +111,9 @@ Ad-geblockte Requests an bekannte Tracker-Hosts bleiben als Teilmenge des fremde
 
 Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/queryAnalyticsFailedResources). Der Fehlertypen-Endpoint weist `error_type: ["ResourceLoadError"]` mit einem 400 ab, der hierher verweist, denn eine leere Liste würde sich wie „du hast keine" lesen.
 
-## Besucher
+## Besucher [#visitors]
 
-Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen.
+Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Bei einem Shopify-Shop stehen die Checkout-Events zwischen den Pageviews.
 
 Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht haben. Sie bleiben auf den Seiten Besucher und Sessions und fallen weg, wenn du woanders hin navigierst.
 

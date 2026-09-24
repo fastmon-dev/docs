@@ -155,7 +155,6 @@ Standardmäßig hält der Tracker den Request-Umfang gering: `init` feuert sofor
 
 | Global | Default | Wirkung |
 | --- | --- | --- |
-| `__FASTMON_SAMPLE_RATE` | `1` | Anteil der Pageviews, die Beacons senden (0 bis 1). `0` lässt einen Pageview ganz aus. Die Entscheidung gilt pro Pageview; ein gesampelter Pageview sendet alle seine Lifecycle-Beacons. |
 | `__FASTMON_INIT_COALESCE_MS` | `0` | Verzögerung vor dem `init`-Beacon. Bei `0` (Standard) feuert `init` sofort, sodass ein Pageview, der vor jedem anderen Beacon endet (ein Bot, ein Crash, ein abruptes Schließen), trotzdem registriert wird. Ein positiver Wert verzögert es wieder. |
 | `__FASTMON_LCP_FINAL_CAP_MS` | `10000` | Wie lange der Tracker auf das Finalwerden des LCP wartet, bevor er `loaded` sendet, wenn keine Interaktion und kein Tab-Wechsel den LCP vorher finalisiert. `0` deaktiviert den Deckel. |
 | `__FASTMON_MAX_VERSION` | `20` | Deckelt Mid-Pageview-Update-Beacons pro Pageview, damit eine pollende Seite nicht Tausende feuert. Lifecycle-Beacons werden nie gedeckelt, und die kumulativen Aggregate landen trotzdem auf dem finalen Beacon. `0` hebt den Deckel auf. |

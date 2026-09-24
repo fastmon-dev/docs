@@ -10,9 +10,10 @@ Analytics is the exploration layer on top of everything your beacons collect: wh
 The main Analytics view for a site shows:
 
 - **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the pages being viewed right now and the sources they came through. On shops the card also shows how many of them are at the cart, checkout, and success stage.
-- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range, so a day and a month compare on the same footing. Clicking a tile explains what it counts.
+- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range. Clicking a tile explains what it counts.
 - **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. It always starts as a line chart, whatever the period. The legend sits above it with the bar/area switch, and each series can be switched off on its own and carries its own previous-period value.
 - **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). The Pages panel's third tab lists the **domains** out of the page URLs. Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
+- **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
 - **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
 - **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
 - **Traffic quality**: the split from bot classification, first as one bar, then as clickable rows.
@@ -27,13 +28,13 @@ A filter bar sits next to the time picker on the dashboard, the overview, and ev
 
 Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
 
-**Every page starts without bot traffic**, so the numbers describe real visitors unless you say otherwise. The filter menu's Traffic control switches between No bots, Bots only, and All, and the page header says which is in force next to the period. The scope is not counted as a filter and survives "Clear all", because it is what a page counts rather than something you narrowed down.
+**Every page starts without bot traffic**, so the numbers describe real visitors unless you say otherwise. The filter menu's Traffic control switches between No bots, Bots only, and All, and the page header says which is in force next to the period. The scope is not counted as a filter and survives "Clear all".
 
 Every chip also has an on/off switch. Switched off, the chip keeps its values and stays in place, drawn struck through, and the query runs without it. A switched-off filter narrows nothing and is not counted in the badge, and clicking the same country on the map switches it back on instead of adding a second one. The state travels in the URL, so a shared link opens with the same filters on and off.
 
 ## The Explorer [#explorer]
 
-The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included, for as long as you are on the page. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a row adds its value to the filters rather than replacing them, so drilling in from a page filtered to Germany narrows instead of emptying the table.
+The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included, for as long as you are on the page. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a row adds its value to the filters rather than replacing them.
 
 An **Events** page sits beside the table, one row per event the tracker reported, filterable by type and opening the visitor a row belongs to. It appears for an organization whose applications can produce events, which today means a Shopify shop and its [checkout events](/en/checkout-funnel#shopify).
 
@@ -110,9 +111,9 @@ Ad-blocked requests to known tracker hosts stay visible as a subset of the forei
 
 The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
 
-## Visitors
+## Visitors [#visitors]
 
-The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions.
+The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events sit between the pageviews.
 
 The summary above the list describes the whole selected period, not the loaded page of results: visitors, visitors with a single page, and the median pages per visitor. Behavior filters narrow the list to visitors with at least a given number of pages, errors, duration, or LCP, with a given page type in the journey, or who reached a funnel stage. They stay on the Visitors and Sessions pages and are dropped when you navigate elsewhere.
 

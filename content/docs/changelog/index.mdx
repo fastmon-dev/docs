@@ -12,6 +12,58 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="An application can store a share of its visitors">
+
+`collection.sampling_rate` on the application sets the share of visitors whose beacons are stored, `1.0` by default.
+
+- **The edge decides once per visitor**, so a visitor's pageviews are kept or dropped together. A new rate applies within about a minute.
+- **Traffic counts are scaled back up** on every analytics endpoint, in Ask, in MCP and in the weekly mail. Percentiles, shares and minimum-sample thresholds stay on the stored rows.
+- **Stored rows** still drive the Beacon explorer, the funnel stage counts and the histograms.
+- **The lowest rate is `0.1`.** The API refuses anything below it. Only an application that stores `stitch` is sampled, and checkout events never are.
+- **`meta.sampling`** on every analytics response names the lowest rate configured in scope and whether it is below `1.0`.
+
+Docs: [Applications → Traffic sampling](/en/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="removed" area="tracker" title="The tracker ignores `__FASTMON_SAMPLE_RATE`">
+
+The tracker no longer reads `window.__FASTMON_SAMPLE_RATE`, so a page that still sets it sends every pageview. Sampling is the application setting `collection.sampling_rate` now, decided per visitor at the edge. Docs: [Applications → Traffic sampling](/en/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-23" type="new" area="dashboard" title="Geographic distribution as a globe">
+
+The section draws the world as a globe or a flat map, beside the country list.
+
+- **The globe opens on your traffic.** A shop selling into one market lands on that market. Drag turns it, the wheel zooms, and the arrow keys, plus and minus work too.
+- **The flat map keeps the poles in proportion**, so Greenland no longer looks like a continent. Zoom and reset buttons sit on the map.
+- **The chosen view stays in the URL**, so a reload or a shared link opens the same one.
+- **Clicking a country shows its filter buttons.** The highlight follows the pointer and no longer sticks after you leave.
+- The section has a heading on the dashboard.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-21" type="fixed" area="platform" title="Shopify checkout events join the storefront visitor">
+
+A Shopify pixel's checkout events now carry the same visitor identifier as the shop's pageviews. The funnel no longer counts a buyer twice, and the visitor's journey shows the checkout. Events collected before the change stay detached.
+
+At the switch every visitor identifier changed once, as it does at the daily salt rotation. An application serving several domains now counts a visitor once across all of them. Docs: [Privacy → stitch](/en/privacy#the-edge-derived-stitch-identifier).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="new" area="dashboard" title="A visitor's journey shows the Shopify checkout">
+
+Checkout started, payment submitted and order placed now sit between the pageviews, in the order they happened. An event from before the selected window shows with a negative offset. Grouped by session, the journey says why its checkout half is missing.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-20" type="fixed" area="dashboard" title="The visitors list shows every visitor again">
+
+The list applied an "at least 3 pages" filter nobody had set, so one- and two-page visitors were missing. All filters now start empty, and the page-count filter still works when you set it.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-20" type="changed" area="api" title="Every API field follows one vocabulary">
 
 One name, one type and one scale per concept, across responses, request bodies and query parameters alike.
