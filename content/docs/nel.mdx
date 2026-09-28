@@ -45,31 +45,93 @@ Every report carries a class, `nel_class`, derived from its type. The dashboard 
 
 ## Error types [#error-types]
 
-The types you meet most often. The browser's type sits in each report's details, the dashboard shows a plain name.
+The dashboard shows a plain name, and each report's details carry the browser's type. Every type has the class `connection` unless its row says otherwise. **Resent** means Chromium retries the request after it reported.
 
-| Type | What happened | Resent by the browser |
-| --- | --- | --- |
-| `http.error` | The server answered 4xx or 5xx. | only a 408 on a reused HTTP/1.1 connection, and a 421 |
-| `dns.name_not_resolved` | The DNS has no address for the host. | no |
-| `dns.failed`, `dns.timed_out` | The name lookup failed or timed out. | no |
-| `dns.address_changed` | A failure whose type the browser hid. | as the hidden type |
-| `tcp.refused` | The server refused the connection. | no |
-| `tcp.timed_out` | The connection or the request timed out. | no |
-| `tcp.reset`, `tcp.closed`, `tcp.aborted` | The connection broke. | on a reused connection |
-| `tls.cert.*` | The certificate is invalid, expired, untrusted, revoked, or names another host. | no |
-| `tls.version_or_cipher_mismatch` | Browser and server share no TLS version or cipher. | no |
-| `h2.ping_failed` | The HTTP/2 connection stopped answering. | up to twice |
-| `http.response.*` | The response could not be read, for example an empty or truncated body. | some, on a reused connection |
-| `abandoned` | The request was cancelled before it completed. | no |
-| `unknown` | A browser error without a name, so the cause is lost. | some |
+### Server answered [#types-http]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `http.error` (`http_error`) | The server answered 4xx or 5xx, for any request: pages, images, API calls. | The status codes and paths on the [dashboard](#dashboard). | only a 408 on a reused HTTP/1.1 connection, and a 421 |
+
+### Name resolution [#types-dns]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `dns.name_not_resolved` | The DNS server answered but has no address for the host. | A missing or deleted DNS record, or a mistyped subdomain. | no |
+| `dns.failed` | The name resolution failed for another reason. | Your DNS provider. | no |
+| `dns.timed_out` | The DNS query timed out. | Your DNS provider, or the visitor's network. | no |
+| `dns.protocol` | The DNS answer was malformed. | Your DNS provider. | no |
+| `dns.server` | The DNS server answered with an error code, such as a server failure or a refusal. | Your authoritative name servers. | no |
+| `dns.address_changed` (`downgraded`) | A failure whose type the browser hid. | [Sites behind several addresses](#several-addresses). | as the hidden type |
+
+### Connection [#types-tcp]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `tcp.timed_out` | The connection or the request timed out. | Server load and firewalls. A rise means the server stopped answering. | no |
+| `tcp.refused` | The server refused the connection. | Whether the server and its port are up. A rise means it stopped accepting. | no |
+| `tcp.closed` | The connection was closed with a TCP FIN. | Part of the [floor](#reading). | on a reused connection |
+| `tcp.reset` | The connection was reset. | Part of the floor. | on a reused connection |
+| `tcp.aborted` | Data sent on the connection was never acknowledged. | Part of the floor. | on a reused connection |
+| `tcp.address_invalid` | The IP address is invalid. | The address in your DNS record. | no |
+| `tcp.address_unreachable` | The IP address is unreachable. | The routing to your server. | no |
+| `tcp.failed` | The connection attempt failed for another reason. | Server and network. | no |
+
+### TLS [#types-tls]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `tls.version_or_cipher_mismatch` | Browser and server share no TLS version or cipher. | The server's TLS configuration. | no |
+| `tls.bad_client_auth_cert` | The handshake failed on a bad or missing client certificate. | Whether the server asks for a client certificate. | no |
+| `tls.cert.invalid` | The server's certificate is invalid. | The certificate. | no |
+| `tls.cert.name_invalid` | The certificate does not name the host. | The names on the certificate. | no |
+| `tls.cert.date_invalid` | The certificate has expired or is not valid yet. | The renewal. | no |
+| `tls.cert.authority_invalid` | The certificate's issuer is not trusted. | The certificate chain. | no |
+| `tls.cert.revoked` | The certificate is revoked. | Replace the certificate. | no |
+| `tls.cert.pinned_key_not_in_cert_chain` | The certificate chain lacks a pinned key. | Your key pinning. | no |
+| `tls.protocol.error` | The TLS exchange broke a protocol rule. | The server's TLS stack. | no |
+| `tls.failed` | The server's response was insecure, a certificate error for example. | The certificate. | no |
+| `tls.unrecognized_name_alert` | The server answered the handshake with an `unrecognized_name` alert. | The server's SNI setup for the host. | no |
+
+### HTTP/2 and HTTP/3 [#types-h2-h3]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `h2.ping_failed` | The HTTP/2 connection stopped answering pings. | Part of the floor. | up to twice |
+| `h2.protocol.error` | The HTTP/2 exchange broke a protocol rule. | The HTTP/2 support of your server or proxy. | no |
+| `h3.protocol.error` | The QUIC exchange broke a protocol rule. | The server's HTTP/3 setup. | on an alternative service, before the response headers |
+
+### Response could not be read [#types-response]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `http.response.redirect_loop` | The request met too many redirects. | Your redirect rules. | no |
+| `http.response.invalid` | The response could not be read as HTTP. | The server or proxy. | no |
+| `http.response.invalid.empty` | The server closed the connection without sending data. | Crashing workers or proxy timeouts. | on a reused connection |
+| `http.response.invalid.content_length_mismatch` | The body length differs from `Content-Length`. | A proxy or compression that changes the body. | no |
+| `http.response.invalid.incomplete_chunked_encoding` | The chunked body ended without its last chunk. | An application that stops mid-response. | no |
+| `http.response.invalid.invalid_chunked_encoding` | The chunked body is malformed. | The server or proxy. | no |
+| `http.request.range_not_satisfiable` | The server answered 416 to a range request. | Range handling for downloads and media. | no |
+| `http.response.headers.truncated` | The headers ended with the connection. | The server or proxy. | no |
+| `http.response.headers.multiple_content_disposition` | The response has two different `Content-Disposition` headers. | Headers set twice, by the application and the server. | no |
+| `http.response.headers.multiple_content_length` | The response has two different `Content-Length` headers. | Headers set twice, by the application and the server. | no |
+
+### Visitor and unknown [#types-other]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `abandoned` (`abandoned`) | The request was cancelled before it completed. | Nothing: the visitor left. Hidden by default. | no |
+| `unknown` | A network error Chromium has no name for. | Nothing to read, see [Reading a report](#reading). | some |
+
+The W3C spec also lists `dns.unreachable`, `http.protocol.error` and `http.failed`, which Chromium never sends. fastmon drops `ok`, a report of a request that worked, and `sxg.*`, a report on a signed exchange.
 
 ## Reading a report [#reading]
 
-- **`http.error`** is the one type that says your server answered with an error. It covers every request to the origin, images and API calls included.
-- **`tls.cert.*`, `tls.version_or_cipher_mismatch` and `http.response.*`** point at your side too.
-- **`abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` and `unknown`** are a floor every site has. Visitors leave while a request loads, and mobile networks drop connections.
+- **Every site has a floor** of `abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` and `unknown`. Visitors leave while a request loads, and mobile networks drop connections.
 - **A sudden rise of `tcp.refused` or `tcp.timed_out`** means the server stopped accepting or answering connections.
-- **A report is no proof a visitor saw a failure.** For some types the browser reports first and resends the request, which may succeed. One failure can also leave several reports.
+- **`unknown` has no cause.** The report format has no field for Chromium's error code. A change of network, a request an HTTP/2 server refused and a failed QUIC handshake all arrive as `unknown`.
+- **A report is no proof a visitor saw a failure.** For the types with a resend, Chromium reports first and then retries, which may succeed. A retry that fails reports again, so one failure can leave several reports.
+- **Resets, closed and aborted connections and empty responses** are retried only on a reused connection that has not received headers yet. Every 4xx and 5xx except a 408 and a 421 reached the browser as reported.
 
 ## Sites behind several addresses [#several-addresses]
 

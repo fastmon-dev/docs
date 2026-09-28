@@ -45,31 +45,93 @@ Jeder Report hat eine Klasse, `nel_class`, abgeleitet aus seinem Typ. In Klammer
 
 ## Fehlertypen [#error-types]
 
-Die Typen, die dir am häufigsten begegnen. In den Details jedes Reports steht der Typ des Browsers, im Dashboard ein lesbarer Name.
+Das Dashboard zeigt einen lesbaren Namen, in den Details jedes Reports steht der Typ des Browsers. Jeder Typ hat die Klasse `connection`, sofern seine Zeile nichts anderes sagt. **Wiederholt** heißt, dass Chromium den Request nach dem Report erneut schickt.
 
-| Typ | Was passiert ist | Wiederholt der Browser |
-| --- | --- | --- |
-| `http.error` | Der Server hat mit 4xx oder 5xx geantwortet. | nur 408 auf einer wiederverwendeten HTTP/1.1-Verbindung und 421 |
-| `dns.name_not_resolved` | Das DNS kennt keine Adresse für den Host. | nein |
-| `dns.failed`, `dns.timed_out` | Die Namensauflösung ist fehlgeschlagen oder hat zu lange gedauert. | nein |
-| `dns.address_changed` | Ein Fehler, dessen Typ der Browser verborgen hat. | wie der verborgene Typ |
-| `tcp.refused` | Der Server hat die Verbindung abgelehnt. | nein |
-| `tcp.timed_out` | Verbindung oder Request hat zu lange gedauert. | nein |
-| `tcp.reset`, `tcp.closed`, `tcp.aborted` | Die Verbindung ist abgerissen. | auf einer wiederverwendeten Verbindung |
-| `tls.cert.*` | Das Zertifikat ist ungültig, abgelaufen, nicht vertrauenswürdig, widerrufen oder für einen anderen Host. | nein |
-| `tls.version_or_cipher_mismatch` | Browser und Server haben keine gemeinsame TLS-Version oder Cipher. | nein |
-| `h2.ping_failed` | Die HTTP/2-Verbindung antwortet nicht mehr. | bis zu zweimal |
-| `http.response.*` | Die Antwort war nicht lesbar, etwa leer oder abgeschnitten. | teils, auf einer wiederverwendeten Verbindung |
-| `abandoned` | Der Request wurde vor dem Ende abgebrochen. | nein |
-| `unknown` | Ein Browserfehler ohne eigenen Namen, die Ursache ist verloren. | teils |
+### Server hat geantwortet [#types-http]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `http.error` (`http_error`) | Der Server hat mit 4xx oder 5xx geantwortet, auf jeden Request: Seiten, Bilder, API-Calls. | Statuscodes und Pfade im [Dashboard](#dashboard). | nur 408 auf einer wiederverwendeten HTTP/1.1-Verbindung und 421 |
+
+### Namensauflösung [#types-dns]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `dns.name_not_resolved` | Der DNS-Server hat geantwortet, kennt aber keine Adresse für den Host. | Ein fehlender oder gelöschter DNS-Eintrag oder eine vertippte Subdomain. | nein |
+| `dns.failed` | Die Namensauflösung ist aus einem anderen Grund gescheitert. | Dein DNS-Anbieter. | nein |
+| `dns.timed_out` | Die DNS-Anfrage hat zu lange gedauert. | Dein DNS-Anbieter oder das Netz des Besuchers. | nein |
+| `dns.protocol` | Die DNS-Antwort war fehlerhaft. | Dein DNS-Anbieter. | nein |
+| `dns.server` | Der DNS-Server hat mit einem Fehlercode geantwortet, etwa einem Serverfehler oder einer Ablehnung. | Deine autoritativen Nameserver. | nein |
+| `dns.address_changed` (`downgraded`) | Ein Fehler, dessen Typ der Browser verdeckt hat. | [Sites hinter mehreren Adressen](#several-addresses). | wie der verdeckte Typ |
+
+### Verbindung [#types-tcp]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `tcp.timed_out` | Verbindung oder Request hat zu lange gedauert. | Serverlast und Firewalls. Ein Anstieg heißt, der Server antwortet nicht mehr. | nein |
+| `tcp.refused` | Der Server hat die Verbindung abgelehnt. | Ob Server und Port laufen. Ein Anstieg heißt, er nimmt nichts mehr an. | nein |
+| `tcp.closed` | Die Verbindung wurde mit einem TCP-FIN geschlossen. | Teil des [Grundrauschens](#reading). | auf einer wiederverwendeten Verbindung |
+| `tcp.reset` | Die Verbindung wurde zurückgesetzt. | Teil des Grundrauschens. | auf einer wiederverwendeten Verbindung |
+| `tcp.aborted` | Gesendete Daten wurden nie bestätigt. | Teil des Grundrauschens. | auf einer wiederverwendeten Verbindung |
+| `tcp.address_invalid` | Die IP-Adresse ist ungültig. | Die Adresse in deinem DNS-Eintrag. | nein |
+| `tcp.address_unreachable` | Die IP-Adresse ist nicht erreichbar. | Das Routing zu deinem Server. | nein |
+| `tcp.failed` | Der Verbindungsaufbau ist aus einem anderen Grund gescheitert. | Server und Netz. | nein |
+
+### TLS [#types-tls]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `tls.version_or_cipher_mismatch` | Browser und Server haben keine gemeinsame TLS-Version oder Cipher. | Die TLS-Konfiguration des Servers. | nein |
+| `tls.bad_client_auth_cert` | Der Handshake ist an einem fehlerhaften oder fehlenden Client-Zertifikat gescheitert. | Ob der Server ein Client-Zertifikat verlangt. | nein |
+| `tls.cert.invalid` | Das Zertifikat des Servers ist ungültig. | Das Zertifikat. | nein |
+| `tls.cert.name_invalid` | Das Zertifikat nennt den Host nicht. | Die Namen im Zertifikat. | nein |
+| `tls.cert.date_invalid` | Das Zertifikat ist abgelaufen oder noch nicht gültig. | Die Verlängerung. | nein |
+| `tls.cert.authority_invalid` | Dem Aussteller des Zertifikats wird nicht vertraut. | Die Zertifikatskette. | nein |
+| `tls.cert.revoked` | Das Zertifikat ist widerrufen. | Das Zertifikat ersetzen. | nein |
+| `tls.cert.pinned_key_not_in_cert_chain` | Der Kette fehlt ein gepinnter Schlüssel. | Dein Key Pinning. | nein |
+| `tls.protocol.error` | Der TLS-Austausch hat eine Protokollregel verletzt. | Den TLS-Stack des Servers. | nein |
+| `tls.failed` | Die Antwort des Servers war unsicher, etwa wegen eines Zertifikatsfehlers. | Das Zertifikat. | nein |
+| `tls.unrecognized_name_alert` | Der Server hat den Handshake mit einem `unrecognized_name`-Alert beantwortet. | Das SNI-Setup des Servers für den Host. | nein |
+
+### HTTP/2 und HTTP/3 [#types-h2-h3]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `h2.ping_failed` | Die HTTP/2-Verbindung antwortet nicht mehr auf Pings. | Teil des Grundrauschens. | bis zu zweimal |
+| `h2.protocol.error` | Der HTTP/2-Austausch hat eine Protokollregel verletzt. | Die HTTP/2-Unterstützung von Server oder Proxy. | nein |
+| `h3.protocol.error` | Der QUIC-Austausch hat eine Protokollregel verletzt. | Das HTTP/3-Setup des Servers. | auf einem Alternative Service, vor den Response-Headern |
+
+### Antwort nicht lesbar [#types-response]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `http.response.redirect_loop` | Der Request ist in zu viele Weiterleitungen gelaufen. | Deine Redirect-Regeln. | nein |
+| `http.response.invalid` | Die Antwort war nicht als HTTP lesbar. | Server oder Proxy. | nein |
+| `http.response.invalid.empty` | Der Server hat die Verbindung ohne Daten geschlossen. | Abstürzende Worker oder Proxy-Timeouts. | auf einer wiederverwendeten Verbindung |
+| `http.response.invalid.content_length_mismatch` | Die Länge des Bodys weicht von `Content-Length` ab. | Ein Proxy oder eine Kompression, die den Body ändert. | nein |
+| `http.response.invalid.incomplete_chunked_encoding` | Der Chunked-Body endet ohne letzten Chunk. | Eine Anwendung, die mitten in der Antwort abbricht. | nein |
+| `http.response.invalid.invalid_chunked_encoding` | Der Chunked-Body ist fehlerhaft. | Server oder Proxy. | nein |
+| `http.request.range_not_satisfiable` | Der Server hat einen Range-Request mit 416 beantwortet. | Range-Requests für Downloads und Medien. | nein |
+| `http.response.headers.truncated` | Die Header endeten mit der Verbindung. | Server oder Proxy. | nein |
+| `http.response.headers.multiple_content_disposition` | Die Antwort hat zwei verschiedene `Content-Disposition`-Header. | Header, die Anwendung und Server doppelt setzen. | nein |
+| `http.response.headers.multiple_content_length` | Die Antwort hat zwei verschiedene `Content-Length`-Header. | Header, die Anwendung und Server doppelt setzen. | nein |
+
+### Besucher und Unbekanntes [#types-other]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `abandoned` (`abandoned`) | Der Request wurde vor dem Ende abgebrochen. | Nichts: Der Besucher ist gegangen. Standardmäßig ausgeblendet. | nein |
+| `unknown` | Ein Netzwerkfehler, für den Chromium keinen Namen hat. | Nichts auszulesen, siehe [Einen Report lesen](#reading). | teils |
+
+Die W3C-Spezifikation nennt außerdem `dns.unreachable`, `http.protocol.error` und `http.failed`, die Chromium nie schickt. fastmon verwirft `ok`, den Report eines erfolgreichen Requests, und `sxg.*`, Reports zu Signed Exchanges.
 
 ## Einen Report lesen [#reading]
 
-- **`http.error`** ist der einzige Typ, der sagt, dass dein Server mit einem Fehler geantwortet hat. Er gilt für jeden Request an den Origin, auch für Bilder und API-Calls.
-- **`tls.cert.*`, `tls.version_or_cipher_mismatch` und `http.response.*`** deuten ebenfalls auf deine Seite.
-- **`abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` und `unknown`** sind ein Grundrauschen, das jede Site hat. Besucher gehen, während noch etwas lädt, und Mobilfunknetze verlieren Verbindungen.
+- **Jede Site hat ein Grundrauschen** aus `abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` und `unknown`. Besucher gehen, während noch etwas lädt, und Mobilfunknetze verlieren Verbindungen.
 - **Ein plötzlicher Anstieg von `tcp.refused` oder `tcp.timed_out`** heißt, dass der Server keine Verbindungen mehr annimmt oder beantwortet.
-- **Ein Report beweist nicht, dass ein Besucher den Fehler gesehen hat.** Bei manchen Typen meldet der Browser zuerst und schickt den Request dann erneut, oft mit Erfolg. Ein Fehler kann außerdem mehrere Reports hinterlassen.
+- **`unknown` hat keine Ursache.** Das Report-Format hat kein Feld für Chromiums Fehlercode. Ein Netzwechsel, ein vom HTTP/2-Server abgelehnter Request und ein gescheiterter QUIC-Handshake landen alle als `unknown`.
+- **Ein Report beweist nicht, dass ein Besucher den Fehler gesehen hat.** Bei Typen mit Wiederholung meldet Chromium zuerst und schickt den Request dann erneut, oft mit Erfolg. Scheitert auch die Wiederholung, kommt ein weiterer Report, ein Fehler kann also mehrere Reports hinterlassen.
+- **Resets, geschlossene und abgebrochene Verbindungen und leere Antworten** wiederholt Chromium nur auf einer wiederverwendeten Verbindung, die noch keine Header bekommen hat. Jeder 4xx- und 5xx-Status außer 408 und 421 kam so beim Browser an, wie er gemeldet ist.
 
 ## Sites hinter mehreren Adressen [#several-addresses]
 
