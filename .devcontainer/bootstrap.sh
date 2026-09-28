@@ -41,17 +41,5 @@ fi
 cd "$WS"
 npm ci
 
-# 5. Claude Code defaults for this isolated container (no prompts, sibling
-#    repos allowed), merged into the user-level settings on the named volume so
-#    they apply to every checkout and worktree. Existing keys win, so personal
-#    settings (model, theme, plugins) are kept.
-CLAUDE_SETTINGS="${CLAUDE_CONFIG_DIR:-/home/dev/.claude}/settings.json"
-if [ -f "$CLAUDE_SETTINGS" ]; then
-  jq -s '.[0] * .[1]' "$WS/.devcontainer/claude-settings.json" "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" \
-    && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
-else
-  cp "$WS/.devcontainer/claude-settings.json" "$CLAUDE_SETTINGS"
-fi
-
 echo "fastmon-docs devcontainer bootstrap complete."
 echo "Start the dev server with: npm run dev -- --hostname 0.0.0.0"

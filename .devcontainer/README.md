@@ -52,11 +52,6 @@ store (`CLAUDE_CONFIG_DIR=/home/dev/.claude`, separate from the host's
 `~/.claude`). Nothing lives outside the repo on the host except the mounted git
 identity.
 
-Claude Code runs without permission prompts inside the container and may edit
-the sibling repos. Those defaults are `claude-settings.json`, which the bootstrap
-merges into the user-level `settings.json` on that volume (existing keys win,
-so model, theme and plugins you set there stay).
-
 ## Troubleshooting
 
 - **Bootstrap reports a missing token or email**: fix `.devcontainer/.env`,
