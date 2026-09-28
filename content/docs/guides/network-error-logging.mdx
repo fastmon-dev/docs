@@ -1,0 +1,122 @@
+---
+title: Set up Network Error Logging
+description: Two response headers make Chromium browsers report every failed request to your site to fastmon.
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Two response headers on your origin make the browser report every failed request to fastmon, including pages that never ran the tracker. Only Chromium browsers send reports. What the reports show is on [Network Error Logging](/en/nel).
+
+## Set it up [#setup]
+
+1. Copy the application's `collector_hash`. It is the part after `/c/` in a beacon request, and a field on the application in the API.
+2. Send the two [headers](#headers) on every HTTPS response of each host.
+3. Make sure every host that sends them is a site of that application, or a subdomain of one.
+4. [Verify](#verify) that a report arrives.
+
+A report whose host is no site of the application is dropped, and a report never creates a site. `www.shop.example` counts for `shop.example`, `notshop.example` does not.
+
+## The headers [#headers]
+
+```http
+Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}
+NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}
+```
+
+An application with a custom [collector endpoint](/en/tracker#collector-endpoint) uses its own host instead of `fastmon.site`.
+
+| Field | Header | Value | What it does |
+| --- | --- | --- | --- |
+| `group` / `report_to` | both | `fastmon` | Links the two headers. Any name works if both use the same one. |
+| `max_age` | `Report-To` | `86400` | How long the browser keeps the endpoint, in seconds. Keep it at least as long as the `NEL` one. |
+| `url` | `Report-To` | `https://fastmon.site/c/n/{collector_hash}` | Where reports go. |
+| `max_age` | `NEL` | `86400` | How long the policy stays in the browser. Every response renews it. |
+| `success_fraction` | `NEL` | `0` | Share of successful requests to report. fastmon drops those reports. |
+| `failure_fraction` | `NEL` | `1` | Share of failed requests to report. Below `1`, each row counts `1 / failure_fraction`, and rare errors can vanish. |
+
+Where to set them:
+
+- **On every response**, error pages included. On a site behind [several addresses](/en/nel#several-addresses), an error page without the headers is lost.
+- **At the outermost server you control.** The ingress or load balancer answers its own 502, which the application never sees.
+- **Over HTTPS only.** The browser ignores a policy from a plain HTTP response.
+- **On each host.** `www.shop.example` and `shop.example` are two policies.
+
+### Examples [#examples]
+
+<Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
+<Tab value="nginx">
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name shop.example;
+
+    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}' always;
+    add_header NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}' always;
+}
+```
+
+`always` adds the headers to error responses. A `location` block with its own `add_header` inherits none from `server`, so repeat both lines there.
+
+</Tab>
+<Tab value="Caddy">
+
+```txt
+shop.example {
+	header Report-To `{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}`
+	header NEL `{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}`
+}
+```
+
+The backticks keep the JSON quotes intact.
+
+</Tab>
+<Tab value="Apache">
+
+```apache
+<IfModule mod_headers.c>
+    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}'
+    Header always set NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}'
+</IfModule>
+```
+
+</Tab>
+<Tab value="PHP">
+
+```php
+header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}');
+header('NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}');
+```
+
+This covers only the responses PHP writes. Set the headers in the web server when you can.
+
+</Tab>
+</Tabs>
+
+### `include_subdomains` [#include-subdomains]
+
+`"include_subdomains":true` in the `NEL` header extends the policy to every subdomain of the host. For those subdomains the browser reports DNS failures only. fastmon keeps such a report when the subdomain is a site of the application, or a subdomain of the only site. A subdomain that serves its own responses is better covered by its own headers.
+
+## Verify [#verify]
+
+1. **The headers arrive.** In the browser's network tab, check any response of the host for `Report-To` and `NEL`.
+2. **A report goes out.** Load a page in Chrome, then open a path that does not exist. The 404 has to carry both headers too. Chrome uploads an `http.error` report after about a minute.
+3. **The endpoint answers.** Test it without a browser, with a registered site in place of `shop.example`:
+
+```sh
+curl -i https://fastmon.site/c/n/YOUR_COLLECTOR_HASH \
+  -H 'Content-Type: application/reports+json' \
+  --data '[{"age":0,"type":"network-error","url":"https://shop.example/missing","body":{"type":"http.error","phase":"application","status_code":404,"elapsed_time":12,"method":"GET","protocol":"http/1.1","referrer":"","sampling_fraction":1}}]'
+```
+
+The endpoint answers 204 whether it kept the report or dropped it. The **Sites and hosts** card on the [dashboard](/en/nel#dashboard) shows each site's last report.
+
+## Traps [#traps]
+
+- **Cloudflare replaces your headers** when its own Network Error Logging setting is on. Turn it off for the zone.
+- **Shopify storefronts** allow no custom response headers, so a Shopify shop cannot send a policy.
+- **`Report-To` is required.** Chromium's NEL does not read `Reporting-Endpoints`.
+- **Each application has its own hash.** A report for a site of another application drops, even in the same organization.
+- **A hash rotation stops the reports** silently. Put the new `collector_hash` into `Report-To`.
+- **A [first-party proxy](/en/guides/first-party-proxy)** has to forward `/c/n/` and the browser's `OPTIONS` preflight. A `location /c/` block covers both.
+- **Removing the headers does not remove the policy.** Browsers keep reporting for up to `max_age` seconds. To stop sooner, send `NEL` with `"max_age":0` for a day first.

@@ -85,9 +85,9 @@ Zwei Schalter pro Site entscheiden, ob überhaupt ein Besucher-Identifier in die
 
 Die beiden sind unabhängig: schalte einen an, beide oder keinen.
 
-### Network-Error-Reports [#network-error-reports]
+### NEL-Reports [#nel-reports]
 
-Schickt eine Site die [NEL-Header](/de/network-errors#headers), entsteht für jeden fehlgeschlagenen Request, den ein Chromium-Browser meldet, eine Zeile. Die Header setzt du, und die Policy bleibt `max_age` Sekunden im Browser des Besuchers.
+Schickt eine Site die [NEL-Header](/de/guides/network-error-logging#headers), entsteht für jeden fehlgeschlagenen Request, den ein Chromium-Browser meldet, eine Zeile. Die Header setzt du, und die Policy bleibt `max_age` Sekunden im Browser des Besuchers.
 
 - **Gespeichert**: Fehlertyp, Phase, HTTP-Status, Dauer, Methode, Protokoll, die fehlgeschlagene URL, gekürzt wie eine Seiten-URL, und der Referrer nur, wenn er auf demselben Host liegt.
 - **Serveradresse**: `server_ip` ist die Adresse deines Servers, nicht die des Besuchers. Gespeichert wird nur eine öffentliche, eine private, Loopback- oder Link-Local-Adresse bleibt leer.

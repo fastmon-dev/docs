@@ -17,41 +17,41 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
-<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Eine Seite für Network Errors aus den Reports der Browser">
+<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Network Error Logging: fehlgeschlagene Requests, wie der Browser sie meldet">
 
-Unter Errors → Network errors siehst du die fehlgeschlagenen Requests, die Chromium-Browser für deine Seite melden. Dazu gehören auch Seiten, die nie geladen haben und den Tracker deshalb nie ausgeführt haben. Voraussetzung sind die `NEL`-Header auf deiner Seite.
+Unter Fehler → Network Error Logging siehst du die fehlgeschlagenen Requests, die Chromium-Browser für deine Seite melden. Dazu gehören auch Seiten, die nie geladen haben und den Tracker deshalb nie ausgeführt haben. Voraussetzung sind die `NEL`-Header auf deiner Seite.
 
-- **Drei Tabs: Overview, Paths und Reports.** Der Tab steht in der Adresse, ein Link öffnet also dieselbe Ansicht.
-- **HTTP-Fehler stehen oben**, Serverfehler vor Clientfehlern. Jede Zahl nennt zuerst die betroffenen Besucher, danach die Reports.
-- **"Where they fail" zeigt jede Dimension als Karte**: Statuscodes, Seiten, Länder, Sites und Hosts, Serveradressen, Geräte, Browser, OS und Traffic. Eine geöffnete Karte nimmt die ganze Zeile ein.
-- **Sites und Hosts ist gleichzeitig der Setup-Check.** Jede Site zeigt ihren letzten Report, eine Site ohne Report sagt das. Zeigen die meisten Reports ohne Details auf eine Serveradresse, nennt die Karte sie als wahrscheinlich ausgefallen.
+- **Drei Tabs: Übersicht, Pfade und Reports.** Der Tab steht in der Adresse, ein Link öffnet also dieselbe Ansicht.
+- **HTTP-Fehler stehen oben**, Serverfehler vor Clientfehlern. Jede Zahl nennt zuerst die betroffenen Besucher mit ihrem Anteil an allen Besuchern, danach die Reports.
+- **„Wo sie scheitern“ zeigt jede Dimension als Karte**: Statuscodes, Seiten, Länder, Seiten und Hosts, Serveradressen, Geräte, Browser, OS und Traffic. Eine geöffnete Karte nimmt die ganze Zeile ein.
+- **Seiten und Hosts ist gleichzeitig der Setup-Check.** Jede Site zeigt ihren letzten Report, eine Site ohne Report sagt das. Zeigen die meisten Reports ohne Details auf eine Serveradresse, nennt die Karte sie als wahrscheinlich ausgefallen.
 - **Verbindungsfehler haben einen eigenen Abschnitt**, standardmäßig zugeklappt. Er vergleicht sie mit ihrem üblichen Niveau und meldet ein kaputtes Zertifikat sowie einen Anstieg bei abgelehnten oder abgelaufenen Verbindungen, unbekannten Hosts oder Reports ohne Details.
-- **Reports listet jeden Report mit seiner Klasse.** Mehrere Reports eines Besuchers auf einer Seite hintereinander fasst die Liste zu einer Zeile mit Anzahl zusammen. Jeder Report öffnet alle gespeicherten Felder und verlinkt auf die Journey des Besuchers.
-- **Die Journey eines Besuchers zeigt seine fehlgeschlagenen Requests** zwischen den Pageviews, in zeitlicher Reihenfolge und mit dem Fehlertyp in Klartext.
+- **Reports listet jeden NEL-Report mit seiner Klasse.** Mehrere Reports eines Besuchers auf einer Seite hintereinander fasst die Liste zu einer Zeile mit Anzahl zusammen. Jeder Report öffnet alle gespeicherten Felder, hat einen eigenen Link zum Teilen und verlinkt auf die Journey des Besuchers.
+- **Die Journey eines Besuchers zeigt seine NEL-Reports** zwischen den Pageviews, in zeitlicher Reihenfolge, als solche markiert und mit dem Fehlertyp in Klartext.
 - **Abgebrochene Ladevorgänge bleiben ausgeblendet**, auf der Seite und in der Journey. Ein Schalter blendet sie ein.
-- **Das + neben einem Wert filtert darauf, das - schließt ihn aus.** Die Filter bleiben in der Adresse und stehen im Filter-Panel unter "Only on this page". Ein Seiten-Icon am Filter-Button zeigt das an.
+- **Das + neben einem Wert filtert darauf, das - schließt ihn aus**, und die Lupe öffnet die Reports der Zeile. Die Kacheln 5xx und 4xx filtern eine ganze Statusklasse. Die Filter bleiben in der Adresse und stehen im Filter-Panel unter „Nur auf dieser Seite“. Ein Seiten-Icon am Filter-Button zeigt das an.
 
-Doku: [Network Errors → Die Seite im Dashboard](/de/network-errors#dashboard).
-
-</ChangelogEntry>
-
-<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Errors ist eine Gruppe in der Sidebar">
-
-JavaScript errors, Failed resources und Network errors sind jetzt drei Seiten unter Errors, jede mit eigener Adresse, Breadcrumb und Eintrag in der Command Palette. Alte Links auf einen Tab öffnen die neue Seite mit ihrem Zeitraum und ihren Filtern. Doku: [Analytics → Error Analytics](/de/analytics#error-analytics).
+Doku: [Network Error Logging → Die Seite im Dashboard](/de/nel#dashboard).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-09-28" type="new" area="api" title="Network-Error-Reports tragen eine Klasse und die Serveradresse">
+<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Fehler ist eine Gruppe in der Sidebar">
+
+JavaScript-Fehler, Fehlgeschlagene Ressourcen und Network Error Logging sind jetzt drei Seiten unter Fehler, jede mit eigener Adresse, Breadcrumb und Eintrag in der Command Palette. Alte Links auf einen Tab öffnen die neue Seite mit ihrem Zeitraum und ihren Filtern. Doku: [Analytics → Error Analytics](/de/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="api" title="NEL-Reports tragen eine Klasse und die Serveradresse">
 
 Zwei neue Felder an jedem Report zeigen dir, was fehlgeschlagen ist und wo.
 
-- **`network_error_class`** sagt, was ein Report bedeutet: `http_error`, `connection`, `abandoned`, `downgraded` oder `other`. Die Klasse wird beim Lesen abgeleitet, ältere Reports haben sie also auch.
+- **`nel_class`** sagt, was ein Report bedeutet: `http_error`, `connection`, `abandoned`, `downgraded` oder `other`. Die Klasse wird beim Lesen abgeleitet, ältere Reports haben sie also auch.
 - **`server_ip`** ist die Adresse deines Servers, an die der fehlgeschlagene Request ging. Gespeichert wird nur eine öffentliche Adresse, Reports von vor dem 28.09.2026 haben keine.
-- **Beide sind Filter mit `exclude`** und Breakdown-Dimensionen auf `POST /analytics/network-errors`.
+- **Beide sind Filter mit `exclude`** und Breakdown-Dimensionen auf `POST /analytics/nel`.
 - **Steigt `downgraded` auf einer Site mit zwei Adressen, fällt eine davon aus**, und `server_ip` nennt sie.
 - **Zwei lange Chromium-Fehlertypen gehen nicht mehr verloren.** Ein Fehlertyp darf jetzt bis zu 64 Zeichen lang sein.
 
-Doku: [Network Errors → Mehrere Serveradressen](/de/network-errors#several-addresses).
+Doku: [Network Error Logging → Mehrere Serveradressen](/de/nel#several-addresses).
 
 </ChangelogEntry>
 
@@ -64,22 +64,23 @@ Mit zwei Response-Headern auf deiner Seite melden Chromium-Browser jeden fehlges
 - **Ein Report speichert** Fehlertyp, Phase, HTTP-Status, Zeit bis zum Fehler, Methode, Protokoll, die gekürzte URL, die Seite, von der er kam, und die Hauptversion des Browsers. Dazu kommen die Besucherkennung unter `store_stitch` und die Edge-Labels, der User-Agent wird verworfen.
 - **Cloudflares eigene NEL-Einstellung ersetzt deine Header**, und Shopify-Storefronts können sie nicht setzen.
 
-Doku: [Network Errors → Einrichten](/de/network-errors#setup) und [Datenschutz → Network-Error-Reports](/de/privacy#network-error-reports).
+Doku: [Network Error Logging einrichten](/de/guides/network-error-logging) und [Datenschutz → NEL-Reports](/de/privacy#nel-reports).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-09-27" type="new" area="api" title="Network-Error-Reports über die API lesen">
+<ChangelogEntry date="2026-09-27" type="new" area="api" title="NEL-Reports über die API lesen">
 
-Drei Routen unter `/organizations/{org_id}/analytics/network-errors` lesen die Reports. Sie nehmen den Site-Scope sowie die Besucher- und Edge-Label-Filter der anderen Analytics-Routen.
+Drei Routen unter `/organizations/{org_id}/analytics/nel` lesen die Reports. Sie nehmen den Site-Scope sowie die Besucher- und Edge-Label-Filter der anderen Analytics-Routen.
 
-- **`POST …/network-errors`** liefert die gewichtete Anzahl, die Zeitreihe, die Zahlen pro Fehlertyp und Statuscode und die am stärksten betroffenen Paare aus Host und Pfad. `affected_visitors` zählt eindeutige Besucher, wo die Site `stitch` speichert, und `elapsed_by_error_type` gibt p50, p75 und p95 der Zeit bis zum Fehler.
-- **`POST …/network-errors/breakdown`** gruppiert die Reports nach einer `dimension`, etwa `page_url`, `host`, `browser_version` oder `site_id`. Eine `site_id`-Zeile trägt mit `last_seen_at` ihren letzten Report.
-- **`POST …/network-errors/reports`** listet einzelne Reports, neueste zuerst, geblättert per `cursor`. `visitor_id` verlinkt einen Report auf die Journey des Besuchers.
+- **`POST …/nel`** liefert die gewichtete Anzahl, die Zeitreihe, die Zahlen pro Fehlertyp und Statuscode und die am stärksten betroffenen Paare aus Host und Pfad. `affected_visitors` zählt eindeutige Besucher, wo die Site `stitch` speichert, und `elapsed_by_error_type` gibt p50, p75 und p95 der Zeit bis zum Fehler.
+- **`POST …/nel/breakdown`** gruppiert die Reports nach einer `dimension`, etwa `page_url`, `host`, `browser_version` oder `site_id`. Eine `site_id`-Zeile trägt mit `last_seen_at` ihren letzten Report.
+- **`POST …/nel/reports`** listet einzelne Reports, neueste zuerst, geblättert per `cursor`, und `filters.report_id` wählt einen aus. `visitor_id` verlinkt einen Report auf die Journey des Besuchers.
 - **Eigene Filter**: `error_type`, `status_code_range`, `host`, `path` und `page_url`, alle außer dem Bereich auch als `exclude`. Jede andere Analytics-Route beantwortet sie mit 422.
 - **Ohne `error_type`-Filter zählt auch `abandoned`.** Schließ es aus, um Besucher auszublenden, die gegangen sind, während noch etwas lud.
-- **Besucherdetail und Checkout-Journeys liefern `network_errors`** neben `pages` und `events`, bis zu den letzten 100 pro Besucher.
+- **Besucherdetail und Checkout-Journeys liefern `nel_reports`** neben `pages` und `events`, bis zu den letzten 100 pro Besucher.
+- **Umbenannt am 28.09.2026.** Bis dahin hießen die Routen `…/network-errors`, die Klasse `network_error_class` und die Liste `network_errors`. Die alten Namen antworten mit 404.
 
-Doku: [Network Errors → API](/de/network-errors#api).
+Doku: [Network Error Logging → API](/de/nel#api).
 
 </ChangelogEntry>
 

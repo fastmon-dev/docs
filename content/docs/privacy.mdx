@@ -85,9 +85,9 @@ Two per-site switches decide whether any visitor identifier reaches storage. Und
 
 The two are independent: enable either, both, or neither.
 
-### Network error reports [#network-error-reports]
+### NEL reports [#nel-reports]
 
-A site that sends the [NEL headers](/en/network-errors#headers) gets one row per failed request a Chromium browser reports. The headers are yours, and the policy they set stays in the visitor's browser for `max_age` seconds.
+A site that sends the [NEL headers](/en/guides/network-error-logging#headers) gets one row per failed request a Chromium browser reports. The headers are yours, and the policy they set stays in the visitor's browser for `max_age` seconds.
 
 - **Stored**: error type, phase, HTTP status, elapsed time, method, protocol, the failed URL reduced like a page URL, and the referrer only when it is on the same host.
 - **Server address**: `server_ip` is your server's address, not the visitor's. Only a public one is stored, a private, loopback or link-local address is stored empty.

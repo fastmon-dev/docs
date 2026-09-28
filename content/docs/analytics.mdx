@@ -68,7 +68,7 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 ## Error Analytics [#error-analytics]
 
-Errors is a group in the sidebar with three pages: JavaScript errors, [Failed resources](#failed-resources), and [Network errors](/en/network-errors). Each has its own address, headline, chart, and list. On JavaScript errors:
+Errors is a group in the sidebar with three pages: JavaScript errors, [Failed resources](#failed-resources), and [Network Error Logging](/en/nel). Each has its own address, headline, chart, and list. On JavaScript errors:
 
 - **Error rate over time**: the share of pageviews with at least one JavaScript error. A failed image, script, or stylesheet runs as its own curve on the same chart.
 - **Which errors, over time**: the five biggest signatures per time bucket as a stacked chart, named by what broke rather than by their hash. Clicking a name in the legend opens that signature in the list below.
@@ -129,7 +129,7 @@ The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/quer
 
 ## Visitors [#visitors]
 
-The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events and the visitor's [network errors](/en/network-errors#dashboard) sit between the pageviews. Abandoned loads are hidden unless you switch them on.
+The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events and the visitor's [NEL reports](/en/nel#dashboard) sit between the pageviews. Abandoned loads are hidden unless you switch them on.
 
 The summary above the list describes the whole selected period, not the loaded page of results: visitors, visitors with a single page, and the median pages per visitor. Behavior filters narrow the list to visitors with at least a given number of pages, errors, duration, or LCP, with a given page type in the journey, or who reached a funnel stage. They stay on the Visitors and Sessions pages and are dropped when you navigate elsewhere.
 

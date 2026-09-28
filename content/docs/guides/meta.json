@@ -6,6 +6,7 @@
     "compare-releases",
     "filter-internal-traffic",
     "first-party-proxy",
+    "network-error-logging",
     "notification-rules",
     "server-timing",
     "shopify-checkout"
