@@ -83,7 +83,7 @@ The two public ingest roots are short on purpose: it keeps the beacon payload sm
 
 | Data                               | Where               | Retention                       |
 | ---------------------------------- | ------------------- | ------------------------------- |
-| Beacon events (raw and rolled-up)  | Analytics store     | `data_retention_days` per site (90 default). |
+| Beacon events (raw and rolled-up)  | Analytics store     | `data_retention_days` per application (90 default). |
 | Site, org, member configuration    | Configuration DB    | Until deletion.                 |
 | Active sessions (auth)             | Session store       | Sliding window, default 30 days idle. |
 | Rate-limit counters                | Session store       | Per-window TTL, < 5 min.        |

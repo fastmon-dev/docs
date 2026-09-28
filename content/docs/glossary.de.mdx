@@ -33,6 +33,8 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Beacon**: Eine einzelne gebündelte Payload, die der Tracker an `/c/{collector_hash}` POSTet. Auch Kurzname für das Script unter `/s/{source_hash}.js`, das sie erzeugt. Siehe [Der RUM-Beacon](/de/concepts/beacon).
 
+**Network-Error-Report (NEL)**: Ein Report, den der Browser schickt, wenn ein Request an deine Site scheitert, sobald dein Server die Header `Report-To` und `NEL` setzt. Nur Chromium. Siehe [Netzwerkfehler](/de/network-errors).
+
 **Tracker**: Der laufende JavaScript-Agent, den das Beacon-Script im Browser des Besuchers startet. Er registriert die Observer, puffert Werte, bereinigt URLs und sendet die Beacons.
 
 **Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`, der Beacons empfängt, validiert und in den Analytics-Store schreibt.
@@ -55,7 +57,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Plan**: Organisations-Tier: `none`, `beta`, `light`, `standard`, `partner`, `enterprise`. Steuert Features und Quotas. Eine neue Organisation startet auf `none`; abgerechnet wird die Production-[Application](/de/concepts/applications). Siehe [Organisationen → Pläne](/de/concepts/organizations#plans).
 
-**Site**: Eine Domain unter einer Application, mit eigenem Dashboard und eigenem Traffic. Hashes und Erfassungseinstellungen liegen an der Application; eine Site trägt nur Per-Domain-Overrides. Siehe [Sites](/de/concepts/sites).
+**Site**: Eine Domain unter einer Application, mit eigenem Dashboard und eigenem Traffic. Alle Einstellungen liegen an der Application. Braucht eine Domain andere Werte, bekommt sie eine eigene Application. Siehe [Sites](/de/concepts/sites).
 
 **Visitor**: Ein eindeutiger Besucher, gezählt entlang einer Identitätsachse: `stitch` (am Edge abgeleitet, in jedem Modus vorhanden, der Standard) oder `session` (consent-gated). Anonym per Konstruktion. Siehe [Besucher und Sessions](/de/concepts/sessions).
 

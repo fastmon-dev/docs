@@ -103,7 +103,7 @@ Schalter und Muster liegen an der Application unter **Einstellungen → Checkout
 
 OXID hält den gesamten Checkout auf `index.php` und unterscheidet die Schritte nur im Query-Parameter `cl`. Nimm `cl` in [`collect_query_values_for`](/de/tracker#collect-query-values-for) auf und setz eigene Muster: cart `*?cl=basket*`, checkout `*?cl=user*`, `*?cl=payment*`, `*?cl=order*`, success `*?cl=thankyou*`. Können andere Query-Keys vor `cl` stehen, ergänze die Varianten mit `*&cl=…*`. Dasselbe Rezept deckt generische `?step=`-Checkouts ab. Query-Muster sind nicht Teil der Defaults.
 
-## Datenschutz
+## Datenschutz [#privacy]
 
 Die Stufe ist ein Label mit vier Werten, berechnet aus der URL, die die Site ohnehin speichert; die Warenkorb-Interaktion ist ein Merker aus Fetch/XHR-Pfaden, die sie ohnehin speichert. Keines von beiden fügt dem Beacon ein Feld hinzu oder erhöht die Besucher-Entropie. Pro Besucher wird nichts aufbewahrt, und der Funnel wird zur Abfragezeit berechnet, in jedem Erfassungsmodus, auch in `anonymous`.
 

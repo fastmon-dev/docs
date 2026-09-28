@@ -1,0 +1,212 @@
+---
+title: Network errors
+description: Failed requests to your site as the browser reports them through Network Error Logging, including pages that never loaded the tracker.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Network Error Logging (NEL) reports the requests that failed in your visitors' browsers: DNS failures, refused connections, timeouts, TLS errors, and 4xx or 5xx answers.
+
+<Callout type="info" title="Chromium only">
+  Chrome, Edge, Opera, Samsung Internet and other Chromium browsers send reports. Safari and Firefox do not, so every count is a lower bound.
+</Callout>
+
+## Set it up [#setup]
+
+1. Copy the application's `collector_hash`. It is the part after `/c/` in a beacon request, and a field on the application in the API.
+2. Send the two [headers](#headers) on every HTTPS response of each host.
+3. Make sure every host that sends them is a site of that application, or a subdomain of one.
+4. [Verify](#verify) that a report arrives.
+
+A report whose host is no site of the application is dropped, and a report never creates a site. `www.shop.example` counts for `shop.example`, `notshop.example` does not.
+
+## The headers [#headers]
+
+```http
+Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}
+NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}
+```
+
+An application with a custom [collector endpoint](/en/tracker#collector-endpoint) uses its own host instead of `fastmon.site`.
+
+| Field | Header | Value | What it does |
+| --- | --- | --- | --- |
+| `group` / `report_to` | both | `fastmon` | Links the two headers. Any name works if both use the same one. |
+| `max_age` | `Report-To` | `86400` | How long the browser keeps the endpoint, in seconds. Keep it at least as long as the `NEL` one. |
+| `url` | `Report-To` | `https://fastmon.site/c/n/{collector_hash}` | Where reports go. |
+| `max_age` | `NEL` | `86400` | How long the policy stays in the browser. Every response renews it. |
+| `success_fraction` | `NEL` | `0` | Share of successful requests to report. fastmon drops those reports. |
+| `failure_fraction` | `NEL` | `1` | Share of failed requests to report. Below `1`, each row counts `1 / failure_fraction`, and rare errors can vanish. |
+
+Where to set them:
+
+- **On every response**, error pages included. On a site behind [several addresses](#several-addresses), an error page without the headers is lost.
+- **At the outermost server you control.** The ingress or load balancer answers its own 502, which the application never sees.
+- **Over HTTPS only.** The browser ignores a policy from a plain HTTP response.
+- **On each host.** `www.shop.example` and `shop.example` are two policies.
+
+### Examples [#examples]
+
+<Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
+<Tab value="nginx">
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name shop.example;
+
+    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}' always;
+    add_header NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}' always;
+}
+```
+
+`always` adds the headers to error responses. A `location` block with its own `add_header` inherits none from `server`, so repeat both lines there.
+
+</Tab>
+<Tab value="Caddy">
+
+```txt
+shop.example {
+	header Report-To `{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}`
+	header NEL `{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}`
+}
+```
+
+The backticks keep the JSON quotes intact.
+
+</Tab>
+<Tab value="Apache">
+
+```apache
+<IfModule mod_headers.c>
+    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}'
+    Header always set NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}'
+</IfModule>
+```
+
+</Tab>
+<Tab value="PHP">
+
+```php
+header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}');
+header('NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}');
+```
+
+This covers only the responses PHP writes. Set the headers in the web server when you can.
+
+</Tab>
+</Tabs>
+
+### `include_subdomains` [#include-subdomains]
+
+`"include_subdomains":true` in the `NEL` header extends the policy to every subdomain of the host. For those subdomains the browser reports DNS failures only. fastmon keeps such a report when the subdomain is a site of the application, or a subdomain of the only site. A subdomain that serves its own responses is better covered by its own headers.
+
+## Verify [#verify]
+
+1. **The headers arrive.** In the browser's network tab, check any response of the host for `Report-To` and `NEL`.
+2. **A report goes out.** Load a page in Chrome, then open a path that does not exist. The 404 has to carry both headers too. Chrome uploads an `http.error` report after about a minute.
+3. **The endpoint answers.** Test it without a browser, with a registered site in place of `shop.example`:
+
+```sh
+curl -i https://fastmon.site/c/n/YOUR_COLLECTOR_HASH \
+  -H 'Content-Type: application/reports+json' \
+  --data '[{"age":0,"type":"network-error","url":"https://shop.example/missing","body":{"type":"http.error","phase":"application","status_code":404,"elapsed_time":12,"method":"GET","protocol":"http/1.1","referrer":"","sampling_fraction":1}}]'
+```
+
+The endpoint answers 204 whether it kept the report or dropped it. The **Sites and hosts** card on the [dashboard](#dashboard) shows each site's last report.
+
+## Traps [#traps]
+
+- **Cloudflare replaces your headers** when its own Network Error Logging setting is on. Turn it off for the zone.
+- **Shopify storefronts** allow no custom response headers, so a Shopify shop cannot send a policy.
+- **`Report-To` is required.** Chromium's NEL does not read `Reporting-Endpoints`.
+- **Each application has its own hash.** A report for a site of another application drops, even in the same organization.
+- **A hash rotation stops the reports** silently. Put the new `collector_hash` into `Report-To`.
+- **A [first-party proxy](/en/guides/first-party-proxy)** has to forward `/c/n/` and the browser's `OPTIONS` preflight. A `location /c/` block covers both.
+- **Removing the headers does not remove the policy.** Browsers keep reporting for up to `max_age` seconds. To stop sooner, send `NEL` with `"max_age":0` for a day first.
+
+## The Network errors page [#dashboard]
+
+The page sits under **Errors → Network errors** in the sidebar. It has three tabs, and the tab is part of the URL.
+
+- **Overview**: the server's HTTP errors, 5xx first and 4xx below. **Visitors hit** leads every number, reports come second. The chart stacks **By class** or **By code**.
+- **Where they fail**: one card per dimension, all at once. Status codes, pages, server addresses, countries, sites and hosts, devices, browsers, OS, traffic, and versions once a browser is filtered.
+- **Sites and hosts** doubles as the setup check. Each site shows its last report, and when most reports without details point at one server address, the card names it as likely failing.
+- **Connection failures**: closed by default. Each type is compared with its own usual level, and a broken certificate or a rise of refused connections, timeouts or unknown hosts is flagged.
+- **Paths**: hosts first, each with its paths inside.
+- **Reports**: every report, newest first, each opening to all stored fields. A run of one type from one visitor on one page folds into one line. Where the site stores a visitor id, a report links to the visitor's journey.
+
+**Filtering** works like on the other pages: `+` next to a value filters to it, `-` excludes it. The page's own filters (status, error type, host, path, page, server address) sit in the Filter panel under **Only on this page** and stay in the URL. **Abandoned loads** are hidden, on the page and on a visitor's journey, each with a switch to show them.
+
+A visitor's journey in [Visitors](/en/analytics#visitors) lists their failed requests between the pageviews, in time order.
+
+## Classes [#classes]
+
+Every report carries a class, `network_error_class`, derived from its type.
+
+| Class | Types | Means |
+| --- | --- | --- |
+| `http_error` | `http.error` | Your server answered with a 4xx or 5xx status. |
+| `connection` | `dns.*`, `tcp.*`, `tls.*`, `h2.*`, `h3.*`, `http.response.*`, `unknown` | No usable answer. |
+| `abandoned` | `abandoned` | The request was cancelled, usually a visitor leaving while it loaded. |
+| `downgraded` | `dns.address_changed` | The browser hid the real type. See [several addresses](#several-addresses). |
+| `other` | anything else | A type no browser sent before. |
+
+## Error types [#error-types]
+
+The types you meet most often. The browser's type sits in each report's details, the dashboard shows a plain name.
+
+| Type | What happened | Resent by the browser |
+| --- | --- | --- |
+| `http.error` | The server answered 4xx or 5xx. | only a 408 on a reused HTTP/1.1 connection, and a 421 |
+| `dns.name_not_resolved` | The DNS has no address for the host. | no |
+| `dns.failed`, `dns.timed_out` | The name lookup failed or timed out. | no |
+| `dns.address_changed` | A failure whose type the browser hid. | as the hidden type |
+| `tcp.refused` | The server refused the connection. | no |
+| `tcp.timed_out` | The connection or the request timed out. | no |
+| `tcp.reset`, `tcp.closed`, `tcp.aborted` | The connection broke. | on a reused connection |
+| `tls.cert.*` | The certificate is invalid, expired, untrusted, revoked, or names another host. | no |
+| `tls.version_or_cipher_mismatch` | Browser and server share no TLS version or cipher. | no |
+| `h2.ping_failed` | The HTTP/2 connection stopped answering. | up to twice |
+| `http.response.*` | The response could not be read, for example an empty or truncated body. | some, on a reused connection |
+| `abandoned` | The request was cancelled before it completed. | no |
+| `unknown` | A browser error without a name, so the cause is lost. | some |
+
+## Reading a report [#reading]
+
+- **`http.error`** is the one type that says your server answered with an error. It covers every request to the origin, images and API calls included.
+- **`tls.cert.*`, `tls.version_or_cipher_mismatch` and `http.response.*`** point at your side too.
+- **`abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` and `unknown`** are a floor every site has. Visitors leave while a request loads, and mobile networks drop connections.
+- **A sudden rise of `tcp.refused` or `tcp.timed_out`** means the server stopped accepting or answering connections.
+- **A report is no proof a visitor saw a failure.** For some types the browser reports first and resends the request, which may succeed. One failure can also leave several reports.
+
+## Sites behind several addresses [#several-addresses]
+
+Two ingress nodes, a CDN, or IPv4 beside IPv6 put several addresses behind one name. The browser keeps the policy together with the address it came from. When one address fails, only the other sends the policy, and the failures of the dead one arrive as `dns.address_changed` without status or elapsed time.
+
+- **A rise of the class `downgraded`** on such a site means one address fails.
+- **`server_ip`** names the address a request went to. The **Server addresses** card, or a breakdown of `downgraded` reports by `server_ip`, names the failing one.
+- **An error page without the headers** from the other address is lost, so the ingress has to set them on every response. Check it on a 404, as in [Verify](#verify).
+
+Only a public `server_ip` is stored. See [Privacy → Network error reports](/en/privacy#network-error-reports).
+
+## Limits [#limits]
+
+- **Chromium browsers only.** Every count is a lower bound.
+- **Visitor counts need [`store_stitch`](/en/tracker#store-stitch).** A site without it counts in the reports but not in **Visitors hit**, and the page names it.
+- **A lower `failure_fraction`** makes the visitor count a lower bound.
+- **A change of network cuts the visitor.** A report takes its visitor id from the upload, so a report sent from a new network never joins the pageviews before it.
+- **The id rotates daily.** A report uploaded after the rotation can land on a new visitor.
+
+## API [#api]
+
+All three routes take the same `filters`, including `error_type`, `network_error_class`, `status_code_range`, `server_ip`, `host`, `path` and `page_url` with their `exclude`. Every other analytics route refuses these filters with a 422.
+
+| Route | Returns |
+| --- | --- |
+| [`POST /analytics/network-errors`](/en/api/analytics/queryAnalyticsNetworkErrors) | Counts, series, error types, status codes, time to failure, and the top paths per host |
+| [`POST /analytics/network-errors/breakdown`](/en/api/analytics/queryAnalyticsNetworkErrorsBreakdown) | Reports grouped by one `dimension`, with share and visitors |
+| [`POST /analytics/network-errors/reports`](/en/api/analytics/listAnalyticsNetworkErrorReports) | Single reports, newest first, paged with `cursor` |
+
+Counts are weighted by `1 / failure_fraction`, single reports are not. Without an `error_type` filter every type counts, `abandoned` included. The [visitor detail](/en/api/analytics/getAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `network_errors` beside `pages` and `events`: absent when not consulted, `[]` when there are none.

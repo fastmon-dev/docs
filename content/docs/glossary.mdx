@@ -33,6 +33,8 @@ Compact definitions. For depth, follow the link on each term.
 
 **Beacon**: A single batched payload the tracker POSTs to `/c/{collector_hash}`. Also shorthand for the script at `/s/{source_hash}.js` that produces them. See [The RUM Beacon](/en/concepts/beacon).
 
+**Network error report (NEL)**: A report the browser sends when a request to your site fails, once your server sets the `Report-To` and `NEL` headers. Chromium only. See [Network errors](/en/network-errors).
+
 **Tracker**: The running JavaScript agent the beacon script starts in the visitor's browser. It registers the observers, buffers values, strips URLs, and sends the beacons.
 
 **Collector**: The server endpoint at `/c/{collector_hash}` that receives beacons, validates them, and writes them to the analytics store.
@@ -55,7 +57,7 @@ Compact definitions. For depth, follow the link on each term.
 
 **Plan**: Organization tier: `none`, `beta`, `light`, `standard`, `partner`, `enterprise`. Gates features and quotas. A new organization starts on `none`; the billed unit is the production [application](/en/concepts/applications). See [Organizations → Plans](/en/concepts/organizations#plans).
 
-**Site**: One domain under an application, with its own dashboard and traffic. The hashes and collection settings live on the application; a site carries only per-domain overrides. See [Sites](/en/concepts/sites).
+**Site**: One domain under an application, with its own dashboard and traffic. Every setting lives on the application, so a domain that needs other values gets its own application. See [Sites](/en/concepts/sites).
 
 **Visitor**: A distinct visitor, counted along an identity axis: `stitch` (edge-derived, present in every mode, the default) or `session` (consent-gated). Anonymous by construction. See [Visitors and sessions](/en/concepts/sessions).
 

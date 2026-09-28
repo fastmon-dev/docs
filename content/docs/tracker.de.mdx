@@ -80,13 +80,13 @@ Entscheidet, *wann* die Session-ID geschrieben wird, und ist nur relevant, wenn 
 
 ### `store_stitch` [#store-stitch]
 
-Behält das am Edge abgeleitete `stitch`-Signal auf der gespeicherten Zeile. `stitch` ist ein `HMAC-SHA256` aus IP, User-Agent und dem Collector-Hash der Application, am Edge berechnet unter einem Salt, das alle 24 Stunden rotiert und den Edge-Speicher nie verlässt. Es liefert dir Unique-Visitor-Counts und besucherbezogene Metriken (Bounce Rate, Seiten pro Besuch, Verweildauer), ohne dass etwas auf dem Gerät liegt. Aus erzwingt der Collector `stitch` beim Insert leer, sodass die Zeile gar keinen Besucher-Identifier trägt. Per-Domain-Default: Eine Site erbt den Wert der Application, solange sie keinen eigenen setzt. An per Default: das Standard-Preset, mit dem neue Applications starten, speichert es. Die vollständige Konstruktion (Forward Secrecy, ≤24 h Verknüpfbarkeit, Scope pro Application) steht unter [Privacy → der am Edge abgeleitete `stitch`](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+Behält das am Edge abgeleitete `stitch`-Signal auf der gespeicherten Zeile. `stitch` ist ein `HMAC-SHA256` aus IP, User-Agent und dem Collector-Hash der Application, am Edge berechnet unter einem Salt, das alle 24 Stunden rotiert und den Edge-Speicher nie verlässt. Es liefert dir Unique-Visitor-Counts und besucherbezogene Metriken (Bounce Rate, Seiten pro Besuch, Verweildauer), ohne dass etwas auf dem Gerät liegt. Aus erzwingt der Collector `stitch` beim Insert leer, sodass die Zeile gar keinen Besucher-Identifier trägt. Gilt für alle Sites der Application. An per Default: das Standard-Preset, mit dem neue Applications starten, speichert es. Die vollständige Konstruktion (Forward Secrecy, ≤24 h Verknüpfbarkeit, Scope pro Application) steht unter [Privacy → der am Edge abgeleitete `stitch`](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
 
 **PII:** `stitch` ist ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung; die Verknüpfbarkeit ist auf rund 24 Stunden begrenzt und nach Salt-Rotation forward-secret. Ihn in deiner Datenschutzerklärung zu benennen, ist Sache des Betreibers.
 
 ### `count_visitors_by` [#count-visitors-by]
 
-Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitch` oder `session`. Reine Reporting-Vorgabe, getrennt von den Erhebungsschaltern, und der Query-Resolver klemmt sie auf das, was die Site tatsächlich speichert (ein Override pro Query ist immer möglich). Default `stitch`. Per-Domain-Default; eine Site kann ihn überschreiben.
+Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitch` oder `session`. Reine Reporting-Vorgabe, getrennt von den Erhebungsschaltern, und der Query-Resolver klemmt sie auf das, was die Site tatsächlich speichert (ein Override pro Query ist immer möglich). Default `stitch`. Gilt für alle Sites der Application.
 
 **PII:** keine eigene. Sie wählt zwischen bereits über [`store_stitch`](#store-stitch) und [`collect_sessions`](#collect-sessions) erhobenen Identifiern; sie erhebt und speichert nichts Neues.
 
@@ -273,7 +273,7 @@ Pinnt die Beacon-Template-Version, die die Application ausliefert (`v1` ist aktu
 
 Diese Einstellungen liegen an der **Application**, also am Tracking-Embed selbst, nicht an einer einzelnen Domain. Eine Application besitzt das ausgelieferte Bundle, die zwei Hashes und jeden Schalter auf dieser Seite, und sie bedient eine Domain oder zwanzig: Jede Domain ist eine [Site](/de/concepts/sites) mit eigenem Dashboard und eigenem Traffic. Einen separaten „org-weiten Tracker" gibt es nicht mehr; eine Application mit mehreren Sites *ist* genau das. Siehe [Applications](/de/concepts/applications).
 
-Drei Einstellungen sind Per-Domain-**Defaults** statt fester Application-Werte: [`data_retention_days`](#data-retention-days), [`store_stitch`](#store-stitch) und [`count_visitors_by`](#count-visitors-by). Eine Site erbt den Wert der Application, solange sie keinen eigenen setzt.
+Eine Site überschreibt keine davon. Braucht eine Domain ein anderes [`data_retention_days`](#data-retention-days), [`store_stitch`](#store-stitch) oder [`count_visitors_by`](#count-visitors-by), gehört sie in eine eigene Application.
 
 ## Einstellungen ändern
 
@@ -284,4 +284,4 @@ Site in fastmon öffnen, auf **Einstellungen**, ändern, was du brauchst, und sp
 - [Applications](/de/concepts/applications): der Embed, an dem diese Einstellungen liegen, und wie er zu Sites steht.
 - [Privacy: Was wir nicht sammeln](/de/privacy): die Datenschutz-Untergrenze, die unter jeder Einstellung gilt.
 - [Der RUM-Beacon](/de/concepts/beacon): was das Beacon genau schickt.
-- [Sites](/de/concepts/sites): die Domains unter einer Application und ihre Per-Domain-Overrides.
+- [Sites](/de/concepts/sites): die Domains unter einer Application und typische Setups.

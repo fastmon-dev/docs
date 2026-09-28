@@ -75,6 +75,8 @@ Recognized names fold into **eight phases**, shown as p50 / p75 / p95 over the t
 
 Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat. Read them next to their count: a p75 over 12 pageviews says less than one over 50,000.
 
+**On a CDN hit the origin phases are not stored.** A CDN replays the origin's header from the request that filled the cache. On a pageview whose CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`, fastmon drops the origin, backend, db, http, render, search, and kv durations and the custom timed keys. `edge_dur`, the cache statuses, ages, TTLs, and label keys stay.
+
 **What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top, because a document store is the primary store wherever it appears (Tideways reports `rdbms` and `mongodb` as separate layers of one request). Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well: synchronous broker time in a request is almost always a cheap publish.
 
 All eight phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the KV phase is labeled "KV / Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Search, KV / Cache, HTTP, and Render under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
@@ -113,27 +115,38 @@ Both layers use the same vocabulary. A pageview that reports no cache status is 
 
 ## Cache age [#cache-age]
 
-The status says whether the visitor got a cached object; the age says how old it was. That is the other half of the question: a shop with a 95 % hit rate whose objects average four hours old is serving fast and stale.
+The age says how old the delivered object was, in seconds. A shop with a 95 % hit rate and objects four hours old serves fast and stale.
 
 ```http
 Server-Timing: fm-cdn-cache;desc="HIT", fm-cdn-age;desc=42, fm-origin-age;desc=312
 ```
 
-| Key             | Column       | Meaning                                     |
-| --------------- | ------------ | ------------------------------------------- |
-| `fm-cdn-age`    | `cdn_age`    | Age of the delivered CDN object, in seconds |
-| `fm-origin-age` | `origin_age` | Age of the delivered origin object, in seconds |
+| Keys (precedence order)             | Column       | Meaning                                        |
+| ----------------------------------- | ------------ | ---------------------------------------------- |
+| `fm-cdn-age`, `cdn-cache-age`       | `cdn_age`    | Age of the delivered CDN object, in seconds    |
+| `fm-origin-age`, `origin-cache-age` | `origin_age` | Age of the delivered origin object, in seconds |
 
 Rules for the value:
 
-- **First-party keys only, no vendor aliases.** A bare `age` says nothing about which tier it measured, and without the prefix we would not own the unit: a framework emitting `cache-age;dur=500` means milliseconds and the value would be stored as 500 seconds.
-- **Seconds, in `desc`, not `dur`.** `dur` is specified as a duration in milliseconds and DevTools draws it as a bar in the document request's timing view, so an age there would render as a backend phase that never happened. A `dur` spelling is still accepted, since it is what a site tries first. Send the bare number: `fm-origin-age;desc=312` is read, `desc=312s` is discarded.
+- **Seconds, in `desc`.** `fm-origin-age;desc=312` is read, `desc=312s` is discarded. The `fm-*` keys also accept `dur`, the vendor keys drop it.
+- **`fm-*` wins** when a site sends it next to the vendor key. A CDN that emits `cdn-cache-age` fills the age without any change on your site.
 - **Emit it on a cache hit only.** On a miss the age is 0 and drags every percentile down.
-- Values above a year are dropped rather than clamped, because a number that large is a timestamp or a millisecond value sent as seconds, not an age. `desc=0` is a valid value: an object stored a moment ago.
+- **Values above a year are dropped.** `desc=0` is valid: an object stored a moment ago.
 
-**Two columns, not one.** A shop behind a CDN has both ages in the same pageview and they do not mean the same thing. The origin's header freezes inside the CDN object, so under a CDN hit the origin value is the age at the moment the CDN fetched, and only the sum is the age the visitor saw. The Server-Timing panel therefore reports three rows, `cdn`, `origin`, and `content` (the sum under a CDN hit), all in seconds and computed server-side, because the p75 of a sum is not the sum of the p75s.
+**Under a CDN hit only the sum is the age the visitor saw.** The origin's header freezes inside the CDN object. The Server-Timing panel reports `cdn`, `origin`, and `content` (the sum under a CDN hit), all in seconds.
 
-Both ages are available as metrics (`cdn_age`, `origin_age`, with the usual avg and p50 to p99), as fields on the beacon rows and in the pageview detail next to the cache status they qualify, and through the MCP server's `get_server_timing`.
+## Cache TTL [#cache-ttl]
+
+The TTL is the freshness the object had left when it was delivered, in seconds. Age plus TTL is the configured lifetime.
+
+| Keys (precedence order)             | Column       |
+| ----------------------------------- | ------------ |
+| `fm-cdn-ttl`, `cdn-cache-ttl`       | `cdn_ttl`    |
+| `fm-origin-ttl`, `origin-cache-ttl` | `origin_ttl` |
+
+The value rules are those of the age. The panel shows p50, p75, and p95 per tier, without a `content` row. The Cache page draws age and TTL as one bar per tier and per page type, and over time, where a purge shows as the age dropping to zero.
+
+All four are metrics with the usual avg and p50 to p99, and [metric range filters](/en/analytics#filtering) in seconds. A pageview without the key never matches such a filter. They also appear on beacon rows, in the pageview detail, in notification rules, on the visitor journey, and in the MCP server's `get_server_timing`.
 
 ## Page type
 

@@ -17,6 +17,173 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Eine Seite für Network Errors aus den Reports der Browser">
+
+Unter Errors → Network errors siehst du die fehlgeschlagenen Requests, die Chromium-Browser für deine Seite melden. Dazu gehören auch Seiten, die nie geladen haben und den Tracker deshalb nie ausgeführt haben. Voraussetzung sind die `NEL`-Header auf deiner Seite.
+
+- **Drei Tabs: Overview, Paths und Reports.** Der Tab steht in der Adresse, ein Link öffnet also dieselbe Ansicht.
+- **HTTP-Fehler stehen oben**, Serverfehler vor Clientfehlern. Jede Zahl nennt zuerst die betroffenen Besucher, danach die Reports.
+- **"Where they fail" zeigt jede Dimension als Karte**: Statuscodes, Seiten, Länder, Sites und Hosts, Serveradressen, Geräte, Browser, OS und Traffic. Eine geöffnete Karte nimmt die ganze Zeile ein.
+- **Sites und Hosts ist gleichzeitig der Setup-Check.** Jede Site zeigt ihren letzten Report, eine Site ohne Report sagt das. Zeigen die meisten Reports ohne Details auf eine Serveradresse, nennt die Karte sie als wahrscheinlich ausgefallen.
+- **Verbindungsfehler haben einen eigenen Abschnitt**, standardmäßig zugeklappt. Er vergleicht sie mit ihrem üblichen Niveau und meldet ein kaputtes Zertifikat sowie einen Anstieg bei abgelehnten oder abgelaufenen Verbindungen, unbekannten Hosts oder Reports ohne Details.
+- **Reports listet jeden Report mit seiner Klasse.** Mehrere Reports eines Besuchers auf einer Seite hintereinander fasst die Liste zu einer Zeile mit Anzahl zusammen. Jeder Report öffnet alle gespeicherten Felder und verlinkt auf die Journey des Besuchers.
+- **Die Journey eines Besuchers zeigt seine fehlgeschlagenen Requests** zwischen den Pageviews, in zeitlicher Reihenfolge und mit dem Fehlertyp in Klartext.
+- **Abgebrochene Ladevorgänge bleiben ausgeblendet**, auf der Seite und in der Journey. Ein Schalter blendet sie ein.
+- **Das + neben einem Wert filtert darauf, das - schließt ihn aus.** Die Filter bleiben in der Adresse und stehen im Filter-Panel unter "Only on this page". Ein Seiten-Icon am Filter-Button zeigt das an.
+
+Doku: [Network Errors → Die Seite im Dashboard](/de/network-errors#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Errors ist eine Gruppe in der Sidebar">
+
+JavaScript errors, Failed resources und Network errors sind jetzt drei Seiten unter Errors, jede mit eigener Adresse, Breadcrumb und Eintrag in der Command Palette. Alte Links auf einen Tab öffnen die neue Seite mit ihrem Zeitraum und ihren Filtern. Doku: [Analytics → Error Analytics](/de/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="api" title="Network-Error-Reports tragen eine Klasse und die Serveradresse">
+
+Zwei neue Felder an jedem Report zeigen dir, was fehlgeschlagen ist und wo.
+
+- **`network_error_class`** sagt, was ein Report bedeutet: `http_error`, `connection`, `abandoned`, `downgraded` oder `other`. Die Klasse wird beim Lesen abgeleitet, ältere Reports haben sie also auch.
+- **`server_ip`** ist die Adresse deines Servers, an die der fehlgeschlagene Request ging. Gespeichert wird nur eine öffentliche Adresse, Reports von vor dem 28.09.2026 haben keine.
+- **Beide sind Filter mit `exclude`** und Breakdown-Dimensionen auf `POST /analytics/network-errors`.
+- **Steigt `downgraded` auf einer Site mit zwei Adressen, fällt eine davon aus**, und `server_ip` nennt sie.
+- **Zwei lange Chromium-Fehlertypen gehen nicht mehr verloren.** Ein Fehlertyp darf jetzt bis zu 64 Zeichen lang sein.
+
+Doku: [Network Errors → Mehrere Serveradressen](/de/network-errors#several-addresses).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="platform" title="fastmon sammelt Network-Error-Logging-Reports">
+
+Mit zwei Response-Headern auf deiner Seite melden Chromium-Browser jeden fehlgeschlagenen Request an `https://fastmon.site/c/n/{collector_hash}`. Das umfasst DNS-Fehler, abgelehnte Verbindungen, Timeouts und 5xx-Seiten, die den Tracker nie ausgeführt haben.
+
+- **Nur Chromium.** Safari und Firefox senden keine Reports, jede Zahl ist also eine Untergrenze.
+- **Der Host des Reports muss eine Site der Application sein** oder eine Subdomain davon. Ein Report legt nie eine Site an.
+- **Ein Report speichert** Fehlertyp, Phase, HTTP-Status, Zeit bis zum Fehler, Methode, Protokoll, die gekürzte URL, die Seite, von der er kam, und die Hauptversion des Browsers. Dazu kommen die Besucherkennung unter `store_stitch` und die Edge-Labels, der User-Agent wird verworfen.
+- **Cloudflares eigene NEL-Einstellung ersetzt deine Header**, und Shopify-Storefronts können sie nicht setzen.
+
+Doku: [Network Errors → Einrichten](/de/network-errors#setup) und [Datenschutz → Network-Error-Reports](/de/privacy#network-error-reports).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="api" title="Network-Error-Reports über die API lesen">
+
+Drei Routen unter `/organizations/{org_id}/analytics/network-errors` lesen die Reports. Sie nehmen den Site-Scope sowie die Besucher- und Edge-Label-Filter der anderen Analytics-Routen.
+
+- **`POST …/network-errors`** liefert die gewichtete Anzahl, die Zeitreihe, die Zahlen pro Fehlertyp und Statuscode und die am stärksten betroffenen Paare aus Host und Pfad. `affected_visitors` zählt eindeutige Besucher, wo die Site `stitch` speichert, und `elapsed_by_error_type` gibt p50, p75 und p95 der Zeit bis zum Fehler.
+- **`POST …/network-errors/breakdown`** gruppiert die Reports nach einer `dimension`, etwa `page_url`, `host`, `browser_version` oder `site_id`. Eine `site_id`-Zeile trägt mit `last_seen_at` ihren letzten Report.
+- **`POST …/network-errors/reports`** listet einzelne Reports, neueste zuerst, geblättert per `cursor`. `visitor_id` verlinkt einen Report auf die Journey des Besuchers.
+- **Eigene Filter**: `error_type`, `status_code_range`, `host`, `path` und `page_url`, alle außer dem Bereich auch als `exclude`. Jede andere Analytics-Route beantwortet sie mit 422.
+- **Ohne `error_type`-Filter zählt auch `abandoned`.** Schließ es aus, um Besucher auszublenden, die gegangen sind, während noch etwas lud.
+- **Besucherdetail und Checkout-Journeys liefern `network_errors`** neben `pages` und `events`, bis zu den letzten 100 pro Besucher.
+
+Doku: [Network Errors → API](/de/network-errors#api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="tracker" title="Der Tracker sendet den HTTP-Status der Seite">
+
+Der Beacon enthält jetzt den HTTP-Status des Dokuments als `rs`, gelesen aus `responseStatus` des Navigation-Eintrags. So erkennst du einen Pageview einer Fehlerseite, die trotzdem den Tracker lädt.
+
+- **Unbekannt ist `0`, nie `200`.** Firefox, Safari und Soft Navigations melden keinen Status, und ein Wert außerhalb von 100 bis 599 wird als `0` gespeichert.
+- **`status_code` steht in jeder Zeile** von `POST /analytics/beacons`, und `metric_ranges` nimmt ihn an: `{"metric": "status_code", "gte": 400}` listet Fehlerseiten. MCP und Ask kennen denselben Filter.
+- **Der Explorer zeigt den Status** als Spalte unter "Network & context", und `HTTP status >= 400` in der Filterleiste listet Fehlerseiten.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="removed" area="api" title="Sites überschreiben die Datenschutz-Einstellungen ihrer Application nicht mehr">
+
+`store_stitch`, `count_visitors_by` und `data_retention_days` gibt es an Sites nicht mehr, weder in der API noch in den Site-Einstellungen. Eine Site übernimmt den Wert ihrer Application, und schickt ein Request die Keys noch mit, werden sie ignoriert. Eine Domain, die andere Werte braucht, gehört in eine eigene Application. Docs: [Applications → Datenschutz-Einstellungen für alle Sites](/de/concepts/applications#site-defaults).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="new" area="dashboard" title="Der Shopfloor: dein Shop live von oben">
+
+Analytics → Shopfloor zeichnet deinen Shop als Zonen nach Seitentyp. Jeder aktuelle Besucher steht als Punkt auf der Seite, die er gerade ansieht.
+
+- **Besucher bewegen sich, wenn die Daten es tun.** Ein neuer Besucher kommt über seine Traffic-Quelle herein, ein Klick führt quer über die Fläche, und ein Kauf läuft zum Ausgang, auf Wunsch mit Kassenklingeln.
+- **Das Zeitfenster ist 5, 15, 30 oder 60 Minuten.** Die Hauptzahl, die Bestellungen und die Zahlen jeder Zone folgen ihm.
+- **Besucher, Bestellungen und Conversion Rate von heute** zählen ab deiner eigenen Mitternacht, jeweils neben demselben Wochentag der Vorwoche. Eine Zeitleiste darunter zeigt Besucher pro Stunde und eine Prognose für den Tag.
+- **Ein Klick auf eine Zone führt hinein**, mit ihren Seitentypen und ihren Top-10-URLs, die sich jeweils im Explorer öffnen.
+- **Gemacht für einen Monitor an der Wand.** `?window=60&sound=1&kiosk=1` öffnet ihn fertig eingestellt, auf dem Handy steht die Fläche hochkant.
+- **Er braucht `store_stitch`**, und eine Site ohne sagt das. Bots folgen dem Traffic-Scope, der Filter bietet Land, Gerät, Seitentyp und Traffic.
+- **Die API dahinter** sind `POST /analytics/live`, `POST /analytics/live-summary` mit optionaler `timezone` und `GET /platforms/{platform}/page-types`. Letztere sortiert die Seitentypen einer Plattform in Gruppen, die für jede Plattform gleich sind.
+
+Doku: [Analytics → Shopfloor](/de/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="new" area="platform" title="Cache-TTL neben dem Cache-Alter">
+
+fastmon erfasst jetzt pro Stufe, wie viel Frische eine gecachte Seite noch hatte, als `cdn_ttl` und `origin_ttl` in Sekunden. Alter plus TTL ergibt die konfigurierte Lebensdauer.
+
+- **CDN-eigene Keys funktionieren ohne Änderung an deiner Seite**: `cdn-cache-age`, `cdn-cache-ttl`, `origin-cache-age` und `origin-cache-ttl`, jeweils mit den Sekunden in `desc`. Sie erscheinen nicht mehr als Serverphase, und die `fm-*`-Keys gewinnen, wenn beide gesendet werden.
+- **Die Cache-Seite zeigt die Frische pro Stufe** als Balken aus Alter und verbleibender TTL, mit p50, p75 und p95, auch pro Seitentyp. Ein Chart mit Median von Alter und TTL über die Zeit zeigt einen Purge als Alter, das auf null fällt.
+- **Der Explorer bietet CDN age, CDN TTL, origin age und origin TTL** als Metriken, Spalten und Filter. `POST /analytics/server-timing` liefert einen `cache_ttl`-Block, und Benachrichtigungsregeln, MCP und Ask kennen beide TTLs.
+
+Doku: [Server-Timing → Cache-TTL](/de/guides/server-timing#cache-ttl).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="Cache- und Server-Timing-Seite lesen sich klarer">
+
+Mehrere Änderungen machen beide Seiten leichter zu lesen und zu filtern.
+
+- **Die Spalten für Alter und TTL sind Mediane** und passen damit zur Karte zur Cache-Frische.
+- **Karte und Tabelle zum Cache-Status filtern beim Hover**, Plus behält einen Status, Minus schließt ihn aus. Die Tabelle teilt auf Wunsch nach Seitentyp auf.
+- **Eine geöffnete Zeile in der Phasentabelle von Server-Timing zeigt jede Phase über die Zeit**, eingeschränkt auf diese Zeile.
+- **Die Karte der Origin-Hosts zeigt den Traffic-Anteil jedes Hosts** im Vergleich zu einer gleichmäßigen Verteilung.
+- **Die Legende des Trends zeigt Durchschnitt, Maximum und letzten Wert** pro Linie, ein Klick blendet eine Linie aus oder ein.
+- **Behoben**: Der Trend nach Host oder Login läuft auf kurzen Zeiträumen wieder bis zum Ende, und Hit-Raten im Explorer zeigen bei gewähltem Perzentil nicht mehr 0 %.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="Der Traffic-Chart stapelt Menschen, wahrscheinliche Bots und Bots">
+
+Der Traffic-Chart stapelt die Pageviews in die drei Traffic-Klassen. Jeder Pageview zählt so einmal, und die Bänder ergeben zusammen die Gesamtzahl. Vorher waren Bots und Rechenzentrums-Traffic zwei überlappende Reihen, und ein Googlebot-Pageview wurde doppelt gezeichnet. Die Besucherlinie zählt immer echte Besucher, und der Chart hat einen Share-Link auf `?panel=traffic`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="Prod-Applications stehen vor dev">
+
+Gibt es eine Application unter einem Namen als prod und als dev, steht prod jetzt zuerst: auf der Seite der Applications, im Site-Switcher und in der Command Palette. Ansonsten liefern die Listen der Applications und Sites den neuesten Eintrag zuerst, und beim Blättern durch die Site-Liste wiederholt oder überspringt sich keine Site mehr.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="removed" area="api" title="`POST /organizations/{org_id}/sites` gibt es nicht mehr">
+
+Die Route verlangte eine `application_id`, die kein Client mitschickte, sie hatte also keinen funktionierenden Aufrufer. Leg eine Domain stattdessen mit `POST /applications/{app_id}/sites` an. `GET` auf dem Pfad der Organization bleibt unverändert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="changed" area="platform" title="Ein CDN-Cache-Hit zählt keine wiedergegebenen Origin-Zeiten mehr">
+
+Ein CDN liefert den `Server-Timing`-Header des Origins bei jedem Hit erneut aus. Eine Seite aus der Edge zeigte dadurch die Backend-Zeit des Requests, der den Cache einmal gefüllt hat. Bei einem Pageview mit CDN-Status `HIT`, `STALE`, `UPDATING` oder `REVALIDATED` werden die Origin-Phasen und eigenen Zeit-Keys jetzt weder gespeichert noch gezählt.
+
+`edge_dur`, die Cache-Status, Alter und TTLs zählen weiter. Origin-Perzentile können sich deshalb verschieben, und auf gut gecachten Sites sinken die Zahlen. Docs: [Server-Timing → Backend-Phasen](/de/guides/server-timing#backend-phasen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="Eine empfohlene Sampling-Rate">
+
+`GET /applications/{app_id}/sampling-recommendation` sagt, welche Rate der Traffic der letzten sieben Tage zulässt: `0.1`, `0.25`, `0.5` oder `1.0`. Sie nennt die entscheidende Regel und die Pageviews dahinter und ändert die konfigurierte Rate nie. `inputs.checkout.status` sagt, ob der Checkout entschieden hat, und ein dünner Checkout erzwingt nicht mehr `1.0`. Doku: [Applications → Sampling-Empfehlung](/de/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="dashboard" title="Den Anteil gespeicherter Besucher im Dashboard einstellen">
+
+"Share of visitors kept" unter Data & privacy setzt die Sampling-Rate der Application. Seiten mit hochgerechneten Zahlen zeigen neben dem Titel ein Sampling-Badge, das erklärt, welche Zahlen hochgerechnet sind. Doku: [Applications → Traffic-Sampling](/de/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="Minuten-Buckets auf den Zeitreihen-Endpoints">
+
+`granularity=minute` funktioniert auf den Zeitreihen für Checkout-Stufen, Checkout-Funnel, Fehler- und Failed-Resource-Detail und den Stitch-Vergleich, für Zeiträume bis 6 Stunden. Ein längerer Zeitraum antwortet mit 422, und `auto` liefert bis 48 Stunden weiter stündlich. Der Checkout-Chart nutzt das auf den Zeiträumen von 15 min bis 6 h und zeigt eine Kurve statt Spitzen zur vollen Stunde.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-24" type="new" area="api" title="Eine Application kann nur einen Teil ihrer Besucher speichern">
 
 `collection.sampling_rate` an der Application legt fest, von welchem Anteil der Besucher die Beacons gespeichert werden, standardmäßig `1.0`.

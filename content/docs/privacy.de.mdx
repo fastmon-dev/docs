@@ -85,6 +85,15 @@ Zwei Schalter pro Site entscheiden, ob überhaupt ein Besucher-Identifier in die
 
 Die beiden sind unabhängig: schalte einen an, beide oder keinen.
 
+### Network-Error-Reports [#network-error-reports]
+
+Schickt eine Site die [NEL-Header](/de/network-errors#headers), entsteht für jeden fehlgeschlagenen Request, den ein Chromium-Browser meldet, eine Zeile. Die Header setzt du, und die Policy bleibt `max_age` Sekunden im Browser des Besuchers.
+
+- **Gespeichert**: Fehlertyp, Phase, HTTP-Status, Dauer, Methode, Protokoll, die fehlgeschlagene URL, gekürzt wie eine Seiten-URL, und der Referrer nur, wenn er auf demselben Host liegt.
+- **Serveradresse**: `server_ip` ist die Adresse deines Servers, nicht die des Besuchers. Gespeichert wird nur eine öffentliche, eine private, Loopback- oder Link-Local-Adresse bleibt leer.
+- **Besucher**: der Edge-[`stitch`](#der-am-edge-abgeleitete-stitch-identifier) unter [`store_stitch`](/de/tracker#store-stitch) und dieselben Labels für Land, Gerät, Browser, OS und Bots wie bei einem Seitenaufruf.
+- **Verworfen**: der User-Agent aus dem Report und jeder Referrer von einem anderen Host.
+
 ### Site-Metadaten vs. Besucherdaten
 
 Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch. Sie sagen dir, welches deiner CDNs langsam ist; sie identifizieren niemanden.
@@ -108,7 +117,7 @@ Ob das Einbinden von fastmon eine Einwilligung erfordert, wer verantwortlich ist
 
 - **Nur EU, keine US-Jurisdiktion.** Alle Daten werden ausschließlich in der EU verarbeitet und gespeichert, auf in Deutschland betriebener Infrastruktur. Jeder Anbieter im Datenpfad ist ein deutsches oder EU-Unternehmen: kein Cloudflare, kein AWS, kein GCP, kein Vercel, kein US-eigener Subprozessor.
 - **Verantwortlich.** Verarbeitet wird von fastmon, der Firma hinter dem Produkt. Im AVV stehen alle Sub-Auftragsverarbeiter, den schicken wir auf Anfrage.
-- **Retention.** Per Default 90 Tage. Pro Site einstellbar ([`data_retention_days`](/de/tracker#data-retention-days)). Was abläuft, wird weggeworfen, nicht archiviert.
+- **Retention.** Per Default 90 Tage. Einstellbar an der Application, für alle ihre Sites ([`data_retention_days`](/de/tracker#data-retention-days)). Was abläuft, wird weggeworfen, nicht archiviert.
 
 <Callout type="info" title="Kein US-CLOUD-Act-Zugriff">
 Weil weder fastmon noch ein Subprozessor unter US-Recht fällt, hat der US CLOUD Act keinen Zugriff auf deine RUM-Daten.

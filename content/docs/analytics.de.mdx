@@ -16,11 +16,25 @@ Die Analytics-Hauptansicht einer Site zeigt:
 - **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Der Globus öffnet dort, wo dein Traffic ist, Ziehen dreht ihn und das Mausrad zoomt. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
 - **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
 - **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
-- **Traffic-Qualität**: die Aufteilung aus der Bot-Klassifizierung, zuerst als eine Leiste, dann als klickbare Zeilen.
+- **Traffic-Qualität**: Pageviews gestapelt nach Menschen, Wahrscheinlich Bots und Bots, die Besucher als Linie darüber. Darunter die Bot-Klassifizierung als eine Leiste, dann als klickbare Zeilen.
 - **Aktive Stunden**: Stunde des Tages nach Wochentag, damit sichtbar wird, wann auf der Seite wirklich etwas passiert. Das Raster zeigt nur die Wochentage, die der gewählte Zeitraum erreicht hat.
 - **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
 
 Besucherzahlen sind anonym per Konstruktion; was ein „Besucher" hier bedeuten kann und was nicht, steht unter [Privacy](/de/privacy).
+
+## Shopfloor [#shopfloor]
+
+Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
+
+- **Die Zonen** sind die Seitentyp-Gruppen deiner Plattform: Home, Kategorie (PLP), Suche, Produkt (PDP), Checkout, Konto, Content und Sonstiges. Ihre Färbung zeigt, wie schnell ihre Seiten sind.
+- **Jeder Besucher ist ein Punkt** in der Zone der Seite, auf der er gerade ist. Ein Tab im Hintergrund wird blass gezeichnet. Ein Käufer läuft zum Ausgang, und dort zählt die Bestellung sofort.
+- **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche.
+- **Ein Klick auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
+- **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus.
+- **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
+- **Er braucht [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zeigt niemanden und sagt das auch.
+
+Die API dazu: [`POST /analytics/live`](/de/api/analytics/queryAnalyticsLive) und [`POST /analytics/live-summary`](/de/api/analytics/queryAnalyticsLiveSummary).
 
 ## Filtern
 
@@ -35,6 +49,8 @@ Jeder Chip hat außerdem einen Ein/Aus-Schalter. Ausgeschaltet behält der Chip 
 ## Der Explorer [#explorer]
 
 Der Explorer gruppiert Pageviews nach jeder Dimension und chartet die Metriken, oder zeigt die Rohzeilen. Maximieren gibt ihm das ganze Fenster samt Sidebar, solange du auf der Seite bist. „Alle anzeigen" und die Zeilen-Links aus den Dashboard-Panels tragen die Filter der Seite mit hinein, samt Ausschlüssen, Metrik-Bereichen und Bot-Schaltern, und er öffnet mit den Zahlen, um die es auf der Seite geht (Pageviews und Besucher, bei Seiten zusätzlich LCP p75). Ein Klick auf eine Zeile ergänzt ihren Wert in den Filtern statt die anderen zu verwerfen.
+
+Die Beacon-Zeilen zeigen den **HTTP-Status** der Seite, und `HTTP-Status >= 400` im Filter listet die Pageviews von Fehlerseiten. Firefox, Safari und Soft Navigations melden keinen Status, ihre Zeilen zeigen deshalb einen Strich und treffen keinen Filter.
 
 Neben der Tabelle sitzt eine **Events**-Seite, eine Zeile pro Event, das der Tracker gemeldet hat, filterbar nach Typ und mit einem Sprung zum Besucher der Zeile. Sie erscheint für Organisationen, deren Applications Events erzeugen können, heute also für einen Shopify-Shop mit seinen [Checkout-Events](/de/checkout-funnel#shopify).
 
@@ -52,7 +68,7 @@ Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
 
 ## Fehler-Analytics [#error-analytics]
 
-Die Fehleransicht hat zwei Tabs, JavaScript-Fehler und [fehlgeschlagene Ressourcen](#failed-resources), jeder mit eigener Überschrift, eigenem Chart und eigener Liste. Im Fehler-Tab:
+Fehler ist eine Gruppe in der Sidebar mit drei Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources) und [Netzwerkfehler](/de/network-errors). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
 
 - **Fehlerrate über Zeit**: der Anteil der Pageviews mit mindestens einem JavaScript-Fehler. Ein fehlgeschlagenes Bild, Skript oder Stylesheet läuft als eigene Kurve im selben Chart.
 - **Welche Fehler, über Zeit**: die fünf größten Signaturen je Zeitbucket als gestapeltes Chart, benannt nach dem, was kaputt ist, statt nach ihrem Hash. Ein Klick auf einen Namen in der Legende öffnet diese Signatur in der Liste darunter.
@@ -67,7 +83,7 @@ Die Fehleransicht hat zwei Tabs, JavaScript-Fehler und [fehlgeschlagene Ressourc
 
 **Ein Fehler sagt in einem Satz, was kaputt ist**, auch wo die Site keine Fehlermeldungen behält. Der Tracker erkennt die Formulierung des Browsers und sendet ihre [Form](/de/tracker#message-shape) statt des Texts. Eine Zeile liest sich also als „`uc.setServiceAlias` wurde aufgerufen, aber `uc` existiert an dieser Stelle nicht", statt nur einen Stack zu zeigen.
 
-**„Stack auflösen" liest die minifizierte Datei, die deine Besucher tatsächlich ausgeführt haben.** Jeder Frame kommt mit der Methode zurück, in der er steht, dem umgebenden Modul und dem Code an dieser Spalte, syntaxgefärbt und zum fehlerhaften Aufruf gescrollt. Ohne Source-Map und ohne Setup auf deiner Seite: Ein Minifier behält Klassen- und Methodennamen. Es ist ein Button und nichts, was eine Zeile von selbst tut, denn dabei wird dein Bundle abgerufen. Das Snippet ist in Zeilen umbrochen und die werfende Zeile markiert, eingefügt wird nur Whitespace, die gemeldete Spalte zeigt also weiter auf ihren Code.
+**„Stack auflösen" liest die minifizierte Datei, die deine Besucher tatsächlich ausgeführt haben.** Jeder Frame kommt mit der Methode zurück, in der er steht, dem umgebenden Modul und dem Code an dieser Spalte, syntaxgefärbt und zum fehlerhaften Aufruf gescrollt. Ohne Source-Map und ohne Setup auf deiner Seite. Das Snippet ist in Zeilen umbrochen und die werfende Zeile markiert, eingefügt wird nur Whitespace, die gemeldete Spalte zeigt also weiter auf ihren Code.
 
 - Mehrere aufeinanderfolgende Frames aus demselben Vendor-Bundle klappen zu einer Zeile zusammen, die die Library nennt. Sind alle Frames Library, sagt das Panel das: Der Aufruf, der den Fehler gemacht hat, wurde bei fünf Frames abgeschnitten.
 - Ein Frame, der den Fehler nur weiterreicht, ist als Rethrow markiert, die Ursache sitzt dann weiter unten. Der oberste Frame eines minifizierten Stacks ist regelmäßig ein Rethrow in einem Promise-Polyfill.
@@ -80,7 +96,7 @@ Die Fehleransicht hat zwei Tabs, JavaScript-Fehler und [fehlgeschlagene Ressourc
 
 **„AI-Prompt" übergibt den ganzen Fall an einen Assistenten**: was kaputt ist, die Zahlen, der aufgelöste Stack mit dem Code an der Wurfstelle, wo es auftritt, und Beispiel-Vorkommen. Er schreibt dazu, was deine Site nicht erfasst, damit nichts als Null gelesen wird, was in Wahrheit eine Einstellung ist.
 
-**Welche API-Calls daneben fehlschlagen.** [`POST /analytics/error-types/correlated-requests`](/de/api/analytics/queryAnalyticsErrorCorrelatedRequests) sortiert die fetch/XHR-Endpunkte, die in denselben Pageviews scheitern, jeweils gegen ihre Fehlerquote in Pageviews ohne diesen Fehler. Gebaut für die Rejection ohne Message und Stack, und die Antwort sagt, dass etwas gemeinsam auftritt, nie dass eines das andere verursacht.
+**Welche API-Calls daneben fehlschlagen.** [`POST /analytics/error-types/correlated-requests`](/de/api/analytics/queryAnalyticsErrorCorrelatedRequests) sortiert die fetch/XHR-Endpunkte, die in denselben Pageviews scheitern, jeweils gegen ihre Fehlerquote in Pageviews ohne diesen Fehler. Die Antwort sagt, dass etwas gemeinsam auftritt, nie dass eines das andere verursacht.
 
 **Eine Fehlersignatur ist ein Filter wie jeder andere.** Jede Fehlerzeile führt in den Explorer, eingegrenzt auf die Pageviews, die sie getragen haben, und „Fehlersignatur" steht in der Filterliste. LCP, Browser, Länder oder der Checkout-Funnel lassen sich also über den Traffic lesen, auf dem eine Sache kaputt ist. `filters.error_fingerprint_kind` sagt, aus welcher Liste der Key stammt (`error` oder `failed_resource`). Eine Query damit liest die Rohzeilen statt eines Rollups und kostet entsprechend.
 
@@ -113,13 +129,13 @@ Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/q
 
 ## Besucher [#visitors]
 
-Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Bei einem Shopify-Shop stehen die Checkout-Events zwischen den Pageviews.
+Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Checkout-Events eines Shopify-Shops und die [Netzwerkfehler](/de/network-errors#dashboard) des Besuchers stehen zwischen den Pageviews. Abgebrochene Ladevorgänge sind ausgeblendet, bis du sie einschaltest.
 
 Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht haben. Sie bleiben auf den Seiten Besucher und Sessions und fallen weg, wenn du woanders hin navigierst.
 
 Ein Besucher lässt sich per `?visitor=` direkt verlinken, der Kopf der Journey sagt dann, wer der Besucher war. In der Liste lässt sich die volle ID per Hover kopieren, und eine Zeilenaktion grenzt die Seite auf diesen Besucher ein.
 
-Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Site legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
+Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Application legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
 ## Fetch/XHR und Server-Timing
 
@@ -133,7 +149,7 @@ Der Beacon liest den Header bei jedem Pageview, und die Dashboards darüber werd
 
 ## Experience Score
 
-Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter. Praktisch, wenn die Gesamtnote gut aussieht, aber Mobile über 3G durchfällt.
+Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Score nach Segment auf (alle Besucher, Desktop, Mobile und langsame Verbindungen), jeweils mit Note, Zahlenwert und den Metriken dahinter.
 
 ## API
 

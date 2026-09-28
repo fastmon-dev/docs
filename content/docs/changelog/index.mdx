@@ -12,6 +12,171 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="A Network errors page from the browser's own reports">
+
+Errors → Network errors shows the failed requests that Chromium browsers report for your site, including pages that never ran the tracker. It needs the `NEL` headers on your site.
+
+- **Three tabs: Overview, Paths and Reports.** The tab is part of the address, so a link opens the same view.
+- **HTTP errors come first**, server errors above client errors. Visitors hit lead every number, and the reports come second.
+- **"Where they fail" shows every dimension as a card**: status codes, pages, countries, sites and hosts, server addresses, devices, browsers, OS and traffic. An opened card takes the whole row.
+- **Sites and hosts is the setup check.** Each site shows its latest report, and a site without one says so. When most reports without details point at one server address, the card names it as likely failing.
+- **Connection failures have their own section**, closed by default. It compares them with their usual level and flags a broken certificate and a rise in refused or timed out connections, unknown hosts or reports without details.
+- **Reports list every report with its class** and fold a burst from one visitor on one page into one line with a count. Each opens to every stored field and links to the visitor's journey.
+- **A visitor's journey shows their failed requests** between the pageviews, in time order, with the error type in plain words.
+- **Abandoned loads stay hidden** on the page and on the journey, each with a switch to show them.
+- **The + next to a value filters to it, the - excludes it.** The filters stay in the address and sit in the Filter panel under "Only on this page", marked by a page icon on the Filter button.
+
+Docs: [Network errors → The dashboard page](/en/network-errors#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Errors is a group in the sidebar">
+
+JavaScript errors, Failed resources and Network errors are three pages under Errors, each with its own address, breadcrumb and entry in the command palette. Old links to a tab open the new page with the time range and filters they carried. Docs: [Analytics → Error Analytics](/en/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="api" title="Network error reports carry a class and the server address">
+
+Two new fields on every report help you read what failed and where.
+
+- **`network_error_class`** says what a report means: `http_error`, `connection`, `abandoned`, `downgraded` or `other`. It is derived when the reports are read, so older reports carry it too.
+- **`server_ip`** is the address of your server that the failed request went to. Only a public address is stored, and reports from before 2026-09-28 have none.
+- **Both are filters with an `exclude`** and breakdown dimensions on `POST /analytics/network-errors`.
+- **A rise of `downgraded` on a site with two addresses points at one failing address**, and `server_ip` names it.
+- **Two long Chromium error types are no longer dropped.** An error type may have up to 64 characters now.
+
+Docs: [Network errors → Several server addresses](/en/network-errors#several-addresses).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="platform" title="fastmon collects Network Error Logging reports">
+
+Two response headers on your site make Chromium browsers report every failed request to `https://fastmon.site/c/n/{collector_hash}`. That covers DNS failures, refused connections, timeouts and 5xx pages that never ran the tracker.
+
+- **Chromium only.** Safari and Firefox send no reports, so every count is a lower bound.
+- **The report's host has to be a site of the application**, or a subdomain of one. A report never creates a site.
+- **A report keeps** the error type, phase, HTTP status, time to failure, method, protocol, the reduced URL, the page it came from and the browser's major version. It also keeps the visitor identifier under `store_stitch` and the edge labels, and drops the User-Agent.
+- **Cloudflare's own NEL setting replaces your headers**, and Shopify storefronts cannot set them.
+
+Docs: [Network errors → Set up](/en/network-errors#setup) and [Privacy → Network error reports](/en/privacy#network-error-reports).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="api" title="Read network error reports through the API">
+
+Three routes under `/organizations/{org_id}/analytics/network-errors` read the reports, with the site scope, visitor and edge label filters of the other analytics routes.
+
+- **`POST …/network-errors`** returns the weighted count, the series, the counts per error type and status code, and the most affected host and path pairs. `affected_visitors` counts distinct visitors where the site stores `stitch`, and `elapsed_by_error_type` gives the p50, p75 and p95 time to failure.
+- **`POST …/network-errors/breakdown`** groups the reports by one `dimension`, such as `page_url`, `host`, `browser_version` or `site_id`. A `site_id` row carries `last_seen_at`, its latest report.
+- **`POST …/network-errors/reports`** lists single reports newest first, paged by `cursor`. `visitor_id` links a report to the visitor's journey.
+- **Filters of their own**: `error_type`, `status_code_range`, `host`, `path` and `page_url`, all but the range with an `exclude`. Every other analytics route answers them with 422.
+- **Without an `error_type` filter, `abandoned` counts too.** Exclude it to hide visitors who left while something loaded.
+- **The visitor detail and the checkout journeys return `network_errors`** beside `pages` and `events`, up to the latest 100 per visitor.
+
+Docs: [Network errors → API](/en/network-errors#api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="new" area="tracker" title="The tracker sends the HTTP status of the page">
+
+The beacon now carries the document's HTTP status as `rs`, read from the navigation entry's `responseStatus`. A pageview of an error page that still loads the tracker can be told apart.
+
+- **Unknown is `0`, never `200`.** Firefox, Safari and soft navigations report no status, and a value outside 100 to 599 is stored as `0`.
+- **`status_code` is on every row** of `POST /analytics/beacons`, and `metric_ranges` takes it: `{"metric": "status_code", "gte": 400}` lists error pages. MCP and Ask accept the same filter.
+- **The Explorer shows the status** as a column under "Network & context", and `HTTP status >= 400` in the filter bar lists error pages.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-27" type="removed" area="api" title="Sites no longer override their application's privacy settings">
+
+Sites no longer carry `store_stitch`, `count_visitors_by` or `data_retention_days`, in the API and on the site settings page. A site takes its application's value, and a request that still sends the keys has them ignored. A domain that needs other values belongs in its own application. Docs: [Applications → Privacy settings for every site](/en/concepts/applications#site-defaults).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="new" area="dashboard" title="The Shopfloor: your shop live, from above">
+
+Analytics → Shopfloor draws your shop as zones by page type, with every recent visitor as a dot on the page they are on.
+
+- **Visitors move as the data does.** A new visitor walks in from their traffic source, a click walks across the floor, and a sale dashes to the exit, with an optional ka-ching.
+- **The window is 5, 15, 30 or 60 minutes.** The headline, the orders and every zone's figures follow it.
+- **Today's visitors, orders and conversion rate** count from your own midnight, each beside the same weekday last week. A timeline under them shows visitors per hour with a forecast for the day.
+- **Click a zone to walk into it**, with its page types and its top 10 URLs, each opening in the Explorer.
+- **Built for a wall screen.** `?window=60&sound=1&kiosk=1` opens it set up, and on a phone the floor turns upright.
+- **It needs `store_stitch`**, and a site without it says so. Bots follow the traffic scope, and the filter offers country, device, page type and traffic.
+- **The API behind it** is `POST /analytics/live`, `POST /analytics/live-summary` with an optional `timezone`, and `GET /platforms/{platform}/page-types`, which sorts a platform's page types into groups shared by every platform.
+
+Docs: [Analytics → Shopfloor](/en/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="new" area="platform" title="Cache TTL beside cache age">
+
+fastmon now collects how much freshness a cached page had left, per tier, as `cdn_ttl` and `origin_ttl` in seconds. Age plus TTL is the configured lifetime.
+
+- **CDN vendor keys work without a change on your site**: `cdn-cache-age`, `cdn-cache-ttl`, `origin-cache-age` and `origin-cache-ttl`, each with the seconds in `desc`. They no longer show as a server phase, and the `fm-*` keys win when both are sent.
+- **The Cache page shows freshness per tier** as a bar of age and TTL left, with p50, p75 and p95, per page type too. A chart of median age and TTL over time shows a purge as the age dropping to zero.
+- **The Explorer offers CDN age, CDN TTL, origin age and origin TTL** as metrics, columns and filters. `POST /analytics/server-timing` returns a `cache_ttl` block, and notification rules, MCP and Ask know both TTLs.
+
+Docs: [Server-Timing → Cache TTL](/en/guides/server-timing#cache-ttl).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="The Cache and Server-Timing pages read more clearly">
+
+Several changes make both pages easier to read and filter.
+
+- **Age and TTL columns are medians**, matching the cache freshness card.
+- **The cache status card and table filter on hover**, plus to keep a status and minus to exclude it. The table splits by page type on request.
+- **An opened row in the Server-Timing phases table shows every phase over time**, scoped to that row.
+- **The origin hosts card shows each host's share** of the traffic against an even split.
+- **The trend legend shows average, max and last value** per line, and a click hides or shows a line.
+- **Fixed**: the trend split by host or login runs to the end of short ranges again, and hit rates in the Explorer no longer read 0% with a percentile selected.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="The traffic chart stacks humans, likely bots and bots">
+
+The traffic chart stacks pageviews into the three traffic classes, so every pageview counts once and the bands add up to the total. Before, bots and datacenter traffic were two overlapping series, and a Googlebot pageview was drawn twice. The visitors line always counts real visitors, and the chart has a share link to `?panel=traffic`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="changed" area="dashboard" title="Prod applications come before dev">
+
+Where an application exists as prod and dev under one name, prod now comes first on the applications page, in the site switcher and in the command palette. Otherwise the application and site lists return the newest entry first, and paging through the site list no longer repeats or skips a site.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-25" type="removed" area="api" title="`POST /organizations/{org_id}/sites` is gone">
+
+The route required an `application_id` that no client sent, so it had no working caller. Add a domain with `POST /applications/{app_id}/sites` instead. `GET` on the organization path is unchanged.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="changed" area="platform" title="A CDN cache hit no longer counts replayed origin timings">
+
+A CDN replays the origin's `Server-Timing` header on every hit, so a page served from the edge showed the backend time of the request that filled the cache. On a pageview with the CDN status `HIT`, `STALE`, `UPDATING` or `REVALIDATED`, the origin phases and custom timed keys are no longer stored or counted. `edge_dur`, the cache statuses, ages and TTLs still count, so origin percentiles can move and counts drop on well cached sites. Docs: [Server-Timing → Backend phases](/en/guides/server-timing#backend-phases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="A recommended sampling rate">
+
+`GET /applications/{app_id}/sampling-recommendation` says which rate the last seven days of traffic allow: `0.1`, `0.25`, `0.5` or `1.0`. It names the rule that decided and the pageviews behind it, and never changes the configured rate. `inputs.checkout.status` says whether the checkout decided, and a thin checkout no longer forces `1.0`. Docs: [Applications → Sampling recommendation](/en/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="dashboard" title="Set the share of visitors kept in the dashboard">
+
+"Share of visitors kept" under Data & privacy sets the application's sampling rate. Pages with estimated counts show a sampling badge beside the title, which says which numbers are scaled up. Docs: [Applications → Traffic sampling](/en/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-24" type="new" area="api" title="Minute buckets on the series endpoints">
+
+`granularity=minute` works on the checkout stages, checkout funnel, error and failed resource detail and stitch comparison series, for windows up to 6 hours. A longer window answers 422, and `auto` still answers hourly up to 48 hours. The checkout chart uses it on the 15 min to 6 h ranges and shows a curve instead of spikes at the full hour.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-24" type="new" area="api" title="An application can store a share of its visitors">
 
 `collection.sampling_rate` on the application sets the share of visitors whose beacons are stored, `1.0` by default.

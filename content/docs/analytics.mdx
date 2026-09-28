@@ -16,11 +16,25 @@ The main Analytics view for a site shows:
 - **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
 - **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
 - **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
-- **Traffic quality**: the split from bot classification, first as one bar, then as clickable rows.
+- **Traffic quality**: pageviews stacked into Humans, Likely bots, and Bots, with visitors as a line. Below it the bot classification as one bar, then as clickable rows.
 - **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
 - **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. Not a bounce rate: whether somebody left afterwards is not in the data.
 
 Visitor counts are anonymous by construction; see [Privacy](/en/privacy) for what a "visitor" can and cannot mean here.
+
+## Shopfloor [#shopfloor]
+
+The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it happens.
+
+- **Zones** are your platform's page type groups: Home, Category (PLP), Search, Product (PDP), Checkout, Account, Content, and Other. Each is tinted by how fast its pages are.
+- **Every visitor is a dot** in the zone of the page they are on. A tab in the background is drawn faint, and a buyer runs to the exit, where the order counts at once.
+- **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, and Conversion Rate from your midnight, each beside the same weekday last week.
+- **A click on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
+- **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default.
+- **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
+- **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
+
+The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/analytics/queryAnalyticsLiveSummary).
 
 ## Filtering
 
@@ -35,6 +49,8 @@ Every chip also has an on/off switch. Switched off, the chip keeps its values an
 ## The Explorer [#explorer]
 
 The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included, for as long as you are on the page. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a row adds its value to the filters rather than replacing them.
+
+The beacon rows show the page's **HTTP status**, and `HTTP status >= 400` in the filter lists the pageviews of error pages. Firefox, Safari, and soft navigations report no status, so their rows show a dash and never match.
 
 An **Events** page sits beside the table, one row per event the tracker reported, filterable by type and opening the visitor a row belongs to. It appears for an organization whose applications can produce events, which today means a Shopify shop and its [checkout events](/en/checkout-funnel#shopify).
 
@@ -52,7 +68,7 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 ## Error Analytics [#error-analytics]
 
-The Errors view has two tabs, JavaScript errors and [failed resources](#failed-resources), each with its own headline, chart, and list. On the errors tab:
+Errors is a group in the sidebar with three pages: JavaScript errors, [Failed resources](#failed-resources), and [Network errors](/en/network-errors). Each has its own address, headline, chart, and list. On JavaScript errors:
 
 - **Error rate over time**: the share of pageviews with at least one JavaScript error. A failed image, script, or stylesheet runs as its own curve on the same chart.
 - **Which errors, over time**: the five biggest signatures per time bucket as a stacked chart, named by what broke rather than by their hash. Clicking a name in the legend opens that signature in the list below.
@@ -67,7 +83,7 @@ The Errors view has two tabs, JavaScript errors and [failed resources](#failed-r
 
 **An error says what broke in a sentence**, even where the site keeps no error messages. The tracker recognizes the browser's wording and sends its [shape](/en/tracker#message-shape) rather than the text, so a row reads "`uc.setServiceAlias` was called, but `uc` does not exist at this point" instead of showing a stack alone.
 
-**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side: a minifier keeps class and method names. It is a button rather than something a row does by itself, because it fetches your bundle. The snippet is laid out in lines with the throwing line marked, and only whitespace is inserted, so the reported column still points at its code.
+**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side. The snippet is laid out in lines with the throwing line marked, and only whitespace is inserted, so the reported column still points at its code.
 
 - A run of frames in the same vendor bundle folds into one row naming the library. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames.
 - A frame that only passes the error on is marked as a rethrow, and the cause sits further down. The top frame of a minified stack is regularly a rethrow inside a promise polyfill.
@@ -80,7 +96,7 @@ The Errors view has two tabs, JavaScript errors and [failed resources](#failed-r
 
 **"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect, so nothing reads as a zero that is really a setting.
 
-**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error. Built for the rejection with no message and no stack, and it says endpoints occur together, never that one caused the other.
+**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error. It says endpoints occur together, never that one caused the other.
 
 **An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list, so LCP, browsers, countries, or the checkout funnel can be read over the traffic where one thing breaks. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`). A query using it reads the raw rows rather than a rollup, and costs accordingly.
 
@@ -113,13 +129,13 @@ The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/quer
 
 ## Visitors [#visitors]
 
-The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events sit between the pageviews.
+The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events and the visitor's [network errors](/en/network-errors#dashboard) sit between the pageviews. Abandoned loads are hidden unless you switch them on.
 
 The summary above the list describes the whole selected period, not the loaded page of results: visitors, visitors with a single page, and the median pages per visitor. Behavior filters narrow the list to visitors with at least a given number of pages, errors, duration, or LCP, with a given page type in the journey, or who reached a funnel stage. They stay on the Visitors and Sessions pages and are dropped when you navigate elsewhere.
 
 A visitor can be deep-linked with `?visitor=`, and the journey header then says who the visitor was. In the list the full ID is click-to-copy on hover, and a row action narrows the page to that visitor.
 
-A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the site's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
+A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the application's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
 
 ## Fetch/XHR and Server-Timing
 
@@ -133,7 +149,7 @@ The beacon reads the header on every pageview, and the dashboards on top of it a
 
 ## Experience Score
 
-The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it. Useful for the classic case where the overall grade looks fine but mobile-on-3G is failing.
+The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it.
 
 ## API
 

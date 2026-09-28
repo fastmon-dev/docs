@@ -85,6 +85,15 @@ Two per-site switches decide whether any visitor identifier reaches storage. Und
 
 The two are independent: enable either, both, or neither.
 
+### Network error reports [#network-error-reports]
+
+A site that sends the [NEL headers](/en/network-errors#headers) gets one row per failed request a Chromium browser reports. The headers are yours, and the policy they set stays in the visitor's browser for `max_age` seconds.
+
+- **Stored**: error type, phase, HTTP status, elapsed time, method, protocol, the failed URL reduced like a page URL, and the referrer only when it is on the same host.
+- **Server address**: `server_ip` is your server's address, not the visitor's. Only a public one is stored, a private, loopback or link-local address is stored empty.
+- **Visitor**: the edge [`stitch`](#the-edge-derived-stitch-identifier) under [`store_stitch`](/en/tracker#store-stitch), and the same country, device, browser, OS and bot labels as a pageview.
+- **Dropped**: the User-Agent in the report body and any referrer from another host.
+
 ### Site metadata vs. visitor data
 
 A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page. They tell you which of your CDNs is slow; they do not identify anyone.
@@ -108,7 +117,7 @@ Whether embedding fastmon needs consent, who is responsible, and the two legal r
 
 - **EU only, no US jurisdiction.** All data is processed and stored exclusively in the EU, on infrastructure operated in Germany. Every provider in the data path is a German or EU company: no Cloudflare, no AWS, no GCP, no Vercel, no US-owned subprocessor.
 - **Operator.** Data is processed by fastmon, the company behind this product. The DPA lists every sub-processor and goes out on request.
-- **Retention.** 90 days by default. Configurable per site ([`data_retention_days`](/en/tracker#data-retention-days)). When retention runs out, rows get dropped. We don't archive them.
+- **Retention.** 90 days by default. Set on the application for all its sites ([`data_retention_days`](/en/tracker#data-retention-days)). When retention runs out, rows get dropped. We don't archive them.
 
 <Callout type="info" title="No US CLOUD Act exposure">
 Because neither fastmon nor any subprocessor falls under US law, the US CLOUD Act has no reach over your RUM data.
