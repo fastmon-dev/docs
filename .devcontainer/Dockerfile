@@ -19,13 +19,14 @@ RUN apt-get update \
 
 # GitHub CLI, latest release at build time, checksum-verified. Auth is GH_TOKEN
 # (docker-compose.yml); gh is also git's credential helper, so it is on the
-# push path.
+# push path. TARGETARCH is only set by BuildKit; the legacy builder falls back
+# to dpkg, whose names (amd64, arm64) match gh's release assets.
 ARG TARGETARCH
 RUN set -eu; \
-    case "$TARGETARCH" in \
-      amd64) arch=amd64 ;; \
-      arm64) arch=arm64 ;; \
-      *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;; \
+    arch="${TARGETARCH:-$(dpkg --print-architecture)}"; \
+    case "$arch" in \
+      amd64|arm64) ;; \
+      *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
     esac; \
     ver="$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/cli/cli/releases/latest)"; \
     ver="${ver##*/v}"; \
