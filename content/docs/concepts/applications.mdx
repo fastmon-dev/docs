@@ -128,19 +128,30 @@ PATCH /applications/{app_id}
 { "collection": { "sampling_rate": 0.5 } }
 ```
 
-## Per-domain defaults
+In the dashboard the rate is **Share of visitors kept** under Data & privacy.
+Analytics pages show a sampling badge beside the title when their counts are
+estimated.
 
-Three settings are application-level **defaults** that each member
-site inherits and can override per domain:
+### Recommended rate [#sampling-recommendation]
 
-- **`data_retention_days`** (default `90`): how long raw data is
-  kept.
-- **`store_stitch`**: persist the edge visitor `stitch`, which drives
-  unique-visitor counts.
-- **`count_visitors_by`** (`stitch` / `session`): which identifier the
-  **visitors** metric counts by. Clamped at query time to what the
-  site stores. See
-[Sites](/en/concepts/sites).
+`GET /applications/{app_id}/sampling-recommendation` answers `0.1`, `0.25`,
+`0.5`, or `1.0` from the last seven days of traffic. It names the rule that
+decided and the pageviews behind it, and never changes the rate.
+
+`inputs.checkout.status` says how the checkout counted:
+
+- **`measured`**: the checkout decided the rate.
+- **`unmeasured`**: fewer than 1000 weighted checkout pageviews a day and under
+  1 % of all pageviews. The rarest page type above 1 % decides, and your
+  checkout tracking needs a look.
+- **`not_tracked`**: no shop, or checkout tracking off.
+
+## Privacy settings for every site [#site-defaults]
+
+`site_defaults` holds three settings that apply to every site of the
+application: `data_retention_days` (default `90`), `store_stitch` and
+`count_visitors_by`. A site cannot override them. A domain that needs other
+values belongs in an application of its own.
 
 ## What's on an application [#application-fields]
 
@@ -170,7 +181,7 @@ twins these groups replaced no longer answer.
 | `script.source_hash`         | string            | Globally unique; in the script URL (`/s/{source_hash}.js`).           |
 | `script.collector_hash`      | string            | Globally unique; in the ingest URL (`/c/{collector_hash}`).           |
 | `script.source_version`      | string            | Pinned beacon template version (`v1`).                                |
-| `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. A site can override each. |
+| `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. They apply to every site. |
 | `site_policy`                | enum              | `open` / `auto` / `strict`. Unknown-hostname handling.                |
 | `is_active`                  | bool              | When false, beacons are accepted but not written.                     |
 

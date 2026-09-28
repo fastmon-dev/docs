@@ -8,7 +8,7 @@ Fastmon's data model is small on purpose. Get these resources, and you've got th
 <Cards>
   <Card title="Organizations" href="/en/concepts/organizations" description="Top-level account container. Owns applications, members, tokens." />
   <Card title="Applications" href="/en/concepts/applications" description="One tracking snippet: its hashes, settings, and the sites it serves." />
-  <Card title="Sites" href="/en/concepts/sites" description="One domain under an application, with its own dashboard and overrides." />
+  <Card title="Sites" href="/en/concepts/sites" description="One domain under an application, with its own dashboard and traffic." />
   <Card title="Sessions" href="/en/concepts/sessions" description="A short window of page-views from the same browser. Anonymous by construction." />
   <Card title="Releases" href="/en/concepts/releases" description="A versioned deploy marker. Used for before/after comparisons." />
   <Card title="Tracker settings" href="/en/tracker" description="Presets and the per-setting configuration: what the beacon does in the browser." />
@@ -27,7 +27,6 @@ Organization
       ├── Releases
       └── Sites (domains)
            ├── domain
-           ├── Per-domain overrides (retention, store_stitch, …)
            └── Tags
 ```
 

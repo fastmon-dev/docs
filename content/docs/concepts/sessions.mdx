@@ -8,7 +8,7 @@ Fastmon counts **visitors**, not people. A visitor is a count along an **identit
 - **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or anything stored on the device. It's on under the default `Standard` preset, so unique-visitor counts work out of the box; the `Minimal` preset is the opt-down that stores no identifier, and then there are no visitor counts.
 - **`session`**: the client-minted `session_id` (`sid` on the wire), present only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the `Full` preset, or after your CMP calls `grantConsent()`). It groups a short burst of page-views from the same browser into a **visit** with a 30-minute boundary, which the visit-level views build on.
 
-Which one the dashboard counts by default is the site's **`count_visitors_by`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
+Which one the dashboard counts by default is the application's **`count_visitors_by`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
 
 ## What the `stitch` lets you do
 
@@ -78,7 +78,7 @@ The Analytics API exposes two endpoints:
 - `POST /analytics/visitors`: paginated list of visitors in a time range, grouped by the resolved `identity`, with filters. Cursor-paginated for high volumes.
 - `POST /analytics/visitors/detail`: the full page-view path for one visitor (the "replay"). It accepts `identity=session` or `stitch` (whichever the visitor list used; default `session`); an unknown identity is rejected with `422`. On the `Minimal` preset the site collects neither identifier, so there are no visitors to drill into.
 
-Pass `identity` explicitly to override the site default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
+Pass `identity` explicitly to override the application default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.
 
 The list filters on what a visitor's journey contains: `contains_page_type` for a page type, and on shops `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` for the [checkout funnel](/en/checkout-funnel). Each pageview in the detail carries its `checkout_stage` and cart interaction fields, and its own client context (`country`, `browser`, `browser_version`, `device_type`, `os`): per pageview rather than per visitor, because a `stitch` visitor can span devices, countries, and browsers, and a mixture should show as one. The funnel itself has its own endpoints under `/analytics/funnels/checkout`, grouped on the same identity.
 

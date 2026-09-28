@@ -1,0 +1,164 @@
+---
+title: Network Error Logging
+description: Failed requests to your site as the browser reports them itself, including pages that never loaded the tracker.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Network Error Logging (NEL) reports the requests that failed in your visitors' browsers: DNS failures, refused connections, timeouts, TLS errors, and 4xx or 5xx answers.
+
+<Callout type="info" title="Chromium only">
+  Chrome, Edge, Opera, Samsung Internet and other Chromium browsers send reports. Safari and Firefox do not, so every count is a lower bound.
+</Callout>
+
+## Set it up [#setup]
+
+Two response headers on your origin turn the reports on. The headers, server examples, verification and traps are in the guide [Set up Network Error Logging](/en/guides/network-error-logging).
+
+## The Network Error Logging page [#dashboard]
+
+The page sits under **Errors → Network Error Logging** in the sidebar, at `/errors/nel`. It has three tabs, and the tab is part of the URL.
+
+- **Overview**: the server's HTTP errors, 5xx first and 4xx below. **Affected visitors** leads every number, with its share of all visitors, and reports come second. The chart stacks **By class** or **By code**.
+- **Where they fail**: one card per dimension, all at once. Status codes, pages, server addresses, countries, sites and hosts, devices, browsers, OS, traffic, and versions once a browser is filtered.
+- **Sites and hosts** doubles as the setup check. Each site shows its last report, and when most reports without details point at one server address, the card names it as likely failing.
+- **Connection failures**: closed by default. Each type is compared with its own usual level, and a broken certificate or a rise of refused connections, timeouts or unknown hosts is flagged.
+- **Paths**: hosts first, each with its paths inside.
+- **Reports**: every NEL report, newest first, each opening to all stored fields. A run of one type from one visitor on one page folds into one line. A report has its own share link, and where the site stores a visitor id it links to the visitor's journey.
+
+**Filtering** works like on the other pages: `+` next to a value filters to it, `-` excludes it, and the magnifier opens the row's reports. The 5xx and 4xx tiles filter a whole status class. The page's own filters (status, error type, host, path, page, server address) sit in the Filter panel under **Only on this page** and stay in the URL. **Abandoned loads** are hidden, on the page and on a visitor's journey, each with a switch to show them.
+
+A visitor's journey in [Visitors](/en/analytics#visitors) lists their NEL reports between the pageviews, in time order, each marked as one.
+
+## Classes [#classes]
+
+Every report carries a class, `nel_class`, derived from its type. The dashboard shows the label in brackets.
+
+| Class | Types | Means |
+| --- | --- | --- |
+| `http_error` (Server error (4xx/5xx)) | `http.error` | Your server answered with a 4xx or 5xx status. |
+| `connection` (Connection) | `dns.*`, `tcp.*`, `tls.*`, `h2.*`, `h3.*`, `http.response.*`, `unknown` | No usable answer. |
+| `abandoned` (Abandoned) | `abandoned` | The request was cancelled, usually a visitor leaving while it loaded. |
+| `downgraded` (Hidden by the browser) | `dns.address_changed` | The browser hid the real type. See [several addresses](#several-addresses). |
+| `other` (Other) | anything else | A type no browser sent before. |
+
+## Error types [#error-types]
+
+The dashboard shows a plain name, and each report's details carry the browser's type. Every type has the class `connection` unless its row says otherwise. **Resent** means Chromium retries the request after it reported.
+
+### Server answered [#types-http]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `http.error` (`http_error`) | The server answered 4xx or 5xx, for any request: pages, images, API calls. | The status codes and paths on the [dashboard](#dashboard). | only a 408 on a reused HTTP/1.1 connection, and a 421 |
+
+### Name resolution [#types-dns]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `dns.name_not_resolved` | The DNS server answered but has no address for the host. | A missing or deleted DNS record, or a mistyped subdomain. | no |
+| `dns.failed` | The name resolution failed for another reason. | Your DNS provider. | no |
+| `dns.timed_out` | The DNS query timed out. | Your DNS provider, or the visitor's network. | no |
+| `dns.protocol` | The DNS answer was malformed. | Your DNS provider. | no |
+| `dns.server` | The DNS server answered with an error code, such as a server failure or a refusal. | Your authoritative name servers. | no |
+| `dns.address_changed` (`downgraded`) | A failure whose type the browser hid. | [Sites behind several addresses](#several-addresses). | as the hidden type |
+
+### Connection [#types-tcp]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `tcp.timed_out` | The connection or the request timed out. | Server load and firewalls. A rise means the server stopped answering. | no |
+| `tcp.refused` | The server refused the connection. | Whether the server and its port are up. A rise means it stopped accepting. | no |
+| `tcp.closed` | The connection was closed with a TCP FIN. | Part of the [floor](#reading). | on a reused connection |
+| `tcp.reset` | The connection was reset. | Part of the floor. | on a reused connection |
+| `tcp.aborted` | Data sent on the connection was never acknowledged. | Part of the floor. | on a reused connection |
+| `tcp.address_invalid` | The IP address is invalid. | The address in your DNS record. | no |
+| `tcp.address_unreachable` | The IP address is unreachable. | The routing to your server. | no |
+| `tcp.failed` | The connection attempt failed for another reason. | Server and network. | no |
+
+### TLS [#types-tls]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `tls.version_or_cipher_mismatch` | Browser and server share no TLS version or cipher. | The server's TLS configuration. | no |
+| `tls.bad_client_auth_cert` | The handshake failed on a bad or missing client certificate. | Whether the server asks for a client certificate. | no |
+| `tls.cert.invalid` | The server's certificate is invalid. | The certificate. | no |
+| `tls.cert.name_invalid` | The certificate does not name the host. | The names on the certificate. | no |
+| `tls.cert.date_invalid` | The certificate has expired or is not valid yet. | The renewal. | no |
+| `tls.cert.authority_invalid` | The certificate's issuer is not trusted. | The certificate chain. | no |
+| `tls.cert.revoked` | The certificate is revoked. | Replace the certificate. | no |
+| `tls.cert.pinned_key_not_in_cert_chain` | The certificate chain lacks a pinned key. | Your key pinning. | no |
+| `tls.protocol.error` | The TLS exchange broke a protocol rule. | The server's TLS stack. | no |
+| `tls.failed` | The server's response was insecure, a certificate error for example. | The certificate. | no |
+| `tls.unrecognized_name_alert` | The server answered the handshake with an `unrecognized_name` alert. | The server's SNI setup for the host. | no |
+
+### HTTP/2 and HTTP/3 [#types-h2-h3]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `h2.ping_failed` | The HTTP/2 connection stopped answering pings. | Part of the floor. | up to twice |
+| `h2.protocol.error` | The HTTP/2 exchange broke a protocol rule. | The HTTP/2 support of your server or proxy. | no |
+| `h3.protocol.error` | The QUIC exchange broke a protocol rule. | The server's HTTP/3 setup. | on an alternative service, before the response headers |
+
+### Response could not be read [#types-response]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `http.response.redirect_loop` | The request met too many redirects. | Your redirect rules. | no |
+| `http.response.invalid` | The response could not be read as HTTP. | The server or proxy. | no |
+| `http.response.invalid.empty` | The server closed the connection without sending data. | Crashing workers or proxy timeouts. | on a reused connection |
+| `http.response.invalid.content_length_mismatch` | The body length differs from `Content-Length`. | A proxy or compression that changes the body. | no |
+| `http.response.invalid.incomplete_chunked_encoding` | The chunked body ended without its last chunk. | An application that stops mid-response. | no |
+| `http.response.invalid.invalid_chunked_encoding` | The chunked body is malformed. | The server or proxy. | no |
+| `http.request.range_not_satisfiable` | The server answered 416 to a range request. | Range handling for downloads and media. | no |
+| `http.response.headers.truncated` | The headers ended with the connection. | The server or proxy. | no |
+| `http.response.headers.multiple_content_disposition` | The response has two different `Content-Disposition` headers. | Headers set twice, by the application and the server. | no |
+| `http.response.headers.multiple_content_length` | The response has two different `Content-Length` headers. | Headers set twice, by the application and the server. | no |
+
+### Visitor and unknown [#types-other]
+
+| Type | What happened | Check | Resent |
+| --- | --- | --- | --- |
+| `abandoned` (`abandoned`) | The request was cancelled before it completed. | Nothing: the visitor left. Hidden by default. | no |
+| `unknown` | A network error Chromium has no name for. | Nothing to read, see [Reading a report](#reading). | some |
+
+The W3C spec also lists `dns.unreachable`, `http.protocol.error` and `http.failed`, which Chromium never sends. fastmon drops `ok`, a report of a request that worked, and `sxg.*`, a report on a signed exchange.
+
+## Reading a report [#reading]
+
+- **Every site has a floor** of `abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` and `unknown`. Visitors leave while a request loads, and mobile networks drop connections.
+- **A sudden rise of `tcp.refused` or `tcp.timed_out`** means the server stopped accepting or answering connections.
+- **`unknown` has no cause.** The report format has no field for Chromium's error code. A change of network, a request an HTTP/2 server refused and a failed QUIC handshake all arrive as `unknown`.
+- **A report is no proof a visitor saw a failure.** For the types with a resend, Chromium reports first and then retries, which may succeed. A retry that fails reports again, so one failure can leave several reports.
+- **Resets, closed and aborted connections and empty responses** are retried only on a reused connection that has not received headers yet. Every 4xx and 5xx except a 408 and a 421 reached the browser as reported.
+
+## Sites behind several addresses [#several-addresses]
+
+Two ingress nodes, a CDN, or IPv4 beside IPv6 put several addresses behind one name. The browser keeps the policy together with the address it came from. When one address fails, only the other sends the policy, and the failures of the dead one arrive as `dns.address_changed` without status or elapsed time.
+
+- **A rise of the class `downgraded`** on such a site means one address fails.
+- **`server_ip`** names the address a request went to. The **Server addresses** card, or a breakdown of `downgraded` reports by `server_ip`, names the failing one.
+- **An error page without the headers** from the other address is lost, so the ingress has to set them on every response. Check it on a 404, as in [Verify](/en/guides/network-error-logging#verify).
+
+Only a public `server_ip` is stored. See [Privacy → NEL reports](/en/privacy#nel-reports).
+
+## Limits [#limits]
+
+- **Chromium browsers only.** Every count is a lower bound.
+- **Visitor counts need [`store_stitch`](/en/tracker#store-stitch).** A site without it counts in the reports but not in **Affected visitors**, and the page names it.
+- **A lower `failure_fraction`** makes the visitor count a lower bound.
+- **A change of network cuts the visitor.** A report takes its visitor id from the upload, so a report sent from a new network never joins the pageviews before it.
+- **The id rotates daily.** A report uploaded after the rotation can land on a new visitor.
+
+## API [#api]
+
+All three routes take the same `filters`, including `error_type`, `nel_class`, `status_code_range`, `server_ip`, `host`, `path` and `page_url` with their `exclude`. Every other analytics route refuses these filters with a 422.
+
+| Route | Returns |
+| --- | --- |
+| [`POST /analytics/nel`](/en/api/analytics/queryAnalyticsNel) | Counts, series, error types, status codes, time to failure, and the top paths per host |
+| [`POST /analytics/nel/breakdown`](/en/api/analytics/queryAnalyticsNelBreakdown) | Reports grouped by one `dimension`, with share and visitors |
+| [`POST /analytics/nel/reports`](/en/api/analytics/listAnalyticsNelReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
+
+Counts are weighted by `1 / failure_fraction`, single reports are not. Without an `error_type` filter every type counts, `abandoned` included. The [visitor detail](/en/api/analytics/getAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `nel_reports` beside `pages` and `events`: absent when not consulted, `[]` when there are none.

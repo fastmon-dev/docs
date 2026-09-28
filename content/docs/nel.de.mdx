@@ -1,0 +1,164 @@
+---
+title: Network Error Logging
+description: Fehlgeschlagene Requests an deine Site, wie der Browser sie selbst meldet, auch für Seiten, die den Tracker nie geladen haben.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Network Error Logging (NEL) meldet die Requests, die im Browser deiner Besucher scheitern: DNS-Fehler, abgelehnte Verbindungen, Timeouts, TLS-Fehler und 4xx- oder 5xx-Antworten.
+
+<Callout type="info" title="Nur Chromium">
+  Reports schicken Chrome, Edge, Opera, Samsung Internet und andere Chromium-Browser. Safari und Firefox schicken keine, jede Zahl ist also eine Untergrenze.
+</Callout>
+
+## Einrichten [#setup]
+
+Zwei Response-Header auf deinem Origin schalten die Reports ein. Header, Server-Beispiele, Prüfung und Fallen stehen im Guide [Network Error Logging einrichten](/de/guides/network-error-logging).
+
+## Die Seite Network Error Logging [#dashboard]
+
+Die Seite liegt in der Sidebar unter **Fehler → Network Error Logging**, unter `/errors/nel`. Sie hat drei Tabs, der Tab steht in der URL.
+
+- **Übersicht**: die HTTP-Fehler des Servers, 5xx oben, 4xx darunter. **Betroffene Besucher** steht bei jeder Zahl vorn, mit dem Anteil an allen Besuchern, die Reports danach. Das Diagramm stapelt **Nach Klasse** oder **Nach Code**.
+- **Wo sie scheitern**: eine Karte pro Dimension, alle auf einmal. Statuscodes, Seiten, Serveradressen, Länder, Seiten und Hosts, Geräte, Browser, OS, Traffic und Versionen, sobald ein Browser gefiltert ist.
+- **Seiten und Hosts** ist zugleich der Setup-Check. Jede Site zeigt ihren letzten Report, und zeigen die meisten Reports ohne Details auf eine Serveradresse, nennt die Karte sie als wahrscheinlich ausgefallen.
+- **Verbindungsfehler**: standardmäßig zugeklappt. Jeder Typ wird mit seinem üblichen Niveau verglichen, markiert werden ein kaputtes Zertifikat und ein Anstieg bei abgelehnten Verbindungen, Timeouts oder unbekannten Hosts.
+- **Pfade**: erst die Hosts, darin jeweils ihre Pfade.
+- **Reports**: jeder NEL-Report, der neueste zuerst, aufklappbar mit allen gespeicherten Feldern. Mehrere Reports eines Typs von einem Besucher auf einer Seite hintereinander stehen als eine Zeile da. Jeder Report hat einen eigenen Link zum Teilen, und speichert die Site eine Besucher-ID, verlinkt er auf die Journey des Besuchers.
+
+**Filtern** geht wie auf den anderen Seiten: `+` neben einem Wert filtert darauf, `-` schließt ihn aus, und die Lupe öffnet die Reports der Zeile. Die Kacheln 5xx und 4xx filtern eine ganze Statusklasse. Die Filter der Seite (Status, Fehlertyp, Host, Pfad, Seite, Serveradresse) stehen im Filter-Panel unter **Nur auf dieser Seite** und bleiben in der URL. **Abgebrochene Ladevorgänge** sind ausgeblendet, auf der Seite und in der Journey eines Besuchers, jeweils mit einem Schalter zum Einblenden.
+
+Die Journey eines Besuchers unter [Visitors](/de/analytics#visitors) zeigt seine NEL-Reports zwischen den Seitenaufrufen, in zeitlicher Reihenfolge und jeweils als solche markiert.
+
+## Klassen [#classes]
+
+Jeder Report hat eine Klasse, `nel_class`, abgeleitet aus seinem Typ. In Klammern steht das Label im Dashboard.
+
+| Klasse | Typen | Bedeutung |
+| --- | --- | --- |
+| `http_error` (Serverfehler (4xx/5xx)) | `http.error` | Dein Server hat mit 4xx oder 5xx geantwortet. |
+| `connection` (Verbindung) | `dns.*`, `tcp.*`, `tls.*`, `h2.*`, `h3.*`, `http.response.*`, `unknown` | Keine brauchbare Antwort. |
+| `abandoned` (Abgebrochen) | `abandoned` | Der Request wurde abgebrochen, meist weil der Besucher weg ist, während er noch lud. |
+| `downgraded` (Vom Browser verdeckt) | `dns.address_changed` | Der Browser hat den echten Typ verborgen. Siehe [mehrere Adressen](#several-addresses). |
+| `other` (Sonstige) | alles andere | Ein Typ, den bisher kein Browser geschickt hat. |
+
+## Fehlertypen [#error-types]
+
+Das Dashboard zeigt einen lesbaren Namen, in den Details jedes Reports steht der Typ des Browsers. Jeder Typ hat die Klasse `connection`, sofern seine Zeile nichts anderes sagt. **Wiederholt** heißt, dass Chromium den Request nach dem Report erneut schickt.
+
+### Server hat geantwortet [#types-http]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `http.error` (`http_error`) | Der Server hat mit 4xx oder 5xx geantwortet, auf jeden Request: Seiten, Bilder, API-Calls. | Statuscodes und Pfade im [Dashboard](#dashboard). | nur 408 auf einer wiederverwendeten HTTP/1.1-Verbindung und 421 |
+
+### Namensauflösung [#types-dns]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `dns.name_not_resolved` | Der DNS-Server hat geantwortet, kennt aber keine Adresse für den Host. | Ein fehlender oder gelöschter DNS-Eintrag oder eine vertippte Subdomain. | nein |
+| `dns.failed` | Die Namensauflösung ist aus einem anderen Grund gescheitert. | Dein DNS-Anbieter. | nein |
+| `dns.timed_out` | Die DNS-Anfrage hat zu lange gedauert. | Dein DNS-Anbieter oder das Netz des Besuchers. | nein |
+| `dns.protocol` | Die DNS-Antwort war fehlerhaft. | Dein DNS-Anbieter. | nein |
+| `dns.server` | Der DNS-Server hat mit einem Fehlercode geantwortet, etwa einem Serverfehler oder einer Ablehnung. | Deine autoritativen Nameserver. | nein |
+| `dns.address_changed` (`downgraded`) | Ein Fehler, dessen Typ der Browser verdeckt hat. | [Sites hinter mehreren Adressen](#several-addresses). | wie der verdeckte Typ |
+
+### Verbindung [#types-tcp]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `tcp.timed_out` | Verbindung oder Request hat zu lange gedauert. | Serverlast und Firewalls. Ein Anstieg heißt, der Server antwortet nicht mehr. | nein |
+| `tcp.refused` | Der Server hat die Verbindung abgelehnt. | Ob Server und Port laufen. Ein Anstieg heißt, er nimmt nichts mehr an. | nein |
+| `tcp.closed` | Die Verbindung wurde mit einem TCP-FIN geschlossen. | Teil des [Grundrauschens](#reading). | auf einer wiederverwendeten Verbindung |
+| `tcp.reset` | Die Verbindung wurde zurückgesetzt. | Teil des Grundrauschens. | auf einer wiederverwendeten Verbindung |
+| `tcp.aborted` | Gesendete Daten wurden nie bestätigt. | Teil des Grundrauschens. | auf einer wiederverwendeten Verbindung |
+| `tcp.address_invalid` | Die IP-Adresse ist ungültig. | Die Adresse in deinem DNS-Eintrag. | nein |
+| `tcp.address_unreachable` | Die IP-Adresse ist nicht erreichbar. | Das Routing zu deinem Server. | nein |
+| `tcp.failed` | Der Verbindungsaufbau ist aus einem anderen Grund gescheitert. | Server und Netz. | nein |
+
+### TLS [#types-tls]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `tls.version_or_cipher_mismatch` | Browser und Server haben keine gemeinsame TLS-Version oder Cipher. | Die TLS-Konfiguration des Servers. | nein |
+| `tls.bad_client_auth_cert` | Der Handshake ist an einem fehlerhaften oder fehlenden Client-Zertifikat gescheitert. | Ob der Server ein Client-Zertifikat verlangt. | nein |
+| `tls.cert.invalid` | Das Zertifikat des Servers ist ungültig. | Das Zertifikat. | nein |
+| `tls.cert.name_invalid` | Das Zertifikat nennt den Host nicht. | Die Namen im Zertifikat. | nein |
+| `tls.cert.date_invalid` | Das Zertifikat ist abgelaufen oder noch nicht gültig. | Die Verlängerung. | nein |
+| `tls.cert.authority_invalid` | Dem Aussteller des Zertifikats wird nicht vertraut. | Die Zertifikatskette. | nein |
+| `tls.cert.revoked` | Das Zertifikat ist widerrufen. | Das Zertifikat ersetzen. | nein |
+| `tls.cert.pinned_key_not_in_cert_chain` | Der Kette fehlt ein gepinnter Schlüssel. | Dein Key Pinning. | nein |
+| `tls.protocol.error` | Der TLS-Austausch hat eine Protokollregel verletzt. | Den TLS-Stack des Servers. | nein |
+| `tls.failed` | Die Antwort des Servers war unsicher, etwa wegen eines Zertifikatsfehlers. | Das Zertifikat. | nein |
+| `tls.unrecognized_name_alert` | Der Server hat den Handshake mit einem `unrecognized_name`-Alert beantwortet. | Das SNI-Setup des Servers für den Host. | nein |
+
+### HTTP/2 und HTTP/3 [#types-h2-h3]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `h2.ping_failed` | Die HTTP/2-Verbindung antwortet nicht mehr auf Pings. | Teil des Grundrauschens. | bis zu zweimal |
+| `h2.protocol.error` | Der HTTP/2-Austausch hat eine Protokollregel verletzt. | Die HTTP/2-Unterstützung von Server oder Proxy. | nein |
+| `h3.protocol.error` | Der QUIC-Austausch hat eine Protokollregel verletzt. | Das HTTP/3-Setup des Servers. | auf einem Alternative Service, vor den Response-Headern |
+
+### Antwort nicht lesbar [#types-response]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `http.response.redirect_loop` | Der Request ist in zu viele Weiterleitungen gelaufen. | Deine Redirect-Regeln. | nein |
+| `http.response.invalid` | Die Antwort war nicht als HTTP lesbar. | Server oder Proxy. | nein |
+| `http.response.invalid.empty` | Der Server hat die Verbindung ohne Daten geschlossen. | Abstürzende Worker oder Proxy-Timeouts. | auf einer wiederverwendeten Verbindung |
+| `http.response.invalid.content_length_mismatch` | Die Länge des Bodys weicht von `Content-Length` ab. | Ein Proxy oder eine Kompression, die den Body ändert. | nein |
+| `http.response.invalid.incomplete_chunked_encoding` | Der Chunked-Body endet ohne letzten Chunk. | Eine Anwendung, die mitten in der Antwort abbricht. | nein |
+| `http.response.invalid.invalid_chunked_encoding` | Der Chunked-Body ist fehlerhaft. | Server oder Proxy. | nein |
+| `http.request.range_not_satisfiable` | Der Server hat einen Range-Request mit 416 beantwortet. | Range-Requests für Downloads und Medien. | nein |
+| `http.response.headers.truncated` | Die Header endeten mit der Verbindung. | Server oder Proxy. | nein |
+| `http.response.headers.multiple_content_disposition` | Die Antwort hat zwei verschiedene `Content-Disposition`-Header. | Header, die Anwendung und Server doppelt setzen. | nein |
+| `http.response.headers.multiple_content_length` | Die Antwort hat zwei verschiedene `Content-Length`-Header. | Header, die Anwendung und Server doppelt setzen. | nein |
+
+### Besucher und Unbekanntes [#types-other]
+
+| Typ | Was passiert ist | Prüfen | Wiederholt |
+| --- | --- | --- | --- |
+| `abandoned` (`abandoned`) | Der Request wurde vor dem Ende abgebrochen. | Nichts: Der Besucher ist gegangen. Standardmäßig ausgeblendet. | nein |
+| `unknown` | Ein Netzwerkfehler, für den Chromium keinen Namen hat. | Nichts auszulesen, siehe [Einen Report lesen](#reading). | teils |
+
+Die W3C-Spezifikation nennt außerdem `dns.unreachable`, `http.protocol.error` und `http.failed`, die Chromium nie schickt. fastmon verwirft `ok`, den Report eines erfolgreichen Requests, und `sxg.*`, Reports zu Signed Exchanges.
+
+## Einen Report lesen [#reading]
+
+- **Jede Site hat ein Grundrauschen** aus `abandoned`, `tcp.reset`, `tcp.closed`, `tcp.aborted`, `h2.ping_failed` und `unknown`. Besucher gehen, während noch etwas lädt, und Mobilfunknetze verlieren Verbindungen.
+- **Ein plötzlicher Anstieg von `tcp.refused` oder `tcp.timed_out`** heißt, dass der Server keine Verbindungen mehr annimmt oder beantwortet.
+- **`unknown` hat keine Ursache.** Das Report-Format hat kein Feld für Chromiums Fehlercode. Ein Netzwechsel, ein vom HTTP/2-Server abgelehnter Request und ein gescheiterter QUIC-Handshake landen alle als `unknown`.
+- **Ein Report beweist nicht, dass ein Besucher den Fehler gesehen hat.** Bei Typen mit Wiederholung meldet Chromium zuerst und schickt den Request dann erneut, oft mit Erfolg. Scheitert auch die Wiederholung, kommt ein weiterer Report, ein Fehler kann also mehrere Reports hinterlassen.
+- **Resets, geschlossene und abgebrochene Verbindungen und leere Antworten** wiederholt Chromium nur auf einer wiederverwendeten Verbindung, die noch keine Header bekommen hat. Jeder 4xx- und 5xx-Status außer 408 und 421 kam so beim Browser an, wie er gemeldet ist.
+
+## Sites hinter mehreren Adressen [#several-addresses]
+
+Zwei Ingress-Knoten, ein CDN oder IPv4 neben IPv6 legen mehrere Adressen hinter einen Namen. Der Browser speichert die Policy zusammen mit der Adresse, von der sie kam. Fällt eine Adresse aus, schickt nur noch die andere die Policy, und die Fehler der toten Adresse kommen als `dns.address_changed` ohne Status und Dauer an.
+
+- **Steigt die Klasse `downgraded`** auf so einer Site, fällt eine Adresse aus.
+- **`server_ip`** nennt die Adresse, an die ein Request ging. Die Karte **Serveradressen** oder eine Aufschlüsselung der `downgraded`-Reports nach `server_ip` zeigt die ausgefallene.
+- **Eine Fehlerseite ohne Header** von der anderen Adresse geht verloren, der Ingress muss sie also auf jede Antwort setzen. Prüf das an einem 404, wie unter [Prüfen](/de/guides/network-error-logging#verify).
+
+Gespeichert wird nur eine öffentliche `server_ip`. Siehe [Datenschutz → NEL-Reports](/de/privacy#nel-reports).
+
+## Grenzen [#limits]
+
+- **Nur Chromium-Browser.** Jede Zahl ist eine Untergrenze.
+- **Besucherzahlen brauchen [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zählt bei den Reports mit, nicht aber bei **Betroffene Besucher**, und die Seite nennt sie.
+- **Eine kleinere `failure_fraction`** macht die Besucherzahl zur Untergrenze.
+- **Ein Netzwechsel trennt den Besucher.** Ein Report bekommt seine Besucher-ID beim Upload, ein Report aus einem neuen Netz passt also nie zu den Seitenaufrufen davor.
+- **Die ID rotiert täglich.** Ein Report, der nach der Rotation hochgeladen wird, kann bei einem neuen Besucher landen.
+
+## API [#api]
+
+Alle drei Routen nehmen dieselben `filters`, darunter `error_type`, `nel_class`, `status_code_range`, `server_ip`, `host`, `path` und `page_url` samt `exclude`. Jede andere Analytics-Route lehnt diese Filter mit 422 ab.
+
+| Route | Liefert |
+| --- | --- |
+| [`POST /analytics/nel`](/de/api/analytics/queryAnalyticsNel) | Anzahl, Zeitreihe, Fehlertypen, Statuscodes, Zeit bis zum Fehler und die Top-Pfade pro Host |
+| [`POST /analytics/nel/breakdown`](/de/api/analytics/queryAnalyticsNelBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil und Besuchern |
+| [`POST /analytics/nel/reports`](/de/api/analytics/listAnalyticsNelReports) | Einzelne Reports, der neueste zuerst, seitenweise per `cursor`. `filters.report_id` wählt einen aus. |
+
+Die Zählungen sind mit `1 / failure_fraction` gewichtet, einzelne Reports nicht. Ohne `error_type`-Filter zählt jeder Typ mit, auch `abandoned`. [Visitor-Detail](/de/api/analytics/getAnalyticsVisitorDetail) und [Checkout-Journeys](/de/api/analytics/queryAnalyticsCheckoutJourneys) liefern `nel_reports` neben `pages` und `events`: fehlt das Feld, wurde nicht nachgesehen, `[]` heißt keine Reports.

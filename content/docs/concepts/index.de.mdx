@@ -8,7 +8,7 @@ Fastmons Datenmodell ist klein gehalten, mit Absicht. Wer diese Ressourcen kennt
 <Cards>
   <Card title="Organisationen" href="/de/concepts/organizations" description="Top-Level-Account-Container. Besitzt Applications, Mitglieder, Tokens." />
   <Card title="Applications" href="/de/concepts/applications" description="Ein Tracking-Snippet: seine Hashes, Einstellungen und die Sites, die es bedient." />
-  <Card title="Sites" href="/de/concepts/sites" description="Eine Domain unter einer Application, mit eigenem Dashboard und Overrides." />
+  <Card title="Sites" href="/de/concepts/sites" description="Eine Domain unter einer Application, mit eigenem Dashboard und Traffic." />
   <Card title="Sessions" href="/de/concepts/sessions" description="Ein kurzes Fenster von Pageviews desselben Browsers. Anonym per Konstruktion." />
   <Card title="Releases" href="/de/concepts/releases" description="Versionierter Deploy-Marker. Für Vorher/Nachher-Vergleiche." />
   <Card title="Tracker-Einstellungen" href="/de/tracker" description="Presets und die Konfiguration pro Einstellung: was der Beacon im Browser tut." />
@@ -27,7 +27,6 @@ Organisation
       ├── Releases
       └── Sites (Domains)
            ├── domain
-           ├── Per-Domain-Overrides (Retention, store_stitch, …)
            └── Tags
 ```
 

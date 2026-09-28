@@ -83,7 +83,7 @@ Die beiden öffentlichen Ingest-Roots sind bewusst kurz: Das hält den Beacon-Pa
 
 | Daten                               | Wo                  | Retention                       |
 | ----------------------------------- | ------------------- | ------------------------------- |
-| Beacon-Events (raw + roll-ups)      | Analytics-Store     | `data_retention_days` pro Site (Default 90). |
+| Beacon-Events (raw + roll-ups)      | Analytics-Store     | `data_retention_days` pro Application (Default 90). |
 | Site-, Org-, Member-Config          | Config-DB           | Bis zur Löschung.               |
 | Aktive Sessions (Auth)              | Session-Store       | Gleitendes Fenster, per Default 30 Tage idle. |
 | Rate-Limit-Counter                  | Session-Store       | Per-Fenster-TTL, < 5 min.       |

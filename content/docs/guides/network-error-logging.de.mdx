@@ -1,0 +1,122 @@
+---
+title: Network Error Logging einrichten
+description: Zwei Response-Header, und Chromium-Browser melden jeden fehlgeschlagenen Request an deine Site an fastmon.
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Mit zwei Response-Headern auf deinem Origin meldet der Browser jeden fehlgeschlagenen Request an fastmon, auch für Seiten, die den Tracker nie ausgeführt haben. Reports schicken nur Chromium-Browser. Was die Reports zeigen, steht unter [Network Error Logging](/de/nel).
+
+## Einrichten [#setup]
+
+1. Kopiere den `collector_hash` der Application. Er steht in jedem Beacon-Request hinter `/c/` und ist ein Feld der Application in der API.
+2. Setze die beiden [Header](#headers) auf jede HTTPS-Antwort jedes Hosts.
+3. Prüfe, dass jeder Host mit den Headern eine Site dieser Application ist oder eine Subdomain davon.
+4. [Prüfe](#verify), dass ein Report ankommt.
+
+Ein Report für einen Host, der keine Site der Application ist, wird verworfen. Ein Report legt nie eine Site an. `www.shop.example` zählt für `shop.example`, `notshop.example` nicht.
+
+## Die Header [#headers]
+
+```http
+Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}
+NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}
+```
+
+Hat die Application einen eigenen [Collector-Endpoint](/de/tracker#collector-endpoint), steht dessen Host statt `fastmon.site` in der URL.
+
+| Feld | Header | Wert | Wirkung |
+| --- | --- | --- | --- |
+| `group` / `report_to` | beide | `fastmon` | Verbindet die beiden Header. Der Name ist frei, er muss nur in beiden gleich sein. |
+| `max_age` | `Report-To` | `86400` | So lange behält der Browser den Endpoint, in Sekunden. Mindestens so lang wie im `NEL`-Header. |
+| `url` | `Report-To` | `https://fastmon.site/c/n/{collector_hash}` | Wohin die Reports gehen. |
+| `max_age` | `NEL` | `86400` | So lange bleibt die Policy im Browser. Jede Antwort erneuert sie. |
+| `success_fraction` | `NEL` | `0` | Anteil erfolgreicher Requests, die gemeldet werden. fastmon verwirft diese Reports. |
+| `failure_fraction` | `NEL` | `1` | Anteil fehlgeschlagener Requests, die gemeldet werden. Unter `1` zählt jede Zeile `1 / failure_fraction`, und seltene Fehler können ganz fehlen. |
+
+Wo du sie setzt:
+
+- **Auf jede Antwort**, auch auf Fehlerseiten. Hängt die Site an [mehreren Adressen](/de/nel#several-addresses), geht eine Fehlerseite ohne Header verloren.
+- **Am äußersten Server, den du kontrollierst.** Den 502 von Ingress oder Load Balancer sieht die Anwendung nie.
+- **Nur über HTTPS.** Eine Policy aus einer HTTP-Antwort ignoriert der Browser.
+- **Auf jedem Host.** `www.shop.example` und `shop.example` sind zwei Policies.
+
+### Beispiele [#examples]
+
+<Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
+<Tab value="nginx">
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name shop.example;
+
+    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}' always;
+    add_header NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}' always;
+}
+```
+
+Mit `always` landen die Header auch auf Fehlerantworten. Ein `location`-Block mit eigenem `add_header` erbt nichts aus `server`, dort brauchst du beide Zeilen noch einmal.
+
+</Tab>
+<Tab value="Caddy">
+
+```txt
+shop.example {
+	header Report-To `{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}`
+	header NEL `{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}`
+}
+```
+
+Die Backticks lassen die Anführungszeichen im JSON stehen.
+
+</Tab>
+<Tab value="Apache">
+
+```apache
+<IfModule mod_headers.c>
+    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}'
+    Header always set NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}'
+</IfModule>
+```
+
+</Tab>
+<Tab value="PHP">
+
+```php
+header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}');
+header('NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}');
+```
+
+Das deckt nur die Antworten ab, die PHP schreibt. Wenn du an den Webserver kommst, setz die Header dort.
+
+</Tab>
+</Tabs>
+
+### `include_subdomains` [#include-subdomains]
+
+Mit `"include_subdomains":true` im `NEL`-Header gilt die Policy für jede Subdomain des Hosts. Für diese Subdomains meldet der Browser nur DNS-Fehler. fastmon behält so einen Report, wenn die Subdomain eine Site der Application ist oder eine Subdomain der einzigen Site. Eine Subdomain mit eigenen Antworten bekommt besser eigene Header.
+
+## Prüfen [#verify]
+
+1. **Die Header kommen an.** Schau im Netzwerk-Tab des Browsers bei einer beliebigen Antwort des Hosts nach `Report-To` und `NEL`.
+2. **Ein Report geht raus.** Lade eine Seite in Chrome und ruf dann einen Pfad auf, den es nicht gibt. Auch der 404 muss beide Header tragen. Chrome schickt nach etwa einer Minute einen `http.error`-Report.
+3. **Der Endpoint antwortet.** Teste ihn ohne Browser, mit einer registrierten Site statt `shop.example`:
+
+```sh
+curl -i https://fastmon.site/c/n/YOUR_COLLECTOR_HASH \
+  -H 'Content-Type: application/reports+json' \
+  --data '[{"age":0,"type":"network-error","url":"https://shop.example/missing","body":{"type":"http.error","phase":"application","status_code":404,"elapsed_time":12,"method":"GET","protocol":"http/1.1","referrer":"","sampling_fraction":1}}]'
+```
+
+Der Endpoint antwortet mit 204, egal ob er den Report behält oder verwirft. Den letzten Report jeder Site zeigt die Karte **Seiten und Hosts** im [Dashboard](/de/nel#dashboard).
+
+## Stolperfallen [#traps]
+
+- **Cloudflare ersetzt deine Header**, wenn dort die eigene Network-Error-Logging-Einstellung an ist. Schalte sie für die Zone ab.
+- **Shopify-Storefronts** erlauben keine eigenen Response-Header, ein Shopify-Shop kann also keine Policy schicken.
+- **`Report-To` bleibt Pflicht.** Chromium liest für NEL keinen `Reporting-Endpoints`-Header.
+- **Jede Application hat ihren eigenen Hash.** Ein Report für eine Site einer anderen Application wird verworfen, auch in derselben Organisation.
+- **Nach einer Hash-Rotation kommen keine Reports mehr**, ohne Warnung. Trag den neuen `collector_hash` in `Report-To` ein.
+- **Ein [First-Party-Proxy](/de/guides/first-party-proxy)** muss `/c/n/` und den `OPTIONS`-Preflight des Browsers durchreichen. Ein `location /c/`-Block deckt beides ab.
+- **Header entfernen entfernt die Policy nicht.** Browser melden bis zu `max_age` Sekunden weiter. Willst du früher Schluss machen, schick vorher einen Tag lang `NEL` mit `"max_age":0`.

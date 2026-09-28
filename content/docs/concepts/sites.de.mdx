@@ -1,6 +1,6 @@
 ---
 title: Sites
-description: Eine Site ist eine Domain unter einer Application, mit eigenem Dashboard, eigenem Traffic und ein paar Per-Domain-Overrides.
+description: Eine Site ist eine Domain unter einer Application, mit eigenem Dashboard und eigenem Traffic.
 ---
 
 Eine **Site** ist eine Domain, die du überwachst. Sie gehört zu genau einer [Application](/de/concepts/applications), der das Snippet, die Hashes und alle [Tracker-Einstellungen](/de/tracker) gehören; die Site ist die reine Analytics-Einheit: eigenes Dashboard, eigener Traffic, eigene `site_id`.
@@ -9,7 +9,7 @@ Die meisten Applications haben eine Site. Weitere kommen dazu, wenn sich mehrere
 
 ## Warum das zählt
 
-Alles Beacon-Bezogene liegt an der **Application**: das Script, die zwei Hashes, die [Tracker-Einstellungen](/de/tracker), der Collector und die Policy für unbekannte Domains. Eine **Site** ist der Ort, an dem die Daten einer Domain landen, plus ein paar Per-Domain-Einstellungen, die du ohne Eingriff in die Application anpassen kannst.
+Alles Beacon-Bezogene liegt an der **Application**: das Script, die zwei Hashes, die [Tracker-Einstellungen](/de/tracker), der Collector und die Policy für unbekannte Domains. Eine **Site** ist der Ort, an dem die Daten einer Domain landen.
 
 Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe unten). Ein Cross-Site-Analytics-Scope, der alle Sites mit einem Tag gemeinsam auswertet, ist geplant; heute sind Tags Labels zum Gruppieren, kein Analytics-Filter.
 
@@ -17,14 +17,13 @@ Zum Gruppieren verwandter Properties hängst du **Tags** an (siehe unten). Ein C
 
 - **Domain hinzufügen.** Eine Site unter der Application anlegen oder eine [vorgeschlagene Domain](/de/concepts/applications#unbekannte-domains-site_policy) adoptieren, dann das Snippet der Application einbetten.
 - **Beacon-Erfassung anpassen.** Das ist eine Änderung an der Application: ihre [Tracker-Einstellungen](/de/tracker) bearbeiten oder ein [Preset](/de/tracker#presets) wählen.
-- **Retention für eine Domain kürzen.** `data_retention_days` auf der Site überschreiben; sonst erbt sie den Default der Application.
-- **Besucher-Identifier für eine Domain abschalten.** `store_stitch` auf der Site aus überschreiben, dann bleiben für diese Domain echt anonyme Zeilen.
+- **Andere Retention oder anderer Besucher-Identifier für eine Domain.** Leg die Domain in eine eigene Application. `data_retention_days`, `store_stitch` und `count_visitors_by` gelten für alle Sites einer Application.
 - **Ohne Löschen pausieren.** `is_active = false` behält Historie, stoppt neuen Ingest.
 - **Zum Organisieren taggen.** Tags wie `env:production` oder `team:growth`.
 
 ## Was eine Site hat
 
-Eine Site ist bewusst schlank. Embed und Erfassungs-Config liegen an der [Application](/de/concepts/applications); drei Felder sind Per-Domain-**Overrides**, bei denen ein leerer Wert den Default der Application erbt.
+Eine Site ist bewusst schlank. Embed, Erfassungs-Config und Datenschutz-Einstellungen liegen an der [Application](/de/concepts/applications).
 
 | Feld                  | Typ                                   | Hinweise                                                                          |
 | --------------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
@@ -33,14 +32,11 @@ Eine Site ist bewusst schlank. Embed und Erfassungs-Config liegen an der [Applic
 | `application_id`      | UUID v7                               | Die Application, zu der diese Domain gehört.                                      |
 | `name`                | string                                | Wie die Site im UI erscheint.                                                     |
 | `domain`              | string                                | Reiner Hostname, kein Protokoll (z. B. `acme.com`).                               |
-| `data_retention_days` | int · nullable                        | Override; leer erbt den Default der Application (`90`). Siehe [`data_retention_days`](/de/tracker#data-retention-days). |
-| `store_stitch`        | bool · nullable                       | Override; leer erbt den Wert der Application. An speichert den am Edge abgeleiteten `stitch` für Visitor-Metriken; aus bleibt die Zeile echt anonym. Siehe [`store_stitch`](/de/tracker#store-stitch). |
-| `count_visitors_by`   | enum · nullable                       | Override (`stitch` oder `session`); leer erbt den Wert der Application. Ein Reporting-Default, begrenzt auf das, was die Site tatsächlich erfasst. Siehe [Besucher und Sessions](/de/concepts/sessions). |
 | `tags`                | Liste von Strings (max 10)            | Freie Labels zum Organisieren von Sites. Cross-Site-Analytics per Tag ist geplant, noch nicht live. |
 | `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
 | `activated_at`        | timestamp · nullable                  | Wann die Site erstmals die Aktivierungsschwelle überschritt und live ging.        |
 
-Die Hashes, das Preset und seine Schalter, der Collector, `site_policy` und das Page-Type-Ruleset stehen **nicht** hier: Sie gehören zur Application. Siehe [Applications](/de/concepts/applications).
+Die Hashes, das Preset und seine Schalter, die Datenschutz-Einstellungen, der Collector, `site_policy` und das Page-Type-Ruleset stehen **nicht** hier: Sie gehören zur Application. Siehe [Applications](/de/concepts/applications).
 
 ## Tags
 
@@ -59,22 +55,13 @@ Max 10 Tags pro Site.
 
 Die frühere Per-Site-Allow-List `allowed_origins` und der Schalter `enforce_domain_match` sind weg. Der Ingest wird über die [`site_policy`](/de/tracker#site-policy) der Application gesteuert: `strict` akzeptiert nur exakt registrierte Domains, `open` (der Default) vermerkt einen unbekannten Hostnamen als vorgeschlagene Domain, die du adoptieren kannst, und `auto` legt ihn automatisch als Site an. Gesetzt wird das an der Application.
 
-## Per-Domain-Overrides
-
-Zwei der erfassungsbezogenen Werte der Application lassen sich pro Site überschreiben, ohne zu ändern, was der Beacon sammelt:
-
-- **`store_stitch`.** An speichert den am Edge abgeleiteten `stitch`-Identifier für Unique-Visitor-Zahlen und Session-Metriken (Bounce-Rate, Seiten pro Session, Verweildauer). Aus lässt eine Zeile ganz ohne Besucher-Identifier zurück, vollständig anonym, auf Kosten dieser Metriken für die Domain. Per-Pageview-Signale (Web Vitals, Fehler, Third-Party, Attribution) bleiben so oder so unberührt.
-- **`count_visitors_by`.** Ob die Reports dieser Site eindeutige Besucher nach `stitch` oder nach `session` zählen. Eine Reporting-Präferenz, zur Query-Zeit auf das begrenzt, was die Site tatsächlich speichert.
-
-Lass eines von beiden leer, um von der Application zu erben. Siehe [Tracker-Einstellungen](/de/tracker) für jeden Schalter und [Privacy → Identifier abschalten, oder aus lassen](/de/privacy#identifier-abschalten-oder-aus-lassen) für die Begründung.
-
 ## Häufige Szenarien
 
 ### Production + Staging + Preview
 
 Zwei Wege, beide tragen:
 
-- **Eine Application, eine Site pro Domain** (`acme.com`, `staging.acme.com` und jede Preview-Domain). Überall dasselbe Snippet; jede Domain bekommt ihr eigenes Dashboard und kann die Retention überschreiben. Markiere die [`environment`](/de/tracker#environment) einer Wegwerf-Application als `dev`, um sie klar von Production zu trennen.
+- **Eine Application, eine Site pro Domain** (`acme.com`, `staging.acme.com` und jede Preview-Domain). Überall dasselbe Snippet; jede Domain bekommt ihr eigenes Dashboard. Markiere die [`environment`](/de/tracker#environment) einer Wegwerf-Application als `dev`, um sie klar von Production zu trennen.
 - **Getrennte Applications**, wenn Staging wirklich andere Tracker-Einstellungen braucht, etwa `Full` auf Staging und `Standard` in Production.
 
 Die meisten Teams starten mit einer Application und mehreren Sites.

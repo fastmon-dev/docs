@@ -1,6 +1,6 @@
 ---
 title: Sites
-description: A site is one domain under an application, with its own dashboard, traffic, and a few per-domain overrides.
+description: A site is one domain under an application, with its own dashboard and traffic.
 ---
 
 A **site** is one domain you monitor. It belongs to exactly one [application](/en/concepts/applications), which owns the snippet, the hashes, and every [tracker setting](/en/tracker); the site is the pure analytics unit: its own dashboard, its own traffic, its own `site_id`.
@@ -9,22 +9,21 @@ Most applications have one site. Add more when several domains should share one 
 
 ## Why it matters
 
-Everything beacon-related lives on the **application**: the script you embed, the two hashes, the [tracker settings](/en/tracker), the collector, and the unknown-domain policy. A **site** is where one domain's data lands, plus a few per-domain settings you can tune without touching the application.
+Everything beacon-related lives on the **application**: the script you embed, the two hashes, the [tracker settings](/en/tracker), the collector, and the unknown-domain policy. A **site** is where one domain's data lands.
 
 To organize related properties, attach **tags** (below). A cross-site analytics scope that reports on every site carrying a tag together is planned; today tags are labels for grouping, not an analytics filter.
 
 ## When you'd touch it
 
-- **Adding a domain.** Create a site under the application, or adopt a [suggested domain](/en/concepts/applications#site-policy), then embed the application's snippet.
+- **Adding a domain.** Create a site under the application, or adopt a [suggested domain](/en/concepts/applications#unknown-domains-site_policy), then embed the application's snippet.
 - **Changing what the beacon collects.** That's an application-level change: edit its [tracker settings](/en/tracker), or pick a [preset](/en/tracker#presets).
-- **Cutting retention for one domain.** Override `data_retention_days` on the site; otherwise it inherits the application's default.
-- **Dropping the visitor identifier for one domain.** Override `store_stitch` off on the site, leaving genuinely anonymous rows for that domain.
+- **Other retention or visitor identifier for one domain.** Move the domain into an application of its own. `data_retention_days`, `store_stitch` and `count_visitors_by` apply to every site of an application.
 - **Pausing without deleting.** Toggle `is_active = false` to keep history but stop ingesting new data.
 - **Tagging to organize sites.** Add tags like `env:production` or `team:growth`.
 
 ## What's on a site
 
-A site is deliberately slim. The embed and the collection config live on the [application](/en/concepts/applications); three fields are per-domain **overrides**, where an empty value inherits the application's default.
+A site is deliberately slim. The embed, the collection config and the privacy settings live on the [application](/en/concepts/applications).
 
 | Field                 | Type                                  | Notes                                                                            |
 | --------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
@@ -33,14 +32,11 @@ A site is deliberately slim. The embed and the collection config live on the [ap
 | `application_id`      | UUID v7                               | The application this domain belongs to.                                          |
 | `name`                | string                                | How the site appears in the UI.                                                  |
 | `domain`              | string                                | Bare hostname, no protocol (e.g. `acme.com`).                                    |
-| `data_retention_days` | int · nullable                        | Override; empty inherits the application's default (`90`). See [`data_retention_days`](/en/tracker#data-retention-days). |
-| `store_stitch`        | bool · nullable                       | Override; empty inherits the application's value. On stores the edge-derived `stitch` for visitor metrics; off keeps a genuinely anonymous row. See [`store_stitch`](/en/tracker#store-stitch). |
-| `count_visitors_by`   | enum · nullable                       | Override (`stitch` or `session`); empty inherits the application's value. A reporting default, clamped to what the site actually collects. See [Visitors and sessions](/en/concepts/sessions). |
 | `tags`                | list of strings (max 10)              | Free-form labels for organizing sites. Cross-site analytics-by-tag is planned, not yet live. |
 | `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
 | `activated_at`        | timestamp · nullable                  | When the site first crossed the activation threshold and went live.              |
 
-The hashes, the preset and its switches, the collector, `site_policy`, and the page-type ruleset are **not** here: they belong to the application. See [Applications](/en/concepts/applications).
+The hashes, the preset and its switches, the privacy settings, the collector, `site_policy`, and the page-type ruleset are **not** here: they belong to the application. See [Applications](/en/concepts/applications).
 
 ## Tags
 
@@ -59,22 +55,13 @@ Max 10 tags per site.
 
 The former per-site `allowed_origins` allow-list and `enforce_domain_match` guard are gone. Ingest is governed by the application's [`site_policy`](/en/tracker#site-policy): `strict` accepts only exactly-registered domains, `open` (the default) records an unknown hostname as a suggested domain you can adopt, and `auto` provisions it as a site automatically. Set it on the application.
 
-## Per-domain overrides
-
-Two of the application's collection-related values can be overridden per site, without changing what the beacon collects:
-
-- **`store_stitch`.** On stores the edge-derived `stitch` identifier for unique-visitor counts and session metrics (bounce rate, pages per session, dwell time). Off leaves a row with no visitor identifier at all, fully anonymous, at the cost of those metrics for that domain. Per-pageview signals (Web Vitals, errors, third-party, attribution) are unaffected either way.
-- **`count_visitors_by`.** Whether this site's reports count distinct visitors by `stitch` or by `session`. A reporting preference, clamped at query time to what the site actually stores.
-
-Leave either empty to inherit the application. See [Tracker settings](/en/tracker) for every switch and [Privacy → Turning identifiers off, or leaving them off](/en/privacy#turning-identifiers-off-or-leaving-them-off) for the reasoning.
-
 ## Common scenarios
 
 ### Production + staging + preview
 
 Two shapes that work:
 
-- **One application, one site per domain** (`acme.com`, `staging.acme.com`, and each preview domain). The same snippet everywhere; each domain gets its own dashboard and can override retention. Mark a throwaway application's [`environment`](/en/tracker#environment) as `dev` to keep it clearly apart from production.
+- **One application, one site per domain** (`acme.com`, `staging.acme.com`, and each preview domain). The same snippet everywhere; each domain gets its own dashboard. Mark a throwaway application's [`environment`](/en/tracker#environment) as `dev` to keep it clearly apart from production.
 - **Separate applications** when staging genuinely needs different tracker settings, for example `Full` on staging and `Standard` in production.
 
 Most teams start with one application and several sites.
