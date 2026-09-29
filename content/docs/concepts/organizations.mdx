@@ -25,7 +25,7 @@ Most accounts only ever have one organization. Multiple is mostly a thing for ag
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
 | `id`              | UUID v7                                   | Stable identifier. Used in API URLs (`/organizations/{id}/…`). |
 | `name`            | string                                    | Human-readable. Shows in the org switcher.                            |
-| `plan`            | enum                                      | `none`, `beta`, `light`, `standard`, `partner`, or `enterprise`.      |
+| `plan`            | enum                                      | `none`, `beta`, `standard`, `partner`, or `enterprise`.               |
 | `members`         | list of `{ user_id, role }`               | Roles: `owner`, `member`, `viewer`. The payload also carries your own `role` and `permissions`. |
 
 ## Plans
@@ -34,8 +34,7 @@ Most accounts only ever have one organization. Multiple is mostly a thing for ag
 | ------------- | ------------------------------------------------------------ |
 | `none`        | The starting state. Nobody has chosen anything yet.          |
 | `beta`        | Early access during onboarding. Limited quota.               |
-| `light`       | Single-product teams. Default retention.                     |
-| `standard`    | Production teams. Higher retention.                          |
+| `standard`    | The one plan you can buy, sold as **fastmon One**. Everything is included. |
 | `partner`     | Agencies. Manage **partner clients** (sub-organizations you operate on behalf of someone else). |
 | `enterprise`  | Custom limits, custom retention, signed DPA.                 |
 
