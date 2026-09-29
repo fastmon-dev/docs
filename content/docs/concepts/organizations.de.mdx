@@ -25,7 +25,7 @@ Die meisten Accounts haben genau eine Organisation. Mehrere lohnen sich vor alle
 | ----------------- | ----------------------------------------- | --------------------------------------------------------------------- |
 | `id`              | UUID v7                                   | Stabiler Identifier. Verwendet in API-URLs (`/organizations/{id}/…`). |
 | `name`            | string                                    | Menschenlesbar. Erscheint im Org-Switcher.                            |
-| `plan`            | enum                                      | `none`, `beta`, `standard`, `partner` oder `enterprise`.              |
+| `plan`            | enum                                      | `none`, `beta`, `one`, `partner` oder `enterprise`.                   |
 | `members`         | Liste von `{ user_id, role }`             | Rollen: `owner`, `member`, `viewer`. Die Antwort trägt außerdem deine eigene `role` und deine `permissions`. |
 
 ## Pläne [#plans]
@@ -34,7 +34,7 @@ Die meisten Accounts haben genau eine Organisation. Mehrere lohnen sich vor alle
 | ------------- | ------------------------------------------------------------ |
 | `none`        | Der Startzustand. Es hat noch niemand etwas gewählt.         |
 | `beta`        | Early Access während Onboarding. Limitierte Quota.           |
-| `standard`    | Der einzige buchbare Plan, verkauft als **fastmon One**. Alles enthalten. |
+| `one`         | Der einzige buchbare Plan, verkauft als **fastmon One**. Alles enthalten. |
 | `partner`     | Agenturen. **Partner-Clients** verwalten (Sub-Organisationen, die die Agentur für jemand anderen betreibt). |
 | `enterprise`  | **fastmon Enterprise**. Custom-Limits, Custom-Retention, AVV. |
 
