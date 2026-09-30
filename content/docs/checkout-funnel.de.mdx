@@ -33,7 +33,7 @@ Ein Muster muss den ganzen Pfad beschreiben. `*` steht für eine beliebige Zeich
 
 Die Muster enden an Wortgrenzen: `*/cart` trifft die Warenkorbseite, aber nicht `/cartoons`, und `*/thank-you` trifft nicht `/thank-you-for-subscribing`. `/order` ist exakt und nur auf Root-Ebene gemeint, sonst würde es Shopwares `/account/order` treffen.
 
-Der Schalter läuft auf jeder Site, Shop oder nicht. Auf einer Site mit Pfaden wie `/docs/checkout/setup` bekommen diese Pageviews eine Stufe; Abhilfe schaffen eigene Muster oder das Abschalten. OXID braucht das [Query-Rezept](#oxid), Shopify die [Checkout-Events](#shopify).
+Der Schalter läuft auf jeder Site, Shop oder nicht. Auf einer Site mit Pfaden wie `/docs/checkout/setup` bekommen diese Pageviews eine Stufe; Abhilfe schaffen eigene Muster oder das Abschalten. OXID liest seinen [Controller `cl`](#oxid), Shopify die [Checkout-Events](#shopify).
 
 ## Warenkorb-Interaktionen [#cart-interactions]
 
@@ -82,14 +82,18 @@ Was sich im Funnel ändert, sobald das Pixel läuft:
 
 Die Events tragen den Schritt, Land, Gerät, Browser und Traffic-Klasse des Besuchers sowie die Edge-Kennung. Keine URL, keine Session-ID, kein Bestellwert und keine Web Vitals: Der Shopify-Checkout wird gezählt, nicht gemessen.
 
-## Wo es auftaucht
+## Wo es auftaucht [#where-it-shows-up]
 
-- **Analytics-Dashboard.** Checkouts ist die vierte zentrale Kennzahl, mit eigener Kachel und Sparkline. Wählst du sie, zeichnet das Hauptdiagramm die Abschluss-Serie, mit Warenkorb und Checkout als Kontextlinien. Das Checkout-Panel listet die Schritte und die Warenkorb-Requests nach Art.
+- **Analytics-Dashboard.** Bestellungen und Conversion sind zentrale Kennzahlen. Bestellungen zeichnet die Abschluss-Serie, mit Warenkorb und Checkout als Kontextlinien. Conversion zeichnet die Rate gegen die Vorperiode, und der Tooltip nennt die Besucher hinter jedem Punkt.
+- **Checkout-Karte.** Die Schritte, die Warenkorb-Requests nach Art, die Besucher mit kaputtem Warenkorb und die Zeit bis zum Kauf.
+- **Käufer im Vergleich.** Eine Karte ganz unten, standardmäßig zugeklappt, stellt Besucher mit gesehenem Kauf denen gegenüber, die ohne Kauf bis in den Checkout kamen. Sie lädt erst, wenn du sie öffnest.
 - **Stufen-Chart.** Besucher pro Stufe über die Zeit, gezählt zum Zeitpunkt des Erreichens und samt der Checkout-Events eines Shopify-Pixels, mit für alle drei gleich verglichener Vorperiode.
-- **Filter `checkout_stage`.** Warenkorb, Checkout und Abgeschlossen sind feste Optionen in der Filterleiste, den Chips und der Befehlspalette. Auf den Metrikseiten sind Web Vitals pro Funnel-Stufe eine gefilterte Abfrage.
+- **Filter `checkout_stage`.** Warenkorb, Checkout und Bestellt sind feste Optionen in der Filterleiste, den Chips und der Befehlspalette. Auf den Metrikseiten sind Web Vitals pro Funnel-Stufe eine gefilterte Abfrage.
 - **Explorer.** Gruppiere nach Checkout-Stufe, zeichne Warenkorb-Aktionen und fehlgeschlagene Warenkorb-Aktionen, und lies Stufe und Arten als Spalten. Ein Preset „Checkout" bringt Stufen über die Zeit und LCP pro Stufe.
 - **Besucher.** Filtere die Liste auf alle, die eine Stufe erreicht oder eine Warenkorb-Interaktion ausgelöst haben. Auf der Journey trägt jeder Pageview einen Funnel-Chip in der Farbe seiner Stufe.
-- **Business Impact.** Wo der Funnel Daten hat, zeigt die Seite die gemessene Conversion-Rate statt der aus LCP und INP geschätzten.
+- **Business Impact.** Wo der Funnel Daten hat, zeigt die Seite dieselbe Conversion-Rate statt der aus LCP und INP geschätzten.
+
+Die Checkout-Zahlen folgen den Filtern der Seite, außer Filtern, die eine Checkout-Stufe wählen. Sie erscheinen nur bei einem Shop: Eine Application mit unbekannter Plattform gilt als Shop, bis `shop.active` auf `false` steht.
 
 ## Einstellungen
 
@@ -101,7 +105,9 @@ Schalter und Muster liegen an der Application unter **Einstellungen → Checkout
 
 ### Query-basierte Checkouts (OXID und andere) [#oxid]
 
-OXID hält den gesamten Checkout auf `index.php` und unterscheidet die Schritte nur im Query-Parameter `cl`. Nimm `cl` in [`collect_query_values_for`](/de/tracker#collect-query-values-for) auf und setz eigene Muster: cart `*?cl=basket*`, checkout `*?cl=user*`, `*?cl=payment*`, `*?cl=order*`, success `*?cl=thankyou*`. Können andere Query-Keys vor `cl` stehen, ergänze die Varianten mit `*&cl=…*`. Dasselbe Rezept deckt generische `?step=`-Checkouts ab. Query-Muster sind nicht Teil der Defaults.
+OXID hält den gesamten Checkout auf `index.php` und nennt den Schritt im Query-Parameter `cl`. Bei einer OXID-Application behält die gespeicherte URL `cl`, etwa `/index.php?cl=thankyou`, und der Funnel braucht keine Einrichtung: `basket` ist der Warenkorb, `user`, `payment` und `order` der Checkout, `thankyou` der Abschluss. Eigene `*?cl=*`-Muster haben weiter Vorrang, und eine Stufe mit eigener Pfadliste, auch `[]`, bekommt nichts vom Controller.
+
+Ein generischer `?step=`-Checkout braucht den Key in [`collect_query_values_for`](/de/tracker#collect-query-values-for) und eigene Muster wie `*?step=payment*`.
 
 ## Datenschutz [#privacy]
 

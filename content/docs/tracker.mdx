@@ -100,7 +100,7 @@ Keeps the **names** of query parameters on the page URL (for example `?page`, `?
 
 ### `collect_query_values_for` [#collect-query-values-for]
 
-An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`collect_query_keys`](#collect-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset. Shops whose checkout steps differ only in a query parameter (OXID's `cl`) list that key here so the [checkout funnel](/en/checkout-funnel#oxid) can match on it.
+An opt-in allow-list (max 20 entries) of parameter names whose **value** is additionally kept, length-capped. Everything not on the list still has its value dropped. Requires [`collect_query_keys`](#collect-query-keys). Typical entries are non-personal routing or campaign parameters such as `page`, `variant`, `utm_campaign`. Default empty. Not part of a preset. Shops whose checkout steps differ only in a query parameter, such as `?step=`, list that key here so the [checkout funnel](/en/checkout-funnel#oxid) can match on it. OXID's `cl` is kept without it.
 
 **PII:** you own this one. A value is stored only for the exact keys you list, and never "all values". If you list a parameter that carries personal data (an email, a user id, a token), you have chosen to store it, so keep the list to non-personal keys.
 
@@ -171,11 +171,11 @@ Captures aggregated fetch/XHR telemetry: per-endpoint call counts, durations, er
 
 ## Page type
 
-In the dashboard and on the API this is two settings: `platform` names the shop system, and `page_type.body_class` turns the read on. `pagetype_ruleset` is derived from the two. See [Applications](/en/concepts/applications#application-fields).
+In the dashboard and on the API this is two settings: `platform` names the shop system, and `page_type.body_class` turns the read on. `pagetype_ruleset` is derived from the two. URL rules and the order of all sources are under [Applications → Page-type detection](/en/concepts/applications#page-type-detection).
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
-Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts the framework's page token, which the collector maps to a page-type category. A `Server-Timing: pageType` header always wins over this. Where your theme renamed one of the framework's classes, name it yourself with [`pagetype_rules`](#pagetype-rules). Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). The [checkout stage](/en/checkout-funnel) is a separate label derived from the URL alone.
+Classifies each pageview into a **page type** (product, category, cart, checkout, and so on) for shop systems, by reading the shop framework's body controller class. Off by default (`""`), which reads nothing from the DOM. Set it to a built-in ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`) and the tracker extracts the framework's page token, which the collector maps to a page-type category. A `Server-Timing: pageType` header always wins over this. Where your theme renamed one of the framework's classes, name it yourself with [`pagetype_rules`](#pagetype-rules). Per-site, and available on org-level trackers too. See [Server-Timing → Page type](/en/guides/server-timing#page-type). Without any other source, a [checkout stage](/en/checkout-funnel) path gives `cart` or `checkout`.
 
 **PII:** the only thing read from the DOM is a single framework class token, matched by a ruleset-scoped pattern; never the full `class` attribute, never page content or form values, and the raw class never leaves the browser. Off is the default, so a site opts into this one DOM read deliberately.
 

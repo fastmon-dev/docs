@@ -20,7 +20,7 @@ Zwei Response-Header auf deinem Origin schalten die Reports ein. Header, Server-
 
 Die Seite liegt in der Sidebar unter **Fehler → Network Error Logging**, unter `/errors/nel`. Sie hat drei Tabs, der Tab steht in der URL.
 
-- **Übersicht**: die HTTP-Fehler des Servers, 5xx oben, 4xx darunter. **Betroffene Besucher** steht bei jeder Zahl vorn, mit dem Anteil an allen Besuchern, die Reports danach. Das Diagramm stapelt **Nach Klasse** oder **Nach Code**.
+- **Übersicht**: die HTTP-Fehler des Servers, 5xx oben, 4xx darunter. Die Kacheln für 5xx und 4xx zeigen zuerst die Reports, die betroffenen Besucher daneben. Überall sonst steht **Betroffene Besucher** vorn, mit dem Anteil an allen Besuchern. Das Diagramm stapelt **Nach Klasse** oder **Nach Code**.
 - **Wo sie scheitern**: eine Karte pro Dimension, alle auf einmal. Statuscodes, Seiten, Serveradressen, Länder, Seiten und Hosts, Geräte, Browser, OS, Traffic und Versionen, sobald ein Browser gefiltert ist.
 - **Seiten und Hosts** ist zugleich der Setup-Check. Jede Site zeigt ihren letzten Report, und zeigen die meisten Reports ohne Details auf eine Serveradresse, nennt die Karte sie als wahrscheinlich ausgefallen.
 - **Verbindungsfehler**: standardmäßig zugeklappt. Jeder Typ wird mit seinem üblichen Niveau verglichen, markiert werden ein kaputtes Zertifikat und ein Anstieg bei abgelehnten Verbindungen, Timeouts oder unbekannten Hosts.

@@ -33,7 +33,7 @@ A pattern must describe the whole path. `*` matches any run of characters, inclu
 
 The patterns are word-bounded: `*/cart` matches the cart page but not `/cartoons`, and `*/thank-you` does not match `/thank-you-for-subscribing`. `/order` is exact and root-only, or it would match Shopware's `/account/order`.
 
-The switch runs on every site, shops or not. On a site with paths like `/docs/checkout/setup`, those pageviews pick up a stage; the remedy is custom patterns or the opt-out. OXID needs the [query recipe](#oxid). For Shopify, see [Shopify checkout events](#shopify).
+The switch runs on every site, shops or not. On a site with paths like `/docs/checkout/setup`, those pageviews pick up a stage; the remedy is custom patterns or the opt-out. OXID reads its [`cl` controller](#oxid). For Shopify, see [Shopify checkout events](#shopify).
 
 ## Cart interactions [#cart-interactions]
 
@@ -82,14 +82,18 @@ What changes in the funnel once the pixel runs:
 
 The events carry the step, the visitor's country, device, browser and traffic class, and the edge identifier. No URL, no session id, no order value, and no Web Vitals: the Shopify checkout is counted, not measured.
 
-## Where it shows up
+## Where it shows up [#where-it-shows-up]
 
-- **Analytics dashboard.** Checkouts is the fourth headline metric, with its own tile and sparkline. Selecting it draws the success series with cart and checkout as context lines. The checkout panel lists the steps and the cart requests by kind.
+- **Analytics dashboard.** Orders and Conversion are headline metrics. Orders draws the success series with cart and checkout as context lines. Conversion draws the rate against the previous period, and its tooltip names the visitors behind each point.
+- **Checkout card.** The steps, the cart requests by kind, the visitors whose cart broke, and the time to purchase.
+- **Buyers compared.** A card at the bottom, closed by default, compares visitors with a seen purchase against those who reached the checkout without one. It loads only when opened.
 - **Stage chart.** Visitors per stage over time, counted when they reached it and including a Shopify pixel's checkout events, with the previous period compared the same way for all three.
-- **`checkout_stage` filter.** Cart, checkout, and completed are fixed options in the filter bar, the chips, and the command palette. On the metric pages Web Vitals per funnel stage is a filtered query.
+- **`checkout_stage` filter.** Cart, checkout, and ordered are fixed options in the filter bar, the chips, and the command palette. On the metric pages Web Vitals per funnel stage is a filtered query.
 - **Explorer.** Group by Checkout Stage, chart Cart Actions and Failed Cart Actions, and read stage and kinds as columns. A "Checkout" preset brings stages over time and LCP per stage.
 - **Visitors.** Filter the list to everyone who reached a stage or issued a cart interaction. On the journey each pageview carries a Funnel chip colored by stage.
-- **Business Impact.** Where the funnel has data, the page shows the measured conversion rate instead of the estimate derived from LCP and INP.
+- **Business Impact.** Where the funnel has data, the page shows the same conversion rate instead of the estimate derived from LCP and INP.
+
+The checkout numbers follow the page's filters, except filters that pick a checkout stage. They show only on a shop: an application whose platform is unknown counts as one until `shop.active` is `false`.
 
 ## Settings
 
@@ -101,7 +105,9 @@ The switch and the patterns live on the application under **Settings → Checkou
 
 ### Query-based checkouts (OXID and others) [#oxid]
 
-OXID keeps the whole checkout on `index.php` and distinguishes the steps only in the `cl` query parameter. Add `cl` to [`collect_query_values_for`](/en/tracker#collect-query-values-for), then set custom patterns: cart `*?cl=basket*`, checkout `*?cl=user*`, `*?cl=payment*`, `*?cl=order*`, success `*?cl=thankyou*`. If other query keys can precede `cl`, add the `*&cl=…*` variants. The same recipe covers generic `?step=` checkouts. Query patterns are not part of the defaults.
+OXID keeps the whole checkout on `index.php` and names the step in the `cl` query parameter. On an OXID application the stored URL keeps `cl`, as in `/index.php?cl=thankyou`, and the funnel needs no setup: `basket` is the cart, `user`, `payment` and `order` the checkout, `thankyou` the success. Custom `*?cl=*` patterns still come first, and a stage with its own path list, including `[]`, gets nothing from the controller.
+
+A generic `?step=` checkout needs the key in [`collect_query_values_for`](/en/tracker#collect-query-values-for) and custom patterns such as `*?step=payment*`.
 
 ## Privacy
 
