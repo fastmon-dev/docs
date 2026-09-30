@@ -80,19 +80,31 @@ A Shopify application also serves the [checkout event
 pixel](/en/guides/shopify-checkout), built from `source_hash` and the
 collector settings.
 
-## Page-type detection
+## Page-type detection [#page-type-detection]
 
 `platform` says what the application runs
 on; `page_type.body_class` turns on reading the page type
 (home, product, cart, checkout) from the page's `<body>` class.
 Picking a platform does not turn the read on, and it stays off for
-Shopify and PrestaShop, which have no ruleset. Server-Timing always
-wins over the body-class read.
+Shopify and PrestaShop, which have no ruleset.
 
 A theme that renamed those classes records nothing, so
 `pagetype_rules` names your own: up to 24 exact class names, each
-mapped to a page type. The rules are read before the ruleset and work
-without one. Two endpoints propose what to set and write nothing:
+mapped to a page type. `page_type.url_rules` labels pages by URL:
+up to 10 patterns in the syntax of the [checkout paths](#checkout-funnel),
+each with a page type, and the first match wins. It suits a headless
+shop whose body classes say nothing.
+
+The collector takes the first source that gives a page type:
+
+1. The `Server-Timing: pageType` header.
+2. Your own body classes, then your own URL rules.
+3. The platform's ruleset, then the Shopify routes or the OXID `cl` controller.
+4. The checkout stage: `cart` on a cart path, `checkout` on a checkout or success path.
+
+[`page-type-sources`](/en/api/applications/getApplicationPageTypeSources)
+lists these sources for an application in that order. Two endpoints
+propose what to set and write nothing:
 [`detect-pagetype`](/en/api/applications/detectApplicationPageType)
 names the shop system,
 [`pagetype/discover`](/en/api/applications/discoverApplicationPageTypeRules)
@@ -173,6 +185,7 @@ twins these groups replaced no longer answer.
 | `collection.sampling_rate`   | number            | Share of visitors stored, `0.1` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
+| `page_type.url_rules`        | list · nullable   | Your own URL patterns mapped to page types. Read after your body classes. |
 | `shop.checkout.tracking`     | bool              | Checkout funnel on (`true`, the default) or off. See [Checkout funnel](#checkout-funnel). |
 | `shop.checkout.*_paths`      | list · nullable   | URL patterns per funnel stage. `null` inherits the built-in patterns; a list replaces them. |
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |

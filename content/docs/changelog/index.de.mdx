@@ -17,6 +17,137 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="Ein Plan zum Buchen: fastmon One">
+
+Die Plan-Seite fragt nicht mehr, welchen Plan du willst. Der Tarif für 29 EUR entfällt, und alles, was ihm fehlte, gehört jetzt zu fastmon One.
+
+- **Preis und Kontingent bleiben**: 99 EUR netto im Monat mit 1.000.000 Seitenaufrufen und einer Production-Application. Development-Applications bleiben kostenlos.
+- **Du entscheidest nur noch über Kapazität**: zusätzliche Seitenaufrufe in Millionenschritten und Slots für Production-Applications, neben deiner Nutzung und der Prognose.
+- **Eine Preisübersicht** zeigt jede Position zum vollen Preis, jeden Rabatt als eigene Zeile, die Änderung gegenüber heute und den Betrag inklusive USt. Fehlende Rechnungsdaten füllst du direkt auf der Seite aus.
+- **Die jährliche Laufzeit kostet zwölf Monate minus 10 %** statt minus 15 %. Bestehende Jahresabos behalten ihren Preis, bis die Laufzeit gewechselt wird.
+- **Rabatte gelten auch für zusätzliche Seitenaufrufe und Applications**, der Jahresrabatt genauso wie ein Kundenrabatt.
+- **fastmon Enterprise** ist ein kurzer Hinweis mit dem Button „Schreib uns" an enterprise@fastmon.eu. Das Early-Adopter-Abzeichen ist weg.
+
+Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="changed" area="api" title="Der Plan-Wert heißt `one`">
+
+Jede Antwort mit einem Plan liefert `one`, wo bisher `standard` stand, und `light` ist aus dem Enum verschwunden. Eine Übergangsfrist gibt es nicht: Ein Client, der auf `"standard"` prüft, trifft ohne Fehlermeldung nicht mehr. `GET /organizations/{id}/billing/plans` liefert kein `early_adopter` mehr, und `GET /organizations/{id}/billing` weist beide Add-on-Beträge nach Abzug des Jahresrabatts aus. Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="JavaScript-Fehler als Anteil, die Top 5 und minutengenau zuletzt gesehen">
+
+Das Chart unter JavaScript-Fehler trennt einen Fehleranstieg von einer Traffic-Spitze.
+
+- **Das Chart der betroffenen Seitenaufrufe schaltet zwischen Anzahl und %.** Der Anteil ist der Teil der Seitenaufrufe eines Buckets, der einen Fehler hatte.
+- **Top 5 zeichnet die fünf Fehler mit den meisten betroffenen Seitenaufrufen** als Linien neben die Summe. Die Legende zeigt ihre Werte für den Bucket unter der Maus und verlinkt auf jeden Fehler.
+- **Ziehen über das Chart zoomt hinein.** Beide Einstellungen bleiben im Link, und die eigene Seite eines Fehlers hat denselben %-Umschalter.
+- **„Zuletzt gesehen" ist minutengenau**, in der Liste und in ihrer Sortierung. Jede Zeile von `POST /analytics/error-types` trägt `last_seen_at`.
+
+Doku: [Analytics → Error Analytics](/de/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="Der Zeitraum-Picker zoomt, zieht und springt zu jetzt">
+
+Die Zeitraum-Pille und ihr Picker brauchen weniger Klicks.
+
+- **Minus und Plus** verdoppeln oder halbieren das Fenster, auch mit den Tasten `-` und `+`. Ein Live-Fenster bleibt live.
+- **Zieh über ein Trend-Chart**, um in diesen Abschnitt zu zoomen. Unter sechs Stunden laden die Charts minütlich neu.
+- **Zu jetzt springen** schiebt ein vergangenes Fenster bei gleicher Länge in die Gegenwart.
+- **„Minütlich" geht auch bei langen Fenstern** und kürzt sie auf ihre letzten 6 Stunden. Die Pfeile blättern dann in 6-Stunden-Schritten.
+- **Die Auflösung ist eine Reihe Kacheln**, jede mit der Zahl der Intervalle, die sie ergibt, oder mit dem Grund, warum sie nicht passt.
+- **Datum und Uhrzeit sind eigene Felder** und greifen sofort, einen Übernehmen-Button gibt es nicht mehr. Das Ausdrucksfeld nimmt eine Uhrzeitspanne wie `14:00-16:30`.
+- **Eine Zeitleiste** oben zeigt das Fenster auf den Tagen drumherum. Zieh es, zieh an einer Kante, oder scroll und pinch zum Zoomen.
+
+Doku: [Analytics → Zeitraum](/de/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-29" type="new" area="platform" title="Seiten über die URL zuordnen">
+
+`page_type.url_rules` nimmt bis zu 10 URL-Muster, jedes mit einem Page-Type, und das erste passende gewinnt. Das ist für einen Shop gedacht, dessen Body-Klassen nichts verraten, etwa ein Headless-Storefront, und braucht keine Tracker-Änderung. Im Dashboard findest du sie als URL-Regeln unter der Page-Type-Detection.
+
+- **Die Quellen greifen in dieser Reihenfolge**: Header, deine Body-Klassen, deine URL-Regeln, das Ruleset der Plattform, die Shopify-Routen, zuletzt die Checkout-Stufe.
+- **Ein Warenkorb-, Checkout- oder Erfolgs-Pfad liefert einen Page-Type**, wenn sonst nichts greift: `cart` für den Warenkorb, `checkout` für die beiden anderen. Seitenaufrufe von vor dem 29.09.2026 behalten ihren leeren Page-Type.
+- **`GET /applications/{app_id}/page-type-sources`** listet die Quellen einer Application in dieser Reihenfolge, jede mit dem Page-Type, den sie speichert. Auch Viewer dürfen das lesen.
+
+Doku: [Applications → Page-Type-Detection](/de/concepts/applications#page-type-detection).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-29" type="changed" area="platform" title="OXID arbeitet mit seinem Controller `cl`">
+
+Bei einer OXID-Application behält die gespeicherte URL den Controller `cl`, etwa `/index.php?cl=thankyou`, auch ohne `collect_query_values_for`. Die URL-Reports zeigen ab dem 29.09.2026 eine Zeile pro Controller, andere Query-Werte fallen weiter weg.
+
+- **Der Checkout-Funnel braucht keine eigenen Pfade.** `basket` markiert den Warenkorb, `user`, `payment` und `order` den Checkout, `thankyou` den Abschluss. Deine eigenen `*?cl=*`-Muster haben weiter Vorrang.
+- **Der Page-Type kommt aus dem Controller**, wenn Header, deine Regeln und die Body-Klasse nichts geliefert haben. `details` ist `product`, `thankyou` ist `checkout`.
+
+Doku: [Checkout-Funnel → OXID](/de/checkout-funnel#oxid).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Checkout: Conversion als Verlauf und Bestellungen beim Namen">
+
+Die Checkout-Zahlen auf der Analytics-Seite lesen sich wie ein Shop-Bericht.
+
+- **Conversion ist eine Kennzahl über dem Hauptchart**, gezeichnet gegen die Vorperiode. Der Tooltip nennt die Besucher hinter jedem Punkt, den Anteil mit Warenkorb, die mit kaputtem Warenkorb und die Zeit bis zum Kauf.
+- **Abgeschlossene Checkouts heißen Bestellungen.** Die letzte Funnel-Stufe heißt „Bestellt", in den Filtern, den Chips und im Explorer.
+- **Business Impact zeigt dieselbe Conversion-Rate**, Käufer durch alle Besucher. Bisher wurde durch die Besucher mit Warenkorb geteilt.
+- **Die Checkout-Karte nennt die Besucher mit kaputtem Warenkorb** und wie lange ein Kauf dauert, als Median und p90.
+- **Käufer im Vergleich ist eine Tabelle** ganz unten auf der Seite, zugeklappt, bis du sie öffnest. Sie stellt Käufer den Besuchern gegenüber, die ohne gesehenen Kauf bis in den Checkout kamen, je Funnel-Stufe.
+- **Die Checkout-Zahlen folgen den Filtern der Seite**, Bestellungen eingeschlossen, außer Filtern, die eine Checkout-Stufe wählen.
+- **Sie erscheinen nur bei einem Shop.** Eine Application mit unbekannter Plattform gilt als Shop, bis du sie als keinen markierst.
+
+Doku: [Checkout-Funnel → Wo es auftaucht](/de/checkout-funnel#where-it-shows-up).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Nach HTTP-Status gruppieren">
+
+Der Explorer und `POST /analytics/query` gruppieren Seitenaufrufe nach `status_code`, Fehlerseiten wie 404 oder 500 werden so zu eigenen Serien. Seitenaufrufe, deren Browser keinen Status meldet, meist Firefox und Safari, bilden die Gruppe „Nicht gemeldet", auf der API `0`. Benachrichtigungsregeln filtern ebenfalls auf `status_code`, und die Gruppierungsauswahl im Explorer hat ein Suchfeld. Doku: [Analytics → Der Explorer](/de/analytics#explorer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="api" title="Gut, verbesserungswürdig und schlecht pro Bucket">
+
+`POST /analytics/query` liefert für `lcp`, `inp`, `cls` und `ttfb` den Anteil der Seitenaufrufe, die gut, verbesserungswürdig und schlecht bewertet sind, als `good_share`, `needs_improvement_share` und `poor_share`. Die drei Anteile eines Buckets ergeben zusammen 1, gerechnet über die Seitenaufrufe mit diesem Messwert und mit den Schwellenwerten des Experience Score. So siehst du pro Stunde einen langsamen Ausläufer, wo sich der p75 kaum bewegt. Jede andere Metrik in derselben Anfrage ergibt `422`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="api" title="Die Vorperiode behält die Wochentage">
+
+`compare_to: previous_period` liegt jetzt so wenige ganze Wochen zurück, wie das Fenster braucht, mindestens eine. Freitag bis Montag wird mit Freitag bis Montag der Vorwoche verglichen, 30 Tage gehen fünf Wochen zurück.
+
+- **Bis 7 Tage entspricht das `previous_week`.** Die letzte Stunde gegen die Stunde direkt davor gibt es nicht mehr.
+- **`compare_to: previous_day`** vergleicht mit demselben Fenster 24 Stunden früher, auf `/analytics/query` und im Checkout-Funnel. Das Dashboard bietet es noch nicht an.
+- **Das Dashboard vergleicht genauso**, auch bei „Neu" und „Steigend" in der Fehlerliste, bei Seitenaufrufen pro Besucher und beim Experience Score unter Business Impact.
+
+Doku: [Analytics → Das Dashboard](/de/analytics#the-dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="fixed" area="api" title="Release-Vergleiche funktionieren wieder">
+
+Eine Abfrage mit `compare_to_release_id` lieferte `500`, sobald das Release im Fenster lag, und gibt jetzt die Aufteilung in vorher und nachher zurück. Ein `released_at` mit UTC-Offset wie `+02:00` wird zum richtigen Zeitpunkt gespeichert. Releases, die vor dem Fix so angelegt wurden, behalten die falsche Zeit, bis du sie bearbeitest.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="platform" title="Perzentile über lange Zeiträume pro URL">
+
+Eine Tabelle pro URL mit vielen Perzentilen, etwa der Response-Breakdown über 90 Tage, bricht auf Sites mit einigen tausend Seiten nicht mehr ab. Perzentile aus einzelnen Seitenaufrufen rechnen jetzt wie die aggregierten Tabellen, bei den Zeit-Metriken mit einer Obergrenze von 30 s. Ein solches Perzentil kann leicht von früheren Werten abweichen und hängt nicht mehr davon ab, welche Tabelle das Fenster bedient. Benachrichtigungsregeln rechnen weiter ohne Obergrenze.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="api" title="Die MCP-Fehlertools nennen das Skript in jedem Frame">
+
+`get_errors` und `get_error_detail` nennen in jedem Stack-Frame den Skriptpfad, etwa `www.example.com/js/theme.js:1:77801`. Ein Frame auf einem geteilten Host zeigt damit, ob er in deinem Bundle oder in einem Drittanbieter-Skript sitzt. `get_errors` liefert bis zu fünf Frames pro Signatur statt drei, und die Nachricht einer Signatur kommt nicht mehr leer zurück, wenn ein Teil der Zeilen ohne Fehlermeldungen erfasst wurde. Doku: [MCP → Was das Modell lesen kann](/de/mcp#tools).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Network Error Logging: fehlgeschlagene Requests, wie der Browser sie meldet">
 
 Unter Fehler → Network Error Logging siehst du die fehlgeschlagenen Requests, die Chromium-Browser für deine Seite melden. Dazu gehören auch Seiten, die nie geladen haben und den Tracker deshalb nie ausgeführt haben. Voraussetzung sind die `NEL`-Header auf deiner Seite.

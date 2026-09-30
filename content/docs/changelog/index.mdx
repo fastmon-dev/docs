@@ -12,6 +12,137 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="One plan to buy: fastmon One">
+
+The plan page no longer asks you to choose a plan. The 29 EUR tier is withdrawn, and everything it left out is part of fastmon One.
+
+- **Price and quotas stay**: 99 EUR net per month with 1,000,000 pageviews and one production application. Development applications stay free.
+- **Capacity is the one choice left**: extra pageviews in steps of a million and production application slots, next to your usage and forecast.
+- **One price summary** lists every item at full price, each discount as its own line, the change against today and the amount including VAT. Missing billing details open as a form on the page.
+- **The yearly term is 10 % off twelve months**, down from 15 %. Existing yearly subscriptions keep their price until the term is switched.
+- **A discount covers extra pageviews and applications too**, the yearly one and a customer discount alike.
+- **fastmon Enterprise** is a short note with a "Write to us" button to enterprise@fastmon.eu. The early-adopter badge is gone.
+
+Docs: [Organizations → Plans](/en/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="changed" area="api" title="The plan value is `one`">
+
+Every response that carries a plan answers `one` where it said `standard`, and `light` is gone from the enum. There is no deprecation window, so a client that matches on `"standard"` stops matching without an error. `GET /organizations/{id}/billing/plans` drops `early_adopter`, and `GET /organizations/{id}/billing` reports both add-on amounts net of the yearly discount. Docs: [Organizations → Plans](/en/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="JavaScript errors as a share, the top five, and last seen to the minute">
+
+The chart on JavaScript errors separates an error spike from a traffic peak.
+
+- **The affected pageviews chart switches between count and %.** The share is the part of each bucket's pageviews that had an error.
+- **Top 5 draws the five errors that reached the most pageviews** as lines beside the total. The legend shows their values for the hovered bucket and links to each error.
+- **Dragging across the chart zooms in.** Both choices stay in the link, and an error's own page has the same % switch.
+- **"Last seen" is exact to the minute**, on the list and in its ordering. Every row of `POST /analytics/error-types` carries `last_seen_at`.
+
+Docs: [Analytics → Error Analytics](/en/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="The time range picker zooms, drags and jumps to now">
+
+The range pill and its picker take fewer clicks.
+
+- **Minus and plus** double or halve the window, also on the `-` and `+` keys. A live window stays live.
+- **Drag across a trend chart** to zoom into that stretch. Under six hours the charts reload by minute.
+- **Jump to now** moves a past window to the present at the same length.
+- **"By minute" works on long windows** and cuts them to their last 6 hours. The arrows then step 6 hours at a time.
+- **Resolution is a row of tiles**, each with the number of intervals it gives, or why it does not fit.
+- **Date and time are fields of their own** and apply at once, without an Apply button. The expression field takes a clock range such as `14:00-16:30`.
+- **A timeline** at the top shows the window on the days around it. Drag it, pull an edge, or scroll and pinch to zoom.
+
+Docs: [Analytics → Time range](/en/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-29" type="new" area="platform" title="Label pages by URL">
+
+`page_type.url_rules` takes up to 10 URL patterns, each with a page type, and the first match wins. It is for a shop whose body classes say nothing, such as a headless storefront, and needs no tracker change. In the dashboard they are the URL rules under page-type detection.
+
+- **The sources come in this order**: the header, your body classes, your URL rules, the platform ruleset, the Shopify routes, then the checkout stage.
+- **A cart, checkout or success path gives a page type** when nothing else did: `cart` for the cart, `checkout` for the other two. Pageviews stored before 2026-09-29 keep their empty page type.
+- **`GET /applications/{app_id}/page-type-sources`** lists an application's sources in that order, each with the page type it stores. Viewers may read it.
+
+Docs: [Applications → Page-type detection](/en/concepts/applications#page-type-detection).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-29" type="changed" area="platform" title="OXID works from its `cl` controller">
+
+On an OXID application the stored URL keeps the `cl` controller, as in `/index.php?cl=thankyou`, without `collect_query_values_for`. The URL reports show one row per controller from 2026-09-29 on, and other query values are still dropped.
+
+- **The checkout funnel needs no custom paths.** `basket` marks the cart, `user`, `payment` and `order` the checkout, `thankyou` the success. Your own `*?cl=*` patterns still come first.
+- **The page type comes from the controller** when the header, your rules and the body class gave none. `details` is `product`, `thankyou` is `checkout`.
+
+Docs: [Checkout funnel → OXID](/en/checkout-funnel#oxid).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="dashboard" title="Checkout: conversion as a trend, and orders by name">
+
+The checkout numbers on the analytics page read like a shop report.
+
+- **Conversion is a metric above the main chart**, drawn against the previous period. Its tooltip names the visitors behind each point, the share who used the cart, whose cart failed, and the time to purchase.
+- **Completed checkouts are called orders.** The last funnel stage reads "Ordered" in the filters, the chips and the Explorer.
+- **Business Impact shows the same conversion rate**, buyers over all visitors. It used to divide by the visitors who reached a cart.
+- **The checkout card names the visitors whose cart broke** and how long a purchase takes, as the median and the p90.
+- **Buyers compared is one table** at the bottom of the page, closed until you open it. It compares buyers with visitors who reached the checkout without a seen purchase, per funnel stage.
+- **The checkout numbers follow the page's filters**, Orders included, except filters that pick a checkout stage.
+- **They show only on a shop.** An application whose platform is unknown counts as one until you mark it as not a shop.
+
+Docs: [Checkout funnel → Where it shows up](/en/checkout-funnel#where-it-shows-up).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Group by HTTP status">
+
+The Explorer and `POST /analytics/query` group pageviews by `status_code`, so error pages such as 404 or 500 form their own series. Pageviews whose browser reports no status, mostly Firefox and Safari, form the "Not reported" group, `0` on the API. Notification rules filter on `status_code` too, and the Explorer's group-by picker has a search field. Docs: [Analytics → The Explorer](/en/analytics#explorer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="new" area="api" title="Good, needs improvement and poor per bucket">
+
+`POST /analytics/query` returns the share of pageviews rated good, needs improvement and poor for `lcp`, `inp`, `cls` and `ttfb`, as `good_share`, `needs_improvement_share` and `poor_share`. Each bucket's three shares sum to 1 over the pageviews that reported the metric, with the thresholds of the Experience Score. A slow tail shows up per hour where the p75 barely moves. Any other metric in the same request answers `422`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="api" title="The previous period keeps the weekdays">
+
+`compare_to: previous_period` now lies the fewest whole weeks earlier that cover the window, at least one. Friday to Monday compares with Friday to Monday a week before, and 30 days go back five weeks.
+
+- **Up to 7 days it equals `previous_week`.** The last hour against the hour right before it is no longer available.
+- **`compare_to: previous_day`** compares with the same window 24 hours earlier, on `/analytics/query` and the checkout funnel. The dashboard does not offer it yet.
+- **The dashboard compares the same way**, including "New" and "Rising" on the errors list, pages per visitor and the Experience Score on Business Impact.
+
+Docs: [Analytics → The dashboard](/en/analytics#the-dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="fixed" area="api" title="Release comparisons work again">
+
+A query with `compare_to_release_id` answered `500` whenever the release fell inside the window, and now returns the before and after split. A `released_at` sent with a UTC offset such as `+02:00` is stored at the right instant. Releases created that way before the fix keep the wrong time until you edit them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="platform" title="Percentiles over long per-URL windows">
+
+A per-URL table with many percentiles, such as the response breakdown over 90 days, no longer fails on sites with a few thousand pages. Percentiles from single pageviews now use the method of the aggregate tables, capped at 30 s for the timing metrics. Such a percentile can move slightly against earlier numbers, and it no longer depends on which table serves the window. Alert rules keep the uncapped method.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-28" type="changed" area="api" title="The MCP error tools name the script in each frame">
+
+`get_errors` and `get_error_detail` name the script path in every stack frame, as in `www.example.com/js/theme.js:1:77801`. A frame on a shared host then shows whether it sits in your bundle or in a third-party script. `get_errors` returns up to five frames per signature instead of three, and a signature's message no longer comes back empty when some rows were collected with error messages off. Docs: [MCP → What the model can read](/en/mcp#tools).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-28" type="new" area="dashboard" title="Network Error Logging: failed requests as the browser reports them">
 
 Errors → Network Error Logging shows the failed requests that Chromium browsers report for your site, including pages that never ran the tracker. It needs the `NEL` headers on your site.

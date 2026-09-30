@@ -85,20 +85,33 @@ Eine Shopify-Application liefert zusätzlich das
 [Checkout-Event-Pixel](/de/guides/shopify-checkout) aus, gebaut aus
 `source_hash` und den Collector-Einstellungen.
 
-## Page-Type-Detection
+## Page-Type-Detection [#page-type-detection]
 
 `platform` sagt, worauf die
 Application läuft; `page_type.body_class` schaltet das Lesen des
 Page-Types (Home, Product, Cart, Checkout) aus der `<body>`-Klasse
 ein. Eine Plattform zu wählen schaltet das Lesen nicht ein, und für
 Shopify und PrestaShop bleibt es aus, weil es für sie kein Ruleset
-gibt. Server-Timing hat immer Vorrang vor der Body-Class.
+gibt.
 
 Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
 `pagetype_rules` benennt deine eigenen: bis zu 24 exakte Klassennamen,
-jeder auf einen Page-Type abgebildet. Die Regeln werden vor der
-Ruleset gelesen und funktionieren auch ohne eine. Zwei Endpunkte
-schlagen vor, was zu setzen ist, und schreiben nichts:
+jeder auf einen Page-Type abgebildet. `page_type.url_rules` ordnet
+Seiten über die URL zu: bis zu 10 Muster in der Syntax der
+[Checkout-Pfade](#checkout-funnel), jedes mit einem Page-Type, das
+erste passende gewinnt. Das hilft einem Headless-Shop, dessen
+Body-Klassen nichts verraten.
+
+Der Collector nimmt die erste Quelle, die einen Page-Type liefert:
+
+1. Den Header `Server-Timing: pageType`.
+2. Deine eigenen Body-Klassen, danach deine URL-Regeln.
+3. Das Ruleset der Plattform, danach die Shopify-Routen oder den OXID-Controller `cl`.
+4. Die Checkout-Stufe: `cart` auf einem Warenkorb-Pfad, `checkout` auf einem Checkout- oder Erfolgs-Pfad.
+
+[`page-type-sources`](/de/api/applications/getApplicationPageTypeSources)
+listet diese Quellen einer Application in genau dieser Reihenfolge.
+Zwei Endpunkte schlagen vor, was zu setzen ist, und schreiben nichts:
 [`detect-pagetype`](/de/api/applications/detectApplicationPageType)
 nennt das Shop-System,
 [`pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules)
@@ -180,6 +193,7 @@ Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
 | `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.1` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
+| `page_type.url_rules`        | list · nullable   | Deine eigenen URL-Muster, auf Page-Types abgebildet. Wird nach deinen Body-Klassen gelesen. |
 | `shop.checkout.tracking`     | bool              | Checkout-Funnel an (`true`, der Default) oder aus. Siehe [Checkout-Funnel](#checkout-funnel). |
 | `shop.checkout.*_paths`      | list · nullable   | URL-Muster pro Funnel-Stufe. `null` erbt die eingebauten Muster; eine Liste ersetzt sie. |
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |

@@ -5,13 +5,13 @@ description: Traffic, visitors, errors, and the Experience Score. The field-data
 
 Analytics is the exploration layer on top of everything your beacons collect: who is on the site right now, where traffic comes from, which pages get viewed, which errors fire, and how whole visits unfold.
 
-## The dashboard
+## The dashboard [#the-dashboard]
 
 The main Analytics view for a site shows:
 
 - **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the pages being viewed right now and the sources they came through. On shops the card also shows how many of them are at the cart, checkout, and success stage.
-- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and Checkouts, each with a sparkline and the change against the previous period. The count tiles also show an average per minute over the selected range. Clicking a tile explains what it counts.
-- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. It always starts as a line chart, whatever the period. The legend sits above it with the bar/area switch, and each series can be switched off on its own and carries its own previous-period value.
+- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline and the change against the previous period. The previous period is the same weekdays and hours, the fewest whole weeks earlier that cover the window. The count tiles also show an average per minute over the selected range. Clicking a tile explains what it counts.
+- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. The legend sits above it with the bar/area switch, and each series can be switched off on its own and carries its own previous-period value.
 - **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). The Pages panel's third tab lists the **domains** out of the page URLs. Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
 - **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
 - **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
@@ -36,9 +36,20 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 
 The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/analytics/queryAnalyticsLiveSummary).
 
+## Time range [#time-range]
+
+The range pill in the header sets the window for every chart on the page.
+
+- **Zoom**: minus doubles the window, plus halves it, also on the `-` and `+` keys. A live window keeps its end at now.
+- **Drag across a trend chart** to zoom into that stretch. The charts reload at the resolution it gets.
+- **Jump to now**: while the window lies in the past, a button moves it to the present at the same length.
+- **Resolution** is a row of tiles, each with the number of intervals it gives. "By minute" on a window longer than 6 hours cuts it to its last 6 hours.
+- **Date and time** are fields that apply at once. The expression field also takes a clock range such as `14:00-16:30`.
+- **The timeline** at the top of the picker shows the window on the days around it. Drag it, pull an edge, or scroll to zoom.
+
 ## Filtering
 
-A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel) (cart, checkout, completed).
+A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel) (cart, checkout, ordered).
 
 Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
 
@@ -50,7 +61,7 @@ Every chip also has an on/off switch. Switched off, the chip keeps its values an
 
 The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included, for as long as you are on the page. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a row adds its value to the filters rather than replacing them.
 
-The beacon rows show the page's **HTTP status**, and `HTTP status >= 400` in the filter lists the pageviews of error pages. Firefox, Safari, and soft navigations report no status, so their rows show a dash and never match.
+The beacon rows show the page's **HTTP status**, and `HTTP status >= 400` in the filter lists the pageviews of error pages. Firefox, Safari, and soft navigations report no status, so their rows show a dash and never match. Grouped by HTTP status, they form the "Not reported" group. The group-by picker has a search field.
 
 An **Events** page sits beside the table, one row per event the tracker reported, filterable by type and opening the visitor a row belongs to. It appears for an organization whose applications can produce events, which today means a Shopify shop and its [checkout events](/en/checkout-funnel#shopify).
 
@@ -70,10 +81,10 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 Errors is a group in the sidebar with three pages: JavaScript errors, [Failed resources](#failed-resources), and [Network Error Logging](/en/nel). Each has its own address, headline, chart, and list. On JavaScript errors:
 
-- **Error rate over time**: the share of pageviews with at least one JavaScript error. A failed image, script, or stylesheet runs as its own curve on the same chart.
-- **Which errors, over time**: the five biggest signatures per time bucket as a stacked chart, named by what broke rather than by their hash. Clicking a name in the legend opens that signature in the list below.
+- **Affected pageviews over time**: pageviews with at least one JavaScript error, as a count or as a share of all pageviews. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
+- **An error's own page** has the same count and share switch.
 - **The list is one row per fault.** Browsers report the same throw site a few characters apart, and a second caller of the same function is a second stack, so a row counts every variant and says how many signatures it stands for. On the API this is `group_variants` on `POST /analytics/error-types`.
-- **A row leads with what broke, in a sentence**: what happened, whose code it is, the file it was thrown from, how often it occurred and when it last did. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
+- **A row leads with what broke, in a sentence**: what happened, whose code it is, the file it was thrown from, how often it occurred and when it last did, to the minute. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
 - **Ranked by the pageviews an error reached**, not by how often it fired. A single visit stuck in a loop is marked as a loop instead of topping the list, and "Most frequent" is still an ordering you can pick.
 - **Every error has its own page** at `/org/<org>/errors/<fingerprint>`, which is also its share link. Existing `?error=` links redirect there.
 - **Pages with the most errors**: ranked by how many errors a page threw, not by its error rate. A page with one pageview that threw once has a rate of 100 % and is not the broken checkout.
