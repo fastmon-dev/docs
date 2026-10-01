@@ -79,7 +79,7 @@ Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
 
 ## Fehler-Analytics [#error-analytics]
 
-Fehler ist eine Gruppe in der Sidebar mit drei Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources) und [Network Error Logging](/de/nel). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
+Fehler ist eine Gruppe in der Sidebar mit vier Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources), [Network Error Logging](/de/nel) und [Content Security Policy](/de/csp). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
 
 - **Betroffene Seitenaufrufe über Zeit**: Pageviews mit mindestens einem JavaScript-Fehler, als Anzahl oder als Anteil aller Pageviews. **Top 5** legt die fünf Fehler mit den meisten betroffenen Pageviews als Linien dazu, die Legende verlinkt auf jeden. Ziehen über das Chart zoomt hinein.
 - **Die eigene Seite eines Fehlers** hat denselben Umschalter zwischen Anzahl und Anteil.
@@ -140,7 +140,7 @@ Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/q
 
 ## Besucher [#visitors]
 
-Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Checkout-Events eines Shopify-Shops und die [NEL-Reports](/de/nel#dashboard) des Besuchers stehen zwischen den Pageviews. Abgebrochene Ladevorgänge sind ausgeblendet, bis du sie einschaltest.
+Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Checkout-Events eines Shopify-Shops und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews. Abgebrochene Ladevorgänge sind ausgeblendet, bis du sie einschaltest.
 
 Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht haben. Sie bleiben auf den Seiten Besucher und Sessions und fallen weg, wenn du woanders hin navigierst.
 

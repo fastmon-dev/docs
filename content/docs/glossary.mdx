@@ -35,6 +35,8 @@ Compact definitions. For depth, follow the link on each term.
 
 **NEL report**: A report the browser sends when a request to your site fails, once your server sets the `Report-To` and `NEL` headers. Chromium only. See [Network Error Logging](/en/nel).
 
+**CSP report**: A report the browser sends when a page breaks its Content Security Policy, once the policy names fastmon in `report-to` and `report-uri`. See [Content Security Policy](/en/csp).
+
 **Tracker**: The running JavaScript agent the beacon script starts in the visitor's browser. It registers the observers, buffers values, strips URLs, and sends the beacons.
 
 **Collector**: The server endpoint at `/c/{collector_hash}` that receives beacons, validates them, and writes them to the analytics store.
