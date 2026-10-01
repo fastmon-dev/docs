@@ -1,0 +1,58 @@
+---
+title: Content Security Policy
+description: Was die Content Security Policy deiner Site blockiert hat oder als Report-only-Policy blockieren würde, wie der Browser es meldet.
+---
+
+Eine Content Security Policy (CSP) legt fest, welche Scripts, Styles, Frames und Verbindungen eine Seite nutzen darf. Nennt deine Policy fastmon als Report-Endpunkt, landet jeder Verstoß hier, auch auf Seiten, die den Tracker nie ausgeführt haben.
+
+## Einrichten [#setup]
+
+Zwei Response-Header schicken die Reports der Policy an fastmon. Header, Server-Beispiele, Prüfung und Stolperfallen stehen in der Anleitung [CSP-Verstöße an fastmon melden](/de/guides/content-security-policy).
+
+fastmon schreibt, liefert und erzwingt die Policy nicht. Es speichert die Reports, die der Browser schickt.
+
+## Die Seite Content Security Policy [#dashboard]
+
+Die Seite liegt in der Sidebar unter **Fehler → Content Security Policy**, unter `/errors/csp`. Sie hat zwei Tabs, und der Tab steht in der URL.
+
+- **Übersicht**: Verstöße im Zeitverlauf, gestapelt **Nach Direktive** oder **Nach Policy**, blockierte Reports unter den Report-only-Reports.
+- **Karten** für das, was blockiert wurde, die Seiten und Scripts mit Verstößen, Direktiven, Sites, Länder, Geräte, Browser, OS und Traffic.
+- **Sites** dient zugleich als Einrichtungs-Check. Jede Site zeigt ihren letzten Report, und eine Site ohne Report fragt, ob ihre Policy fastmon nennt.
+- **Reports**: jeder CSP-Report, neueste zuerst, aufklappbar mit allen gespeicherten Feldern und der verletzten Policy. Jeder Report hat einen eigenen Link zum Teilen und verlinkt auf die Journey des Besuchers.
+
+**Filtern** funktioniert wie bei [Network Error Logging](/de/nel#dashboard): `+` filtert auf einen Wert, `-` schließt ihn aus, und die Lupe öffnet die Reports der Zeile. Die eigenen Filter der Seite (blockiert oder Report-only, Direktive, blockierte URL, Seite, Script) stehen im Filter-Panel unter **Nur auf dieser Seite** und bleiben in der URL.
+
+Die Journey eines Besuchers unter [Besucher](/de/analytics#visitors) zeigt seine CSP-Reports zwischen den Seitenaufrufen, blockierte in Rot, Report-only in Gelb.
+
+## Einen Report lesen [#reading]
+
+| Feld | Bedeutung |
+| --- | --- |
+| `disposition` | `enforce`: Der Browser hat es blockiert. `report`: Eine Report-only-Policy hätte es blockiert. Leer, wenn der Browser es nicht sagt. |
+| `effective_directive` | Die verletzte Direktive, etwa `script-src-elem`. |
+| `blocked_url` | Was blockiert wurde: eine URL ohne Query oder ein Schlüsselwort wie `inline`, `eval` oder `data`. |
+| `source_url` | Das Script, das gegen die Policy verstoßen hat, mit `line` und `column`. |
+| `page_url` | Die Seite, auf der der Verstoß passiert ist. |
+| `original_policy` | Die Policy, die die Seite geschickt hat, mit geleerten Nonces. Daran siehst du, aus welcher Version einer Report-only-Policy ein Report stammt. |
+| `report_count` | Identische Reports eines Uploads, als eine Zeile gespeichert. |
+
+- **Ein Script, das eine Browser-Erweiterung einschleust**, meldet sich als `inline` auf deiner Seite und ist von deinem eigenen Inline-Code nicht zu unterscheiden. Reports mit einer Erweiterungs-URL werden verworfen.
+- **Erst testen, dann erzwingen.** Schick die neue Policy als `Content-Security-Policy-Report-Only` und behebe, was der Breakdown nach `blocked_url` auflistet.
+
+## Grenzen [#limits]
+
+- **Praktisch jeder Browser meldet**, über `report-to` oder `report-uri`. Die Zahlen sind exakt und nicht gesampelt.
+- **Besucherzahlen brauchen [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zählt bei den Reports mit, aber nicht bei den Besuchern, und die Seite nennt sie.
+- **Ein `report-to`-Report kann bis zu 48 Stunden später ankommen.** Er wird dem Besucher mit der ID des Uploads zugeordnet.
+
+## API [#api]
+
+Alle drei Routen nehmen dieselben `filters`, darunter `disposition`, `effective_directive`, `blocked_url`, `source_url`, `page_url` und `status_code_range` samt `exclude`. Jede andere Analytics-Route lehnt `disposition`, `effective_directive`, `blocked_url` und `source_url` mit 422 ab.
+
+| Route | Liefert |
+| --- | --- |
+| [`POST /analytics/csp`](/de/api/analytics/queryAnalyticsCsp) | Reports und betroffene Besucher, je Direktive und Disposition, im Zeitverlauf |
+| [`POST /analytics/csp/breakdown`](/de/api/analytics/queryAnalyticsCspBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil und Besuchern. Site-Zeilen tragen `last_seen_at`. |
+| [`POST /analytics/csp/reports`](/de/api/analytics/listAnalyticsCspReports) | Einzelne Reports, neueste zuerst, seitenweise über `cursor`. `filters.report_id` wählt einen aus. |
+
+Die [Besucher-Details](/de/api/analytics/getAnalyticsVisitorDetail) und die [Checkout-Journeys](/de/api/analytics/queryAnalyticsCheckoutJourneys) tragen `csp_reports` neben `nel_reports`, ohne die Policy.

@@ -1,0 +1,58 @@
+---
+title: Content Security Policy
+description: What your site's Content Security Policy blocked, or would block under a report-only policy, as the browser reports it.
+---
+
+A Content Security Policy (CSP) tells the browser which scripts, styles, frames and connections a page may use. When your policy names fastmon as its report endpoint, every violation arrives here, including those on pages that never ran the tracker.
+
+## Set it up [#setup]
+
+Two response headers point the policy's reports at fastmon. The headers, server examples, verification and traps are in the guide [Report Content Security Policy violations](/en/guides/content-security-policy).
+
+fastmon does not write, serve or enforce the policy. It stores the reports the browser sends.
+
+## The Content Security Policy page [#dashboard]
+
+The page sits under **Errors → Content Security Policy** in the sidebar, at `/errors/csp`. It has two tabs, and the tab is part of the URL.
+
+- **Overview**: violations over time, stacked **By directive** or **By policy**, with blocked reports below report-only ones.
+- **Cards** for what was blocked, the pages and scripts that broke the policy, directives, sites, countries, devices, browsers, OS and traffic.
+- **Sites** doubles as the setup check. Each site shows its last report, and a site without one asks whether its policy names fastmon.
+- **Reports**: every CSP report, newest first, each opening to all stored fields and the policy it broke. A report has its own share link and links to the visitor's journey.
+
+**Filtering** works like on [Network Error Logging](/en/nel#dashboard): `+` filters to a value, `-` excludes it, and the magnifier opens the row's reports. The page's own filters (blocked or report-only, directive, blocked URL, page, script) sit in the Filter panel under **Only on this page** and stay in the URL.
+
+A visitor's journey in [Visitors](/en/analytics#visitors) lists their CSP reports between the pageviews, blocked ones in red and report-only ones in amber.
+
+## Reading a report [#reading]
+
+| Field | Means |
+| --- | --- |
+| `disposition` | `enforce`: the browser blocked it. `report`: a report-only policy would have blocked it. Empty when the browser did not say. |
+| `effective_directive` | The directive the violation broke, such as `script-src-elem`. |
+| `blocked_url` | What was blocked: a URL without its query, or a keyword such as `inline`, `eval` or `data`. |
+| `source_url` | The script that broke the policy, with `line` and `column`. |
+| `page_url` | The page the violation happened on. |
+| `original_policy` | The policy the page sent, with nonces blanked. It shows which version of a report-only policy a report came from. |
+| `report_count` | Identical reports of one upload, stored as one row. |
+
+- **A script an extension injects** reports as `inline` on your page and cannot be told apart from your own inline code. Reports with an extension URL are dropped.
+- **Test before you enforce.** Send the new policy as `Content-Security-Policy-Report-Only` and fix what the `blocked_url` breakdown lists.
+
+## Limits [#limits]
+
+- **Practically every browser reports**, through `report-to` or `report-uri`. Counts are exact and not sampled.
+- **Visitor counts need [`store_stitch`](/en/tracker#store-stitch).** A site without it counts in the reports but not in the visitors, and the page names it.
+- **A `report-to` report can arrive up to 48 hours late.** It joins the visitor with the id of the upload.
+
+## API [#api]
+
+All three routes take the same `filters`, including `disposition`, `effective_directive`, `blocked_url`, `source_url`, `page_url` and `status_code_range` with their `exclude`. Every other analytics route refuses `disposition`, `effective_directive`, `blocked_url` and `source_url` with a 422.
+
+| Route | Returns |
+| --- | --- |
+| [`POST /analytics/csp`](/en/api/analytics/queryAnalyticsCsp) | Reports and affected visitors, per directive and disposition, over time |
+| [`POST /analytics/csp/breakdown`](/en/api/analytics/queryAnalyticsCspBreakdown) | Reports grouped by one `dimension`, with share and visitors. Site rows carry `last_seen_at`. |
+| [`POST /analytics/csp/reports`](/en/api/analytics/listAnalyticsCspReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
+
+The [visitor detail](/en/api/analytics/getAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `csp_reports` beside `nel_reports`, without the policy.

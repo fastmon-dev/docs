@@ -1,0 +1,108 @@
+---
+title: CSP-Verstöße an fastmon melden
+description: Zwei Response-Header, und der Browser meldet jeden Verstoß gegen deine Content Security Policy an fastmon.
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Nennst du fastmon als Report-Endpunkt deiner Policy, schickt der Browser jeden Verstoß an fastmon. Eine neue oder verschärfte Policy kann zuerst als `Content-Security-Policy-Report-Only` laufen, so siehst du, was sie kaputt machen würde, bevor sie etwas blockiert. Was die Reports zeigen, steht unter [Content Security Policy](/de/csp).
+
+## Einrichten [#setup]
+
+1. Kopier den `collector_hash` der Application. Er steht in einem Beacon-Request hinter `/c/` und ist ein Feld der Application in der API.
+2. Schick die beiden [Header](#headers) bei jeder HTML-Response der Site mit.
+3. Stell sicher, dass jeder Host, der sie schickt, eine Site dieser Application ist oder eine Subdomain davon.
+4. [Prüf](#verify), dass ein Report ankommt.
+
+Ein Report, dessen Host keine Site der Application ist, wird verworfen, und ein Report legt nie eine Site an. `www.shop.example` zählt für `shop.example`, `notshop.example` nicht.
+
+## Die Header [#headers]
+
+```http
+Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
+Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://js.payments.example; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH
+```
+
+Die Policy ist ein Beispiel. Behalte deine eigenen Direktiven und ergänze `report-to` und `report-uri`. Eine Application mit eigenem [Collector-Endpunkt](/de/tracker#collector-endpoint) nutzt ihren Host statt `fastmon.site`.
+
+- **Bei jeder HTML-Response.** Eine Policy gilt für das Dokument, das sie trägt, nicht für die Bilder oder Scripts, die es lädt.
+- **`Reporting-Endpoints` neben der Policy.** Der Header definiert die Gruppe `fastmon-csp`, die `report-to` nennt. `Report-To`, das NEL braucht, ist hier nicht nötig.
+- **`report-to` und `report-uri` zusammen.** Neuere Browser nutzen `report-to` und ignorieren `report-uri`, ältere schicken nur `report-uri`. Jeder Verstoß kommt einmal an.
+- **Auch die erzwingende Policy kann melden.** Ergänze dieselben zwei Direktiven in `Content-Security-Policy`. Jeder Report sagt, ob blockiert oder nur gemeldet wurde.
+- **Lass `'report-sample'` weg.** fastmon verwirft das Code-Sample ungelesen, siehe [Datenschutz → CSP-Reports](/de/privacy#csp-reports).
+
+### Beispiele [#examples]
+
+<Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
+<Tab value="nginx">
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name shop.example;
+
+    add_header Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"' always;
+    add_header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH" always;
+}
+```
+
+Ein `location`-Block mit eigenem `add_header` erbt nichts von `server`, wiederhole dort also beide Zeilen.
+
+</Tab>
+<Tab value="Caddy">
+
+```txt
+shop.example {
+	header Reporting-Endpoints `fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"`
+	header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
+}
+```
+
+</Tab>
+<Tab value="Apache">
+
+```apache
+<IfModule mod_headers.c>
+    Header always set Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"'
+    Header always set Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
+</IfModule>
+```
+
+</Tab>
+<Tab value="PHP">
+
+```php
+header('Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"');
+header("Content-Security-Policy-Report-Only: default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH");
+```
+
+Das deckt nur die Responses ab, die PHP schreibt. Setz die Header besser im Webserver.
+
+</Tab>
+</Tabs>
+
+## Prüfen [#verify]
+
+1. **Die Header kommen an.** Prüf im Netzwerk-Tab des Browsers den Dokument-Request auf `Reporting-Endpoints` und den Policy-Header.
+2. **Ein Verstoß erscheint.** Verbietet eine Report-only-Policy etwas, das die Seite lädt, schreibt die Konsole pro Verstoß eine Meldung `[Report Only]`. Chrome lädt `report-to`-Reports nach etwa einer Minute hoch, ein `report-uri`-Report geht sofort raus.
+3. **Der Endpunkt antwortet.** Teste beide Formate ohne Browser, mit einer registrierten Site statt `shop.example`:
+
+```sh
+curl -i https://fastmon.site/c/v/YOUR_COLLECTOR_HASH \
+  -H 'Content-Type: application/reports+json' \
+  --data '[{"age":0,"type":"csp-violation","url":"https://shop.example/","body":{"documentURL":"https://shop.example/","blockedURL":"https://cdn.example/x.js","effectiveDirective":"script-src-elem","disposition":"report","statusCode":200}}]'
+
+curl -i https://fastmon.site/c/v/YOUR_COLLECTOR_HASH \
+  -H 'Content-Type: application/csp-report' \
+  --data '{"csp-report":{"document-uri":"https://shop.example/","blocked-uri":"inline","effective-directive":"script-src-elem","disposition":"report","status-code":200}}'
+```
+
+Der Endpunkt antwortet mit 204, egal ob er den Report behalten oder verworfen hat. Die Karte **Sites** auf der [Seite Content Security Policy](/de/csp#dashboard) zeigt den letzten Report jeder Site.
+
+## Stolperfallen [#traps]
+
+- **Eine lange Policy füllt den Upload.** Ein Upload ist auf 128 KiB begrenzt, und jeder Report trägt die ganze Policy. Verstößt eine Seite pro Aufruf dutzendfach gegen eine Policy von mehreren Kilobyte, kann das die Grenze sprengen, und der Browser verwirft den Upload.
+- **Shopify-Storefronts** erlauben keine eigenen Response-Header, ein Shopify-Shop kann also keine Policy schicken, die an fastmon meldet.
+- **Jede Application hat ihren eigenen Hash.** Ein Report für eine Site einer anderen Application wird verworfen, auch in derselben Organisation.
+- **Eine Hash-Rotation stoppt die Reports** ohne Warnung. Trag den neuen `collector_hash` in beide Direktiven ein.
+- **Ein [First-Party-Proxy](/de/guides/first-party-proxy)** muss `/c/v/` und den `OPTIONS`-Preflight vor einem `report-to`-Upload weiterleiten. Ein Block `location /c/` deckt beides ab.

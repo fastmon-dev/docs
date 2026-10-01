@@ -94,6 +94,14 @@ Schickt eine Site die [NEL-Header](/de/guides/network-error-logging#headers), en
 - **Besucher**: der Edge-[`stitch`](#der-am-edge-abgeleitete-stitch-identifier) unter [`store_stitch`](/de/tracker#store-stitch) und dieselben Labels für Land, Gerät, Browser, OS und Bots wie bei einem Seitenaufruf.
 - **Verworfen**: der User-Agent aus dem Report und jeder Referrer von einem anderen Host.
 
+### CSP-Reports [#csp-reports]
+
+Nennt die [Content Security Policy](/de/guides/content-security-policy) einer Site fastmon, entsteht für jeden unterschiedlichen Verstoß, den der Browser meldet, eine Zeile.
+
+- **Gespeichert**: Disposition, Direktive, die blockierte und die auslösende URL als Schema, Host und Pfad, Zeile und Spalte, die Seiten-URL, gekürzt wie bei einem Seitenaufruf, der HTTP-Status der Seite und die Policy mit geleerten Nonces.
+- **Besucher**: der Edge-[`stitch`](#der-am-edge-abgeleitete-stitch-identifier) unter [`store_stitch`](/de/tracker#store-stitch) und dieselben Labels für Land, Gerät, Browser, OS und Bots wie bei einem Seitenaufruf.
+- **Verworfen**: das Code-Sample von `'report-sample'`, ungelesen und in jedem Modus, der Inhalt einer `data:`- oder `blob:`-URL, Reports, die Browser-Erweiterungen auslösen, und jeder Referrer von einem anderen Host.
+
 ### Site-Metadaten vs. Besucherdaten
 
 Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch. Sie sagen dir, welches deiner CDNs langsam ist; sie identifizieren niemanden.
