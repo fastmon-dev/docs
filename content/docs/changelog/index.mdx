@@ -12,6 +12,40 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="Content Security Policy: what your policy blocked">
+
+Errors → Content Security Policy shows what your site's policy blocked, and what a report-only policy would block. It needs a policy that names fastmon as its report endpoint.
+
+- **Two tabs: Overview and Reports.** The overview stacks violations over time by directive or by policy, with cards for what was blocked, pages, scripts, directives, sites, countries, devices, browsers, OS and traffic.
+- **The Sites card is the setup check.** Each site shows its latest report, and a site without one says so. Without any report, the page links to the setup guide.
+- **The + filters to a value, the - excludes it**, and the magnifier opens its reports. Blocked or report-only, directive, blocked URL, page and script stay in the address.
+- **Reports list every CSP report** with the policy it broke. Each has its own share link and links to the visitor.
+- **A visitor's journey shows their CSP reports** between the pageviews, blocked in red and report-only in amber.
+
+Docs: [Content Security Policy → The page](/en/csp#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="platform" title="fastmon collects Content Security Policy reports">
+
+A policy whose `report-to` and `report-uri` name `https://fastmon.site/c/v/{collector_hash}` makes the browser report every violation to fastmon. Run a new policy as `Content-Security-Policy-Report-Only` first to see what it would break.
+
+- **Both formats arrive**, the Reporting API and the older `report-uri`, so practically every browser reports. Counts are exact and not sampled.
+- **The report's host has to be a site of the application**, or a subdomain of one. A report never creates a site.
+- **A report keeps** the disposition, directive, blocked and source URL without their query, the page, and the policy with nonces blanked. Identical reports of one upload are stored once with their count.
+- **Dropped**: the code sample of `'report-sample'`, reports caused by browser extensions, and a referrer from another host.
+- **Shopify storefronts cannot set the headers.**
+
+Docs: [Report Content Security Policy violations](/en/guides/content-security-policy) · [Privacy → CSP reports](/en/privacy#csp-reports).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="api" title="Read CSP reports through the API">
+
+`POST /analytics/csp` counts the reports and affected visitors per directive and disposition over time. `/analytics/csp/breakdown` groups them by one dimension, such as the blocked URL or the page, and `/analytics/csp/reports` lists them one by one with the policy they broke. The visitor detail and the checkout journeys carry `csp_reports` beside `nel_reports`. The filters `disposition`, `effective_directive`, `blocked_url` and `source_url` work on the CSP routes only, every other route answers `422`. Docs: [Content Security Policy → API](/en/csp#api).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="One plan to buy: fastmon One">
 
 The plan page no longer asks you to choose a plan. The 29 EUR tier is withdrawn, and everything it left out is part of fastmon One.
@@ -19,9 +53,6 @@ The plan page no longer asks you to choose a plan. The 29 EUR tier is withdrawn,
 - **Price and quotas stay**: 99 EUR net per month with 1,000,000 pageviews and one production application. Development applications stay free.
 - **Capacity is the one choice left**: extra pageviews in steps of a million and production application slots, next to your usage and forecast.
 - **One price summary** lists every item at full price, each discount as its own line, the change against today and the amount including VAT. Missing billing details open as a form on the page.
-- **The yearly term is 10 % off twelve months**, down from 15 %. Existing yearly subscriptions keep their price until the term is switched.
-- **A discount covers extra pageviews and applications too**, the yearly one and a customer discount alike.
-- **fastmon Enterprise** is a short note with a "Write to us" button to enterprise@fastmon.eu. The early-adopter badge is gone.
 
 Docs: [Organizations → Plans](/en/concepts/organizations#plans).
 

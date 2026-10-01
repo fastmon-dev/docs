@@ -4,6 +4,7 @@
     "index",
     "beacon-inspector",
     "compare-releases",
+    "content-security-policy",
     "filter-internal-traffic",
     "first-party-proxy",
     "network-error-logging",

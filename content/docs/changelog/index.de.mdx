@@ -17,6 +17,40 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="Content Security Policy: was deine Policy blockiert hat">
+
+Fehler → Content Security Policy zeigt, was die Policy deiner Site blockiert hat und was eine Report-only-Policy blockieren würde. Dafür muss die Policy fastmon als Report-Endpunkt nennen.
+
+- **Zwei Tabs: Übersicht und Reports.** Die Übersicht stapelt die Verstöße im Zeitverlauf nach Direktive oder nach Policy, dazu Karten für Blockiertes, Seiten, Scripts, Direktiven, Sites, Länder, Geräte, Browser, OS und Traffic.
+- **Die Karte Sites ist der Einrichtungs-Check.** Jede Site zeigt ihren letzten Report, eine Site ohne Report sagt das. Gibt es gar keine Reports, verlinkt die Seite die Einrichtungsanleitung.
+- **Das + filtert auf einen Wert, das - schließt ihn aus**, und die Lupe öffnet seine Reports. Blockiert oder Report-only, Direktive, blockierte URL, Seite und Script bleiben in der Adresse.
+- **Reports listet jeden CSP-Report** mit der verletzten Policy. Jeder hat einen eigenen Link zum Teilen und verlinkt auf den Besucher.
+- **Die Journey eines Besuchers zeigt seine CSP-Reports** zwischen den Seitenaufrufen, blockierte in Rot, Report-only in Gelb.
+
+Doku: [Content Security Policy → Die Seite](/de/csp#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="platform" title="fastmon sammelt Content-Security-Policy-Reports">
+
+Nennt eine Policy in `report-to` und `report-uri` die Adresse `https://fastmon.site/c/v/{collector_hash}`, meldet der Browser jeden Verstoß an fastmon. Lass eine neue Policy zuerst als `Content-Security-Policy-Report-Only` laufen, dann siehst du, was sie kaputt machen würde.
+
+- **Beide Formate kommen an**, die Reporting API und das ältere `report-uri`, praktisch jeder Browser meldet also. Die Zahlen sind exakt und nicht gesampelt.
+- **Der Host des Reports muss eine Site der Application sein** oder eine Subdomain davon. Ein Report legt nie eine Site an.
+- **Ein Report behält** Disposition, Direktive, blockierte und auslösende URL ohne Query, die Seite und die Policy mit geleerten Nonces. Identische Reports eines Uploads werden einmal mit ihrer Anzahl gespeichert.
+- **Verworfen werden** das Code-Sample von `'report-sample'`, Reports von Browser-Erweiterungen und ein Referrer von einem anderen Host.
+- **Shopify-Storefronts können die Header nicht setzen.**
+
+Doku: [CSP-Verstöße an fastmon melden](/de/guides/content-security-policy) · [Datenschutz → CSP-Reports](/de/privacy#csp-reports).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-09-30" type="new" area="api" title="CSP-Reports über die API lesen">
+
+`POST /analytics/csp` zählt Reports und betroffene Besucher je Direktive und Disposition im Zeitverlauf. `/analytics/csp/breakdown` gruppiert sie nach einer Dimension, etwa der blockierten URL oder der Seite, und `/analytics/csp/reports` listet sie einzeln mit der verletzten Policy. Die Besucher-Details und die Checkout-Journeys tragen `csp_reports` neben `nel_reports`. Die Filter `disposition`, `effective_directive`, `blocked_url` und `source_url` gelten nur auf den CSP-Routen, jede andere Route antwortet mit `422`. Doku: [Content Security Policy → API](/de/csp#api).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-30" type="changed" area="dashboard" title="Ein Plan zum Buchen: fastmon One">
 
 Die Plan-Seite fragt nicht mehr, welchen Plan du willst. Der Tarif für 29 EUR entfällt, und alles, was ihm fehlte, gehört jetzt zu fastmon One.
@@ -24,9 +58,6 @@ Die Plan-Seite fragt nicht mehr, welchen Plan du willst. Der Tarif für 29 EUR e
 - **Preis und Kontingent bleiben**: 99 EUR netto im Monat mit 1.000.000 Seitenaufrufen und einer Production-Application. Development-Applications bleiben kostenlos.
 - **Du entscheidest nur noch über Kapazität**: zusätzliche Seitenaufrufe in Millionenschritten und Slots für Production-Applications, neben deiner Nutzung und der Prognose.
 - **Eine Preisübersicht** zeigt jede Position zum vollen Preis, jeden Rabatt als eigene Zeile, die Änderung gegenüber heute und den Betrag inklusive USt. Fehlende Rechnungsdaten füllst du direkt auf der Seite aus.
-- **Die jährliche Laufzeit kostet zwölf Monate minus 10 %** statt minus 15 %. Bestehende Jahresabos behalten ihren Preis, bis die Laufzeit gewechselt wird.
-- **Rabatte gelten auch für zusätzliche Seitenaufrufe und Applications**, der Jahresrabatt genauso wie ein Kundenrabatt.
-- **fastmon Enterprise** ist ein kurzer Hinweis mit dem Button „Schreib uns" an enterprise@fastmon.eu. Das Early-Adopter-Abzeichen ist weg.
 
 Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
 

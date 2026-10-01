@@ -94,6 +94,14 @@ A site that sends the [NEL headers](/en/guides/network-error-logging#headers) ge
 - **Visitor**: the edge [`stitch`](#the-edge-derived-stitch-identifier) under [`store_stitch`](/en/tracker#store-stitch), and the same country, device, browser, OS and bot labels as a pageview.
 - **Dropped**: the User-Agent in the report body and any referrer from another host.
 
+### CSP reports [#csp-reports]
+
+A site whose [Content Security Policy](/en/guides/content-security-policy) names fastmon gets one row per distinct violation the browser reports.
+
+- **Stored**: disposition, directive, the blocked and the source URL as scheme, host and path, line and column, the page URL reduced like a pageview URL, the page's HTTP status, and the policy with nonces blanked.
+- **Visitor**: the edge [`stitch`](#the-edge-derived-stitch-identifier) under [`store_stitch`](/en/tracker#store-stitch), and the same country, device, browser, OS and bot labels as a pageview.
+- **Dropped**: the code sample of `'report-sample'`, unread and in every mode, the payload of a `data:` or `blob:` URL, reports caused by browser extensions, and any referrer from another host.
+
 ### Site metadata vs. visitor data
 
 A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page. They tell you which of your CDNs is slow; they do not identify anyone.
