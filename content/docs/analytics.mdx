@@ -63,7 +63,9 @@ The Explorer groups pageviews by any dimension and charts the metrics, or shows 
 
 The beacon rows show the page's **HTTP status**, and `HTTP status >= 400` in the filter lists the pageviews of error pages. Firefox, Safari, and soft navigations report no status, so their rows show a dash and never match. Grouped by HTTP status, they form the "Not reported" group. The group-by picker has a search field.
 
-An **Events** page sits beside the table, one row per event the tracker reported, filterable by type and opening the visitor a row belongs to. It appears for an organization whose applications can produce events, which today means a Shopify shop and its [checkout events](/en/checkout-funnel#shopify).
+An **Events** page sits beside the table, one row per [checkout event](/en/checkout-funnel#stage-events), filterable by type and opening the visitor a row belongs to. A column says whether the row came from a pageview or from the Shopify pixel.
+
+**A pageview opens in a detail with fixed places.** Eight facts and six vital tiles sit at the top, and nine collapsible sections below each show a one-line summary. The field search opens the section that holds a value, for example `ttfb`, and a shared link reopens the same sections.
 
 Results can be copied as Markdown or downloaded as CSV: same rows in the same order, values unformatted, the unit in the header, so a spreadsheet can compute with them.
 
@@ -140,11 +142,14 @@ The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/quer
 
 ## Visitors [#visitors]
 
-The Visitors explorer lists distinct visitors with start and end time, duration, page count, country, device, average LCP and FCP, and error count. A per-visitor detail view shows every pageview in order, each with its Web Vitals, errors, page type, and on shops its [checkout stage](/en/checkout-funnel) and cart actions. A Shopify shop's checkout events and the visitor's [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between the pageviews. Abandoned loads are hidden unless you switch them on.
+The Visitors page lists distinct visitors with start time, duration, page count, country, device, average LCP, and errors. Two columns read the visit at a glance:
 
-The summary above the list describes the whole selected period, not the loaded page of results: visitors, visitors with a single page, and the median pages per visitor. Behavior filters narrow the list to visitors with at least a given number of pages, errors, duration, or LCP, with a given page type in the journey, or who reached a funnel stage. They stay on the Visitors and Sessions pages and are dropped when you navigate elsewhere.
+- **Outcome**: ordered, left the checkout, cart, browsed, or bounced.
+- **Journey**: one block per page, its width the time spent there and its colour the page type. A red mark flags errors, a check an order.
 
-A visitor can be deep-linked with `?visitor=`, and the journey header then says who the visitor was. In the list the full ID is click-to-copy on hover, and a row action narrows the page to that visitor.
+The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage.
+
+**A visitor opens in a dialog**, on a phone as a sheet from the bottom. It shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and the visitor's [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between the pageviews, abandoned loads only once you switch them on. A click on a page opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there. `?visitor=` links to the dialog.
 
 A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the application's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
 

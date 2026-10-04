@@ -12,6 +12,109 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-04" type="changed" area="dashboard" title="The visitors list says how each visit ended">
+
+The Visitors page shows what happened in a visit, not only how many came.
+
+- **Two new columns.** Outcome says ordered, left the checkout, cart, browsed, or bounced. Journey draws one block per page, its width the time spent and its colour the page type.
+- **Segment chips above the list** set the behavior filters: with errors, slow, ordered, reached checkout, cart activity, one page only. Each shows how many visitors it lists.
+- **The summary** adds the share of visitors with a JavaScript error, slow visitors, and buyers.
+- **A visitor opens in a dialog**, on a phone as a sheet from the bottom. A click on a page opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews.
+
+Docs: [Analytics → Visitors](/en/analytics#visitors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="new" area="api" title="Visitor rows carry their journey and outcome">
+
+Every row of `POST /analytics/visitors` carries `outcome` (`ordered`, `checkout`, `cart`, `browsed`, or `bounced`) and `journey`, the first 50 pageviews with page type, time on page, errors, and checkout stage. `POST /analytics/visitors/segments` counts the visitors behind each segment of the list. On a sampled shop these counts are estimates. Docs: [Visitors and sessions → Querying visitors](/en/concepts/sessions#querying-visitors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="changed" area="platform" title="Fetch and XHR calls are kept for a quarter of visitors">
+
+An application stores the fetch and XHR calls of 25 % of its visitors by default. Every application that stored them for all visitors was moved to 25 %.
+
+- **Counts stay comparable.** Calls and errors are scaled back up, while percentiles and rare endpoints rest on fewer calls.
+- **The rest of the pageview is stored in full**, and cart interactions count at the pageview rate.
+- **Set it back to 100 %** under Visitors & sampling, or with `collection.fetch_xhr_sampling_rate`. It never applies above the traffic rate.
+
+Docs: [Applications → Fetch and XHR sampling](/en/concepts/applications#fetch-xhr-sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="new" area="dashboard" title="The settings recommend a sampling rate">
+
+The sampling field shows a recommended rate from the last seven days of traffic. It names the pageviews a day and a month it rests on and how many the rate keeps. **Use** fills the field, and saving stays with you. Docs: [Applications → Recommended rate](/en/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="changed" area="api" title="The sampling recommendation rests on traffic alone">
+
+`GET /applications/{app_id}/sampling-recommendation` recommends the rate that keeps about 20,000 pageviews a day, rounded up to the next `0.05` and never below `0.2`. It drops `binding_constraint`, `constraints`, `inputs.quiet_hour_pageviews`, `inputs.smallest_slice`, and `inputs.checkout`, and adds `inputs.pageviews_per_month`. A client that reads the removed fields has to be updated. Docs: [Applications → Recommended rate](/en/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="Application settings in five sections">
+
+The application settings are now General, Data scope, Visitors & sampling, Shop & page types, and Collector.
+
+- **The navigation shows the value in force** for each section, so you can check a setting without opening it.
+- **One save bar** counts your unsaved changes and can discard them. When something blocks saving, it takes you to the field.
+- **The session ID moved to Visitors & sampling.** Turning it on asks you to confirm first, because it writes to the visitor's device.
+- **Site settings** use the same rows and save bar. Old links to "Data & privacy" open Data scope.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="The pageview detail has fixed places">
+
+Every value of a pageview now has a fixed place: eight facts and six vital tiles at the top, nine collapsible sections below. Each section shows a one-line summary, and the field search opens the section that holds a value. JavaScript errors take the full width, with the stack folded except on the first error. Docs: [Analytics → The Explorer](/en/analytics#explorer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="One notice bar">
+
+Notices share one slim bar at the top instead of stacked strips. "Details" opens all of them at once, the most urgent first. On a phone the bar shows the most urgent title and how many more there are.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="new" area="platform" title="Server-Timing: the time in your own code">
+
+The new phase `code_dur` holds the time your backend spends in its own code, outside the database, key-value, HTTP, and render layers. It comes from `fm-code`, or from the Tideways layer `unknown` that the Shopware plugin passes through. The dashboard shows it as "Code" beside DB, KV, HTTP, and Render. Pageviews from before the change keep `unknown` as a custom key. Docs: [Server-Timing → Backend phases](/en/guides/server-timing#backend-phases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="platform" title="Search pages keep the search term">
+
+On a page typed `search`, the stored URL keeps the value of `q`, `search`, and OXID's `searchparam`, cut to 64 characters. A `category` page keeps `searchparam` for OXID's filter form. This holds in every mode and needs no opt-in, so your privacy notice has to name site search terms. Docs: [Privacy → Site search terms](/en/privacy#search-terms).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-02" type="changed" area="api" title="Checkout stage events and estimated fields">
+
+Every checkout pageview writes a stage event, so `/analytics/events` and the checkout journeys return more rows.
+
+- **Names**: `view_cart`, `begin_checkout`, and `order_placed`, the same names the Shopify pixel uses. `source` is `collector` or `shopify_pixel`.
+- **`meta.sampling.estimated_metrics`** names the fields of a funnel, live, NEL, or CSP response that are estimates. It is empty while nothing is sampled.
+- **On the NEL routes `meta.sampling`** describes the browser's failure sampling instead of the application's rate.
+
+Docs: [Checkout funnel → Stage events and sampling](/en/checkout-funnel#stage-events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-01" type="changed" area="platform" title="The checkout and the live view count every visitor">
+
+The checkout funnel and the purchases now count every visitor at any sampling rate, so a shop can run sampled again.
+
+- **Stage events** are written for every checkout pageview, also for visitors sampling drops. The funnel steps, cohort sizes, stage series, and purchases read them.
+- **Live numbers count every visitor** in the window, sampled or not, on the Shopfloor and in `/analytics/live`.
+- **Estimates carry a `~`** in the dashboard, such as the cart figures and last week's numbers. Checkout steps and orders stay unmarked.
+- **Events is in the Explorer for every shop**, not only on Shopify.
+
+Docs: [Checkout funnel → Stage events and sampling](/en/checkout-funnel#stage-events).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="Content Security Policy: what your policy blocked">
 
 Errors → Content Security Policy shows what your site's policy blocked, and what a report-only policy would block. It needs a policy that names fastmon as its report endpoint.

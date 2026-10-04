@@ -17,8 +17,8 @@ These rules hold regardless of how the site is configured:
 | **Cross-site identifiers**            | We mint nothing that reaches another operator's site. A visitor id is scoped to one [application](/en/concepts/applications) and shared only by the domains that application itself serves. |
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
 | **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. The one carve-out is the opt-in page-type read ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset), or the class names you list yourself in [`pagetype_rules`](/en/tracker#pagetype-rules)), which takes a single body-class token to classify the page type; off by default. |
-| **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`collect_query_keys`](/en/tracker#collect-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`collect_query_values_for`](/en/tracker#collect-query-values-for). |
-| **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured.                 |
+| **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`collect_query_keys`](/en/tracker#collect-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`collect_query_values_for`](/en/tracker#collect-query-values-for), and for a [site search term](#search-terms). |
+| **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured, except a [site search term](#search-terms). |
 
 ### A note on cookies and storage
 
@@ -102,6 +102,10 @@ A site whose [Content Security Policy](/en/guides/content-security-policy) names
 - **Visitor**: the edge [`stitch`](#the-edge-derived-stitch-identifier) under [`store_stitch`](/en/tracker#store-stitch), and the same country, device, browser, OS and bot labels as a pageview.
 - **Dropped**: the code sample of `'report-sample'`, unread and in every mode, the payload of a `data:` or `blob:` URL, reports caused by browser extensions, and any referrer from another host.
 
+### Site search terms [#search-terms]
+
+On a page typed `search`, the stored URL keeps the value of `q`, `search`, and `searchparam`, cut to 64 characters. A page typed `category` keeps `searchparam`, which OXID uses for its filter form. This holds in every mode, `anonymous` included, with no opt-in and no opt-out. Every other page drops these values.
+
 ### Site metadata vs. visitor data
 
 A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page. They tell you which of your CDNs is slow; they do not identify anyone.
@@ -146,9 +150,10 @@ If you're moving from a US analytics product, here's the relevant delta:
 
 ## Your responsibilities
 
-The tracker enforces the wire shape. Two things sit on your side of the line:
+The tracker enforces the wire shape. These sit on your side of the line:
 
 - **No PII in URL paths.** Query strings and hash fragments are stripped, but the pathname is preserved. `/orders/jane.doe@x.com` would carry the email into our pipeline. Use opaque IDs (UUIDs, numeric DB IDs) or put PII into query parameters that get stripped.
+- **Name site search terms in your privacy notice.** A visitor can type personal data into a search box, and fastmon keeps the [term](#search-terms).
 - **No PII in UTM parameters.** UTM tags and click-ID labels land in the database verbatim from the marketer's outbound URLs. Don't embed visitor PII. Never construct campaign URLs like `?utm_term=jane@example.com&utm_content=user-12345` for per-recipient tracking. Each field is server-side capped at 64 chars, but the value is not pattern-scrubbed. Ad-platform click-ID *values* are dropped by the tracker, so the per-recipient join risk applies only to the UTM fields.
 - **Don't pass raw user input to `throw`.** The always-on scrubber catches patterned PII (URLs, emails, IDs), but free-form text (names, custom phrases) can slip through. Type the failure instead: `throw new EmailDeliveryError({ code: "..." })` rather than `throw new Error("Failed to send to " + email)`. Only matters when [`collect_error_messages`](/en/tracker#collect-error-messages) is on; otherwise the entire message is dropped.
 

@@ -1,11 +1,11 @@
 {
   "backend": {
     "repo": "../backend",
-    "since": "2026.9.60"
+    "since": "2026.10.17"
   },
   "frontend": {
     "repo": "../frontend",
-    "since": "2026.9.49"
+    "since": "2026.10.5"
   },
   "tracker": {
     "paths": [

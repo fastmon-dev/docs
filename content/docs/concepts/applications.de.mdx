@@ -137,34 +137,47 @@ behält oder verwirft die Pageviews eines Besuchers gemeinsam, und eine
 neue Rate greift nach etwa einer Minute.
 
 Pageviews, Besucher und Fehlerzahlen werden hochgerechnet. Perzentile,
-Anteile, Mindeststichproben, der Beacon-Explorer, die Funnel-Stufen und
-Histogramme rechnen mit den gespeicherten Zeilen. Gesampelt wird nur eine
-Application, die `stitch` speichert, Checkout-Events nie, und jede
-Analytics-Antwort nennt die Einstellung in `meta.sampling`.
+Anteile, Mindeststichproben, der Beacon-Explorer und Histogramme rechnen mit
+den gespeicherten Zeilen. Gesampelt wird nur eine Application, die `stitch`
+speichert, und jede Analytics-Antwort nennt die Einstellung in
+`meta.sampling`.
+
+Checkout-Schritte und Käufe sind bei jeder Rate exakt, weil sie
+[Stage-Events](/de/checkout-funnel#stage-events) zählen. Auch die Live-Ansicht
+zählt jeden Besucher. `meta.sampling.estimated_metrics` nennt die Felder einer
+Antwort, die hochgerechnet sind, und das Dashboard markiert sie mit `~`.
 
 ```json
 PATCH /applications/{app_id}
 { "collection": { "sampling_rate": 0.5 } }
 ```
 
-Im Dashboard heißt die Rate **Erfasster Besucheranteil** unter Daten & Privacy.
-Sind die Zahlen einer Analytics-Seite hochgerechnet, steht neben dem Titel
-ein Sampling-Badge.
+Im Dashboard heißt die Rate **Erfasster Besucheranteil** unter Besucher &
+Sampling.
+
+### Fetch- und XHR-Sampling [#fetch-xhr-sampling]
+
+`collection.fetch_xhr_sampling_rate` behält die Fetch- und XHR-Aufrufe nur für
+einen Teil der gespeicherten Besucher. Der Rest des Pageviews wird vollständig
+gespeichert. Eine neue Application startet mit `0.25`, und die Rate greift nie
+über `sampling_rate` hinaus.
+
+Aufrufe und Fehler werden hochgerechnet. Perzentile und die gelisteten Aufrufe
+beruhen nur auf den behaltenen Aufrufen.
+[Warenkorb-Interaktionen](/de/checkout-funnel#cart-interactions) zählen mit
+der Pageview-Rate. Im Dashboard heißt das Feld **Besucheranteil mit
+Fetch/XHR** und erscheint, solange die Fetch/XHR-Erfassung an ist.
 
 ### Empfohlene Rate [#sampling-recommendation]
 
-`GET /applications/{app_id}/sampling-recommendation` antwortet aus dem Traffic
-der letzten sieben Tage mit `0.1`, `0.25`, `0.5` oder `1.0`. Die Antwort nennt
-die Regel, die entschieden hat, und die Pageviews dahinter. Die Rate selbst
-ändert sie nie.
+`GET /applications/{app_id}/sampling-recommendation` empfiehlt die Rate, die
+über die letzten sieben vollen Tage etwa 20.000 Pageviews am Tag behält. Sie
+rundet auf die nächsten `0.05` auf, geht nie unter `0.2` und antwortet bei
+weniger Traffic mit `1.0`. `inputs` enthält `pageviews_per_day` und
+`pageviews_per_month`, und die Abfrage ändert nichts.
 
-`inputs.checkout.status` sagt, wie der Checkout gezählt hat:
-
-- **`measured`**: Der Checkout hat die Rate bestimmt.
-- **`unmeasured`**: Weniger als 1000 gewichtete Checkout-Pageviews am Tag und
-  unter 1 % aller Pageviews. Dann entscheidet der seltenste Seitentyp über 1 %,
-  und du solltest dein Checkout-Tracking prüfen.
-- **`not_tracked`**: kein Shop, oder Checkout-Tracking ist aus.
+Das Dashboard zeigt die Empfehlung unter dem Feld. **Übernehmen** trägt sie
+ein, speichern musst du selbst.
 
 ## Datenschutz-Einstellungen für alle Sites [#site-defaults]
 
@@ -191,6 +204,7 @@ Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
 | `spa`                        | bool              | Single-Page-App. Von Hand gesetzt, Default `false`.                   |
 | `collection.*`               | bool · enum       | Die Preset-Flags: Sessions, Fetch/XHR, Fehlermessages und -Frames, Query-Keys und -Werte, `session_consent`, `template_url_ids`. Siehe [Presets](/de/tracker). |
 | `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.1` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
+| `collection.fetch_xhr_sampling_rate` | number | Anteil der Besucher, deren Fetch/XHR-Aufrufe gespeichert werden, Default `0.25` für eine neue Application. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
 | `page_type.url_rules`        | list · nullable   | Deine eigenen URL-Muster, auf Page-Types abgebildet. Wird nach deinen Body-Klassen gelesen. |

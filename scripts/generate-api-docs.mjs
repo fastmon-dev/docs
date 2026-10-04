@@ -49,13 +49,21 @@ const spec = await res.json();
 // that are still admin-only or not ready to document). Their operations are
 // dropped from the spec before anything is generated, so no folder is emitted
 // and the sidebar guard stays green without listing them.
-// `issues` and `highlights` are the Watchdog, which runs in shadow mode and has
-// no member-facing surface yet.
-const EXCLUDE_TAGS = new Set(["issues", "highlights"]);
+// `observations` is the Watchdog, which has no member-facing surface yet.
+// The uptime probe is admin-only for now; its routes sit under the sites,
+// applications and organizations tags, so they are dropped by path, and its
+// application fields and schemas go with them. The support chat routes are
+// already left out of the schema by the backend.
+const EXCLUDE_TAGS = new Set(["observations"]);
+const EXCLUDE_PATH = /\/uptime(\/|$)/;
+const EXCLUDE_PROPERTY = /^uptime_/;
+const EXCLUDE_SCHEMA =
+  /^(Uptime|SiteUptime|ApplicationUptime|SiteCertificate|Observation|PaginatedResponse_Observation)/;
 let excludedOps = 0;
 for (const [route, methods] of Object.entries(spec.paths || {})) {
   for (const [method, op] of Object.entries(methods || {})) {
-    if (op && Array.isArray(op.tags) && op.tags.some((t) => EXCLUDE_TAGS.has(t))) {
+    if (!op || typeof op !== "object") continue;
+    if (EXCLUDE_PATH.test(route) || op.tags?.some((t) => EXCLUDE_TAGS.has(t))) {
       delete methods[method];
       excludedOps++;
     }
@@ -64,7 +72,24 @@ for (const [route, methods] of Object.entries(spec.paths || {})) {
 }
 if (spec.tags) spec.tags = spec.tags.filter((t) => !EXCLUDE_TAGS.has(t.name));
 if (excludedOps) {
-  console.log(`Excluded ${excludedOps} operation(s) for tag(s): ${[...EXCLUDE_TAGS].join(", ")}`);
+  console.log(
+    `Excluded ${excludedOps} operation(s) for uptime and tag(s): ${[...EXCLUDE_TAGS].join(", ")}`
+  );
+}
+const schemas = spec.components?.schemas || {};
+for (const name of Object.keys(schemas)) {
+  if (EXCLUDE_SCHEMA.test(name)) {
+    delete schemas[name];
+    continue;
+  }
+  const props = schemas[name].properties;
+  if (!props) continue;
+  for (const prop of Object.keys(props)) {
+    if (EXCLUDE_PROPERTY.test(prop)) delete props[prop];
+  }
+  if (Array.isArray(schemas[name].required)) {
+    schemas[name].required = schemas[name].required.filter((p) => !EXCLUDE_PROPERTY.test(p));
+  }
 }
 
 // Normalise the spec so generateFiles doesn't choke.

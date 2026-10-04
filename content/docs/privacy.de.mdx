@@ -17,8 +17,8 @@ Diese Regeln gelten unabhängig davon, wie die Site konfiguriert ist:
 | **Cross-Site-IDs**                 | Wir vergeben keine Kennung, die zur Seite eines anderen Betreibers reicht. Eine Besucher-ID gilt nur für eine [Application](/de/concepts/applications) und nur für deren eigene Domains. |
 | **Third-Party-Daten**              | Wir reichern nicht mit Datenbrokern, Ad-Networks oder Social-Platforms an. Es gibt keine "Audience"-Daten. |
 | **Seiteninhalt**                   | Wir lesen kein DOM, keine Formularwerte, keine Scroll-Positionen, kein Session-Replay. Es gibt keine Aufzeichnung. Die einzige Ausnahme ist der Opt-in-Page-Type-Read ([`pagetype_ruleset`](/de/tracker#pagetype-ruleset), oder die Klassennamen, die du selbst in [`pagetype_rules`](/de/tracker#pagetype-rules) auflistest), der einen einzelnen Body-Class-Token zur Page-Type-Einordnung nimmt; standardmäßig aus. |
-| **Query-Parameter-Werte und URL-Fragmente** | Die URL wird im Tracker auf Origin + Pfad gekürzt. Das `#…`-Fragment wird immer verworfen, und Query-*Werte* werden verworfen. `/orders/checkout?email=jane@x.com` kommt unter dem Default-Preset Standard als `/orders/checkout?email` an (der Name `email` bleibt via [`collect_query_keys`](/de/tracker#collect-query-keys), der Wert wird gestrippt), oder als `/orders/checkout` bei Minimal. Ein Wert bleibt nur für Schlüssel, die du explizit in [`collect_query_values_for`](/de/tracker#collect-query-values-for) allow-listest. |
-| **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst.                     |
+| **Query-Parameter-Werte und URL-Fragmente** | Die URL wird im Tracker auf Origin + Pfad gekürzt. Das `#…`-Fragment wird immer verworfen, und Query-*Werte* werden verworfen. `/orders/checkout?email=jane@x.com` kommt unter dem Default-Preset Standard als `/orders/checkout?email` an (der Name `email` bleibt via [`collect_query_keys`](/de/tracker#collect-query-keys), der Wert wird gestrippt), oder als `/orders/checkout` bei Minimal. Ein Wert bleibt nur für Schlüssel, die du explizit in [`collect_query_values_for`](/de/tracker#collect-query-values-for) allow-listest, und für einen [Suchbegriff der Site-Suche](#search-terms). |
+| **Personenbezogene Daten**         | Nichts, was der Besucher tippt, klickt oder im Browser hat, wird erfasst, außer einem [Suchbegriff der Site-Suche](#search-terms). |
 
 ### Zu Cookies und Storage
 
@@ -102,6 +102,10 @@ Nennt die [Content Security Policy](/de/guides/content-security-policy) einer Si
 - **Besucher**: der Edge-[`stitch`](#der-am-edge-abgeleitete-stitch-identifier) unter [`store_stitch`](/de/tracker#store-stitch) und dieselben Labels für Land, Gerät, Browser, OS und Bots wie bei einem Seitenaufruf.
 - **Verworfen**: das Code-Sample von `'report-sample'`, ungelesen und in jedem Modus, der Inhalt einer `data:`- oder `blob:`-URL, Reports, die Browser-Erweiterungen auslösen, und jeder Referrer von einem anderen Host.
 
+### Suchbegriffe der Site-Suche [#search-terms]
+
+Auf einer Seite vom Typ `search` behält die gespeicherte URL den Wert von `q`, `search` und `searchparam`, gekürzt auf 64 Zeichen. Eine Seite vom Typ `category` behält `searchparam`, das OXID für sein Filterformular nutzt. Das gilt in jedem Modus, auch in `anonymous`, ohne Opt-in und ohne Opt-out. Auf allen anderen Seiten fallen diese Werte weg.
+
 ### Site-Metadaten vs. Besucherdaten
 
 Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch. Sie sagen dir, welches deiner CDNs langsam ist; sie identifizieren niemanden.
@@ -146,9 +150,10 @@ Wenn du von einem US-Analytics-Produkt umsteigst, hier das relevante Delta:
 
 ## Deine Verantwortung
 
-Der Tracker garantiert die Wire-Form. Zwei Dinge bleiben bei dir:
+Der Tracker garantiert die Wire-Form. Diese Punkte bleiben bei dir:
 
 - **Keine PII in URL-Pfaden.** Query-Strings und Hash-Fragmente werden entfernt, der Pathname bleibt erhalten. `/orders/jane.doe@x.com` würde die E-Mail in unsere Pipeline tragen. Nutze opake IDs (UUIDs, numerische DB-IDs) oder bring PII in Query-Parameter, die ohnehin gestrippt werden.
+- **Nenne Suchbegriffe in deiner Datenschutzerklärung.** Besucher können personenbezogene Daten in ein Suchfeld tippen, und fastmon behält den [Begriff](#search-terms).
 - **Keine PII in UTM-Parametern.** UTM-Tags und Click-ID-Labels landen wortwörtlich aus den Outbound-URLs der Marketer in der Datenbank. Pack da keine Besucher-PII rein. Bau Kampagnen-URLs niemals als `?utm_term=jane@example.com&utm_content=user-12345` für Per-Empfänger-Tracking. Jedes Feld wird serverseitig auf 64 Zeichen gedeckelt, der Wert läuft aber nicht durch den Scrubber. Ad-Plattform-Click-ID-*Werte* verwirft der Tracker selbst, damit greift das Per-Empfänger-Join-Risiko nur bei den UTM-Feldern.
 - **Kein roher User-Input in `throw`.** Der immer aktive Scrubber fängt gemusterte PII (URLs, E-Mails, IDs), aber freier Text (Namen, eigene Bezeichner) kann durchrutschen. Typisiere den Fehler: `throw new EmailDeliveryError({ code: "..." })` statt `throw new Error("Failed to send to " + email)`. Greift nur, wenn [`collect_error_messages`](/de/tracker#collect-error-messages) an ist; sonst wird die Message ohnehin komplett verworfen.
 

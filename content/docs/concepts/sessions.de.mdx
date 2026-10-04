@@ -68,14 +68,17 @@ Der Besucher-View listet eine Zeile pro Besucher, gruppiert nach der aufgelöste
 | `avg_lcp`      | number              | Durchschnittlicher LCP über die Seiten des Besuchers.          |
 | `avg_fcp`      | number              | Durchschnittlicher FCP über die Seiten des Besuchers.          |
 | `total_errors` | int                 | Fehler insgesamt über die Seiten des Besuchers.                |
+| `outcome`      | enum                | Wie der Besuch geendet hat: `ordered`, `checkout`, `cart`, `browsed` oder `bounced`. Die höchste erreichte Stufe zählt. |
+| `journey`      | list                | Die ersten 50 Pageviews in Reihenfolge, jeweils mit Seitentyp, Verweildauer, Fehlern und Checkout-Stufe. `journey_truncated` zeigt einen längeren Besuch an. |
 
 Was fehlt: keine Besucher-ID, kein Fingerprint, keine IP. Keiner der beiden Identifier ist dafür gedacht, außerhalb des Analytics-Fensters verwendet zu werden: `stitch` rotiert auf seinem Salt-Zeitplan (siehe Privacy), und `session_id` ist kurzlebig.
 
 ## Besucher abfragen
 
-Die Analytics-API bietet zwei Endpunkte:
+Die Analytics-API bietet drei Endpunkte:
 
 - `POST /analytics/visitors`: paginierte Liste der Besucher in einem Zeitraum, gruppiert nach der aufgelösten `identity`, mit Filtern. Cursor-paginiert für hohe Volumina.
+- `POST /analytics/visitors/segments`: wie viele Besucher der Liste Fehler hatten, langsam waren (durchschnittlicher LCP ab `slow_lcp_threshold_ms`), bestellt haben, im Checkout oder am Warenkorb waren oder nur eine Seite gesehen haben. Er nimmt denselben Scope und dieselben Filter wie die Liste.
 - `POST /analytics/visitors/detail`: der vollständige Pageview-Pfad eines Besuchers (das „Replay"). Er akzeptiert `identity=session` oder `stitch` (je nachdem, was die Besucherliste genutzt hat; Default `session`); eine unbekannte Identität wird mit `422` abgelehnt. Im Preset `Minimal` erfasst die Site keinen der beiden Identifier, es gibt also keine Besucher zum Reinzoomen.
 
 Übergib `identity` explizit, um den Standard der Application zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/listAnalyticsVisitors).
