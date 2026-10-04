@@ -70,6 +70,8 @@ Einen Widerruf mitten in der Session gibt es nicht: Die Session-ID liegt im `ses
 
 Schreibt eine Session-ID (`_fms`) in den `sessionStorage` des Besuchers, sodass Pageviews desselben Besuchs verknüpfbar werden: seitenübergreifende Journeys, Funnels, Einstiegs- und Ausstiegsseiten, Wiederkehr innerhalb der Session. Die ID liegt im `sessionStorage` und stirbt beim Schließen des Tabs. Sie ist das **Einzige**, was das Beacon je auf das Gerät schreibt; aus rührt das ausgelieferte Bundle den `sessionStorage` gar nicht erst an (der Schreibschritt wird herauskompiliert, statt serverseitig verworfen zu werden), und der Collector erzwingt zur Absicherung eine leere Session-ID. Aus auf dem Standard-Preset, mit dem neue Applications starten; das Preset Full schaltet sie an.
 
+Im Dashboard heißt der Schalter **Session-ID speichern** und liegt unter Besucher & Sampling. Vor dem Einschalten fragt das Dashboard noch einmal nach.
+
 **PII:** die Session-ID ist ein Besucher-Identifier, und ihr Schreiben ist der einzige Vorgang, mit dem das Beacon etwas auf dem Gerät ablegt, und damit einwilligungsrelevant nach § 25 Abs. 1 TDDDG (siehe [Consent und TDDDG](#consent-and-the-tdddg)). Für die schlankste Position aus lassen, oder mit [`session_consent`](#session-consent) kombinieren, um erst nach Opt-In zu schreiben. Aus getragen enthält eine Zeile keinen Identifier auf dem Gerät.
 
 ### `session_consent` [#session-consent]
@@ -166,6 +168,8 @@ Behält volles Stack-Frame-Detail (Script-Pfad plus Zeile und Spalte) für jeden
 ### `collect_fetch_xhr` [#collect-fetch-xhr]
 
 Erfasst aggregierte Fetch/XHR-Telemetrie: Aufruf-Counts pro Endpunkt, Dauern, Fehler-Statuscodes und die langsamsten Ausreißer, sodass du siehst, welche deiner eigenen APIs langsam sind oder fehlschlagen. Ein wiederholter Fehler mit demselben Status auf demselben Endpunkt schickt ein einziges `fetch_xhr_update`; die Wiederholungen erhöhen nur den Fehlerzähler, den das nächste Beacon trägt. Wird beim Rendern ins ausgelieferte Bundle gebacken. Aus unterdrückt die Fetch/XHR-Erhebung komplett, inklusive des Wrappers. An per Default (das Preset Standard schaltet es an). Der [Checkout-Funnel](/de/checkout-funnel#cart-interactions) liest seine Warenkorb-Interaktionen aus dieser Telemetrie (ein `POST` an einen bekannten Warenkorb-Endpunkt); ist sie aus, bleiben die Interaktionszahlen leer, während die URL-Stufen weiter funktionieren.
+
+Eine neue Application speichert die Aufrufe eines Viertels ihrer Besucher, siehe [Fetch- und XHR-Sampling](/de/concepts/applications#fetch-xhr-sampling).
 
 **PII:** Endpunkt-Pfade werden wie die Seiten-URL sanitisiert, und zwar strenger. Der Collector templatisiert sie serverseitig nach: lange Content-Slugs auf `:slug`, opake Tokens auf `:id`, Soft-Navigation-Dokument-Fetches auf `/:page`, und ein Third-Party-Host verliert seine Query komplett. Die Zähler sind aggregierte Zahlen, und der Ziel-Host ist Site-Metadaten. Das eine Restrisiko ist ein alphabetisches Segment wie `/users/jane-doe`, das die Templatisierung übersteht, dieselbe Betreiberpflicht wie bei Seiten-URLs.
 

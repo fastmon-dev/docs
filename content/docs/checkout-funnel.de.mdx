@@ -52,6 +52,14 @@ Warenkorb-Interaktionen brauchen [`collect_fetch_xhr`](/de/tracker#collect-fetch
 
 Warenkorb-Interaktionen stehen **neben** den Funnel-Schritten, nie als einer davon: Ihre Abdeckung hängt vom Shop-System und von der Fetch/XHR-Einstellung ab.
 
+## Stage-Events und Sampling [#stage-events]
+
+Jeder Pageview mit einer Stufe schreibt zusätzlich ein **Stage-Event**: `view_cart`, `begin_checkout` oder `order_placed`, mit `source` `collector`. Das Shopify-Pixel nutzt dieselben Namen, nur `source` unterscheidet die beiden. Stage-Events brauchen Checkout-Tracking, einen Shop und einen gespeicherten `stitch`.
+
+Sie entstehen für jeden Besucher, auch für die, die das [Sampling](/de/concepts/applications#sampling) verwirft. Funnel-Schritte, Kohortengrößen, Stufen-Verlauf und Käufe lesen sie und bleiben deshalb bei jeder Rate exakt. `visitors_total`, die Conversion-Rate und die Warenkorb-Interaktionen kommen aus Pageviews und sind auf einem gesampelten Shop hochgerechnet.
+
+Ein Filter, den die Events nicht beantworten können, etwa eine URL oder eine Kampagne, liest stattdessen den gewichteten Pageview-Funnel. `meta.sampling.estimated_metrics` nennt die hochgerechneten Felder.
+
 ## Was die Zahlen bedeuten [#what-the-numbers-mean]
 
 - **Conversion-Rate**: Besucher mit Abschluss geteilt durch alle Besucher im Zeitraum, die Zahl, die auch GA4 und Shopify melden. Vergleichbar mit dem üblichen Shop-Benchmark von 1 bis 3 %. Der Nenner ist `visitors_total`, und jeder Punkt der Zeitreihe trägt eigene `visitors`.
@@ -97,7 +105,7 @@ Die Checkout-Zahlen folgen den Filtern der Seite, außer Filtern, die eine Check
 
 ## Einstellungen
 
-Schalter und Muster liegen an der Application unter **Einstellungen → Checkout-Funnel** und auf der API unter `shop.checkout` (siehe [Applications](/de/concepts/applications#checkout-funnel)).
+Schalter und Muster liegen an der Application unter **Einstellungen → Shop & Seitentypen** und auf der API unter `shop.checkout` (siehe [Applications](/de/concepts/applications#checkout-funnel)).
 
 - **`checkout_tracking`** ist standardmäßig an und ist das Opt-out. Es umfasst URL-Stufen und Warenkorb-Interaktionen zusammen. Die Markierung wirkt nur vorwärts, Abschalten hinterlässt also eine Lücke, die sich später nicht füllen lässt.
 - **Pfade pro Stufe.** Jede Stufe erbt entweder die eingebauten Muster (der Default, `null`) oder ersetzt sie komplett. Es gibt keine Mischung. Bis zu 10 Muster pro Stufe, jedes bis zu 200 Zeichen, druckbares ASCII in Kleinbuchstaben, `*` als einziges Wildcard-Zeichen. Verbesserungen an der eingebauten Liste erreichen jede Site, die diese Stufe nicht überschrieben hat.
@@ -111,7 +119,7 @@ Ein generischer `?step=`-Checkout braucht den Key in [`collect_query_values_for`
 
 ## Datenschutz [#privacy]
 
-Die Stufe ist ein Label mit vier Werten, berechnet aus der URL, die die Site ohnehin speichert; die Warenkorb-Interaktion ist ein Merker aus Fetch/XHR-Pfaden, die sie ohnehin speichert. Keines von beiden fügt dem Beacon ein Feld hinzu oder erhöht die Besucher-Entropie. Pro Besucher wird nichts aufbewahrt, und der Funnel wird zur Abfragezeit berechnet, in jedem Erfassungsmodus, auch in `anonymous`.
+Die Stufe ist ein Label mit vier Werten, berechnet aus der URL, die die Site ohnehin speichert; die Warenkorb-Interaktion ist ein Merker aus Fetch/XHR-Pfaden, die sie ohnehin speichert. Keines von beiden fügt dem Beacon ein Feld hinzu oder erhöht die Besucher-Entropie, und ein [Stage-Event](#stage-events) übernimmt nur, was die Pageview-Zeile ohnehin enthält. Der Funnel wird zur Abfragezeit berechnet, in jedem Erfassungsmodus, auch in `anonymous`.
 
 Das Shopify-Pixel ist der einzige Teil, der eigene Events schickt. Was es trägt, steht unter [Shopify-Checkout-Events](#shopify). Siehe [Privacy](/de/privacy#what-we-collect).
 
@@ -122,7 +130,7 @@ Das Shopify-Pixel ist der einzige Teil, der eigene Events schickt. Was es trägt
 - `POST /organizations/{org_id}/analytics/funnels/checkout/stages`: die Besucher, die jede Stufe erreicht haben, pro Stunde oder Tag, Checkout-Events eingeschlossen, für das Stufen-Chart. `compare_to` ergänzt die Vorperiode und reicht nur so weit zurück, wie ein Shopify-Pixel installiert ist, ein früherer Vergleich zeigt die Installation also als Anstieg. `events_read` sagt, ob die Events gezählt wurden.
 - `POST /organizations/{org_id}/analytics/funnels/checkout/journeys`: die Pageviews rund um den Treffer eines Besuchers auf einem Schritt, mit seinen Checkout-`events` neben `pages`. Die Besucher kommen aus beiden Quellen, wer nur aus Events bekannt ist, kommt also mit leerem `pages` zurück. Siehe die [Referenz](/en/api/analytics/queryAnalyticsCheckoutJourneys).
 - `POST /organizations/{org_id}/analytics/visitors` nimmt `contains_checkout_stage` und `contains_cart_interaction` als Filter, und ein Checkout-Event zählt als erreichte Stufe. Jede Zeile ist eine Pageview-Zeile, ein Besucher nur aus Events hat also keine. Das Besucher-Detail antwortet mit `events` neben `pages`, je mit Name, Stufe, Quelle und Zeit.
-- `POST /organizations/{org_id}/analytics/events` listet die Checkout-Events selbst, neueste zuerst und cursor-paginiert, eine Testbestellung lässt sich also gegen die Shopify-Bestellliste halten. Eingrenzen kannst du mit `names`, dem Site-Scope, `filters.stitch` für einen Besucher und den Edge-Dimensionen.
+- `POST /organizations/{org_id}/analytics/events` listet die Checkout-Events selbst, neueste zuerst und cursor-paginiert, eine Testbestellung lässt sich also gegen die Shopify-Bestellliste halten. `name` ist `view_cart`, `begin_checkout`, `add_payment_info` oder `order_placed`, `source` ist `collector` oder `shopify_pixel`. Eingrenzen kannst du mit `names`, dem Site-Scope, `filters.stitch` für einen Besucher und den Edge-Dimensionen.
 - `checkout_stage` ist auf jedem Analytics-Endpunkt mit `filters` eine Filter- und Ausschlussdimension (`exclude: {checkout_stage: ['']}` behält nur Funnel-Pageviews) und in `POST /analytics/query` eine Gruppierungsdimension. `cart_interactions` und `cart_interaction_errors` sind dort Metriken (und damit in Benachrichtigungsregeln nutzbar) sowie Metrikbereiche. `POST /analytics/beacons` projiziert `checkout_stage`, die beiden Zähler und die Map `cart_interaction_kinds` auf jede Zeile.
 
 ## Weiterlesen

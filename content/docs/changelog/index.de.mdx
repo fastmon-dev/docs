@@ -17,6 +17,109 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-04" type="changed" area="dashboard" title="Die Besucherliste zeigt, wie ein Besuch geendet hat">
+
+Die Besucher-Seite zeigt jetzt, was in einem Besuch passiert ist, nicht nur, wie viele kamen.
+
+- **Zwei neue Spalten.** Ausgang sagt bestellt, Checkout verlassen, Warenkorb, gestöbert oder abgesprungen. Verlauf zeigt einen Block pro Seite, die Breite ist die Verweildauer, die Farbe der Seitentyp.
+- **Segment-Chips über der Liste** setzen die Verhaltensfilter: mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite. Jeder Chip zeigt, wie viele Besucher er listet.
+- **Die Zusammenfassung** zeigt zusätzlich den Anteil der Besucher mit JavaScript-Fehler, die langsamen Besucher und die Käufer.
+- **Ein Besucher öffnet sich in einem Dialog**, auf dem Handy als Sheet von unten. Ein Klick auf eine Seite öffnet ihr volles Detail, und „Im Explorer öffnen“ listet alle Pageviews des Besuchers.
+
+Doku: [Analytics → Besucher](/de/analytics#visitors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="new" area="api" title="Besucherzeilen enthalten Verlauf und Ausgang">
+
+Jede Zeile von `POST /analytics/visitors` enthält `outcome` (`ordered`, `checkout`, `cart`, `browsed` oder `bounced`) und `journey`, die ersten 50 Pageviews mit Seitentyp, Verweildauer, Fehlern und Checkout-Stufe. `POST /analytics/visitors/segments` zählt die Besucher hinter jedem Segment der Liste. Auf einem gesampelten Shop sind diese Zahlen hochgerechnet. Doku: [Besucher und Sessions → Besucher abfragen](/de/concepts/sessions#besucher-abfragen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="changed" area="platform" title="Fetch- und XHR-Aufrufe für ein Viertel der Besucher">
+
+Eine Application speichert die Fetch- und XHR-Aufrufe standardmäßig für 25 % ihrer Besucher. Jede Application, die sie für alle Besucher gespeichert hat, steht jetzt auf 25 %.
+
+- **Die Zahlen bleiben vergleichbar.** Aufrufe und Fehler werden hochgerechnet, Perzentile und seltene Endpunkte beruhen aber auf weniger Aufrufen.
+- **Der Rest des Pageviews wird vollständig gespeichert**, und Warenkorb-Interaktionen zählen mit der Pageview-Rate.
+- **Zurück auf 100 %** stellst du unter Besucher & Sampling oder mit `collection.fetch_xhr_sampling_rate`. Die Rate greift nie über die Traffic-Rate hinaus.
+
+Doku: [Applications → Fetch- und XHR-Sampling](/de/concepts/applications#fetch-xhr-sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="new" area="dashboard" title="Die Einstellungen empfehlen eine Sampling-Rate">
+
+Unter dem Sampling-Feld steht eine empfohlene Rate aus dem Traffic der letzten sieben Tage. Sie nennt die Pageviews pro Tag und Monat, auf denen sie beruht, und wie viele die Rate behält. **Übernehmen** trägt sie ins Feld ein, speichern musst du selbst. Doku: [Applications → Empfohlene Rate](/de/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-04" type="changed" area="api" title="Die Sampling-Empfehlung beruht nur noch auf dem Traffic">
+
+`GET /applications/{app_id}/sampling-recommendation` empfiehlt die Rate, die etwa 20.000 Pageviews am Tag behält, aufgerundet auf die nächsten `0.05` und nie unter `0.2`. Weggefallen sind `binding_constraint`, `constraints`, `inputs.quiet_hour_pageviews`, `inputs.smallest_slice` und `inputs.checkout`, neu ist `inputs.pageviews_per_month`. Ein Client, der die entfernten Felder liest, muss angepasst werden. Doku: [Applications → Empfohlene Rate](/de/concepts/applications#sampling-recommendation).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="Application-Einstellungen in fünf Bereichen">
+
+Die Einstellungen einer Application gliedern sich jetzt in Allgemein, Datenumfang, Besucher & Sampling, Shop & Seitentypen und Collector.
+
+- **Die Navigation zeigt den aktiven Wert** jedes Bereichs, du siehst eine Einstellung also, ohne den Bereich zu öffnen.
+- **Eine Speicherleiste** zählt deine ungespeicherten Änderungen und kann sie verwerfen. Blockiert etwas das Speichern, springt sie zum Feld.
+- **Die Session-ID liegt jetzt unter Besucher & Sampling.** Vor dem Einschalten fragt das Dashboard nach, weil sie auf das Gerät des Besuchers schreibt.
+- **Die Site-Einstellungen** nutzen dieselben Zeilen und dieselbe Speicherleiste. Alte Links auf „Daten & Privacy“ öffnen Datenumfang.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="Das Pageview-Detail hat feste Plätze">
+
+Jeder Wert eines Pageviews hat jetzt einen festen Platz: oben acht Eckdaten und sechs Vitals-Kacheln, darunter neun einklappbare Abschnitte. Jeder Abschnitt zeigt eine Zusammenfassung in einer Zeile, und die Feldsuche öffnet den Abschnitt mit dem gesuchten Wert. JavaScript-Fehler nutzen die volle Breite, der Stack ist außer beim ersten Fehler eingeklappt. Doku: [Analytics → Der Explorer](/de/analytics#explorer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="dashboard" title="Eine Hinweisleiste">
+
+Hinweise teilen sich oben eine schmale Leiste statt gestapelter Streifen. „Details“ öffnet alle auf einmal, den dringendsten zuerst. Auf dem Handy zeigt die Leiste den dringendsten Titel und wie viele weitere es gibt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="new" area="platform" title="Server-Timing: die Zeit im eigenen Code">
+
+Die neue Phase `code_dur` ist die Zeit, die dein Backend in seinem eigenen Code verbringt, außerhalb von Datenbank, Key-Value, HTTP und Rendering. Sie kommt aus `fm-code` oder aus dem Tideways-Layer `unknown`, den das Shopware-Plugin durchreicht. Das Dashboard zeigt sie als „Code“ neben DB, KV, HTTP und Render. Pageviews von vor der Änderung behalten `unknown` als eigenen Key. Doku: [Server-Timing → Backend-Phasen](/de/guides/server-timing#backend-phasen).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="platform" title="Suchseiten behalten den Suchbegriff">
+
+Auf einer Seite vom Typ `search` behält die gespeicherte URL den Wert von `q`, `search` und OXIDs `searchparam`, gekürzt auf 64 Zeichen. Eine `category`-Seite behält `searchparam` für OXIDs Filterformular. Das gilt in jedem Modus und ohne Opt-in, deine Datenschutzerklärung muss Suchbegriffe der Site-Suche also nennen. Doku: [Privacy → Suchbegriffe der Site-Suche](/de/privacy#search-terms).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="api" title="Checkout-Stage-Events und hochgerechnete Felder">
+
+Jeder Checkout-Pageview schreibt ein Stage-Event, `/analytics/events` und die Checkout-Journeys liefern also mehr Zeilen.
+
+- **Namen**: `view_cart`, `begin_checkout` und `order_placed`, dieselben Namen wie beim Shopify-Pixel. `source` ist `collector` oder `shopify_pixel`.
+- **`meta.sampling.estimated_metrics`** nennt die hochgerechneten Felder einer Funnel-, Live-, NEL- oder CSP-Antwort. Ohne Sampling bleibt die Liste leer.
+- **Auf den NEL-Routen beschreibt `meta.sampling`** das Failure-Sampling des Browsers statt der Rate der Application.
+
+Doku: [Checkout-Funnel → Stage-Events und Sampling](/de/checkout-funnel#stage-events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-03" type="changed" area="platform" title="Checkout und Live-Zahlen zählen jeden Besucher">
+
+Checkout-Funnel und Käufe zählen jetzt bei jeder Sampling-Rate jeden Besucher, ein Shop kann also wieder gesampelt laufen.
+
+- **Stage-Events** entstehen für jeden Checkout-Pageview, auch für Besucher, die das Sampling verwirft. Funnel-Schritte, Kohortengrößen, Stufen-Verlauf und Käufe lesen sie.
+- **Live-Zahlen zählen jeden Besucher** im Fenster, gesampelt oder nicht, im Shopfloor und in `/analytics/live`.
+- **Hochgerechnete Werte tragen ein `~`** im Dashboard, etwa die Warenkorb-Zahlen und die Vorwoche. Checkout-Schritte und Bestellungen bleiben unmarkiert.
+- **Events gibt es im Explorer für jeden Shop**, nicht nur für Shopify.
+
+Doku: [Checkout-Funnel → Stage-Events und Sampling](/de/checkout-funnel#stage-events).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-09-30" type="new" area="dashboard" title="Content Security Policy: was deine Policy blockiert hat">
 
 Fehler → Content Security Policy zeigt, was die Policy deiner Site blockiert hat und was eine Report-only-Policy blockieren würde. Dafür muss die Policy fastmon als Report-Endpunkt nennen.

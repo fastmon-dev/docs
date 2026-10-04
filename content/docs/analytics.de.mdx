@@ -63,7 +63,9 @@ Der Explorer gruppiert Pageviews nach jeder Dimension und chartet die Metriken, 
 
 Die Beacon-Zeilen zeigen den **HTTP-Status** der Seite, und `HTTP-Status >= 400` im Filter listet die Pageviews von Fehlerseiten. Firefox, Safari und Soft Navigations melden keinen Status, ihre Zeilen zeigen deshalb einen Strich und treffen keinen Filter. Gruppiert nach HTTP-Status bilden sie die Gruppe „Nicht gemeldet". Die Gruppierungsauswahl hat ein Suchfeld.
 
-Neben der Tabelle sitzt eine **Events**-Seite, eine Zeile pro Event, das der Tracker gemeldet hat, filterbar nach Typ und mit einem Sprung zum Besucher der Zeile. Sie erscheint für Organisationen, deren Applications Events erzeugen können, heute also für einen Shopify-Shop mit seinen [Checkout-Events](/de/checkout-funnel#shopify).
+Neben der Tabelle sitzt eine **Events**-Seite, eine Zeile pro [Checkout-Event](/de/checkout-funnel#stage-events), filterbar nach Typ und mit einem Sprung zum Besucher der Zeile. Eine Spalte zeigt, ob die Zeile aus einem Pageview oder vom Shopify-Pixel stammt.
+
+**Ein Pageview öffnet sich in einer Detailansicht mit festen Plätzen.** Oben stehen acht Eckdaten und sechs Vitals-Kacheln, darunter neun einklappbare Abschnitte mit je einer Zusammenfassung in einer Zeile. Die Feldsuche öffnet den Abschnitt, in dem ein Wert steht, etwa `ttfb`, und ein geteilter Link öffnet dieselben Abschnitte wieder.
 
 Ergebnisse lassen sich als Markdown kopieren oder als CSV herunterladen: dieselben Zeilen in derselben Reihenfolge, Werte unformatiert, die Einheit im Header, damit eine Tabellenkalkulation damit rechnen kann.
 
@@ -140,11 +142,14 @@ Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/q
 
 ## Besucher [#visitors]
 
-Der Besucher-Explorer listet eindeutige Besucher mit Start- und Endzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und FCP und Fehlerzahl. Eine Detailansicht pro Besucher zeigt jeden Pageview in Reihenfolge, jeweils mit Web Vitals, Fehlern, Page-Type und bei Shops seiner [Checkout-Stufe](/de/checkout-funnel) und seinen Warenkorb-Aktionen. Die Checkout-Events eines Shopify-Shops und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews. Abgebrochene Ladevorgänge sind ausgeblendet, bis du sie einschaltest.
+Die Besucher-Seite listet eindeutige Besucher mit Startzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und Fehlern. Zwei Spalten zeigen auf einen Blick, wie der Besuch lief:
 
-Die Zusammenfassung über der Liste beschreibt den ganzen gewählten Zeitraum, nicht die geladene Ergebnisseite: Besucher, Besucher mit nur einer Seite und der Median der Seiten pro Besucher. Verhaltensfilter grenzen die Liste ein auf Besucher mit mindestens so vielen Seiten, Fehlern, so viel Dauer oder LCP, mit einem bestimmten Page-Type in der Journey, oder auf solche, die eine Funnel-Stufe erreicht haben. Sie bleiben auf den Seiten Besucher und Sessions und fallen weg, wenn du woanders hin navigierst.
+- **Ausgang**: bestellt, Checkout verlassen, Warenkorb, gestöbert oder abgesprungen.
+- **Verlauf**: ein Block pro Seite, die Breite ist die Verweildauer, die Farbe der Seitentyp. Eine rote Marke steht für Fehler, ein Haken für eine Bestellung.
 
-Ein Besucher lässt sich per `?visitor=` direkt verlinken, der Kopf der Journey sagt dann, wer der Besucher war. In der Liste lässt sich die volle ID per Hover kopieren, und eine Zeilenaktion grenzt die Seite auf diesen Besucher ein.
+Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Seitenaufrufe pro Besucher und der Anteil mit JavaScript-Fehler, langsame Besucher (durchschnittlicher LCP über 4 s) und Käufer. **Segment-Chips** (mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite) setzen die Verhaltensfilter und zeigen, wie viele Besucher sie listen. „Verhalten anpassen“ öffnet alle Filter: Seiten, Fehler, Dauer, LCP, Seitentyp und Funnel-Stufe.
+
+**Ein Besucher öffnet sich in einem Dialog**, auf dem Handy als Sheet von unten. Er zeigt jeden Pageview in Reihenfolge mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews, abgebrochene Ladevorgänge erst, wenn du sie einschaltest. Ein Klick auf eine Seite öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers. `?visitor=` verlinkt direkt auf den Dialog.
 
 Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Application legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
 

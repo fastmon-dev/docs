@@ -130,33 +130,45 @@ The edge keeps or drops a visitor's pageviews together, and a new
 rate applies within about a minute.
 
 Pageviews, visitors, and error counts are scaled back up. Percentiles,
-shares, minimum-sample thresholds, the Beacon explorer, funnel stage
-counts, and histograms stay on the stored rows. Only an application that
-stores `stitch` is sampled, checkout events never are, and every
-analytics response reports the setting in `meta.sampling`.
+shares, minimum-sample thresholds, the Beacon explorer, and histograms stay
+on the stored rows. Only an application that stores `stitch` is sampled, and
+every analytics response reports the setting in `meta.sampling`.
+
+The checkout steps and purchases are exact at any rate, because they count
+[stage events](/en/checkout-funnel#stage-events). The live view counts every
+visitor too. `meta.sampling.estimated_metrics` names the fields of a response
+that are estimates, and the dashboard marks them with `~`.
 
 ```json
 PATCH /applications/{app_id}
 { "collection": { "sampling_rate": 0.5 } }
 ```
 
-In the dashboard the rate is **Share of visitors kept** under Data & privacy.
-Analytics pages show a sampling badge beside the title when their counts are
-estimated.
+In the dashboard the rate is **Share of visitors kept** under Visitors &
+sampling.
+
+### Fetch and XHR sampling [#fetch-xhr-sampling]
+
+`collection.fetch_xhr_sampling_rate` keeps the fetch and XHR calls of a share
+of the stored visitors. The rest of each pageview is stored in full. A new
+application starts at `0.25`, and the rate never applies above
+`sampling_rate`.
+
+Call and error counts are scaled back up. Percentiles and the listed calls
+rest on the kept calls only. [Cart interactions](/en/checkout-funnel#cart-interactions)
+count at the pageview rate. In the dashboard the field is **Share of visitors
+with fetch/XHR kept**, shown while fetch/XHR capture is on.
 
 ### Recommended rate [#sampling-recommendation]
 
-`GET /applications/{app_id}/sampling-recommendation` answers `0.1`, `0.25`,
-`0.5`, or `1.0` from the last seven days of traffic. It names the rule that
-decided and the pageviews behind it, and never changes the rate.
+`GET /applications/{app_id}/sampling-recommendation` recommends the rate that
+keeps about 20,000 pageviews a day over the last seven full days. It rounds up
+to the next `0.05`, never goes below `0.2`, and answers `1.0` for less traffic.
+`inputs` holds `pageviews_per_day` and `pageviews_per_month`, and reading it
+changes nothing.
 
-`inputs.checkout.status` says how the checkout counted:
-
-- **`measured`**: the checkout decided the rate.
-- **`unmeasured`**: fewer than 1000 weighted checkout pageviews a day and under
-  1 % of all pageviews. The rarest page type above 1 % decides, and your
-  checkout tracking needs a look.
-- **`not_tracked`**: no shop, or checkout tracking off.
+The dashboard shows the recommendation under the field. **Use** fills it in,
+and saving stays with you.
 
 ## Privacy settings for every site [#site-defaults]
 
@@ -183,6 +195,7 @@ twins these groups replaced no longer answer.
 | `spa`                        | bool              | Single-page app. Set by hand, default `false`.                        |
 | `collection.*`               | bool · enum       | The preset flags: sessions, fetch/XHR, error messages and frames, query keys and values, `session_consent`, `template_url_ids`. See [Presets](/en/tracker). |
 | `collection.sampling_rate`   | number            | Share of visitors stored, `0.1` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
+| `collection.fetch_xhr_sampling_rate` | number | Share of visitors whose fetch/XHR calls are stored, default `0.25` for a new application. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
 | `page_type.url_rules`        | list · nullable   | Your own URL patterns mapped to page types. Read after your body classes. |

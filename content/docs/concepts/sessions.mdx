@@ -68,14 +68,17 @@ The Visitors view lists one row per visitor, grouped by the resolved identity:
 | `avg_lcp`      | number              | Average LCP across the visitor's pages.                        |
 | `avg_fcp`      | number              | Average FCP across the visitor's pages.                        |
 | `total_errors` | int                 | Total errors across the visitor's pages.                       |
+| `outcome`      | enum                | How the visit ended: `ordered`, `checkout`, `cart`, `browsed`, or `bounced`. The highest stage wins. |
+| `journey`      | list                | The first 50 pageviews in order, each with page type, time on page, errors, and checkout stage. `journey_truncated` marks a longer visit. |
 
 Note what's absent: no user ID, no fingerprint, no IP. Neither identifier is meant to be used outside the analytics window: `stitch` rotates on its salt schedule (see Privacy), and `session_id` is short-lived.
 
 ## Querying visitors
 
-The Analytics API exposes two endpoints:
+The Analytics API exposes three endpoints:
 
 - `POST /analytics/visitors`: paginated list of visitors in a time range, grouped by the resolved `identity`, with filters. Cursor-paginated for high volumes.
+- `POST /analytics/visitors/segments`: how many visitors the list holds with errors, slow (average LCP at or above `slow_lcp_threshold_ms`), ordered, in the checkout, with a cart interaction, and with one page only. It takes the same scope and filters as the list.
 - `POST /analytics/visitors/detail`: the full page-view path for one visitor (the "replay"). It accepts `identity=session` or `stitch` (whichever the visitor list used; default `session`); an unknown identity is rejected with `422`. On the `Minimal` preset the site collects neither identifier, so there are no visitors to drill into.
 
 Pass `identity` explicitly to override the application default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/listAnalyticsVisitors) for the request shapes.

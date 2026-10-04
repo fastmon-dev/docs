@@ -44,7 +44,7 @@ The beacon ships the raw entries; the wire is forgeable, so the tracker's filter
 
 **Three tiers.** What survives is sorted into:
 
-1. **Promoted scalars** (always kept): the eight [backend phases](#backend-phases), the two [cache statuses](#cache-status), the [page type](#page-type), and the two [labeled dimensions](#origin-host-and-logged-in) (`origin_host`, `logged_in`). These become dedicated columns.
+1. **Promoted scalars** (always kept): the nine [backend phases](#backend-phases), the two [cache statuses](#cache-status), the [page type](#page-type), and the two [labeled dimensions](#origin-host-and-logged-in) (`origin_host`, `logged_in`). These become dedicated columns.
 2. **Tier-2 catalog** (uncapped): a known set of names (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
 3. **Tier-3 custom** (≤ 8 per pageview): any other valid name you invent.
 
@@ -60,7 +60,7 @@ Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backen
 
 ## Backend phases
 
-Recognized names fold into **eight phases**, shown as p50 / p75 / p95 over the time range, each with the number of pageviews that reported it. Four take the first alias that carries a duration; `http`, `search`, and `kv` **sum** every matching member; `db` takes the first relational alias and adds the document stores on top. Summed members also stay in the maps for drill-down. The `fm-*` alias always leads.
+Recognized names fold into **nine phases**, shown as p50 / p75 / p95 over the time range, each with the number of pageviews that reported it. Five take the first alias that carries a duration; `http`, `search`, and `kv` **sum** every matching member; `db` takes the first relational alias and adds the document stores on top. Summed members also stay in the maps for drill-down. The `fm-*` alias always leads.
 
 | Phase         | Recognized names (in precedence order)                                    | How                     |
 | ------------- | ------------------------------------------------------------------------- | ----------------------- |
@@ -72,14 +72,15 @@ Recognized names fold into **eight phases**, shown as p50 / p75 / p95 over the t
 | `http_dur`    | `fm-http`, `http`, `fetch`, `api`, `ext`                                  | **sum**                 |
 | `search_dur`  | `fm-search`, `elasticsearch`, `opensearch`, `solr`, `search`              | **sum**                 |
 | `kv_dur`      | `fm-kv`, `redis`, `valkey`, `kv`, `memcache`, `cache`                     | **sum**                 |
+| `code_dur`    | `fm-code`, `fm-unknown`, `unknown`                                        | first w/ dur            |
 
 Phases you don't emit are simply absent (NULLs are skipped, never counted as zero). The percentiles let you see, for example, that `db` is your p95 problem while `render` is flat. Read them next to their count: a p75 over 12 pageviews says less than one over 50,000.
 
-**On a CDN hit the origin phases are not stored.** A CDN replays the origin's header from the request that filled the cache. On a pageview whose CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`, fastmon drops the origin, backend, db, http, render, search, and kv durations and the custom timed keys. `edge_dur`, the cache statuses, ages, TTLs, and label keys stay.
+**On a CDN hit the origin phases are not stored.** A CDN replays the origin's header from the request that filled the cache. On a pageview whose CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`, fastmon drops the origin, backend, db, http, render, search, kv, and code durations and the custom timed keys. `edge_dur`, the cache statuses, ages, TTLs, and label keys stay.
 
-**What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top, because a document store is the primary store wherever it appears (Tideways reports `rdbms` and `mongodb` as separate layers of one request). Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well: synchronous broker time in a request is almost always a cheap publish.
+**What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top, because a document store is the primary store wherever it appears (Tideways reports `rdbms` and `mongodb` as separate layers of one request). Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well: synchronous broker time in a request is almost always a cheap publish. `code_dur` is the time spent in your own code outside every other layer, shown as "Code". The Shopware plugin passes the Tideways layer `unknown` through, which lands here.
 
-All eight phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the KV phase is labeled "KV / Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Search, KV / Cache, HTTP, and Render under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
+All nine phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the KV phase is labeled "KV / Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Search, KV / Cache, HTTP, Render, and Code under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
 
 ## Cache status
 
