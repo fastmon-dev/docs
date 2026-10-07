@@ -44,6 +44,8 @@ The plan gates features and quotas. Which Web Vitals get collected isn't tied to
 
 **What a plan is measured in.** The billed unit is the [application](/en/concepts/applications), and only a **production** application takes a slot: a development application is free and unlimited. A plan includes a number of production slots and a monthly pageview volume; both can be extended with permanent add-ons, bought in advance rather than billed after a spike. Creating or promoting a production application past the included slots is refused with `402 app_limit_reached` (see [Errors](/en/api/errors)), and an organization with no entitlement at all gets `402 billing_required` or `402 trial_expired`.
 
+**The pageview volume counts each stored pageview once**, bots included. A sampled pageview counts as stored, not scaled up, and the last 15 minutes count once they are finalized. [`GET /organizations/{id}/usage`](/en/api/organizations/getOrganizationUsage) answers it as `pageview_count` with its `time_range`.
+
 ## Roles
 
 A role is a fixed bundle of **permissions**. A permission is one capability in `resource:action` form (`analytics:read`, `release:write`, `member:manage`); every API route names the one it needs, and the dashboard shows or hides actions by the same list. `GET /permissions` lists every permission with a description and the roles that hold it.
@@ -80,6 +82,7 @@ Any **member** of the partner organization can create a client, hand it to the c
 
 - **The org switcher is just UI.** API requests scope by the URL (`/organizations/{id}/…`), not by whichever tab you've got open.
 - **Members are global fastmon users.** Invite an existing user and the existing account gets reused; no duplicate.
+- **An invite waits on the account.** Someone who signed up without the mail link sees the open invites for their email on the start screen and joins from there.
 - **Adding a member directly needs an owner.** `POST /organizations/{id}/members` requires `member:manage`. Members invite instead, and an invite carries the role.
 - **Sites can't move between organizations.** If you genuinely need this, ping support. No self-serve action for it.
 

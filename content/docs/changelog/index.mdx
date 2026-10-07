@@ -12,6 +12,97 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-07" type="changed" area="dashboard" title="Shopfloor orders count to the second">
+
+Today's orders on the Shopfloor count up to the request and refresh every 10 seconds. The figure says up to when it counts ("as of 14:32"), and last week runs to the same clock time. A sale no longer drops back out of the header while the server catches up. On the API, `today.time_range.to` of `POST /analytics/live-summary` carries that instant. Docs: [Analytics → Shopfloor](/en/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-07" type="changed" area="api" title="Error counts and Ask answers match the dashboard">
+
+A few readers now count the way the dashboard does.
+
+- **`error_count` of the error list counts every JavaScript error in scope**, not only the listed signatures. Each row's `share` divides by that total.
+- **An error drill-down whose occurrences sum to 0** shows its first and last seen time and its samples.
+- **Ask and the MCP tools `get_overview`, `detect_changes`, and `get_cwv_distribution`** read a p75 with the dashboard's method, so their numbers can move slightly.
+- **`get_cwv_distribution` rates with the dashboard's cutoffs.** A CLS of exactly 0.1 is good, and a reported 0 counts as good.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="platform" title="URL patterns with segments and alternatives">
+
+Page type URL rules and checkout paths take a subset of the URLPattern syntax.
+
+- **New parts**: `:name` for one path segment, `(de|en)` for one of the listed words, and `{/}?` for an optional part.
+- **A pattern without a `?` matches the path alone.** `/checkout` now also matches `/checkout?step=2`, and a query pattern written without `?`, such as `*cl=basket*`, stops matching.
+- **Invalid patterns are refused on save**, such as a pasted regular expression. A stored one is skipped at ingest, and the settings mark it while you type.
+- **URL rules are numbered** and move up and down, since the first match wins.
+
+Docs: [Checkout funnel → Pattern syntax](/en/checkout-funnel#pattern-syntax).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="new" area="dashboard" title="Bots over time on Analytics">
+
+"Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The bot filter moves along and goes back when you switch the view off. Each stack can be hidden in the legend, and the view is part of the URL. Docs: [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="JavaScript errors by origin, charts in %">
+
+The JavaScript error list filters by origin: All, First-party, or Third-party. The error charts open on the share of pageviews, and "Absolute" switches to the count. The chart and the error rate still count every error. Docs: [Analytics → Error Analytics](/en/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="Fetch/XHR: one endpoint over time">
+
+An expanded endpoint shows its own p75 or p95 over the period, with its calls, release markers, and the period before. It stays in the address bar, so the URL links to what is open. The "Over time" chart and the NEL and CSP charts draw a line per series with a fading tint, and each series can be switched off in the legend.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="Prod before dev">
+
+The command palette lists prod applications and sites before dev ones among equally good matches. The dashboard opens on a prod site when you have not picked one before. On the API, each site hit of `GET /search` carries its application's `environment`. Docs: [Analytics → Command palette](/en/analytics#command-palette).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="dashboard" title="Network Error Logging reports as a table">
+
+The Network Error Logging page reads more directly.
+
+- **Reports is a table** with time, type, status, time to failure, request, page, device, browser, visitor, and country. It loads as you scroll, sorts by any column, and copies as Markdown or CSV.
+- **"Add type" offers every known error type**, those of the period first.
+- **Connection failures filter by type** with `+` and `-`.
+- **The "likely failing" warning on a server address is gone.**
+
+Docs: [Network Error Logging → The page](/en/nel#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="platform" title="Usage counts each pageview once">
+
+Your usage, the quota banner, and the plan page counted beacons, so a pageview with several beacons counted more than once. They now count each stored pageview once, bots included. A sampled pageview counts as stored, not scaled up, so the figures drop to your real pageviews. Docs: [Organizations → Plans](/en/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="removed" area="api" title="Usage routes answer `pageview_count` only">
+
+`GET /organizations/{org_id}/usage` and `GET /organizations/{org_id}/partner/usage` answer `pageview_count` and `time_range`. `beacon_count`, `total_beacons`, `period_start`, and `period_end` are gone, also from the per-site and per-client rows. A client that reads them has to switch.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="new" area="dashboard" title="Invites without the mail link">
+
+Without an organization, the start screen lists the open invites for your email with a "Join" button, also when you registered without the invite link. The invite also survives the way through login and registration. A new email address takes effect once you confirm it on the page the confirmation mail links to.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="dashboard" title="The visitor dialog refreshes">
+
+The visitor dialog has a refresh button next to "Open in Explorer", so a visit still going on picks up its new pages. Orders, checkout, and cart show on the visitors page only for a shop. Docs: [Analytics → Visitors](/en/analytics#visitors).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-04" type="changed" area="dashboard" title="The visitors list says how each visit ended">
 
 The Visitors page shows what happened in a visit, not only how many came.

@@ -44,6 +44,8 @@ Der Plan steuert Features und Quotas. Welche Web Vitals erfasst werden, hängt n
 
 **Worin ein Plan gemessen wird.** Abgerechnet wird die [Application](/de/concepts/applications), und nur eine **Production**-Application belegt einen Platz: eine Development-Application ist kostenlos und unbegrenzt. Ein Plan enthält eine Anzahl Production-Plätze und ein monatliches Pageview-Volumen; beides lässt sich über dauerhafte Add-ons erweitern, die im Voraus gekauft werden und nicht nach einem Ausschlag abgerechnet. Eine Production-Application über die enthaltenen Plätze hinaus anzulegen oder hochzustufen wird mit `402 app_limit_reached` abgewiesen (siehe [Fehler](/de/api/errors)); eine Organisation ohne jede Berechtigung bekommt `402 billing_required` oder `402 trial_expired`.
 
+**Das Pageview-Volumen zählt jeden gespeicherten Pageview einmal**, Bots eingeschlossen. Ein gesampelter Pageview zählt so, wie er gespeichert ist, nicht hochgerechnet, und die letzten 15 Minuten zählen, sobald sie finalisiert sind. [`GET /organizations/{id}/usage`](/de/api/organizations/getOrganizationUsage) liefert es als `pageview_count` mit seinem `time_range`.
+
 ## Rollen
 
 Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist eine einzelne Fähigkeit in der Form `resource:action` (`analytics:read`, `release:write`, `member:manage`); jede API-Route nennt die, die sie braucht, und das Dashboard blendet Aktionen nach derselben Liste ein oder aus. `GET /permissions` listet jede Berechtigung mit Beschreibung und den Rollen, die sie haben.
@@ -80,6 +82,7 @@ Jedes **Mitglied** der Partner-Organisation kann einen Client anlegen, ihn per `
 
 - **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen über die URL (`/organizations/{id}/…`), nicht über irgendeinen aktiven Tab.
 - **Mitglieder sind globale fastmon-User.** Lädst du einen bestehenden User neu ein, wird der bestehende Account weiterverwendet, kein Duplikat.
+- **Eine Einladung wartet am Konto.** Wer sich ohne den Link aus der Mail registriert hat, sieht die offenen Einladungen für seine E-Mail-Adresse auf dem Startbildschirm und tritt dort bei.
 - **Ein Mitglied direkt hinzufügen darf nur ein Owner.** `POST /organizations/{id}/members` braucht `member:manage`. Mitglieder laden stattdessen ein, und die Einladung trägt die Rolle.
 - **Sites können nicht zwischen Organisationen umziehen.** Falls doch nötig: Support melden, das geht nicht per Self-Service.
 

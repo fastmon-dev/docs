@@ -23,7 +23,7 @@ Die Markierung wird mit dem Pageview gespeichert und nie neu berechnet. Änderst
 
 ### Eingebaute Muster [#default-patterns]
 
-Ein Muster muss den ganzen Pfad beschreiben. `*` steht für eine beliebige Zeichenfolge, `/` eingeschlossen; alles andere ist wörtlich gemeint. Groß- und Kleinschreibung spielt keine Rolle.
+Die Muster folgen der [Mustersyntax](#pattern-syntax) weiter unten.
 
 | Stufe        | Eingebaute Muster | Shop-Systeme |
 | ------------ | ----------------- | ------------ |
@@ -34,6 +34,20 @@ Ein Muster muss den ganzen Pfad beschreiben. `*` steht für eine beliebige Zeich
 Die Muster enden an Wortgrenzen: `*/cart` trifft die Warenkorbseite, aber nicht `/cartoons`, und `*/thank-you` trifft nicht `/thank-you-for-subscribing`. `/order` ist exakt und nur auf Root-Ebene gemeint, sonst würde es Shopwares `/account/order` treffen.
 
 Der Schalter läuft auf jeder Site, Shop oder nicht. Auf einer Site mit Pfaden wie `/docs/checkout/setup` bekommen diese Pageviews eine Stufe; Abhilfe schaffen eigene Muster oder das Abschalten. OXID liest seinen [Controller `cl`](#oxid), Shopify die [Checkout-Events](#shopify).
+
+### Mustersyntax [#pattern-syntax]
+
+Ein Muster beschreibt den ganzen Pfad, Groß- und Kleinschreibung spielt keine Rolle. Checkout-Pfade und [URL-Regeln](/de/concepts/applications#page-type-detection) verstehen einen Teil der Pathname-Syntax von URLPattern:
+
+| Teil            | Trifft                              | Beispiel             |
+| --------------- | ----------------------------------- | -------------------- |
+| `*`             | Beliebige Zeichen, auch `/`         | `*/checkout/*`       |
+| `:name`         | Genau ein Pfadsegment               | `/:lang/:slug`       |
+| `(de\|en)`      | Eines der aufgezählten Wörter       | `/:lang(de\|en)/cart` |
+| `{...}?`        | Den Inhalt oder nichts              | `/cart{/}?`          |
+| alles andere    | Sich selbst, auch `?` und `=`       | `*?cl=thankyou*`     |
+
+Ein Muster ohne wörtliches `?` prüft nur den Pfad, `/checkout` trifft also auch `/checkout?step=2`. Ein Muster mit `?` prüft Pfad und Query zusammen. Pro Muster darf nur ein Teil auf mehrere Arten passen, etwa ein `*` vor dem Ende oder ein `(...)`. Ein Muster, das eine Regel verletzt, zum Beispiel ein eingefügter regulärer Ausdruck, wird beim Speichern abgelehnt.
 
 ## Warenkorb-Interaktionen [#cart-interactions]
 
@@ -108,7 +122,7 @@ Die Checkout-Zahlen folgen den Filtern der Seite, außer Filtern, die eine Check
 Schalter und Muster liegen an der Application unter **Einstellungen → Shop & Seitentypen** und auf der API unter `shop.checkout` (siehe [Applications](/de/concepts/applications#checkout-funnel)).
 
 - **`checkout_tracking`** ist standardmäßig an und ist das Opt-out. Es umfasst URL-Stufen und Warenkorb-Interaktionen zusammen. Die Markierung wirkt nur vorwärts, Abschalten hinterlässt also eine Lücke, die sich später nicht füllen lässt.
-- **Pfade pro Stufe.** Jede Stufe erbt entweder die eingebauten Muster (der Default, `null`) oder ersetzt sie komplett. Es gibt keine Mischung. Bis zu 10 Muster pro Stufe, jedes bis zu 200 Zeichen, druckbares ASCII in Kleinbuchstaben, `*` als einziges Wildcard-Zeichen. Verbesserungen an der eingebauten Liste erreichen jede Site, die diese Stufe nicht überschrieben hat.
+- **Pfade pro Stufe.** Jede Stufe erbt entweder die eingebauten Muster (der Default, `null`) oder ersetzt sie komplett. Es gibt keine Mischung. Bis zu 10 Muster pro Stufe, jedes bis zu 200 Zeichen, druckbares ASCII in Kleinbuchstaben, in der [Mustersyntax](#pattern-syntax). Verbesserungen an der eingebauten Liste erreichen jede Site, die diese Stufe nicht überschrieben hat.
 - **Voraussetzungen.** Besucher pro Stufe zu zählen braucht eine gespeicherte Besucher-Identität ([`store_stitch`](/de/tracker#store-stitch) oder Sessions), sonst antworten die Funnel-Endpunkte mit `422`. Warenkorb-Interaktionen brauchen zusätzlich [`collect_fetch_xhr`](/de/tracker#collect-fetch-xhr).
 
 ### Query-basierte Checkouts (OXID und andere) [#oxid]

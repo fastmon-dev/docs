@@ -17,6 +17,97 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-07" type="changed" area="dashboard" title="Shopfloor-Bestellungen zählen bis zur Sekunde">
+
+Die Bestellungen von heute im Shopfloor zählen bis zur Anfrage und aktualisieren sich alle 10 Sekunden. Die Zahl sagt, bis wann sie zählt („Stand 14:32“), und die Vorwoche läuft bis zur gleichen Uhrzeit. Ein Verkauf fällt nicht mehr aus der Kopfzeile heraus, während der Server aufholt. In der API trägt `today.time_range.to` von `POST /analytics/live-summary` diesen Zeitpunkt. Doku: [Analytics → Shopfloor](/de/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-07" type="changed" area="api" title="Fehlerzahlen und Ask-Antworten passen zum Dashboard">
+
+Einige Abfragen zählen jetzt so wie das Dashboard.
+
+- **`error_count` der Fehlerliste zählt jeden JavaScript-Fehler im Scope**, nicht nur die gelisteten Signaturen. Der `share` jeder Zeile teilt durch diese Summe.
+- **Ein Fehler-Drill-down, dessen Vorkommen sich zu 0 summieren**, zeigt sein erstes und letztes Auftreten und seine Beispiele.
+- **Ask und die MCP-Tools `get_overview`, `detect_changes` und `get_cwv_distribution`** berechnen den p75 wie das Dashboard, ihre Zahlen können sich also leicht verschieben.
+- **`get_cwv_distribution` bewertet mit den Schwellenwerten des Dashboards.** Ein CLS von genau 0,1 gilt als gut, ein gemeldeter Wert von 0 ebenfalls.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="platform" title="URL-Muster mit Segmenten und Alternativen">
+
+URL-Regeln für Seitentypen und Checkout-Pfade verstehen einen Teil der URLPattern-Syntax.
+
+- **Neue Bausteine**: `:name` für ein Pfadsegment, `(de|en)` für eines der aufgezählten Wörter und `{/}?` für einen optionalen Teil.
+- **Ein Muster ohne `?` prüft nur den Pfad.** `/checkout` trifft jetzt auch `/checkout?step=2`, und ein Query-Muster ohne `?`, etwa `*cl=basket*`, trifft nicht mehr.
+- **Ungültige Muster werden beim Speichern abgelehnt**, etwa ein eingefügter regulärer Ausdruck. Ein bereits gespeichertes überspringt der Collector, und die Einstellungen markieren es schon beim Tippen.
+- **URL-Regeln sind nummeriert** und lassen sich verschieben, denn die erste passende gewinnt.
+
+Doku: [Checkout-Funnel → Mustersyntax](/de/checkout-funnel#pattern-syntax).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="new" area="dashboard" title="Bots im Zeitverlauf unter Analytics">
+
+„Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter zieht mit und springt zurück, wenn du die Ansicht ausschaltest. Jeder Stapel lässt sich in der Legende ausblenden, und die Ansicht steht in der URL. Doku: [Analytics](/de/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="JavaScript-Fehler nach Herkunft, Charts in %">
+
+Die Liste der JavaScript-Fehler filtert nach Herkunft: Alle, Eigene oder Dritte. Die Fehler-Charts öffnen mit dem Anteil an den Pageviews, „Absolut“ schaltet auf die Anzahl. Chart und Fehlerrate zählen weiter jeden Fehler. Doku: [Analytics → Fehler-Analytics](/de/analytics#error-analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="Fetch/XHR: ein Endpunkt im Zeitverlauf">
+
+Ein aufgeklappter Endpunkt zeigt seinen eigenen p75 oder p95 über den Zeitraum, mit Aufrufen, Release-Markern und dem Zeitraum davor. Er steht in der Adresszeile, die URL verlinkt also genau das Geöffnete. Das Chart „Zeitverlauf“ und die Charts für NEL und CSP zeichnen eine Linie pro Serie mit auslaufender Fläche, und jede Serie lässt sich in der Legende ausschalten.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-06" type="changed" area="dashboard" title="Prod vor Dev">
+
+Das Befehlsmenü listet bei gleich guten Treffern Prod-Applications und -Sites vor Dev. Hast du noch keine Site gewählt, öffnet das Dashboard eine Prod-Site. In der API trägt jeder Site-Treffer von `GET /search` das `environment` seiner Application. Doku: [Analytics → Befehlsmenü](/de/analytics#command-palette).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="dashboard" title="Network-Error-Logging-Reports als Tabelle">
+
+Die Seite Network Error Logging liest sich direkter.
+
+- **Reports ist eine Tabelle** mit Zeit, Typ, Status, Zeit bis zum Fehler, Request, Seite, Gerät, Browser, Besucher und Land. Sie lädt beim Scrollen nach, sortiert nach jeder Spalte und lässt sich als Markdown oder CSV kopieren.
+- **„Typ hinzufügen“ bietet jeden bekannten Fehlertyp an**, die des Zeitraums zuerst.
+- **Verbindungsfehler lassen sich nach Typ filtern**, mit `+` und `-`.
+- **Die Warnung „wahrscheinlich ausgefallen“ an einer Serveradresse ist weg.**
+
+Doku: [Network Error Logging → Die Seite](/de/nel#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="platform" title="Die Nutzung zählt jeden Pageview einmal">
+
+Nutzung, Kontingent-Hinweis und Plan-Seite haben Beacons gezählt, ein Pageview mit mehreren Beacons zählte also mehrfach. Jetzt zählt jeder gespeicherte Pageview einmal, Bots eingeschlossen. Ein gesampelter Pageview zählt so, wie er gespeichert ist, nicht hochgerechnet, die Zahlen sinken also auf deine echten Pageviews. Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="removed" area="api" title="Usage-Routen liefern nur noch `pageview_count`">
+
+`GET /organizations/{org_id}/usage` und `GET /organizations/{org_id}/partner/usage` liefern `pageview_count` und `time_range`. `beacon_count`, `total_beacons`, `period_start` und `period_end` sind weg, auch aus den Zeilen pro Site und pro Kunde. Ein Client, der sie liest, muss umstellen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="new" area="dashboard" title="Einladungen ohne den Link aus der Mail">
+
+Ohne Organisation zeigt der Startbildschirm die offenen Einladungen für deine E-Mail-Adresse mit einem Button „Beitreten“, auch wenn du dich ohne den Einladungslink registriert hast. Die Einladung übersteht außerdem den Weg über Login und Registrierung. Eine neue E-Mail-Adresse gilt erst, wenn du sie auf der Seite bestätigst, die die Bestätigungsmail verlinkt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-05" type="changed" area="dashboard" title="Der Besucher-Dialog aktualisiert sich">
+
+Der Besucher-Dialog hat neben „Im Explorer öffnen“ einen Aktualisieren-Button, ein laufender Besuch holt so seine neuen Seiten nach. Bestellungen, Checkout und Warenkorb zeigt die Besucher-Seite nur bei einem Shop. Doku: [Analytics → Besucher](/de/analytics#visitors).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-04" type="changed" area="dashboard" title="Die Besucherliste zeigt, wie ein Besuch geendet hat">
 
 Die Besucher-Seite zeigt jetzt, was in einem Besuch passiert ist, nicht nur, wie viele kamen.
