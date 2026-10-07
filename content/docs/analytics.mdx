@@ -16,6 +16,7 @@ The main Analytics view for a site shows:
 - **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
 - **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
 - **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
+- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. It moves the bot filter along and puts it back when you switch the view off.
 - **Traffic quality**: pageviews stacked into Humans, Likely bots, and Bots, with visitors as a line. Below it the bot classification as one bar, then as clickable rows.
 - **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
 - **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. Not a bounce rate: whether somebody left afterwards is not in the data.
@@ -28,7 +29,7 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 
 - **Zones** are your platform's page type groups: Home, Category (PLP), Search, Product (PDP), Checkout, Account, Content, and Other. Each is tinted by how fast its pages are.
 - **Every visitor is a dot** in the zone of the page they are on. A tab in the background is drawn faint, and a buyer runs to the exit, where the order counts at once.
-- **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, and Conversion Rate from your midnight, each beside the same weekday last week.
+- **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, and Conversion Rate from your midnight, each beside the same weekday last week. Orders count up to the second and say so ("as of 14:32"), and last week runs to the same clock time.
 - **A click on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
 - **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default.
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
@@ -73,7 +74,7 @@ Results can be copied as Markdown or downloaded as CSV: same rows in the same or
 
 Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to open a searchable command menu that drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add, remove, or clear filters. Start typing to search everything at once, or drill into a category with `Enter` or `→`; `←` or `Backspace` steps back and `Esc` closes.
 
-Typing searches **across every organization you can reach**: your own memberships, the client organizations of any agency you belong to, and the applications and domains inside them. Each hit says which organization it lives in. Applications lead the results, and picking one sets the application filter on the page you are on. Inactive sites and applications are listed and flagged.
+Typing searches **across every organization you can reach**: your own memberships, the client organizations of any agency you belong to, and the applications and domains inside them. Each hit says which organization it lives in. Applications lead the results, prod before dev among equally good matches, and picking one sets the application filter on the page you are on. Inactive sites and applications are listed and flagged.
 
 Every page is listed with the group it belongs to, so typing a group ("network") lists everything under it, and a page is also found by what it is called elsewhere ("API" finds Fetch/XHR). Opening an organization lists its applications above its domains.
 
@@ -83,8 +84,9 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 Errors is a group in the sidebar with four pages: JavaScript errors, [Failed resources](#failed-resources), [Network Error Logging](/en/nel), and [Content Security Policy](/en/csp). Each has its own address, headline, chart, and list. On JavaScript errors:
 
-- **Affected pageviews over time**: pageviews with at least one JavaScript error, as a count or as a share of all pageviews. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
-- **An error's own page** has the same count and share switch.
+- **Affected pageviews over time**: pageviews with at least one JavaScript error, as a share of all pageviews or, under "Absolute", as a count. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
+- **An error's own page** has the same share and count switch.
+- **The list filters by origin**: All, First-party (your own hosts), or Third-party. The choice stays in the link, and the chart and error rate still count every error.
 - **The list is one row per fault.** Browsers report the same throw site a few characters apart, and a second caller of the same function is a second stack, so a row counts every variant and says how many signatures it stands for. On the API this is `group_variants` on `POST /analytics/error-types`.
 - **A row leads with what broke, in a sentence**: what happened, whose code it is, the file it was thrown from, how often it occurred and when it last did, to the minute. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
 - **Ranked by the pageviews an error reached**, not by how often it fired. A single visit stuck in a loop is marked as a loop instead of topping the list, and "Most frequent" is still an ordering you can pick.
@@ -147,9 +149,9 @@ The Visitors page lists distinct visitors with start time, duration, page count,
 - **Outcome**: ordered, left the checkout, cart, browsed, or bounced.
 - **Journey**: one block per page, its width the time spent there and its colour the page type. A red mark flags errors, a check an order.
 
-The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage.
+The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage. Orders, checkout, and cart show only on a shop.
 
-**A visitor opens in a dialog**, on a phone as a sheet from the bottom. It shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and the visitor's [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between the pageviews, abandoned loads only once you switch them on. A click on a page opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there. `?visitor=` links to the dialog.
+**A visitor opens in a dialog**, on a phone as a sheet from the bottom. It shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and the visitor's [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between the pageviews, abandoned loads only once you switch them on. A click on a page opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there. The refresh button beside it picks up new pages of a visit still going on. `?visitor=` links to the dialog.
 
 A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the application's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
 
@@ -157,7 +159,7 @@ A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch
 
 The Fetch/XHR view has an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, a status-error distribution) plus a per-beacon detail. The Server-Timing view breaks out the metrics your backend reports. Both read fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
 
-A page with more than 24 API endpoints keeps 24 of them named, and the rest sum into a nameless `other` row. Ad-blocked calls in that row do not count as failures.
+An expanded endpoint shows its own p75 or p95 over time with its calls and release markers, and stays in the URL. A page with more than 24 API endpoints keeps 24 of them named, and the rest sum into a nameless `other` row. Ad-blocked calls in that row do not count as failures.
 
 The Fetch/XHR error rate counts failures on your own hosts, by the same registrable-domain rule as the [error rate](#failed-resources). Failures on foreign hosts are reported beside it as their own number, mostly the visitor's ad blocker. The panel's 1P/3P filter follows the same rule.
 

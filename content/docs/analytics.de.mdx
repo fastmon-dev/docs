@@ -16,6 +16,7 @@ Die Analytics-Hauptansicht einer Site zeigt:
 - **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Der Globus öffnet dort, wo dein Traffic ist, Ziehen dreht ihn und das Mausrad zoomt. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
 - **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
 - **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
+- **Bots im Zeitverlauf**: „Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter oben zieht mit und springt zurück, wenn du die Ansicht wieder ausschaltest.
 - **Traffic-Qualität**: Pageviews gestapelt nach Menschen, Wahrscheinlich Bots und Bots, die Besucher als Linie darüber. Darunter die Bot-Klassifizierung als eine Leiste, dann als klickbare Zeilen.
 - **Aktive Stunden**: Stunde des Tages nach Wochentag, damit sichtbar wird, wann auf der Seite wirklich etwas passiert. Das Raster zeigt nur die Wochentage, die der gewählte Zeitraum erreicht hat.
 - **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
@@ -28,7 +29,7 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 
 - **Die Zonen** sind die Seitentyp-Gruppen deiner Plattform: Home, Kategorie (PLP), Suche, Produkt (PDP), Checkout, Konto, Content und Sonstiges. Ihre Färbung zeigt, wie schnell ihre Seiten sind.
 - **Jeder Besucher ist ein Punkt** in der Zone der Seite, auf der er gerade ist. Ein Tab im Hintergrund wird blass gezeichnet. Ein Käufer läuft zum Ausgang, und dort zählt die Bestellung sofort.
-- **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche.
+- **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche. Bestellungen zählen bis zur Sekunde und sagen das („Stand 14:32“), die Vorwoche läuft bis zur gleichen Uhrzeit.
 - **Ein Klick auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
 - **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus.
 - **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
@@ -73,7 +74,7 @@ Ergebnisse lassen sich als Markdown kopieren oder als CSV herunterladen: dieselb
 
 Drück `Cmd`/`Ctrl`+`K` (oder den Befehls-Button oben), um ein durchsuchbares Befehlsmenü zu öffnen, das die ganze App steuert: zu jeder Seite springen, Organisation oder Site wechseln, Zeitraum und Auflösung ändern sowie Filter hinzufügen, entfernen oder löschen. Tipp einfach los, um alles auf einmal zu durchsuchen, oder geh mit `Enter` oder `→` in eine Kategorie; `←` oder `Backspace` geht zurück, `Esc` schließt.
 
-Getippt wird **über alle Organisationen gesucht, die du erreichst**: eigene Mitgliedschaften, die Kunden-Organisationen jeder Agentur, zu der du gehörst, und die Applikationen und Domains darin. Jeder Treffer nennt die Organisation, in der er liegt. Applikationen stehen zuerst, und eine Auswahl setzt den Applikations-Filter auf der Seite, auf der du bist. Inaktive Sites und Applikationen werden gelistet und gekennzeichnet.
+Getippt wird **über alle Organisationen gesucht, die du erreichst**: eigene Mitgliedschaften, die Kunden-Organisationen jeder Agentur, zu der du gehörst, und die Applikationen und Domains darin. Jeder Treffer nennt die Organisation, in der er liegt. Applikationen stehen zuerst, bei gleich guten Treffern Prod vor Dev, und eine Auswahl setzt den Applikations-Filter auf der Seite, auf der du bist. Inaktive Sites und Applikationen werden gelistet und gekennzeichnet.
 
 Jede Seite ist mit ihrer Gruppe gelistet, tippst du eine Gruppe („Netzwerk"), erscheint alles darunter, und eine Seite wird auch unter ihrem anderen Namen gefunden („API" findet Fetch/XHR). Öffnest du eine Organisation, stehen ihre Applications über ihren Domains.
 
@@ -83,8 +84,9 @@ Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
 
 Fehler ist eine Gruppe in der Sidebar mit vier Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources), [Network Error Logging](/de/nel) und [Content Security Policy](/de/csp). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
 
-- **Betroffene Seitenaufrufe über Zeit**: Pageviews mit mindestens einem JavaScript-Fehler, als Anzahl oder als Anteil aller Pageviews. **Top 5** legt die fünf Fehler mit den meisten betroffenen Pageviews als Linien dazu, die Legende verlinkt auf jeden. Ziehen über das Chart zoomt hinein.
-- **Die eigene Seite eines Fehlers** hat denselben Umschalter zwischen Anzahl und Anteil.
+- **Betroffene Seitenaufrufe über Zeit**: Pageviews mit mindestens einem JavaScript-Fehler, als Anteil aller Pageviews oder unter „Absolut“ als Anzahl. **Top 5** legt die fünf Fehler mit den meisten betroffenen Pageviews als Linien dazu, die Legende verlinkt auf jeden. Ziehen über das Chart zoomt hinein.
+- **Die eigene Seite eines Fehlers** hat denselben Umschalter zwischen Anteil und Anzahl.
+- **Die Liste filtert nach Herkunft**: Alle, Eigene (deine eigenen Hosts) oder Dritte. Die Auswahl steht im Link, Chart und Fehlerrate zählen weiter jeden Fehler.
 - **Die Liste zeigt eine Zeile pro Fehler.** Browser melden dieselbe Wurfstelle ein paar Zeichen versetzt, und ein zweiter Aufrufer ist ein zweiter Stack, eine Zeile zählt also alle Varianten und sagt, für wie viele Signaturen sie steht. Auf der API ist das `group_variants` auf `POST /analytics/error-types`.
 - **Eine Zeile beginnt mit dem, was kaputt ist, als Satz**: was passiert ist, wessen Code es ist, die Datei, wie oft und minutengenau wann zuletzt. Jede Zeile trägt eine Sparkline und ein Abzeichen „Neu" oder „Steigend", sortiert wird nach häufigste, neu, steigend oder zuletzt gesehen.
 - **Sortiert nach erreichten Pageviews**, nicht nach Häufigkeit. Ein einzelner Besuch in einer Schleife ist als Schleife markiert, statt die Liste anzuführen, und „Häufigste" bleibt wählbar.
@@ -147,9 +149,9 @@ Die Besucher-Seite listet eindeutige Besucher mit Startzeit, Dauer, Seitenanzahl
 - **Ausgang**: bestellt, Checkout verlassen, Warenkorb, gestöbert oder abgesprungen.
 - **Verlauf**: ein Block pro Seite, die Breite ist die Verweildauer, die Farbe der Seitentyp. Eine rote Marke steht für Fehler, ein Haken für eine Bestellung.
 
-Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Seitenaufrufe pro Besucher und der Anteil mit JavaScript-Fehler, langsame Besucher (durchschnittlicher LCP über 4 s) und Käufer. **Segment-Chips** (mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite) setzen die Verhaltensfilter und zeigen, wie viele Besucher sie listen. „Verhalten anpassen“ öffnet alle Filter: Seiten, Fehler, Dauer, LCP, Seitentyp und Funnel-Stufe.
+Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Seitenaufrufe pro Besucher und der Anteil mit JavaScript-Fehler, langsame Besucher (durchschnittlicher LCP über 4 s) und Käufer. **Segment-Chips** (mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite) setzen die Verhaltensfilter und zeigen, wie viele Besucher sie listen. „Verhalten anpassen“ öffnet alle Filter: Seiten, Fehler, Dauer, LCP, Seitentyp und Funnel-Stufe. Bestellungen, Checkout und Warenkorb erscheinen nur bei einem Shop.
 
-**Ein Besucher öffnet sich in einem Dialog**, auf dem Handy als Sheet von unten. Er zeigt jeden Pageview in Reihenfolge mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews, abgebrochene Ladevorgänge erst, wenn du sie einschaltest. Ein Klick auf eine Seite öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers. `?visitor=` verlinkt direkt auf den Dialog.
+**Ein Besucher öffnet sich in einem Dialog**, auf dem Handy als Sheet von unten. Er zeigt jeden Pageview in Reihenfolge mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews, abgebrochene Ladevorgänge erst, wenn du sie einschaltest. Ein Klick auf eine Seite öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers. Der Aktualisieren-Button daneben holt neue Seiten eines laufenden Besuchs nach. `?visitor=` verlinkt direkt auf den Dialog.
 
 Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Application legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
@@ -157,7 +159,7 @@ Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitc
 
 Der Fetch/XHR-View hat einen aggregierten Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile, eine Statusfehler-Verteilung) plus ein Per-Beacon-Detail. Der Server-Timing-View schlüsselt die Metriken deines Backends auf. Beide lesen Felder, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
 
-Eine Seite mit mehr als 24 API-Endpunkten behält 24 davon benannt, der Rest summiert sich in eine namenlose `other`-Zeile. Von Adblockern geblockte Calls zählen darin nicht als Fehler.
+Ein aufgeklappter Endpunkt zeigt seinen eigenen p75 oder p95 im Zeitverlauf mit Aufrufen und Release-Markern und steht in der URL. Eine Seite mit mehr als 24 API-Endpunkten behält 24 davon benannt, der Rest summiert sich in eine namenlose `other`-Zeile. Von Adblockern geblockte Calls zählen darin nicht als Fehler.
 
 Die Fetch/XHR-Fehlerrate zählt Fehler auf deinen eigenen Hosts, nach derselben Regel der registrierbaren Domain wie die [Fehlerrate](#failed-resources). Fehler auf fremden Hosts stehen als eigene Zahl daneben, überwiegend aus dem Ad-Blocker des Besuchers. Der 1P/3P-Filter des Panels folgt derselben Regel.
 

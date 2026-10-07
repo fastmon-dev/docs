@@ -22,12 +22,12 @@ The page sits under **Errors → Network Error Logging** in the sidebar, at `/er
 
 - **Overview**: the server's HTTP errors, 5xx first and 4xx below. The 5xx and 4xx tiles lead with the reports, the affected visitors beside them. Everywhere else **Affected visitors** leads, with its share of all visitors. The chart stacks **By class** or **By code**.
 - **Where they fail**: one card per dimension, all at once. Status codes, pages, server addresses, countries, sites and hosts, devices, browsers, OS, traffic, and versions once a browser is filtered.
-- **Sites and hosts** doubles as the setup check. Each site shows its last report, and when most reports without details point at one server address, the card names it as likely failing.
-- **Connection failures**: closed by default. Each type is compared with its own usual level, and a broken certificate or a rise of refused connections, timeouts or unknown hosts is flagged.
+- **Sites and hosts** doubles as the setup check. Each site shows its last report.
+- **Connection failures**: closed by default. Each type is compared with its own usual level, and a broken certificate or a rise of refused connections, timeouts or unknown hosts is flagged. Each type has its own `+` and `-`.
 - **Paths**: hosts first, each with its paths inside.
-- **Reports**: every NEL report, newest first, each opening to all stored fields. A run of one type from one visitor on one page folds into one line. A report has its own share link, and where the site stores a visitor id it links to the visitor's journey.
+- **Reports**: a table of every NEL report with time, type, status, time to failure, request, page, device, browser, visitor, and country. It loads 100 at a time as you scroll, sorts by any column, and copies as Markdown or CSV. A row opens all stored fields and has its own share link, and the visitor links to their journey.
 
-**Filtering** works like on the other pages: `+` next to a value filters to it, `-` excludes it, and the magnifier opens the row's reports. The 5xx and 4xx tiles filter a whole status class. The page's own filters (status, error type, host, path, page, server address) sit in the Filter panel under **Only on this page** and stay in the URL. **Abandoned loads** are hidden, on the page and on a visitor's journey, each with a switch to show them.
+**Filtering** works like on the other pages: `+` next to a value filters to it, `-` excludes it, and the magnifier opens the row's reports. The 5xx and 4xx tiles filter a whole status class. The page's own filters (status, error type, host, path, page, server address) sit in the Filter panel under **Only on this page** and stay in the URL. **Add type** offers every known error type, those of the period first. **Abandoned loads** are hidden, on the page and on a visitor's journey, each with a switch to show them.
 
 A visitor's journey in [Visitors](/en/analytics#visitors) lists their NEL reports between the pageviews, in time order, each marked as one.
 

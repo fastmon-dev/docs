@@ -23,7 +23,7 @@ The marks are stored with the pageview and never recomputed. Changing the patter
 
 ### Default patterns [#default-patterns]
 
-A pattern must describe the whole path. `*` matches any run of characters, including `/`; everything else is literal. Matching is case-insensitive.
+The patterns use the [pattern syntax](#pattern-syntax) below.
 
 | Stage        | Built-in patterns | Shop systems |
 | ------------ | ----------------- | ------------ |
@@ -34,6 +34,20 @@ A pattern must describe the whole path. `*` matches any run of characters, inclu
 The patterns are word-bounded: `*/cart` matches the cart page but not `/cartoons`, and `*/thank-you` does not match `/thank-you-for-subscribing`. `/order` is exact and root-only, or it would match Shopware's `/account/order`.
 
 The switch runs on every site, shops or not. On a site with paths like `/docs/checkout/setup`, those pageviews pick up a stage; the remedy is custom patterns or the opt-out. OXID reads its [`cl` controller](#oxid). For Shopify, see [Shopify checkout events](#shopify).
+
+### Pattern syntax [#pattern-syntax]
+
+A pattern describes the whole path, and matching ignores case. Checkout paths and [URL rules](/en/concepts/applications#page-type-detection) take a subset of the URLPattern pathname syntax:
+
+| Part          | Matches                          | Example              |
+| ------------- | -------------------------------- | -------------------- |
+| `*`           | Any characters, `/` included     | `*/checkout/*`       |
+| `:name`       | Exactly one path segment         | `/:lang/:slug`       |
+| `(de\|en)`    | One of the listed words          | `/:lang(de\|en)/cart` |
+| `{...}?`      | Its content or nothing           | `/cart{/}?`          |
+| anything else | Itself, `?` and `=` included     | `*?cl=thankyou*`     |
+
+A pattern without a literal `?` matches the path alone, so `/checkout` also matches `/checkout?step=2`. A pattern with a `?` matches path and query together. One part per pattern may match in more than one way, such as a `*` before the end or a `(...)`. A pattern that breaks a rule, such as a pasted regular expression, is refused on save.
 
 ## Cart interactions [#cart-interactions]
 
@@ -108,7 +122,7 @@ The checkout numbers follow the page's filters, except filters that pick a check
 The switch and the patterns live on the application under **Settings → Shop & page types**, and on the API under `shop.checkout` (see [Applications](/en/concepts/applications#checkout-funnel)).
 
 - **`checkout_tracking`** is on by default and is the opt-out. It covers the URL stages and the cart interactions together. Marking is forward-only, so turning it off leaves a gap you cannot fill later.
-- **Per-stage paths.** Each stage either inherits the built-in patterns (the default, `null`) or replaces them wholesale. There is no merge. Up to 10 patterns per stage, each up to 200 characters, lowercase printable ASCII, `*` the only wildcard. Improvements to the built-in list reach every site that did not override that stage.
+- **Per-stage paths.** Each stage either inherits the built-in patterns (the default, `null`) or replaces them wholesale. There is no merge. Up to 10 patterns per stage, each up to 200 characters, lowercase printable ASCII, in the [pattern syntax](#pattern-syntax). Improvements to the built-in list reach every site that did not override that stage.
 - **Requirements.** Counting visitors per stage needs a stored visitor identity ([`store_stitch`](/en/tracker#store-stitch), or sessions); without one the funnel endpoints answer `422`. Cart interactions additionally need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr).
 
 ### Query-based checkouts (OXID and others) [#oxid]

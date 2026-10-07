@@ -91,9 +91,11 @@ Shopify and PrestaShop, which have no ruleset.
 A theme that renamed those classes records nothing, so
 `pagetype_rules` names your own: up to 24 exact class names, each
 mapped to a page type. `page_type.url_rules` labels pages by URL:
-up to 10 patterns in the syntax of the [checkout paths](#checkout-funnel),
-each with a page type, and the first match wins. It suits a headless
-shop whose body classes say nothing.
+up to 10 patterns in the [pattern syntax](/en/checkout-funnel#pattern-syntax),
+each with a page type, and the first match wins. The dashboard numbers
+the rules and moves them up and down. It suits a headless shop whose
+body classes say nothing, or one that tells `/:lang(de|en)/:slug{/}?`
+from `/:lang(de|en)/:cat/:slug{/}?`.
 
 The collector takes the first source that gives a page type:
 

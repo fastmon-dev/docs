@@ -97,10 +97,13 @@ gibt.
 Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
 `pagetype_rules` benennt deine eigenen: bis zu 24 exakte Klassennamen,
 jeder auf einen Page-Type abgebildet. `page_type.url_rules` ordnet
-Seiten über die URL zu: bis zu 10 Muster in der Syntax der
-[Checkout-Pfade](#checkout-funnel), jedes mit einem Page-Type, das
-erste passende gewinnt. Das hilft einem Headless-Shop, dessen
-Body-Klassen nichts verraten.
+Seiten über die URL zu: bis zu 10 Muster in der
+[Mustersyntax](/de/checkout-funnel#pattern-syntax), jedes mit einem
+Page-Type, das erste passende gewinnt. Im Dashboard sind die Regeln
+nummeriert und lassen sich nach oben und unten schieben. Das hilft
+einem Headless-Shop, dessen Body-Klassen nichts verraten, oder einem
+Shop, der `/:lang(de|en)/:slug{/}?` von `/:lang(de|en)/:cat/:slug{/}?`
+unterscheiden muss.
 
 Der Collector nimmt die erste Quelle, die einen Page-Type liefert:
 
