@@ -9,19 +9,20 @@ Mit zwei Response-Headern auf deinem Origin meldet der Browser jeden fehlgeschla
 
 ## Einrichten [#setup]
 
-1. Kopiere den `collector_hash` der Application. Er steht in jedem Beacon-Request hinter `/c/` und ist ein Feld der Application in der API.
+1. Trag den `collector_hash` der Application im Panel unten ein oder öffne die Seite mit `?collector_hash=`. Alle Snippets der Seite übernehmen ihn dann.
 2. Setze die beiden [Header](#headers) auf jede HTTPS-Antwort jedes Hosts.
 3. Prüfe, dass jeder Host mit den Headern eine Site dieser Application ist oder eine Subdomain davon.
 4. [Prüfe](#verify), dass ein Report ankommt.
+
+<InstallConfigPanel />
 
 Ein Report für einen Host, der keine Site der Application ist, wird verworfen. Ein Report legt nie eine Site an. `www.shop.example` zählt für `shop.example`, `notshop.example` nicht.
 
 ## Die Header [#headers]
 
-```http
-Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}
+<InstallCode lang="http" code={`Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}
 NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}
-```
+`} />
 
 Hat die Application einen eigenen [Collector-Endpoint](/de/tracker#collector-endpoint), steht dessen Host statt `fastmon.site` in der URL.
 
@@ -29,7 +30,7 @@ Hat die Application einen eigenen [Collector-Endpoint](/de/tracker#collector-end
 | --- | --- | --- | --- |
 | `group` / `report_to` | beide | `fastmon` | Verbindet die beiden Header. Der Name ist frei, er muss nur in beiden gleich sein. |
 | `max_age` | `Report-To` | `86400` | So lange behält der Browser den Endpoint, in Sekunden. Mindestens so lang wie im `NEL`-Header. |
-| `url` | `Report-To` | `https://fastmon.site/c/n/{collector_hash}` | Wohin die Reports gehen. |
+| `url` | `Report-To` | <InstallValue of="nel-url" /> | Wohin die Reports gehen. |
 | `max_age` | `NEL` | `86400` | So lange bleibt die Policy im Browser. Jede Antwort erneuert sie. |
 | `success_fraction` | `NEL` | `0` | Anteil erfolgreicher Requests, die gemeldet werden. fastmon verwirft diese Reports. |
 | `failure_fraction` | `NEL` | `1` | Anteil fehlgeschlagener Requests, die gemeldet werden. Unter `1` zählt jede Zeile `1 / failure_fraction`, und seltene Fehler können ganz fehlen. |
@@ -46,47 +47,43 @@ Wo du sie setzt:
 <Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
 <Tab value="nginx">
 
-```nginx
-server {
+<InstallCode lang="nginx" code={`server {
     listen 443 ssl;
     server_name shop.example;
 
-    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}' always;
+    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}' always;
     add_header NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}' always;
 }
-```
+`} />
 
 Mit `always` landen die Header auch auf Fehlerantworten. Ein `location`-Block mit eigenem `add_header` erbt nichts aus `server`, dort brauchst du beide Zeilen noch einmal.
 
 </Tab>
 <Tab value="Caddy">
 
-```txt
-shop.example {
-	header Report-To `{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}`
-	header NEL `{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}`
+<InstallCode lang="txt" code={`shop.example {
+	header Report-To \`{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}\`
+	header NEL \`{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}\`
 }
-```
+`} />
 
 Die Backticks lassen die Anführungszeichen im JSON stehen.
 
 </Tab>
 <Tab value="Apache">
 
-```apache
-<IfModule mod_headers.c>
-    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}'
+<InstallCode lang="apache" code={`<IfModule mod_headers.c>
+    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}'
     Header always set NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}'
 </IfModule>
-```
+`} />
 
 </Tab>
 <Tab value="PHP">
 
-```php
-header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}');
+<InstallCode lang="php" code={`header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}');
 header('NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}');
-```
+`} />
 
 Das deckt nur die Antworten ab, die PHP schreibt. Wenn du an den Webserver kommst, setz die Header dort.
 
@@ -103,11 +100,10 @@ Mit `"include_subdomains":true` im `NEL`-Header gilt die Policy für jede Subdom
 2. **Ein Report geht raus.** Lade eine Seite in Chrome und ruf dann einen Pfad auf, den es nicht gibt. Auch der 404 muss beide Header tragen. Chrome schickt nach etwa einer Minute einen `http.error`-Report.
 3. **Der Endpoint antwortet.** Teste ihn ohne Browser, mit einer registrierten Site statt `shop.example`:
 
-```sh
-curl -i https://fastmon.site/c/n/YOUR_COLLECTOR_HASH \
-  -H 'Content-Type: application/reports+json' \
+<InstallCode lang="sh" code={`curl -i https://fastmon.site/c/n/{collector_hash} \\
+  -H 'Content-Type: application/reports+json' \\
   --data '[{"age":0,"type":"network-error","url":"https://shop.example/missing","body":{"type":"http.error","phase":"application","status_code":404,"elapsed_time":12,"method":"GET","protocol":"http/1.1","referrer":"","sampling_fraction":1}}]'
-```
+`} />
 
 Der Endpoint antwortet mit 204, egal ob er den Report behält oder verwirft. Den letzten Report jeder Site zeigt die Karte **Seiten und Hosts** im [Dashboard](/de/nel#dashboard).
 

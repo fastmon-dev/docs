@@ -43,7 +43,7 @@ Der Consent-Screen fragt nach:
 
 - **Einer Organisation**, aus denen, die du erreichst. Die Verbindung liest genau diese eine, zwei Organisationen heißt also zwei Verbindungen. Eine mit ausgeschaltetem MCP ist markiert und lässt sich nicht genehmigen.
 - **`analytics:read`**, ohne das kommt keine Verbindung zustande.
-- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 17 funktionieren auch ohne.
+- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 24 funktionieren auch ohne.
 
 Der Screen benennt die Verbindung als MCP-Verbindung, direkt neben der Adresse, an die er dich zurückschickt. Das ist die Tatsache, die man sehen sollte: Was du hier freigibst, kann ein KI-Modell erreichen.
 
@@ -57,7 +57,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 ## Was das Modell lesen kann [#tools]
 
-20 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
+27 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
 
 | Bereich | Tools |
 | ------- | ----- |
@@ -66,6 +66,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 | Veränderung über die Zeit | `compare_periods`, `detect_changes` |
 | Fehler | `get_errors`, `get_failed_resources`, `get_error_detail`, `get_failed_resource_detail` |
 | Performance im Detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
+| Browser-Reports | `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, `list_csp_reports` |
 | Synthetic (Labor) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
 Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Rohe Beacon-Zeilen gibt kein Tool zurück, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung.

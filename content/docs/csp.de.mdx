@@ -18,9 +18,9 @@ Die Seite liegt in der Sidebar unter **Fehler → Content Security Policy**, unt
 - **Übersicht**: Verstöße im Zeitverlauf, gestapelt **Nach Direktive** oder **Nach Policy**, blockierte Reports unter den Report-only-Reports.
 - **Karten** für das, was blockiert wurde, die Seiten und Scripts mit Verstößen, Direktiven, Sites, Länder, Geräte, Browser, OS und Traffic.
 - **Sites** dient zugleich als Einrichtungs-Check. Jede Site zeigt ihren letzten Report, und eine Site ohne Report fragt, ob ihre Policy fastmon nennt.
-- **Reports**: jeder CSP-Report, neueste zuerst, aufklappbar mit allen gespeicherten Feldern und der verletzten Policy. Jeder Report hat einen eigenen Link zum Teilen und verlinkt auf die Journey des Besuchers.
+- **Reports**: eine Tabelle aller CSP-Reports mit Zeit, Policy, Direktive, Blockiertem, Seite, Gerät, Browser, Besucher und Land. Gruppen und Seiten funktionieren wie bei [Network Error Logging](/de/nel#dashboard). Eine Zeile öffnet alle gespeicherten Felder und die verletzte Policy, und die Adresse verlinkt darauf.
 
-**Filtern** funktioniert wie bei [Network Error Logging](/de/nel#dashboard): `+` filtert auf einen Wert, `-` schließt ihn aus, und die Lupe öffnet die Reports der Zeile. Die eigenen Filter der Seite (blockiert oder Report-only, Direktive, blockierte URL, Seite, Script) stehen im Filter-Panel unter **Nur auf dieser Seite** und bleiben in der URL.
+**Filtern** funktioniert wie bei [Network Error Logging](/de/nel#dashboard): `+` filtert auf einen Wert, `-` schließt ihn aus, und die Lupe öffnet die Reports der Zeile. Die eigenen Filter der Seite (blockiert oder Report-only, Direktive, blockierte URL, Seite, Script) stehen im Filter-Panel unter **Nur auf dieser Seite** und bleiben in der URL. **Add directive** bietet jede Direktive an, die des Zeitraums zuerst.
 
 Die Journey eines Besuchers unter [Besucher](/de/analytics#visitors) zeigt seine CSP-Reports zwischen den Seitenaufrufen, blockierte in Rot, Report-only in Gelb.
 
@@ -52,7 +52,7 @@ Alle drei Routen nehmen dieselben `filters`, darunter `disposition`, `effective_
 | Route | Liefert |
 | --- | --- |
 | [`POST /analytics/csp`](/de/api/analytics/queryAnalyticsCsp) | Reports und betroffene Besucher, je Direktive und Disposition, im Zeitverlauf |
-| [`POST /analytics/csp/breakdown`](/de/api/analytics/queryAnalyticsCspBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil und Besuchern. Site-Zeilen tragen `last_seen_at`. |
+| [`POST /analytics/csp/breakdown`](/de/api/analytics/queryAnalyticsCspBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil, Besuchern, `first_seen_at` und `last_seen_at`. Ein Schlüssel passt zurück in seinen Filter. |
 | [`POST /analytics/csp/reports`](/de/api/analytics/listAnalyticsCspReports) | Einzelne Reports, neueste zuerst, seitenweise über `cursor`. `filters.report_id` wählt einen aus. |
 
 Die [Besucher-Details](/de/api/analytics/getAnalyticsVisitorDetail) und die [Checkout-Journeys](/de/api/analytics/queryAnalyticsCheckoutJourneys) tragen `csp_reports` neben `nel_reports`, ohne die Policy.

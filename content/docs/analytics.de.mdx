@@ -16,7 +16,7 @@ Die Analytics-Hauptansicht einer Site zeigt:
 - **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Der Globus öffnet dort, wo dein Traffic ist, Ziehen dreht ihn und das Mausrad zoomt. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
 - **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
 - **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
-- **Bots im Zeitverlauf**: „Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter oben zieht mit und springt zurück, wenn du die Ansicht wieder ausschaltest.
+- **Bots im Zeitverlauf**: „Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter oben zieht mit und springt zurück, wenn du die Ansicht wieder ausschaltest. Ein Cmd- oder Strg-Klick auf einen Legendeneintrag zeigt nur diesen.
 - **Traffic-Qualität**: Pageviews gestapelt nach Menschen, Wahrscheinlich Bots und Bots, die Besucher als Linie darüber. Darunter die Bot-Klassifizierung als eine Leiste, dann als klickbare Zeilen.
 - **Aktive Stunden**: Stunde des Tages nach Wochentag, damit sichtbar wird, wann auf der Seite wirklich etwas passiert. Das Raster zeigt nur die Wochentage, die der gewählte Zeitraum erreicht hat.
 - **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
@@ -151,7 +151,13 @@ Die Besucher-Seite listet eindeutige Besucher mit Startzeit, Dauer, Seitenanzahl
 
 Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Seitenaufrufe pro Besucher und der Anteil mit JavaScript-Fehler, langsame Besucher (durchschnittlicher LCP über 4 s) und Käufer. **Segment-Chips** (mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite) setzen die Verhaltensfilter und zeigen, wie viele Besucher sie listen. „Verhalten anpassen“ öffnet alle Filter: Seiten, Fehler, Dauer, LCP, Seitentyp und Funnel-Stufe. Bestellungen, Checkout und Warenkorb erscheinen nur bei einem Shop.
 
-**Ein Besucher öffnet sich in einem Dialog**, auf dem Handy als Sheet von unten. Er zeigt jeden Pageview in Reihenfolge mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und die [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) des Besuchers stehen zwischen den Pageviews, abgebrochene Ladevorgänge erst, wenn du sie einschaltest. Ein Klick auf eine Seite öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers. Der Aktualisieren-Button daneben holt neue Seiten eines laufenden Besuchs nach. `?visitor=` verlinkt direkt auf den Dialog.
+**Ein Besucher öffnet sich überall, wo er verlinkt ist, in einem Dialog**: in dieser Liste, bei NEL- und CSP-Reports, im Explorer und bei Checkout-Events. Auf dem Handy ist er ein Sheet von unten, und `?visitor=` verlinkt direkt darauf.
+
+- **Die Journey** zeigt jeden Pageview der Reihe nach mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) stehen dazwischen, abgebrochene Ladevorgänge erst, wenn du sie einschaltest.
+- **Ohne Pageviews** im Zeitraum listet sie nur die Reports und Events des Besuchers.
+- **Ein Klick auf eine Seite** öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers.
+- **Aktualisieren** holt neue Seiten eines laufenden Besuchs nach. Der Live-Schalter macht das alle 7 Sekunden.
+- **Ein Cmd- oder Strg-Klick** auf einen Besucher-Link öffnet die Visitors-Seite in einem neuen Tab.
 
 Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Application legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
 

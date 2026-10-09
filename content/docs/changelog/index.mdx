@@ -12,6 +12,129 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-09" type="new" area="tracker" title="Three checks on the LCP element">
+
+The tracker records three causes of a slow LCP image on every pageview, in every privacy mode.
+
+- **`lfp`**: the `fetchpriority` of the image, or of the preload that fetched it (`high`, `low`, or `auto`).
+- **`llg`**: the image's `loading`, normalized to `lazy` or `eager`.
+- **`ldv`**: whether the resource came from the browser `cache` or over the `network`. A 304 revalidation counts as network, and a soft navigation reads only its own resource entries.
+
+The cache check comes mostly from Chromium. Firefox and Safari leave it empty for images from their in-page cache, and every browser does for a cross-origin image without `Timing-Allow-Origin`. `POST /analytics/element-targets` gives each LCP element `fetch_priority_high_rate`, `lazy_rate`, and `cache_rate`, and `POST /analytics/query` groups by `lcp_fetch_priority`, `lcp_loading`, and `lcp_delivery`. Docs: [LCP → How to see LCP](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-09" type="fixed" area="dashboard" title="Ask uses half the tokens">
+
+An Ask question costs about half as many tokens, so a question with one tool call no longer hits the organization's per-minute limit on its own. A refused question answers with its own status instead of a 500. An exhausted budget is a 429 with `retry_after_seconds`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="dashboard" title="NEL and CSP reports in groups">
+
+The Reports tab of Network Error Logging and Content Security Policy groups and pages its reports.
+
+- **Group by visitor, page, or URL**: the failed request on NEL, the blocked URL on CSP. A group opens in place to its reports and sorts by most reports or newest.
+- **Pages of 25, 50, or 100 reports** with Previous and Next, instead of loading as you scroll.
+- **An opened report is in the URL**, so the address links to it, also outside the current period.
+- **CSP is built like NEL**: the reports as a table, and "Add directive" in the filter panel picks any directive.
+- **No sampling badge on either page.** The browser sends every report, and fastmon stores all of them.
+
+Docs: [Content Security Policy → The page](/en/csp#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="NEL and CSP breakdowns group by visitor and URL">
+
+`POST /analytics/nel/breakdown` and `POST /analytics/csp/breakdown` group by `stitch`, `status_code_range`, and `bot_name`. NEL also groups by `request_url`, `error_type`, and `path`. Each key goes back into its filter and selects exactly that group's reports. Every row carries `first_seen_at` and `last_seen_at`, and `order_by: {"field": "last_seen_at"}` puts the newest group first. Docs: [Network Error Logging → API](/en/nel#api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="NEL and CSP in Ask and MCP">
+
+Ask and MCP clients read Network Error Logging and Content Security Policy reports with six new tools: `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, and `list_csp_reports`. They take the filters of the dashboard routes and count the same. A row from `list_csp_reports` carries no `original_policy`. Docs: [MCP → What the model can read](/en/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="changed" area="api" title="Four MCP tools answer with the dashboard's field names">
+
+`get_server_timing`, `get_fetch_xhr`, `get_resource_breakdown`, and `get_third_party_impact` run the dashboard panel's queries and answer with its field names. A client that reads the old keys has to switch.
+
+| Tool | Old key | New key |
+| --- | --- | --- |
+| `get_server_timing` | `cache_status` as `{layer: {status: count}}` | `cache`, a list of `layer`, `cache_status`, `count` |
+| `get_server_timing` | `phases[].phase` `edge` | `edge_dur` |
+| `get_server_timing` | `samples` | `count` |
+| `get_server_timing` | `top_keys[].values[].value` | `top_keys[].values[].desc` |
+| `get_fetch_xhr` | `errors`, `status_errors`, `total_time_ms` | `error_count`, `errors_by_status_code`, `impact_ms` |
+| `get_resource_breakdown` | `total_bytes`, `resources`, `total_count`, `avg_duration_ms` | `size_bytes`, `data`, `resource_count`, `avg_ms` |
+| `get_resource_breakdown` | `size_percent` from 0 to 100 | `share` from 0 to 1 |
+| `get_third_party_impact` | `total_top_n_requests`, `domains`, `domain`, `request_count` | `resource_count`, `data`, `host`, `count` |
+
+Earlier Ask conversations keep the old keys in their stored tool results.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="Element targets describe each LCP element">
+
+`POST /analytics/element-targets` returns a `distribution` per target with p50, p75, p90, and p95, so a client switches the percentile without a second request.
+
+- **With `metric: "lcp"`** each target carries the means of the four LCP subparts, the most frequent `lcp_discovered_via`, and `image_rate`.
+- **With `by: "element"`** it adds the `resource_url` serving most of the target's pageviews and `resource_url_count`.
+- **`metric` in the response** is the request's enum, with the same values `lcp`, `cls`, and `inp`.
+
+`group_by: "url"` no longer fails with a 500 on shops with many pages. Docs: [LCP → How to see LCP](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="dashboard" title="A visitor opens as a pop-up everywhere">
+
+A visitor link opens the visitor's journey over the page you are on, and closing it brings you back. This works from NEL and CSP reports, the Explorer table, the pageview detail, and checkout events.
+
+- **Cmd or Ctrl click** still opens the Visitors page in a new tab.
+- **A visitor without pageviews** in the period shows their reports and events in order, with a note.
+- **Live mode** has its own switch in the pop-up and keeps the journey on screen while new pages arrive. It refreshes every 7 seconds on every page that has it.
+
+Docs: [Analytics → Visitors](/en/analytics#visitors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="fixed" area="platform" title="Visitor counts across several sites">
+
+A multi-site or organization-wide scope counted `stitch` visitors, whatever the applications stored. An organization whose applications keep only session ids read 0 visitors there and now reads its real count.
+
+- **Applications that disagree** count by the identifier most of them store. Each application counts once.
+- **No identifier stored**: `visitors` is null instead of 0.
+- **`meta.is_identity_mixed`** is true when the count is a lower bound. `POST /analytics/query` names the identity it counted by in `request.identity`.
+
+Docs: [Visitors and sessions](/en/concepts/sessions#several-sites).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="platform" title="E-invoices over Peppol">
+
+Business customers in Germany, the Netherlands, and Belgium with a VAT id also receive their invoice as an e-invoice over Peppol. The VAT id is the Peppol identifier, so it has to match your registration. The PDF and the invoice mail stay as they are. Docs: [Organizations → Plans](/en/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="changed" area="api" title="Up to 20 metrics per query">
+
+`POST /analytics/query` takes up to 20 metrics instead of 10. The Server-Timing table per page type no longer fails with a 422 on sites that report every phase.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="fixed" area="dashboard" title="Links keep the bot filter">
+
+A link that opens a page or the Explorer filtered to a row keeps "All traffic" and "Bots only", and the page's other filters. It used to fall back to bots hidden.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-07" type="new" area="dashboard" title="Show one segment of the chart">
+
+Cmd or Ctrl click on a segment in the Analytics chart legend shows only that segment, such as one bot of the bot split. The same click again brings all segments back. A plain click still hides a segment, but never the last one. Docs: [Analytics → The dashboard](/en/analytics#the-dashboard).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-07" type="changed" area="dashboard" title="Shopfloor orders count to the second">
 
 Today's orders on the Shopfloor count up to the request and refresh every 10 seconds. The figure says up to when it counts ("as of 14:32"), and last week runs to the same clock time. A sale no longer drops back out of the header while the server catches up. On the API, `today.time_range.to` of `POST /analytics/live-summary` carries that instant. Docs: [Analytics → Shopfloor](/en/analytics#shopfloor).

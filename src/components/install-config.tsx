@@ -157,6 +157,12 @@ export function snippetBase(config: InstallConfig): string {
   return FASTMON_COLLECTOR;
 }
 
+/** Base URL for browser report endpoints (NEL, CSP). A report header needs an
+ *  absolute URL, so the relative mode sends reports straight to fastmon. */
+export function reportBase(config: InstallConfig): string {
+  return config.mode === "relative" ? FASTMON_COLLECTOR : snippetBase(config);
+}
+
 const sourceOf = (c: InstallConfig) => c.sourceHash.trim() || "{source_hash}";
 const collectorOf = (c: InstallConfig) => c.collectorHash.trim() || "{collector_hash}";
 
@@ -364,7 +370,9 @@ export type InstallValueOf =
   | "collector-url"
   | "events-collector-url"
   | "source-hash"
-  | "collector-hash";
+  | "collector-hash"
+  | "nel-url"
+  | "csp-url";
 
 export function installValue(of: InstallValueOf, config: InstallConfig): string {
   const base = snippetBase(config);
@@ -381,6 +389,10 @@ export function installValue(of: InstallValueOf, config: InstallConfig): string 
       return sourceOf(config);
     case "collector-hash":
       return collectorOf(config);
+    case "nel-url":
+      return `${reportBase(config)}/c/n/${collectorOf(config)}`;
+    case "csp-url":
+      return `${reportBase(config)}/c/v/${collectorOf(config)}`;
   }
 }
 
@@ -403,6 +415,23 @@ export function InstallSnippet({ kind }: { kind: SnippetKind }) {
   return (
     <div className="my-4">
       <DynamicCodeBlock lang={SNIPPET_LANG[kind]} code={code} />
+    </div>
+  );
+}
+
+/**
+ * A code block written in MDX with `https://fastmon.site` and `{collector_hash}`
+ * in it, both swapped for the reader's values. For server configs whose shape
+ * differs per web server, where a SnippetKind per variant would not pay off.
+ */
+export function InstallCode({ lang, code }: { lang: string; code: string }) {
+  const config = useInstallConfig();
+  const filled = code
+    .replaceAll(FASTMON_COLLECTOR, reportBase(config))
+    .replaceAll("{collector_hash}", collectorOf(config));
+  return (
+    <div className="my-4">
+      <DynamicCodeBlock lang={lang} code={filled.trim()} />
     </div>
   );
 }

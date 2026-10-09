@@ -17,8 +17,6 @@ LCP is reported in milliseconds and bucketed into three ranges. The threshold to
 | ≤ 4,000 ms      | Needs improvement |
 | > 4,000 ms      | Poor         |
 
-If your p75 is 2,500 ms or below, three out of four visitors had a load experience Google calls good. If it's 4,000 ms or above, one in four sat there for more than four seconds before the page felt ready.
-
 ## What counts as the "largest contentful element"
 
 The browser tracks the largest element that has finished painting in the visible viewport. Eligible elements are:
@@ -49,7 +47,7 @@ Fastmon's tracker picks up the final LCP at that moment and includes it in the n
 
 **Article with embedded video.** LCP is the video poster, not the article text. Optimizing the poster image improves LCP, even though it's the article body the visitor actually reads.
 
-## How to see LCP in fastmon
+## How to see LCP in fastmon [#how-to-see-lcp-in-fastmon]
 
 The dashboard's **Performance** section shows LCP at p50, p75, and p95 out of the box. To break it down:
 
@@ -57,6 +55,7 @@ The dashboard's **Performance** section shows LCP at p50, p75, and p95 out of th
 - **By device**: group by `device_type`. Mobile LCP is almost always worse than desktop.
 - **By country**: group by `country`. RTT to your origin matters.
 - **By release**: set `compare_to_release_id` in the [Analytics API](/en/api/analytics/queryAnalytics) to see whether a deploy regressed LCP.
+- **By element**: [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets) ranks the LCP elements with their percentiles and subparts. Each also carries the share of pageviews with `fetchpriority="high"` (`fetch_priority_high_rate`), `loading="lazy"` (`lazy_rate`), and a cache hit (`cache_rate`).
 
 Programmatically:
 
@@ -87,7 +86,7 @@ For a deeper walkthrough, see web.dev's [Optimize LCP](https://web.dev/articles/
 
 - **LCP is usually an image, not text.** Tweaking fonts probably won't move your LCP at all.
 - **SPAs don't restart LCP on route change.** LCP is a navigation-level metric; SPA route changes don't produce a new one.
-- **Lazy-loading the hero kills LCP.** Classic copy-paste mistake. Don't lazy-load above-the-fold content.
+- **Lazy-loading the hero delays LCP.** `lazy_rate` above 0 on an LCP element shows it.
 - **`background-image` counts.** If your "hero" is a CSS background, the browser still measures it as LCP.
 
 ## What's next
