@@ -16,7 +16,7 @@ The main Analytics view for a site shows:
 - **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
 - **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
 - **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
-- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. It moves the bot filter along and puts it back when you switch the view off.
+- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. It moves the bot filter along and puts it back when you switch the view off. Cmd or Ctrl click on a legend entry shows only that one.
 - **Traffic quality**: pageviews stacked into Humans, Likely bots, and Bots, with visitors as a line. Below it the bot classification as one bar, then as clickable rows.
 - **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
 - **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. Not a bounce rate: whether somebody left afterwards is not in the data.
@@ -151,7 +151,13 @@ The Visitors page lists distinct visitors with start time, duration, page count,
 
 The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage. Orders, checkout, and cart show only on a shop.
 
-**A visitor opens in a dialog**, on a phone as a sheet from the bottom. It shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and the visitor's [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between the pageviews, abandoned loads only once you switch them on. A click on a page opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there. The refresh button beside it picks up new pages of a visit still going on. `?visitor=` links to the dialog.
+**A visitor opens in a dialog** wherever it is linked: in this list, on NEL and CSP reports, in the Explorer, and on checkout events. On a phone it is a sheet from the bottom, and `?visitor=` links to it.
+
+- **The journey** shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between them, abandoned loads only once you switch them on.
+- **Without pageviews** in the period, it lists the visitor's reports and events alone.
+- **A click on a page** opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there.
+- **Refresh** picks up new pages of a visit still going on. The live switch does it every 7 seconds.
+- **Cmd or Ctrl click** on a visitor link opens the Visitors page in a new tab.
 
 A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the application's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
 

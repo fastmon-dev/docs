@@ -17,6 +17,129 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-09" type="new" area="tracker" title="Drei Prüfungen am LCP-Element">
+
+Der Tracker erfasst bei jedem Seitenaufruf drei häufige Ursachen für ein langsames LCP-Bild, in jedem Datenschutzmodus.
+
+- **`lfp`**: die `fetchpriority` des Bildes oder des Preloads, der es geladen hat (`high`, `low` oder `auto`).
+- **`llg`**: das `loading` des Bildes, vereinheitlicht auf `lazy` oder `eager`.
+- **`ldv`**: ob die Ressource aus dem Browser-`cache` oder über das `network` kam. Eine 304-Revalidierung zählt als Netzwerk, und eine Soft Navigation liest nur ihre eigenen Ressourceneinträge.
+
+Die Cache-Prüfung liefert vor allem Chromium. Firefox und Safari lassen sie bei Bildern aus ihrem seiteninternen Cache leer, jeder Browser bei einem Cross-Origin-Bild ohne `Timing-Allow-Origin`. `POST /analytics/element-targets` gibt jedem LCP-Element `fetch_priority_high_rate`, `lazy_rate` und `cache_rate`, und `POST /analytics/query` gruppiert nach `lcp_fetch_priority`, `lcp_loading` und `lcp_delivery`. Doku: [LCP → LCP in fastmon](/de/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-09" type="fixed" area="dashboard" title="Ask braucht halb so viele Tokens">
+
+Eine Ask-Frage kostet etwa halb so viele Tokens. Eine Frage mit einem Tool-Aufruf reißt das Minutenlimit der Organisation also nicht mehr allein. Eine abgelehnte Frage antwortet mit ihrem eigenen Status statt mit einem 500, ein aufgebrauchtes Budget mit 429 und `retry_after_seconds`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="dashboard" title="NEL- und CSP-Reports in Gruppen">
+
+Der Tab „Reports“ von Network Error Logging und Content Security Policy gruppiert und blättert seine Reports.
+
+- **Gruppiert nach Besucher, Seite oder URL**: auf NEL der fehlgeschlagene Request, auf CSP die blockierte URL. Eine Gruppe klappt direkt zu ihren Reports auf und sortiert nach den meisten Reports oder den neuesten.
+- **Seiten mit 25, 50 oder 100 Reports** und „Zurück“ und „Weiter“, statt Nachladen beim Scrollen.
+- **Ein geöffneter Report steht in der URL**, die Adresse ist also ein Link darauf, auch außerhalb des aktuellen Zeitraums.
+- **CSP ist aufgebaut wie NEL**: die Reports als Tabelle, und „Add directive“ im Filter-Panel wählt jede Direktive.
+- **Kein Sampling-Badge mehr auf beiden Seiten.** Der Browser schickt jeden Report, und fastmon speichert alle.
+
+Doku: [Content Security Policy → Die Seite](/de/csp#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="NEL- und CSP-Breakdowns nach Besucher und URL">
+
+`POST /analytics/nel/breakdown` und `POST /analytics/csp/breakdown` gruppieren nach `stitch`, `status_code_range` und `bot_name`, NEL zusätzlich nach `request_url`, `error_type` und `path`. Jeder Schlüssel passt in seinen Filter und wählt genau die Reports seiner Gruppe. Jede Zeile trägt `first_seen_at` und `last_seen_at`, und `order_by: {"field": "last_seen_at"}` stellt die neueste Gruppe nach vorn. Doku: [Network Error Logging → API](/de/nel#api).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="NEL und CSP in Ask und MCP">
+
+Ask und MCP-Clients lesen Network-Error-Logging- und CSP-Reports mit sechs neuen Tools: `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown` und `list_csp_reports`. Sie nehmen die Filter der Dashboard-Routen und zählen genauso. Eine Zeile aus `list_csp_reports` enthält kein `original_policy`. Doku: [MCP → Was das Modell lesen kann](/de/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="changed" area="api" title="Vier MCP-Tools antworten mit den Feldnamen des Dashboards">
+
+`get_server_timing`, `get_fetch_xhr`, `get_resource_breakdown` und `get_third_party_impact` führen die Abfragen der Dashboard-Panels aus und antworten mit deren Feldnamen. Ein Client, der die alten Schlüssel liest, muss umstellen.
+
+| Tool | Alter Schlüssel | Neuer Schlüssel |
+| --- | --- | --- |
+| `get_server_timing` | `cache_status` als `{layer: {status: count}}` | `cache`, eine Liste aus `layer`, `cache_status`, `count` |
+| `get_server_timing` | `phases[].phase` `edge` | `edge_dur` |
+| `get_server_timing` | `samples` | `count` |
+| `get_server_timing` | `top_keys[].values[].value` | `top_keys[].values[].desc` |
+| `get_fetch_xhr` | `errors`, `status_errors`, `total_time_ms` | `error_count`, `errors_by_status_code`, `impact_ms` |
+| `get_resource_breakdown` | `total_bytes`, `resources`, `total_count`, `avg_duration_ms` | `size_bytes`, `data`, `resource_count`, `avg_ms` |
+| `get_resource_breakdown` | `size_percent` von 0 bis 100 | `share` von 0 bis 1 |
+| `get_third_party_impact` | `total_top_n_requests`, `domains`, `domain`, `request_count` | `resource_count`, `data`, `host`, `count` |
+
+Ältere Ask-Unterhaltungen behalten die alten Schlüssel in ihren gespeicherten Tool-Ergebnissen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="api" title="Element Targets beschreiben jedes LCP-Element">
+
+`POST /analytics/element-targets` liefert pro Target eine `distribution` mit p50, p75, p90 und p95. Ein Client wechselt das Perzentil also ohne zweite Anfrage.
+
+- **Mit `metric: "lcp"`** trägt jedes Target die Mittelwerte der vier LCP-Teilphasen, das häufigste `lcp_discovered_via` und `image_rate`.
+- **Mit `by: "element"`** kommen die `resource_url`, die die meisten Seitenaufrufe des Targets ausliefert, und `resource_url_count` dazu.
+- **`metric` in der Antwort** ist das Enum der Anfrage, mit denselben Werten `lcp`, `cls` und `inp`.
+
+`group_by: "url"` scheitert bei Shops mit vielen Seiten nicht mehr mit einem 500. Doku: [LCP → LCP in fastmon](/de/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="dashboard" title="Besucher öffnen sich überall als Pop-up">
+
+Ein Besucher-Link öffnet die Journey über der Seite, auf der du bist, und Schließen bringt dich dorthin zurück. Das gilt für NEL- und CSP-Reports, die Explorer-Tabelle, das Seitenaufruf-Detail und Checkout-Events.
+
+- **Cmd- oder Strg-Klick** öffnet weiterhin die Visitors-Seite in einem neuen Tab.
+- **Ein Besucher ohne Seitenaufruf** im Zeitraum zeigt seine Reports und Events der Reihe nach, mit einem Hinweis.
+- **Der Live-Modus** hat einen eigenen Schalter im Pop-up und hält die Journey stehen, während neue Seiten dazukommen. Er aktualisiert auf jeder Seite, die ihn hat, alle 7 Sekunden.
+
+Doku: [Analytics → Visitors](/de/analytics#visitors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="fixed" area="platform" title="Besucherzahlen über mehrere Sites">
+
+Ein Scope über mehrere Sites oder die ganze Organisation hat `stitch`-Besucher gezählt, egal was die Applikationen speichern. Eine Organisation, deren Applikationen nur Session-IDs speichern, sah dort 0 Besucher und sieht jetzt die echte Zahl.
+
+- **Uneinige Applikationen** zählen nach der Kennung, die die meisten speichern. Jede Applikation zählt einmal.
+- **Keine Kennung gespeichert**: `visitors` ist null statt 0.
+- **`meta.is_identity_mixed`** ist true, wenn die Zahl eine Untergrenze ist. `POST /analytics/query` nennt in `request.identity`, wonach es gezählt hat.
+
+Doku: [Besucher und Sessions](/de/concepts/sessions#several-sites).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="new" area="platform" title="E-Rechnungen über Peppol">
+
+Geschäftskunden in Deutschland, den Niederlanden und Belgien mit USt-IdNr. bekommen ihre Rechnung zusätzlich als E-Rechnung über Peppol. Die USt-IdNr. dient als Peppol-Kennung und muss deshalb zu deiner Registrierung passen. PDF und Rechnungsmail bleiben, wie sie sind. Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="changed" area="api" title="Bis zu 20 Metriken pro Abfrage">
+
+`POST /analytics/query` nimmt bis zu 20 Metriken statt 10. Die Server-Timing-Tabelle pro Seitentyp scheitert bei Sites, die jede Phase melden, nicht mehr mit einem 422.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-08" type="fixed" area="dashboard" title="Links behalten den Bot-Filter">
+
+Ein Link, der eine Seite oder den Explorer auf eine Zeile gefiltert öffnet, behält „All traffic“ und „Bots only“ und die übrigen Filter der Seite. Bisher fiel er auf ausgeblendete Bots zurück.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-07" type="new" area="dashboard" title="Ein Segment im Chart allein zeigen">
+
+Ein Cmd- oder Strg-Klick auf ein Segment in der Legende des Analytics-Charts zeigt nur dieses Segment, etwa einen Bot im Bot-Split. Derselbe Klick holt alle Segmente zurück. Ein normaler Klick blendet weiterhin ein Segment aus, aber nie das letzte. Doku: [Analytics → Das Dashboard](/de/analytics#the-dashboard).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-07" type="changed" area="dashboard" title="Shopfloor-Bestellungen zählen bis zur Sekunde">
 
 Die Bestellungen von heute im Shopfloor zählen bis zur Anfrage und aktualisieren sich alle 10 Sekunden. Die Zahl sagt, bis wann sie zählt („Stand 14:32“), und die Vorwoche läuft bis zur gleichen Uhrzeit. Ein Verkauf fällt nicht mehr aus der Kopfzeile heraus, während der Server aufholt. In der API trägt `today.time_range.to` von `POST /analytics/live-summary` diesen Zeitpunkt. Doku: [Analytics → Shopfloor](/de/analytics#shopfloor).

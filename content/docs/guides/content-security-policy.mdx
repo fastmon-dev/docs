@@ -9,19 +9,20 @@ Naming fastmon as your policy's report endpoint makes the browser send every vio
 
 ## Set it up [#setup]
 
-1. Copy the application's `collector_hash`. It is the part after `/c/` in a beacon request, and a field on the application in the API.
+1. Enter the application's `collector_hash` in the panel below, or open this page with `?collector_hash=`. Every snippet on the page then uses it.
 2. Send the two [headers](#headers) on every HTML response of the site.
 3. Make sure every host that sends them is a site of that application, or a subdomain of one.
 4. [Verify](#verify) that a report arrives.
+
+<InstallConfigPanel />
 
 A report whose host is no site of the application is dropped, and a report never creates a site. `www.shop.example` counts for `shop.example`, `notshop.example` does not.
 
 ## The headers [#headers]
 
-```http
-Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
-Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://js.payments.example; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH
-```
+<InstallCode lang="http" code={`Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/{collector_hash}"
+Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' https://js.payments.example; report-to fastmon-csp; report-uri https://fastmon.site/c/v/{collector_hash}
+`} />
 
 The policy is an example. Keep your own directives and add `report-to` and `report-uri`. An application with a custom [collector endpoint](/en/tracker#collector-endpoint) uses its own host instead of `fastmon.site`.
 
@@ -36,45 +37,41 @@ The policy is an example. Keep your own directives and add `report-to` and `repo
 <Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
 <Tab value="nginx">
 
-```nginx
-server {
+<InstallCode lang="nginx" code={`server {
     listen 443 ssl;
     server_name shop.example;
 
-    add_header Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"' always;
-    add_header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH" always;
+    add_header Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/{collector_hash}"' always;
+    add_header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/{collector_hash}" always;
 }
-```
+`} />
 
 A `location` block with its own `add_header` inherits none from `server`, so repeat both lines there.
 
 </Tab>
 <Tab value="Caddy">
 
-```txt
-shop.example {
-	header Reporting-Endpoints `fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"`
-	header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
+<InstallCode lang="txt" code={`shop.example {
+	header Reporting-Endpoints \`fastmon-csp="https://fastmon.site/c/v/{collector_hash}"\`
+	header Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/{collector_hash}"
 }
-```
+`} />
 
 </Tab>
 <Tab value="Apache">
 
-```apache
-<IfModule mod_headers.c>
-    Header always set Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"'
-    Header always set Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"
+<InstallCode lang="apache" code={`<IfModule mod_headers.c>
+    Header always set Reporting-Endpoints 'fastmon-csp="https://fastmon.site/c/v/{collector_hash}"'
+    Header always set Content-Security-Policy-Report-Only "default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/{collector_hash}"
 </IfModule>
-```
+`} />
 
 </Tab>
 <Tab value="PHP">
 
-```php
-header('Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/YOUR_COLLECTOR_HASH"');
-header("Content-Security-Policy-Report-Only: default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/YOUR_COLLECTOR_HASH");
-```
+<InstallCode lang="php" code={`header('Reporting-Endpoints: fastmon-csp="https://fastmon.site/c/v/{collector_hash}"');
+header("Content-Security-Policy-Report-Only: default-src 'self'; report-to fastmon-csp; report-uri https://fastmon.site/c/v/{collector_hash}");
+`} />
 
 This covers only the responses PHP writes. Set the headers in the web server when you can.
 
@@ -87,15 +84,14 @@ This covers only the responses PHP writes. Set the headers in the web server whe
 2. **A violation shows.** With a report-only policy that forbids something the page loads, the console prints a `[Report Only]` message per violation. Chrome uploads `report-to` reports within about a minute, a `report-uri` report goes out at once.
 3. **The endpoint answers.** Test both formats without a browser, with a registered site in place of `shop.example`:
 
-```sh
-curl -i https://fastmon.site/c/v/YOUR_COLLECTOR_HASH \
-  -H 'Content-Type: application/reports+json' \
+<InstallCode lang="sh" code={`curl -i https://fastmon.site/c/v/{collector_hash} \\
+  -H 'Content-Type: application/reports+json' \\
   --data '[{"age":0,"type":"csp-violation","url":"https://shop.example/","body":{"documentURL":"https://shop.example/","blockedURL":"https://cdn.example/x.js","effectiveDirective":"script-src-elem","disposition":"report","statusCode":200}}]'
 
-curl -i https://fastmon.site/c/v/YOUR_COLLECTOR_HASH \
-  -H 'Content-Type: application/csp-report' \
+curl -i https://fastmon.site/c/v/{collector_hash} \\
+  -H 'Content-Type: application/csp-report' \\
   --data '{"csp-report":{"document-uri":"https://shop.example/","blocked-uri":"inline","effective-directive":"script-src-elem","disposition":"report","status-code":200}}'
-```
+`} />
 
 The endpoint answers 204 whether it kept the report or dropped it. The **Sites** card on the [Content Security Policy page](/en/csp#dashboard) shows each site's last report.
 

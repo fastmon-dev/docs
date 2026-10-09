@@ -5,7 +5,7 @@ description: How fastmon counts visitors without identifying them, and what a se
 
 Fastmon counts **visitors**, not people. A visitor is a count along an **identity axis**, and there are two:
 
-- **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or anything stored on the device. It's on under the default `Standard` preset, so unique-visitor counts work out of the box; the `Minimal` preset is the opt-down that stores no identifier, and then there are no visitor counts.
+- **`stitch`** (the default): an edge-derived identifier present whenever [`store_stitch`](/en/tracker#store-stitch) is on (the `Standard` and `Full` presets). It is bounded-lifetime and forward-secret (see [Privacy](/en/privacy#the-edge-derived-stitch-identifier)), so it lets the dashboard count unique visitors without a cookie or anything stored on the device.
 - **`session`**: the client-minted `session_id` (`sid` on the wire), present only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the `Full` preset, or after your CMP calls `grantConsent()`). It groups a short burst of page-views from the same browser into a **visit** with a 30-minute boundary, which the visit-level views build on.
 
 Which one the dashboard counts by default is the application's **`count_visitors_by`** setting (default `stitch`). That's a reporting choice, kept separate from what the site collects: if a site doesn't collect the chosen identity, the count falls back to whatever it does collect, and to nothing if it collects neither.
@@ -72,6 +72,13 @@ The Visitors view lists one row per visitor, grouped by the resolved identity:
 | `journey`      | list                | The first 50 pageviews in order, each with page type, time on page, errors, and checkout stage. `journey_truncated` marks a longer visit. |
 
 Note what's absent: no user ID, no fingerprint, no IP. Neither identifier is meant to be used outside the analytics window: `stitch` rotates on its salt schedule (see Privacy), and `session_id` is short-lived.
+
+## Several sites [#several-sites]
+
+A scope over several sites or the whole organization counts by the identity its applications store.
+
+- **Applications disagree**: the identifier most of them store counts, each application once. `meta.is_identity_mixed` is true when that makes the count a lower bound.
+- **None stores one**: `visitors` is null, not 0.
 
 ## Querying visitors
 

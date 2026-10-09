@@ -25,7 +25,7 @@ The page sits under **Errors → Network Error Logging** in the sidebar, at `/er
 - **Sites and hosts** doubles as the setup check. Each site shows its last report.
 - **Connection failures**: closed by default. Each type is compared with its own usual level, and a broken certificate or a rise of refused connections, timeouts or unknown hosts is flagged. Each type has its own `+` and `-`.
 - **Paths**: hosts first, each with its paths inside.
-- **Reports**: a table of every NEL report with time, type, status, time to failure, request, page, device, browser, visitor, and country. It loads 100 at a time as you scroll, sorts by any column, and copies as Markdown or CSV. A row opens all stored fields and has its own share link, and the visitor links to their journey.
+- **Reports**: a table of every NEL report with time, type, status, time to failure, request, page, device, browser, visitor, and country. It pages 25, 50, or 100 at a time, sorts by any column, and copies as Markdown or CSV. **Group by** visitor, page, or request URL, by most reports or newest; a group opens in place to its reports. A row opens all stored fields, and the address links to it.
 
 **Filtering** works like on the other pages: `+` next to a value filters to it, `-` excludes it, and the magnifier opens the row's reports. The 5xx and 4xx tiles filter a whole status class. The page's own filters (status, error type, host, path, page, server address) sit in the Filter panel under **Only on this page** and stay in the URL. **Add type** offers every known error type, those of the period first. **Abandoned loads** are hidden, on the page and on a visitor's journey, each with a switch to show them.
 
@@ -158,7 +158,7 @@ All three routes take the same `filters`, including `error_type`, `nel_class`, `
 | Route | Returns |
 | --- | --- |
 | [`POST /analytics/nel`](/en/api/analytics/queryAnalyticsNel) | Counts, series, error types, status codes, time to failure, and the top paths per host |
-| [`POST /analytics/nel/breakdown`](/en/api/analytics/queryAnalyticsNelBreakdown) | Reports grouped by one `dimension`, with share and visitors |
+| [`POST /analytics/nel/breakdown`](/en/api/analytics/queryAnalyticsNelBreakdown) | Reports grouped by one `dimension`, with share, visitors, `first_seen_at`, and `last_seen_at`. A key goes back into its filter, and `order_by` sorts by reports or `last_seen_at`. |
 | [`POST /analytics/nel/reports`](/en/api/analytics/listAnalyticsNelReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
 
 Counts are weighted by `1 / failure_fraction`, single reports are not. Without an `error_type` filter every type counts, `abandoned` included. The [visitor detail](/en/api/analytics/getAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `nel_reports` beside `pages` and `events`: absent when not consulted, `[]` when there are none.

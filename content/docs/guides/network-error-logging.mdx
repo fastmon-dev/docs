@@ -9,19 +9,20 @@ Two response headers on your origin make the browser report every failed request
 
 ## Set it up [#setup]
 
-1. Copy the application's `collector_hash`. It is the part after `/c/` in a beacon request, and a field on the application in the API.
+1. Enter the application's `collector_hash` in the panel below, or open this page with `?collector_hash=`. Every snippet on the page then uses it.
 2. Send the two [headers](#headers) on every HTTPS response of each host.
 3. Make sure every host that sends them is a site of that application, or a subdomain of one.
 4. [Verify](#verify) that a report arrives.
+
+<InstallConfigPanel />
 
 A report whose host is no site of the application is dropped, and a report never creates a site. `www.shop.example` counts for `shop.example`, `notshop.example` does not.
 
 ## The headers [#headers]
 
-```http
-Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}
+<InstallCode lang="http" code={`Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}
 NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}
-```
+`} />
 
 An application with a custom [collector endpoint](/en/tracker#collector-endpoint) uses its own host instead of `fastmon.site`.
 
@@ -29,7 +30,7 @@ An application with a custom [collector endpoint](/en/tracker#collector-endpoint
 | --- | --- | --- | --- |
 | `group` / `report_to` | both | `fastmon` | Links the two headers. Any name works if both use the same one. |
 | `max_age` | `Report-To` | `86400` | How long the browser keeps the endpoint, in seconds. Keep it at least as long as the `NEL` one. |
-| `url` | `Report-To` | `https://fastmon.site/c/n/{collector_hash}` | Where reports go. |
+| `url` | `Report-To` | <InstallValue of="nel-url" /> | Where reports go. |
 | `max_age` | `NEL` | `86400` | How long the policy stays in the browser. Every response renews it. |
 | `success_fraction` | `NEL` | `0` | Share of successful requests to report. fastmon drops those reports. |
 | `failure_fraction` | `NEL` | `1` | Share of failed requests to report. Below `1`, each row counts `1 / failure_fraction`, and rare errors can vanish. |
@@ -46,47 +47,43 @@ Where to set them:
 <Tabs items={['nginx', 'Caddy', 'Apache', 'PHP']}>
 <Tab value="nginx">
 
-```nginx
-server {
+<InstallCode lang="nginx" code={`server {
     listen 443 ssl;
     server_name shop.example;
 
-    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}' always;
+    add_header Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}' always;
     add_header NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}' always;
 }
-```
+`} />
 
 `always` adds the headers to error responses. A `location` block with its own `add_header` inherits none from `server`, so repeat both lines there.
 
 </Tab>
 <Tab value="Caddy">
 
-```txt
-shop.example {
-	header Report-To `{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}`
-	header NEL `{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}`
+<InstallCode lang="txt" code={`shop.example {
+	header Report-To \`{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}\`
+	header NEL \`{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}\`
 }
-```
+`} />
 
 The backticks keep the JSON quotes intact.
 
 </Tab>
 <Tab value="Apache">
 
-```apache
-<IfModule mod_headers.c>
-    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}'
+<InstallCode lang="apache" code={`<IfModule mod_headers.c>
+    Header always set Report-To '{"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}'
     Header always set NEL '{"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}'
 </IfModule>
-```
+`} />
 
 </Tab>
 <Tab value="PHP">
 
-```php
-header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/YOUR_COLLECTOR_HASH"}]}');
+<InstallCode lang="php" code={`header('Report-To: {"group":"fastmon","max_age":86400,"endpoints":[{"url":"https://fastmon.site/c/n/{collector_hash}"}]}');
 header('NEL: {"report_to":"fastmon","max_age":86400,"success_fraction":0,"failure_fraction":1}');
-```
+`} />
 
 This covers only the responses PHP writes. Set the headers in the web server when you can.
 
@@ -103,11 +100,10 @@ This covers only the responses PHP writes. Set the headers in the web server whe
 2. **A report goes out.** Load a page in Chrome, then open a path that does not exist. The 404 has to carry both headers too. Chrome uploads an `http.error` report after about a minute.
 3. **The endpoint answers.** Test it without a browser, with a registered site in place of `shop.example`:
 
-```sh
-curl -i https://fastmon.site/c/n/YOUR_COLLECTOR_HASH \
-  -H 'Content-Type: application/reports+json' \
+<InstallCode lang="sh" code={`curl -i https://fastmon.site/c/n/{collector_hash} \\
+  -H 'Content-Type: application/reports+json' \\
   --data '[{"age":0,"type":"network-error","url":"https://shop.example/missing","body":{"type":"http.error","phase":"application","status_code":404,"elapsed_time":12,"method":"GET","protocol":"http/1.1","referrer":"","sampling_fraction":1}}]'
-```
+`} />
 
 The endpoint answers 204 whether it kept the report or dropped it. The **Sites and hosts** card on the [dashboard](/en/nel#dashboard) shows each site's last report.
 

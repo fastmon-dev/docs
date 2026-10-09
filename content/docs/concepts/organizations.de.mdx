@@ -46,6 +46,8 @@ Der Plan steuert Features und Quotas. Welche Web Vitals erfasst werden, hängt n
 
 **Das Pageview-Volumen zählt jeden gespeicherten Pageview einmal**, Bots eingeschlossen. Ein gesampelter Pageview zählt so, wie er gespeichert ist, nicht hochgerechnet, und die letzten 15 Minuten zählen, sobald sie finalisiert sind. [`GET /organizations/{id}/usage`](/de/api/organizations/getOrganizationUsage) liefert es als `pageview_count` mit seinem `time_range`.
 
+**E-Rechnungen.** Geschäftskunden in Deutschland, den Niederlanden und Belgien mit USt-IdNr. bekommen jede Rechnung zusätzlich über Peppol. Die USt-IdNr. dient als Peppol-Kennung und muss deshalb zu deiner Registrierung passen.
+
 ## Rollen
 
 Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist eine einzelne Fähigkeit in der Form `resource:action` (`analytics:read`, `release:write`, `member:manage`); jede API-Route nennt die, die sie braucht, und das Dashboard blendet Aktionen nach derselben Liste ein oder aus. `GET /permissions` listet jede Berechtigung mit Beschreibung und den Rollen, die sie haben.

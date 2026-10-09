@@ -46,6 +46,8 @@ The plan gates features and quotas. Which Web Vitals get collected isn't tied to
 
 **The pageview volume counts each stored pageview once**, bots included. A sampled pageview counts as stored, not scaled up, and the last 15 minutes count once they are finalized. [`GET /organizations/{id}/usage`](/en/api/organizations/getOrganizationUsage) answers it as `pageview_count` with its `time_range`.
 
+**E-invoices.** Business customers in Germany, the Netherlands, and Belgium with a VAT id also get each invoice over Peppol. The VAT id is the Peppol identifier, so it has to match your registration.
+
 ## Roles
 
 A role is a fixed bundle of **permissions**. A permission is one capability in `resource:action` form (`analytics:read`, `release:write`, `member:manage`); every API route names the one it needs, and the dashboard shows or hides actions by the same list. `GET /permissions` lists every permission with a description and the roles that hold it.

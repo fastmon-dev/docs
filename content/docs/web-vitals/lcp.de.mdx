@@ -17,8 +17,6 @@ LCP wird in Millisekunden gemessen und in drei Kategorien eingeteilt. Die zu beo
 | ≤ 4.000 ms      | Verbesserungswürdig |
 | > 4.000 ms      | Schlecht            |
 
-Liegt dein p75 bei oder unter 2.500 ms, hatten drei von vier Besuchern ein Lade-Erlebnis, das Google „gut" findet. Bei 4.000 ms oder mehr saß einer von vier länger als vier Sekunden vor einer Seite, die sich noch nicht fertig anfühlte.
-
 ## Was als „größtes inhaltliches Element" zählt
 
 Der Browser verfolgt das größte Element, das im sichtbaren Viewport fertig gerendert ist. Infrage kommen:
@@ -49,7 +47,7 @@ Der fastmon-Tracker greift den finalen LCP in genau diesem Moment ab und packt i
 
 **Artikel mit eingebettetem Video.** LCP ist das Video-Poster, nicht der Text. Wenn du das Poster-Bild optimierst, verbesserst du den LCP, auch wenn der Besucher hinterher den Body liest.
 
-## LCP in fastmon ansehen
+## LCP in fastmon ansehen [#how-to-see-lcp-in-fastmon]
 
 Der Bereich **Performance** im Dashboard zeigt LCP bei p50, p75 und p95 von Haus aus. Für Breakdowns:
 
@@ -57,6 +55,7 @@ Der Bereich **Performance** im Dashboard zeigt LCP bei p50, p75 und p95 von Haus
 - **Nach Device**: Group by `device_type`. Mobile-LCP ist fast immer schlechter als Desktop.
 - **Nach Land**: Group by `country`. RTT zu deinem Origin zählt.
 - **Nach Release**: `compare_to_release_id` in der [Analytics-API](/en/api/analytics/queryAnalytics) setzen, um zu sehen, ob ein Deploy LCP verschlechtert hat.
+- **Nach Element**: [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets) listet die LCP-Elemente mit ihren Perzentilen und Teilphasen. Jedes trägt dazu den Anteil der Seitenaufrufe mit `fetchpriority="high"` (`fetch_priority_high_rate`), `loading="lazy"` (`lazy_rate`) und Cache-Treffer (`cache_rate`).
 
 Programmatisch:
 
@@ -87,7 +86,7 @@ Für einen tieferen Walkthrough siehe [Optimize LCP](https://web.dev/articles/op
 
 - **LCP ist meistens ein Bild, kein Text.** Wenn du nur an Fonts rumschraubst, verschiebst du deinen LCP wahrscheinlich kein Stück.
 - **SPAs starten LCP bei Route-Change nicht neu.** LCP ist eine Navigations-Metrik; Route-Wechsel innerhalb der App erzeugen keinen neuen LCP-Wert.
-- **Den Hero lazy-loaden ruiniert dir LCP.** Klassischer Copy-Paste-Fehler. Above the fold gehört nichts ins Lazy-Loading.
+- **Ein lazy geladener Hero verzögert LCP.** Ein `lazy_rate` über 0 an einem LCP-Element zeigt das.
 - **`background-image` zählt mit.** Wenn dein „Hero" ein CSS-Hintergrund ist, misst der Browser den trotzdem als LCP.
 
 ## Nächste Schritte

@@ -25,7 +25,7 @@ Die Seite liegt in der Sidebar unter **Fehler → Network Error Logging**, unter
 - **Seiten und Hosts** ist zugleich der Setup-Check. Jede Site zeigt ihren letzten Report.
 - **Verbindungsfehler**: standardmäßig zugeklappt. Jeder Typ wird mit seinem üblichen Niveau verglichen, markiert werden ein kaputtes Zertifikat und ein Anstieg bei abgelehnten Verbindungen, Timeouts oder unbekannten Hosts. Jeder Typ hat sein eigenes `+` und `-`.
 - **Pfade**: erst die Hosts, darin jeweils ihre Pfade.
-- **Reports**: eine Tabelle aller NEL-Reports mit Zeit, Typ, Status, Zeit bis zum Fehler, Request, Seite, Gerät, Browser, Besucher und Land. Sie lädt beim Scrollen jeweils 100 nach, sortiert nach jeder Spalte und lässt sich als Markdown oder CSV kopieren. Eine Zeile öffnet alle gespeicherten Felder und hat einen eigenen Link zum Teilen, der Besucher verlinkt auf seine Journey.
+- **Reports**: eine Tabelle aller NEL-Reports mit Zeit, Typ, Status, Zeit bis zum Fehler, Request, Seite, Gerät, Browser, Besucher und Land. Sie zeigt 25, 50 oder 100 pro Seite, sortiert nach jeder Spalte und lässt sich als Markdown oder CSV kopieren. **Gruppieren** kannst du nach Besucher, Seite oder Request-URL, nach den meisten Reports oder den neuesten; eine Gruppe klappt direkt zu ihren Reports auf. Eine Zeile öffnet alle gespeicherten Felder, und die Adresse verlinkt darauf.
 
 **Filtern** geht wie auf den anderen Seiten: `+` neben einem Wert filtert darauf, `-` schließt ihn aus, und die Lupe öffnet die Reports der Zeile. Die Kacheln 5xx und 4xx filtern eine ganze Statusklasse. Die Filter der Seite (Status, Fehlertyp, Host, Pfad, Seite, Serveradresse) stehen im Filter-Panel unter **Nur auf dieser Seite** und bleiben in der URL. **Typ hinzufügen** bietet jeden bekannten Fehlertyp an, die des Zeitraums zuerst. **Abgebrochene Ladevorgänge** sind ausgeblendet, auf der Seite und in der Journey eines Besuchers, jeweils mit einem Schalter zum Einblenden.
 
@@ -158,7 +158,7 @@ Alle drei Routen nehmen dieselben `filters`, darunter `error_type`, `nel_class`,
 | Route | Liefert |
 | --- | --- |
 | [`POST /analytics/nel`](/de/api/analytics/queryAnalyticsNel) | Anzahl, Zeitreihe, Fehlertypen, Statuscodes, Zeit bis zum Fehler und die Top-Pfade pro Host |
-| [`POST /analytics/nel/breakdown`](/de/api/analytics/queryAnalyticsNelBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil und Besuchern |
+| [`POST /analytics/nel/breakdown`](/de/api/analytics/queryAnalyticsNelBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil, Besuchern, `first_seen_at` und `last_seen_at`. Ein Schlüssel passt zurück in seinen Filter, und `order_by` sortiert nach Reports oder `last_seen_at`. |
 | [`POST /analytics/nel/reports`](/de/api/analytics/listAnalyticsNelReports) | Einzelne Reports, der neueste zuerst, seitenweise per `cursor`. `filters.report_id` wählt einen aus. |
 
 Die Zählungen sind mit `1 / failure_fraction` gewichtet, einzelne Reports nicht. Ohne `error_type`-Filter zählt jeder Typ mit, auch `abandoned`. [Visitor-Detail](/de/api/analytics/getAnalyticsVisitorDetail) und [Checkout-Journeys](/de/api/analytics/queryAnalyticsCheckoutJourneys) liefern `nel_reports` neben `pages` und `events`: fehlt das Feld, wurde nicht nachgesehen, `[]` heißt keine Reports.
