@@ -12,6 +12,78 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-10" type="new" area="dashboard" title="A new LCP page">
+
+The LCP page under Core Web Vitals is rebuilt. Two tiles show the LCP and the share of pageviews measured, and a short summary links to the sections below.
+
+- **Where the time goes** splits the LCP into server response, load delay, load duration, and render delay against the web.dev targets.
+- **Where the LCP is poor** ranks page type and device, or another dimension, by pageviews over 4 s. A row opens as a pop-up with its own chart.
+- **The LCP elements** list each element with selector, kind, discovery path, and phases. Its detail checks HTML discovery, preload, `fetchpriority`, lazy loading, and browser cache, and has its own link.
+- **AI prompt** on an element builds a prompt for an assistant with the numbers, the checks, and what fastmon does not collect.
+- **A pageview in the Explorer** shows its LCP element the same way and links to it on the LCP page.
+
+Docs: [LCP → How to see LCP](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-10" type="changed" area="dashboard" title="Calmer charts on every metric page">
+
+The charts on the metric pages show less and are easier to read.
+
+- **The trend** draws the selected percentile alone against the rating zones, in the chart and in its tooltip. Its pageview bars count the traffic on a sampled application.
+- **The distribution** shows the zones as a scale under the bars, without estimated percentile markers.
+- **The breakdown grid** shows each row's phases as a stripe, and icons for pages, connections, and cache statuses.
+- **Counts** on the stacked charts of NEL, CSP, Fetch/XHR, and cache status are whole numbers such as 150,000 and no longer cut off.
+- **On a phone**, charts keep 16 px to the edge, and a trend labels every other date.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-10" type="new" area="dashboard" title="The visitor's network">
+
+fastmon stores the network each visitor comes from, as `asn` and `isp`, in every privacy mode. The edge derives it from the IP like the country.
+
+- **NEL and CSP** list the networks of the failing visitors in a Networks card. A carrier outage shows as one row, such as "Deutsche Telekom AG".
+- **Network is a filter**, include only. Every metric page and the Explorer break down by it.
+- **Analytics** shows the top networks in a tab beside the countries.
+- **The pageview detail** names the visitor's network in its top grid.
+- **"Network type"** is the new name of the card for residential and datacenter traffic.
+
+Docs: [Privacy → What we collect](/en/privacy#what-we-collect).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-10" type="changed" area="dashboard" title="Explorer groups open in place">
+
+A click on a grouped row in the Explorer shows that group's pageviews as the usual list, with its columns, filters, and pager. A bar above steps to the previous or next group and back to all, and the open group is part of the link. On a phone, both Explorer tables show one card per row.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-10" type="changed" area="dashboard" title="Uptime checks in one table">
+
+The checks of an Uptime site or application sit in the Explorer's table.
+
+- **Every check of the period** pages 25 to 100 at a time, sorts by any column, and copies as Markdown or CSV. The application page names each check's domain.
+- **A strip over the table** shows the checks over time with failures in red. Dragging across it narrows the period, and "Reset zoom" brings it back.
+- **Quick filters** show only failed, slow, or redirected checks, and two selects narrow the list to one domain or page type.
+- **A row opens the check** as a pop-up with its timing, response, headers, and body, and a link to share it.
+- **The top** shows availability and sites as two tiles, sites with a problem first.
+
+For now the table covers the newest 3,000 checks of the period and says so.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-10" type="changed" area="dashboard" title="Setup guides come with your headers">
+
+The setup guide links on the NEL and CSP pages open with ready-to-copy headers for the selected application. A view across several applications opens the guide without them.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-09" type="new" area="api" title="Break down by the visitor's network">
+
+`asn` is a dimension and a filter of `POST /analytics/query`, the NEL and CSP breakdowns, the MCP breakdown tools, and the live view. A group by `asn` also returns `isp`, the network's name. Every row-level response with `country`, such as beacon rows, visitors, errors, and NEL and CSP reports, carries `asn` and `isp` too.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-09" type="new" area="tracker" title="Three checks on the LCP element">
 
 The tracker records three causes of a slow LCP image on every pageview, in every privacy mode.
