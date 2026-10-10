@@ -9,7 +9,7 @@ LCP is part of [Core Web Vitals](/en/web-vitals), Google's standard user-experie
 
 ## What's a good LCP?
 
-LCP is reported in milliseconds and bucketed into three ranges. The threshold to track is the **75th percentile** across page-views; that's how Google reports it, and it's the number you should optimize against.
+LCP is reported in milliseconds and bucketed into three ranges. The threshold to track is the **75th percentile** across pageviews, as Google reports it.
 
 | LCP at p75      | Rating       |
 | --------------- | ------------ |
@@ -49,13 +49,14 @@ Fastmon's tracker picks up the final LCP at that moment and includes it in the n
 
 ## How to see LCP in fastmon [#how-to-see-lcp-in-fastmon]
 
-The dashboard's **Performance** section shows LCP at p50, p75, and p95 out of the box. To break it down:
+The LCP page sits under **Core Web Vitals → LCP**. Two tiles show the LCP with its rating and the share of pageviews measured.
 
-- **By URL**: Performance → group by URL. Find the worst pages first.
-- **By device**: group by `device_type`. Mobile LCP is almost always worse than desktop.
-- **By country**: group by `country`. RTT to your origin matters.
-- **By release**: set `compare_to_release_id` in the [Analytics API](/en/api/analytics/queryAnalytics) to see whether a deploy regressed LCP.
-- **By element**: [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets) ranks the LCP elements with their percentiles and subparts. Each also carries the share of pageviews with `fetchpriority="high"` (`fetch_priority_high_rate`), `loading="lazy"` (`lazy_rate`), and a cache hit (`cache_rate`).
+- **Where the time goes**: server response, load delay, load duration, and render delay as one bar, against the web.dev target split.
+- **History**: the selected percentile against the rating zones, or one line per phase, beside the distribution.
+- **Where the LCP is poor**: page type and device, or another dimension, ranked by pageviews over 4 s. A row opens its own chart and breakdown.
+- **LCP elements**: each element with selector, kind, discovery path, and phases. Its detail checks HTML discovery, preload, `fetchpriority`, lazy loading, and browser cache, and **AI prompt** hands it to an assistant.
+
+The API is [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets), with `fetch_priority_high_rate`, `lazy_rate`, and `cache_rate` per element. To check a deploy, set `compare_to_release_id` in the [Analytics API](/en/api/analytics/queryAnalytics).
 
 Programmatically:
 
@@ -73,19 +74,18 @@ curl https://api.fastmon.eu/organizations/$ORG/analytics/query \
 
 ## How to improve a slow LCP
 
-LCP usually breaks down into one of four contributors. The fastmon dashboard surfaces each; start with the one with the largest share.
+LCP splits into four phases, and **Where the time goes** shows each. Start with the largest.
 
 1. **TTFB.** If your time to first byte is already >1,500 ms, no amount of front-end optimization will save your LCP. Cache HTML at the edge, or render statically.
 2. **Resource load delay.** The LCP image isn't requested early enough. Preload it (`<link rel="preload" as="image">`) or move it above the fold in the HTML.
 3. **Resource load duration.** The LCP image is too big or served slowly. Use modern formats (AVIF/WebP), serve responsive sizes via `srcset`, and put it on a CDN close to your visitors.
 4. **Element render delay.** The browser has the bytes but is blocked by render-blocking CSS or JavaScript. Inline critical CSS, defer non-critical scripts.
 
-For a deeper walkthrough, see web.dev's [Optimize LCP](https://web.dev/articles/optimize-lcp); the underlying optimization advice is the same regardless of which RUM tool you use.
+web.dev's [Optimize LCP](https://web.dev/articles/optimize-lcp) covers each phase in depth.
 
 ## Common surprises
 
 - **LCP is usually an image, not text.** Tweaking fonts probably won't move your LCP at all.
-- **SPAs don't restart LCP on route change.** LCP is a navigation-level metric; SPA route changes don't produce a new one.
 - **Lazy-loading the hero delays LCP.** `lazy_rate` above 0 on an LCP element shows it.
 - **`background-image` counts.** If your "hero" is a CSS background, the browser still measures it as LCP.
 
