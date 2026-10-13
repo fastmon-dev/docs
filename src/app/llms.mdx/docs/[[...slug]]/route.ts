@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/llms.mdx/doc
   // segments = [locale, ...pageSlug, "content.md"] (see getPageMarkdownUrl)
   const segments = slug ?? [];
   const lang = segments[0];
-  if (!lang || !i18n.languages.includes(lang)) notFound();
+  if (!lang || !(i18n.languages as string[]).includes(lang)) notFound();
   const page = source.getPage(segments.slice(1, -1), lang);
   if (!page) notFound();
 

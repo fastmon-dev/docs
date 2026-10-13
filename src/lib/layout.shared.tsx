@@ -1,11 +1,10 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { Globe, LayoutDashboard } from "lucide-react";
 import { appName } from "./shared";
-import { i18n } from "./i18n";
 
 export function baseOptions(_locale: string): BaseLayoutProps {
   return {
-    i18n,
+    i18n: true,
     nav: {
       title: (
         <span className="inline-flex items-center gap-2 font-semibold">

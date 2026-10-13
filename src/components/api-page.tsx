@@ -1,5 +1,5 @@
 import { openapi } from "@/lib/openapi";
-import type { OperationItem, WebhookItem } from "fumadocs-openapi/ui";
+import type { OperationItem, WebhookItem } from "fumadocs-openapi";
 import { OpenAPIPage } from "./api-page.client";
 
 // Props as emitted into the generated MDX by `npm run generate:api`, e.g.
