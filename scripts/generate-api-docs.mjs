@@ -78,10 +78,6 @@ if (excludedOps) {
 }
 const schemas = spec.components?.schemas || {};
 for (const name of Object.keys(schemas)) {
-  if (EXCLUDE_SCHEMA.test(name)) {
-    delete schemas[name];
-    continue;
-  }
   const props = schemas[name].properties;
   if (!props) continue;
   for (const prop of Object.keys(props)) {
@@ -90,6 +86,24 @@ for (const name of Object.keys(schemas)) {
   if (Array.isArray(schemas[name].required)) {
     schemas[name].required = schemas[name].required.filter((p) => !EXCLUDE_PROPERTY.test(p));
   }
+}
+// Drop an excluded schema only once nothing kept still references it: shared
+// enums like ObservationDirection also back documented schemas.
+const reachable = new Set();
+const walk = (node) => {
+  if (!node || typeof node !== "object") return;
+  if (typeof node.$ref === "string") {
+    const name = node.$ref.replace("#/components/schemas/", "");
+    if (!reachable.has(name) && schemas[name]) {
+      reachable.add(name);
+      walk(schemas[name]);
+    }
+  }
+  for (const v of Object.values(node)) walk(v);
+};
+walk(spec.paths);
+for (const name of Object.keys(schemas)) {
+  if (EXCLUDE_SCHEMA.test(name) && !reachable.has(name)) delete schemas[name];
 }
 
 // Normalise the spec so generateFiles doesn't choke.
