@@ -27,7 +27,8 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: npm audit
-        run: npm audit --audit-level=high
+        # Honours the ignore list in osv-scanner.toml.
+        run: node scripts/audit.mjs
 
   osv-scan:
     # Supplementary scan via Google's OSV-Scanner. OSV.dev aggregates GitHub
