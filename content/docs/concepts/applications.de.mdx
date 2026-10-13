@@ -99,18 +99,19 @@ Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
 jeder auf einen Page-Type abgebildet. `page_type.url_rules` ordnet
 Seiten über die URL zu: bis zu 10 Muster in der
 [Mustersyntax](/de/checkout-funnel#pattern-syntax), jedes mit einem
-Page-Type, das erste passende gewinnt. Im Dashboard sind die Regeln
-nummeriert und lassen sich nach oben und unten schieben. Das hilft
-einem Headless-Shop, dessen Body-Klassen nichts verraten, oder einem
-Shop, der `/:lang(de|en)/:slug{/}?` von `/:lang(de|en)/:cat/:slug{/}?`
-unterscheiden muss.
+Page-Type, das erste passende gewinnt.
+
+Eine Seite kann ihren Typ selbst nennen, mit
+`<meta name="fm-page-type" content="product">` oder `page-type`, wenn
+das fehlt oder leer ist. Soft-Pageviews lesen es, sobald deine App es neu setzt.
 
 Der Collector nimmt die erste Quelle, die einen Page-Type liefert:
 
 1. Den Header `Server-Timing: pageType`.
-2. Deine eigenen Body-Klassen, danach deine URL-Regeln.
-3. Das Ruleset der Plattform, danach die Shopify-Routen oder den OXID-Controller `cl`.
-4. Die Checkout-Stufe: `cart` auf einem Warenkorb-Pfad, `checkout` auf einem Checkout- oder Erfolgs-Pfad.
+2. Das Page-Type-Meta-Tag.
+3. Deine eigenen Body-Klassen, danach deine URL-Regeln.
+4. Das Ruleset der Plattform, danach die Shopify-Routen oder den OXID-Controller `cl`.
+5. Die Checkout-Stufe: `cart` auf einem Warenkorb-Pfad, `checkout` auf einem Checkout- oder Erfolgs-Pfad.
 
 [`page-type-sources`](/de/api/applications/getApplicationPageTypeSources)
 listet diese Quellen einer Application in genau dieser Reihenfolge.

@@ -17,6 +17,72 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-13" type="new" area="tracker" title="Page-Type aus einem Meta-Tag">
+
+Der Tracker liest den Page-Type aus `<meta name="fm-page-type" content="product">` und schickt ihn als `pt`, in jedem Datenschutzmodus.
+
+- **Ersatzname**: `page-type` zählt, wenn das Tag mit Präfix fehlt oder leer ist. Bei mehreren Tags gleichen Namens gilt das letzte, gekürzt auf 32 Zeichen.
+- **Bei jedem Beacon gelesen**: Eine Single-Page-App, die das Tag beim Routenwechsel neu setzt, beschriftet damit den neuen Pageview. Eine Sekunde später liest der Tracker es noch einmal, für Router, die den Head spät aktualisieren.
+- **Soft-Pageviews** schicken das Tag erst, wenn es sich seit dem ersten Lesen geändert hat. Ein Tag, das sich nie ändert, bleibt bei der Einstiegsseite.
+- **Eine Wiederherstellung aus dem BFCache** schickt das eigene Tag der Seite.
+- **Reihenfolge**: Ein Page-Type aus `Server-Timing` gewinnt, das Tag schlägt Body-Klassen, URL-Regeln und Erkennung. `page-type-sources` listet es als `meta_tag`.
+
+Außerhalb von Shopify zählt `brand` jetzt als Kategorie, `cms` und `blog` als Content, statt unter Other zu landen. Doku: [Applications → Page-Type-Detection](/de/concepts/applications#page-type-detection).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="platform" title="Aus dem Plan `beta` wird `free`">
+
+`free` ist fastmon One ohne Bezahlung: alle Features, unbegrenzte Pageviews und Applications. Die API nimmt und liefert kein `beta` mehr, eine Anfrage damit bekommt eine 422. Synthetic Monitoring erlaubt auf `free`, `one` und `partner` gleichermaßen 5 manuelle und 10 automatische Seiten, auf `partner` vorher 10 und 20. Doku: [Organisationen → Pläne](/de/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Partner decken Features pro Client ab">
+
+Jede Organisation listet ihre Features, und ein Partner legt fest, welche er für jeden Client abdeckt.
+
+- **`features`** an der Organisation nennt jedes Feature mit Status: `covered` durch einen Partner, `granted` von fastmon, `included` im Plan oder `locked`. Gesperrt ist noch nichts.
+- **`PATCH /organizations/{org_id}/partner/clients/{client_org_id}`** setzt die Features und Pageviews, die ein Partner abdeckt, im Rahmen seines Vertrags unter `GET /organizations/{org_id}/partner/contract`.
+- **`billing`** an einer Partner-Verbindung ist true, sobald sie irgendetwas abdeckt.
+- **Das Audit-Log** kennt drei neue Aktionen: `org.grants_changed`, `partner.contract_changed` und `partner.coverage_changed`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Served-Raten und Phasen des ersten Bytes">
+
+`POST /analytics/query` nimmt neue Metriken, und Alert-Regeln, Histogramm, Ask und MCP nehmen sie auch.
+
+- **`cdn_served_rate` und `origin_served_rate`**: der Anteil der Seitenaufrufe, die ein Cache aus seiner gespeicherten Kopie beantwortet hat (`HIT`, `STALE`, `UPDATING` oder `REVALIDATED`). `cdn_hit_rate` und `origin_hit_rate` zählen weiter nur `HIT`.
+- **`ttfb_phase_connect`, `_edge`, `_origin`, `_backend`, `_unattributed` und `_unmeasured`** teilen das erste Byte jedes Seitenaufrufs auf. Ihre Mittelwerte ergeben in jeder Gruppierung zusammen den mittleren TTFB.
+- **`ttfb_phase_db`, `_http`, `_render`, `_search`, `_kv` und `_code`** teilen den Backend-Anteil auf.
+- **`metric_ranges`** nimmt `ttfb_final` und die Server-Timing-Phasen von `edge_dur` bis `code_dur`. Ein Seitenaufruf ohne die Messung trifft keine Grenze.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Die Zahl der Vorperiode in der Fehlerliste">
+
+`POST /analytics/error-types` nimmt `compare_to: previous_period` und gibt dann jeder Zeile `previous_period.count`. Eine Signatur außerhalb der Top 50 der Vorperiode bekommt ihre echte Zahl, statt als neu zu gelten. Andere Modi antworten mit 422.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="fixed" area="platform" title="Histogramme und Alert-Regeln zählen einen Seitenaufruf einmal">
+
+`POST /analytics/histogram` und Alert-Regeln zählten einen Seitenaufruf einmal pro gespeicherter Beacon-Version, ein früher Beacon wog also doppelt. Beide lesen jetzt dieselben Daten wie die Diagramme. Ein Alert-Fenster über 6 Stunden hinkt am neuesten Ende 15 Minuten hinterher, wie die Diagramme.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-12" type="fixed" area="platform" title="Keine veralteten DNS- und Connect-Zeiten mehr">
+
+Ein DNS-Lookup oder TCP-Connect über 60 s oder länger als das erste Byte, in dem er steckt, wird leer gespeichert. Ein aufgeweckter Tab hatte Minuten in diese Mittelwerte getragen. Gespeicherte Zeilen verlieren die Verbindungen, die länger als ihr erstes Byte sind, ebenfalls; Werte über 60 s von vor dem 12. Oktober bleiben.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-11" type="new" area="api" title="Eine Beispielseite für jedes Element">
+
+`POST /analytics/element-targets` nennt pro Element eine `example_url`, für jede Metrik und Gruppierung. Mit einem `target` zählt es nur die Seitenaufrufe dieses Elements, und `group_by: "url"` listet dessen eigene meistbesuchte Seiten. `group_by` nimmt außerdem `page_type` und `device_type`.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-10" type="new" area="dashboard" title="Eine neue LCP-Seite">
 
 Die LCP-Seite unter Core Web Vitals ist neu aufgebaut. Zwei Kacheln zeigen den LCP und den Anteil gemessener Seitenaufrufe, darunter verlinkt eine kurze Zusammenfassung auf die Abschnitte.
