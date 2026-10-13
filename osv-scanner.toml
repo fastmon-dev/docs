@@ -1,6 +1,10 @@
-# OSV-Scanner ignore list. Mirror of the npm audit `--audit-level=high` threshold
-# in .github/workflows/security.yml. Re-evaluate each time package-lock.json changes.
+# Ignore list for OSV-Scanner and scripts/audit.mjs (npm audit, `high` and up).
+# Re-evaluate each time package-lock.json changes.
 
 [[IgnoredVulns]]
 id = "GHSA-qx2v-qp2m-jg93"
 reason = "postcss XSS via unescaped </style>. Only present via next's bundled postcss@8.4.31 (next pins it exactly; root postcss is on the patched line). This is a docs site: postcss runs at build time on our own authored CSS only — MDX code samples are rendered as text by the syntax highlighter, never piped through postcss. No attacker-controlled CSS reaches the stringify path. Re-evaluate when next bumps its postcss pin."
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+reason = "braces stack exhaustion on deeply nested patterns, no patched version. Dev only: eslint-config-next -> @next/eslint-plugin-next -> fast-glob -> micromatch -> braces. fast-glob only expands the rootDir globs from our own ESLint config at lint time; nothing reaches the build or the site. Remove once braces ships a fix."
