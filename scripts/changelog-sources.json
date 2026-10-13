@@ -1,7 +1,7 @@
 {
   "backend": {
     "repo": "../backend",
-    "since": "2026.10.31"
+    "since": "2026.10.34"
   },
   "frontend": {
     "repo": "../frontend",

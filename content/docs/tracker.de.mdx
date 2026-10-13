@@ -175,13 +175,13 @@ Eine neue Application speichert die Aufrufe eines Viertels ihrer Besucher, siehe
 
 ## Page-Type
 
-Im Dashboard und auf der API sind das zwei Einstellungen: `platform` nennt das Shop-System, `page_type.body_class` schaltet das Lesen ein. `pagetype_ruleset` leitet sich aus beiden ab. URL-Regeln und die Reihenfolge aller Quellen stehen unter [Applications → Page-Type-Detection](/de/concepts/applications#page-type-detection).
+Im Dashboard und auf der API sind das zwei Einstellungen: `platform` nennt das Shop-System, `page_type.body_class` schaltet das Lesen ein. `pagetype_ruleset` leitet sich aus beiden ab. Ein Tag `<meta name="fm-page-type">` braucht keine Einstellung. Das Tag, URL-Regeln und die Reihenfolge aller Quellen stehen unter [Applications → Page-Type-Detection](/de/concepts/applications#page-type-detection).
 
 ### `pagetype_ruleset` [#pagetype-ruleset]
 
 Ordnet jeden Pageview in einen **Page-Type** ein (Product, Category, Cart, Checkout und so weiter), für Shop-Systeme, indem die Body-Controller-Klasse des Shop-Frameworks gelesen wird. Standardmäßig aus (`""`), dann wird nichts aus dem DOM gelesen. Setz es auf eine eingebaute Ruleset (`shopware6`, `shopware5`, `oxid`, `magento`, `woocommerce`), und der Tracker extrahiert den Seiten-Token des Frameworks, den der Collector auf eine Page-Type-Kategorie mappt. Ein `Server-Timing: pageType`-Header hat immer Vorrang. Wo dein Theme eine der Framework-Klassen umbenannt hat, benennst du sie selbst mit [`pagetype_rules`](#pagetype-rules). Pro Site, und auch auf org-weiten Trackern verfügbar. Siehe [Server-Timing → Page-Type](/de/guides/server-timing#page-type). Liefert keine andere Quelle etwas, ergibt ein Pfad der [Checkout-Stufe](/de/checkout-funnel) `cart` oder `checkout`.
 
-**PII:** das Einzige, was aus dem DOM gelesen wird, ist ein einzelner Framework-Klassen-Token, gematcht über ein ruleset-spezifisches Muster; nie das volle `class`-Attribut, nie Seiteninhalt oder Formularwerte, und die rohe Klasse verlässt den Browser nie. Aus ist der Default, eine Site entscheidet sich also bewusst für diesen einen DOM-Read.
+**PII:** das Einzige, was aus dem DOM gelesen wird, ist ein einzelner Framework-Klassen-Token, gematcht über ein ruleset-spezifisches Muster; nie das volle `class`-Attribut, nie Seiteninhalt oder Formularwerte, und die rohe Klasse verlässt den Browser nie.
 
 #### Was jede Ruleset erkennt [#ruleset-page-types]
 

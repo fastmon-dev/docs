@@ -12,6 +12,72 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-13" type="new" area="tracker" title="Page type from a meta tag">
+
+The tracker reads the page type from `<meta name="fm-page-type" content="product">` and sends it as `pt`, in every privacy mode.
+
+- **Fallback name**: `page-type` counts when the prefixed tag is missing or empty. The last tag of a name wins, cut to 32 characters.
+- **Read on every beacon**: a single-page app that rewrites the tag on a route change labels the new pageview. The tracker reads it again one second later, for routers that update the head late.
+- **Soft pageviews** send the tag only once it has changed since the first read. A tag that never changes stays on the landing page.
+- **A BFCache restore** sends the restored page's own tag.
+- **Order**: a `Server-Timing` page type wins, and the tag beats body classes, URL rules, and detection. `page-type-sources` lists it as `meta_tag`.
+
+Outside Shopify, `brand` now counts as a category and `cms` and `blog` as content, instead of Other. Docs: [Applications → Page-type detection](/en/concepts/applications#page-type-detection).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="platform" title="The plan `beta` is now `free`">
+
+`free` is fastmon One without payment: every feature, unlimited pageviews and applications. The API no longer accepts or returns `beta`, and a request that sends it gets a 422. Synthetic Monitoring allows 5 manual and 10 automatic pages on `free`, `one`, and `partner` alike, down from 10 and 20 on `partner`. Docs: [Organizations → Plans](/en/concepts/organizations#plans).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Partners cover features per client">
+
+Every organization lists its features, and a partner decides which ones it covers for each client.
+
+- **`features`** on the organization lists each feature as `covered` by a partner, `granted` by fastmon, `included` in the plan, or `locked`. Nothing is locked yet.
+- **`PATCH /organizations/{org_id}/partner/clients/{client_org_id}`** sets the features and pageviews a partner covers, within its contract at `GET /organizations/{org_id}/partner/contract`.
+- **`billing`** on a partner link is true whenever the link covers anything.
+- **The audit log** has three new actions: `org.grants_changed`, `partner.contract_changed`, and `partner.coverage_changed`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Served rates and first byte phases">
+
+`POST /analytics/query` takes new metrics, and alert rules, the histogram, Ask, and MCP take them too.
+
+- **`cdn_served_rate` and `origin_served_rate`**: the share of pageviews a cache answered from its stored copy (`HIT`, `STALE`, `UPDATING`, or `REVALIDATED`). `cdn_hit_rate` and `origin_hit_rate` keep counting `HIT` only.
+- **`ttfb_phase_connect`, `_edge`, `_origin`, `_backend`, `_unattributed`, and `_unmeasured`** split each pageview's first byte. Their averages add up to the average TTFB in any grouping.
+- **`ttfb_phase_db`, `_http`, `_render`, `_search`, `_kv`, and `_code`** split the backend part.
+- **`metric_ranges`** takes `ttfb_final` and the Server-Timing phases from `edge_dur` to `code_dur`. A pageview without the measurement matches no bound.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="new" area="api" title="Last period's count in the error list">
+
+`POST /analytics/error-types` takes `compare_to: previous_period` and then gives every row `previous_period.count`. A signature outside last period's top 50 gets its real count instead of showing as new. Other modes answer 422.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="fixed" area="platform" title="Histograms and alert rules count a pageview once">
+
+`POST /analytics/histogram` and alert rules counted a pageview once per stored beacon version, so an early beacon weighed twice. Both now read the same data as the charts. An alert window over 6 hours lags 15 minutes at its newest end, like the charts.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-12" type="fixed" area="platform" title="No more stale DNS and connect times">
+
+A DNS lookup or TCP connect over 60 s, or longer than the first byte around it, is stored as empty. A woken tab had put minutes into these averages. Stored rows lose the connections longer than their first byte too, while values over 60 s from before 12 October stay.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-11" type="new" area="api" title="An example page for every element">
+
+`POST /analytics/element-targets` names one `example_url` per element, for every metric and grouping. With a `target`, it counts only that element's pageviews, and `group_by: "url"` lists the element's own busiest pages. `group_by` also takes `page_type` and `device_type`.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-10" type="new" area="dashboard" title="A new LCP page">
 
 The LCP page under Core Web Vitals is rebuilt. Two tiles show the LCP and the share of pageviews measured, and a short summary links to the sections below.
