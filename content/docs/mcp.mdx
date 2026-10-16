@@ -43,7 +43,7 @@ The consent screen asks for:
 
 - **One organization**, from those you can reach. The connection reads that one and nothing else, so two organizations mean two connections. One with MCP switched off is marked and cannot be approved.
 - **`analytics:read`**, required to connect at all.
-- **`synthetic:read`**, optional. Three tools read Lighthouse reports and need it; the other 24 work without.
+- **`synthetic:read`**, optional. Three tools read Lighthouse reports and need it; the other 25 work without.
 
 The screen labels the connection as an MCP one, next to the address it returns you to, because that is the fact worth seeing: what you release here can reach an AI model.
 
@@ -57,7 +57,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 
 ## What the model can read [#tools]
 
-27 tools, all read-only, all scoped to the organization the connection was approved for:
+28 tools, all read-only, all scoped to the organization the connection was approved for:
 
 | Area | Tools |
 | ---- | ----- |
@@ -66,6 +66,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 | Change over time | `compare_periods`, `detect_changes` |
 | Errors | `get_errors`, `get_failed_resources`, `get_error_detail`, `get_failed_resource_detail` |
 | Performance detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
+| Events | `get_events` |
 | Browser reports | `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, `list_csp_reports` |
 | Synthetic (lab) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
@@ -73,7 +74,7 @@ Answers are aggregates and ranked lists, the same ones behind the dashboard. Not
 
 A call without a site covers the whole organization, since an MCP connection has no "current site" the way a dashboard tab does. For a question about one site, a model should call `list_sites` first.
 
-`list_sites` also reports what each site **collects**: whether fetch/XHR collection, page-type detection, checkout tracking, session collection, and error messages and stack frames are on, plus which visitor identifier its counts use. Without that, a model reads the empty result of a switched-off feature as "no problem". Visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites with different identifiers says so rather than quietly mixing them.
+`list_sites` also reports what each site **collects**: whether fetch/XHR collection, page-type detection, checkout tracking, session collection, error messages and stack frames, [events](/en/events) (`event_tracking`) and the dataLayer bridge (`collect_data_layer`) are on, plus which visitor identifier its counts use. Visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites with different identifiers says so rather than quietly mixing them.
 
 The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/synthetic) enabled for the organization. Missing either one is a refusal with a reason, never an empty report.
 
@@ -102,7 +103,7 @@ Fastmon's own [collection rules](/en/privacy) do not change here. A field the tr
 
 A partner organization can connect a client organization, personally: the client organizations appear among the choices on the consent screen. Partner access resolves on every request, so the connection stops working the moment the partnership does, and there is nothing left to revoke.
 
-`mcp_enabled` stays with the customer, because it hangs on `org:update`, which partner access deliberately does not carry. Onboarding therefore costs one click on the customer's side, and the approval lands in their audit log marked as partner access.
+Turning on `mcp_enabled` needs `org:update`. An owner of the agency holds it in a client, a member or viewer does not. The client's audit log records the change.
 
 ## Building an MCP client [#developers]
 

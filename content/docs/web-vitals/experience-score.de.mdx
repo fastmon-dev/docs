@@ -55,7 +55,7 @@ Die Headline-Zahl steht auf dem **Performance**-Dashboard. Darunter siehst du de
 Nützliche Slices:
 
 - **Nach URL**: Group by URL. Welche Seiten dominieren den Durchschnitt?
-- **Nach Release**: `compare_to_release_id`. Das beste Einzelsignal dafür, ob ein Deploy die UX verschlechtert hat.
+- **Nach Release**: `compare_to` mit einem Release, siehe [Releases vergleichen](/de/guides/compare-releases#compare-metrics).
 - **Nach Land / Device**: Group by `country` oder `device_type`. Regionale oder Device-Klassen-Regressionen sind im globalen Score meist unsichtbar.
 
 ## Niedrigen Score verbessern
@@ -64,7 +64,7 @@ Der Composite ist nur so gesund wie sein schwächster Bestandteil:
 
 1. Den Breakdown öffnen und den **schlechtesten Sub-Score** identifizieren.
 2. Die zugehörige Metrik-Seite lesen ([LCP](/de/web-vitals/lcp), [INP](/de/web-vitals/inp), [CLS](/de/web-vitals/cls), [FCP](/de/web-vitals/fcp), [TTFB](/de/web-vitals/ttfb)) und den Fix mit dem größten Hebel anwenden.
-3. Nach dem Release nachprüfen. `compare_to_release_id` für ein sauberes Vorher/Nachher.
+3. Nach dem Release mit `compare_to` nachprüfen.
 
 Nicht versuchen, alles gleichzeitig zu optimieren. Die Verbesserungen beißen sich oft: LCP-Fix mit mehr JS kann INP verschlechtern, Platz für Ads gegen CLS kann LCP nach hinten schieben.
 

@@ -12,7 +12,7 @@ Performance-Regressionen hängen fast immer an einem Deploy. Ohne Release-Marker
 ## Wann du sie anfasst
 
 - **Bei jedem Deploy.** Sauberster Weg: ein `POST /sites/{id}/releases` aus der CI/CD nach erfolgreichem Deploy.
-- **Wenn du eine Regression untersuchst.** Im Dashboard den Release-Picker nehmen und Metriken über Releases hinweg überlagern.
+- **Wenn du eine Regression untersuchst.** Auf der LCP- oder TTFB-Seite zeigt **Vergleichen → Release, gegen das davor** ein Release neben dem vorherigen.
 - **Bei einem Rollback.** Auch den als Release taggen; du willst beide Übergänge im Chart sehen.
 
 Wenn du keine Releases taggst, ist nichts kaputt. Das Dashboard funktioniert auch ohne. Dir entgeht nur die Deploy-Korrelation als Abkürzung.
@@ -21,10 +21,11 @@ Wenn du keine Releases taggst, ist nichts kaputt. Das Dashboard funktioniert auc
 
 | Feld          | Typ         | Hinweise                                                                   |
 | ------------- | ----------- | -------------------------------------------------------------------------- |
-| `id`          | UUID v7     | Wird in `compare_to_release_id`-Queries verwendet.                         |
+| `id`          | UUID v7     | Wird in Analytics-Queries als `compare_to: { "release_id": … }` verwendet. |
 | `site_id`     | UUID v7     | Die zugehörige Site.                                                       |
 | `version`     | string      | Pflicht. Freiform (`v2.4.1`, `2026-05-07`, `git:abcdef0`).                |
 | `released_at` | timestamp   | Optional. Wann der Deploy live ging. Default „jetzt", wenn weggelassen.    |
+| `window`      | Zeitraum    | Nur lesbar. Von `released_at` bis zum nächsten Release, höchstens 14 Tage. |
 
 Mehr ist da nicht. Releases sind mit Absicht minimal; wir wollen Korrelation, keine Deploy-Datenbank bauen.
 
@@ -53,26 +54,15 @@ Letzter Schritt im Deploy-Job, mit `${{ github.sha }}` oder `${{ github.ref_name
 
 Eine `release`-Stage nach der Deploy-Stage, mit `$CI_COMMIT_SHA` oder `$CI_COMMIT_TAG`.
 
-## Releases vergleichen
+## Releases vergleichen [#comparing-releases]
 
-`compare_to_release_id` in die Analytics-Query reinpacken. In der Antwort liegt dann ein `compare`-Block mit denselben Metriken, gerechnet auf dem Fenster *direkt vor* dem Release.
-
-```json
-{
-  "time_range": { "from": "2026-05-07T00:00:00Z", "to": "2026-05-08T00:00:00Z" },
-  "metrics": ["lcp", "inp"],
-  "aggregations": ["p75"],
-  "compare_to_release_id": "01HZX..."
-}
-```
-
-Das „Vorher"-Fenster ist genauso lang wie `time_range` und endet beim `released_at` des Releases. Heißt: ein 24-Stunden-Fenster „danach" wird gegen die 24 Stunden direkt davor verglichen.
+Schick das `window` eines Release als `time_range` und das vorherige Release als `compare_to: { "release_id": … }`. Jede Zeile im Ergebnis hat dann ein `comparison` mit denselben Metriken. Schritte und Beispiel stehen unter [Releases vergleichen](/de/guides/compare-releases#compare-metrics).
 
 ## Häufige Szenarien
 
 ### Continuous Deploys
 
-Zehn Deploys am Tag? Tagg sie alle. Die Menge ist kein Problem. Der Release-Picker zeigt die neuesten zuerst, an ältere kommst du per ID jederzeit dran.
+Tagg jeden Deploy, die Menge ist kein Problem. Die Auswahl unter **Vergleichen** listet die Releases der letzten 90 Tage, neueste zuerst, ältere erreichst du per ID.
 
 ### Lang laufende Release-Branches
 
@@ -86,10 +76,10 @@ Den Rollback als eigenen Release taggen, gerne mit einer Version wie `rollback-v
 
 - **`released_at` zählt mehr als `id`.** Sortiert wird nach `released_at`. Wer rückdatiert, riskiert, dass die Reihenfolge später komisch aussieht.
 - **Releases sind pro Site.** In einem Monorepo, das mehrere Sites ausliefert, musst du jede einzeln taggen, auch wenn der Version-String identisch ist.
-- **Ein gelöschter Release lässt `compare_to_release_id`-Requests scheitern.** Der Endpunkt antwortet mit `404`. Schon gerenderte Metriken bleiben unberührt.
+- **Ein gelöschter Release lässt Vergleiche damit scheitern.** Der Endpunkt antwortet mit `404`. Schon gerenderte Metriken bleiben unberührt.
 
 ## Verwandt
 
 - [Sites](/de/concepts/sites): Releases liegen unter einer Site.
-- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to_release_id`.
+- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to`.
 - [Releases vergleichen](/de/guides/compare-releases): Schritt-für-Schritt-Guide, um CI/CD anzubinden.

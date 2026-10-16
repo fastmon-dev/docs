@@ -1,23 +1,9 @@
 ---
 title: Organisationen
-description: Der Top-Level-Account-Container. Alles in fastmon gehört zu genau einer.
+description: Das Konto deiner Firma oder deines Teams, mit Plan, Abrechnung und Mitgliedern.
 ---
 
-Eine **Organisation** ist der oberste Container in fastmon. Sites, Mitglieder, Einladungen, Notification Rules: alles hängt an genau einer Organisation, und nichts geht darüber hinaus.
-
-## Warum das wichtig ist
-
-Über die Organisation trennt fastmon Kunden voneinander. Hier hängen Billing, Plan und Zugriffsrechte.
-
-Die meisten Accounts haben genau eine Organisation.
-
-## Wann du sie anfasst
-
-- **Beim Setup.** Das Allererste. Der „Account anlegen"-Flow legt eine Organisation für dich an.
-- **Team einladen.** Per E-Mail, Rolle zuweisen, fertig.
-- **Plan kaufen.** Plan hängt an der Organisation, nicht am User.
-- **AVV oder Rechnung anfordern.** Die Organisation ist die Vertragspartei.
-- **Compliance-Review.** „Wer hat Zugriff?" beantwortet sich auf Organisations-Ebene.
+Eine **Organisation** ist das Konto deiner Firma oder deines Teams in fastmon. Sie hat den Plan, die Abrechnung und die Mitglieder. Jede [Site](/de/concepts/sites), Einladung und Notification Rule gehört zu genau einer Organisation.
 
 ## Was eine Organisation hat
 
@@ -42,11 +28,11 @@ Eine neue Organisation startet auf `none` und verlässt diesen Zustand über gen
 
 Der Plan steuert Features und Quotas, nicht die Metriken. `features` nennt jedes Feature mit Status: `covered` durch einen Partner, `granted` von fastmon, `included` im Plan oder `locked`.
 
-**Worin ein Plan gemessen wird.** Abgerechnet wird die [Application](/de/concepts/applications), und nur eine **Production**-Application belegt einen Platz: eine Development-Application ist kostenlos und unbegrenzt. Ein Plan enthält eine Anzahl Production-Plätze und ein monatliches Pageview-Volumen; beides lässt sich über dauerhafte Add-ons erweitern, die im Voraus gekauft werden und nicht nach einem Ausschlag abgerechnet. Eine Production-Application über die enthaltenen Plätze hinaus anzulegen oder hochzustufen wird mit `402 app_limit_reached` abgewiesen (siehe [Fehler](/de/api/errors)); eine Organisation ohne jede Berechtigung bekommt `402 billing_required` oder `402 trial_expired`.
+**Worin ein Plan gemessen wird.** Abgerechnet wird die [Application](/de/concepts/applications), und nur eine **Production**-Application belegt einen Platz: eine Development-Application ist kostenlos und unbegrenzt. Ein Plan enthält eine Anzahl Production-Plätze und ein monatliches Pageview-Volumen; beides lässt sich mit dauerhaften Add-ons im Voraus erweitern. Eine Production-Application über die enthaltenen Plätze hinaus anzulegen oder hochzustufen wird mit `402 app_limit_reached` abgewiesen (siehe [Fehler](/de/api/errors)); eine Organisation ohne jede Berechtigung bekommt `402 billing_required` oder `402 trial_expired`.
 
 **Das Pageview-Volumen zählt jeden gespeicherten Pageview einmal**, Bots eingeschlossen. Ein gesampelter Pageview zählt so, wie er gespeichert ist, nicht hochgerechnet, und die letzten 15 Minuten zählen, sobald sie finalisiert sind. [`GET /organizations/{id}/usage`](/de/api/organizations/getOrganizationUsage) liefert es als `pageview_count` mit seinem `time_range`.
 
-**E-Rechnungen.** Geschäftskunden in Deutschland, den Niederlanden und Belgien mit USt-IdNr. bekommen jede Rechnung zusätzlich über Peppol. Die USt-IdNr. dient als Peppol-Kennung und muss deshalb zu deiner Registrierung passen.
+**E-Rechnungen.** Geschäftskunden in Deutschland, den Niederlanden und Belgien mit USt-IdNr. bekommen jede Rechnung zusätzlich über Peppol. Die USt-IdNr. ist die Peppol-Kennung und muss zu deiner Registrierung passen.
 
 ## Rollen
 
@@ -58,21 +44,38 @@ Eine Rolle ist ein festes Bündel von **Berechtigungen**. Eine Berechtigung ist 
 | `member` | Die tägliche Arbeit: Sites, Applications, Releases und Synthetic-Seiten anlegen und ändern; Synthetic-Runs starten; den KI-Assistenten fragen; Leute einladen; die Rechnungen lesen (`billing:read`); in einer `partner`-Organisation deren Clients verwalten (`partner:manage`). |
 | `viewer` | Nur lesen. Sieht Dashboards, Analytics, Releases, Synthetic-Ergebnisse, Notification Rules und die Mitgliederliste. Ändert nichts, löst nichts aus, was Geld kostet oder Mails verschickt, und sieht kein Billing. |
 
-**Billing sind zwei Berechtigungen, nicht eine Rolle.** `billing:read` öffnet die Rechnungen, die Rechnungsadresse und die USt-IdNr.; `billing:manage` bewegt das Geld. Lesen ist eine Member-Berechtigung, ein Viewer sieht den Billing-Tab also nicht. Bezahlen bleibt beim Owner. Eine Agentur, die die Rechnungen ihres Kunden liest, ist dort Member, und das ist genau `billing:read` ohne `billing:manage`.
+**Billing sind zwei Berechtigungen, nicht eine Rolle.** `billing:read` öffnet die Rechnungen, die Rechnungsadresse und die USt-IdNr.; `billing:manage` bewegt das Geld.
 
 Die Bündel sind ineinander geschachtelt: Ein Mitglied hat alles, was ein Viewer hat, ein Owner alles, was ein Mitglied hat. [Persönliche API-Keys](/en/api/authentication) werden aus denselben Bündeln geschnitten: Die Scopes eines Keys sind Berechtigungen, bei jedem Request mit deiner aktuellen Rolle geschnitten. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) gehört stattdessen der Organisation und steht allein auf seinen Scopes, begrenzt beim Ausstellen. Organisations-Keys und [verbundene Apps](/en/api/oauth) verwaltet, wer `org_key:manage` hält: Member und Owner, nicht Viewer.
 
 Eine Organisation kann mehrere Owner haben. Owner ändern Rollen unter **Mitglieder** (`PATCH /members/{member_id}`); nur ein Owner kann die Owner-Rolle vergeben. Der letzte Owner kann weder herabgestuft werden noch die Organisation verlassen, solange andere Mitglieder da sind (`last_owner`). **Transfer ownership** übergibt die Organisation in einem Schritt an ein anderes Mitglied.
 
+### Partner-Zugriff [#partner-access]
+
+In einer Client-Organisation hat ein Partner-Mitarbeiter dieselbe Rolle wie in der Partner-Organisation: `owner`, `member` oder `viewer`. Betreuen zwei Agenturen denselben Client, gilt die stärkere Rolle. Eine direkte Mitgliedschaft im Client geht vor.
+
+Über Partner-Zugriff kannst du im Client Organisations-Keys ausstellen und Apps der Organisation verbinden, etwa das Shopware-Plugin per OAuth. Auch als Owner der Agentur kannst du im Client Folgendes nicht:
+
+- Ihn löschen, sein letztes Mitglied entfernen, ihn übergeben oder sein Billing verwalten.
+- Seine Owner herabstufen oder entfernen, oder die Owner-Rolle vergeben, solange er einen Owner hat.
+- Mitglieder ohne Einladung hinzufügen oder seine Partner-Verbindungen verwalten.
+- Keys für die eigenen Clients des Clients ausstellen.
+
+**Vom Partner erstellte Zugänge** überleben die Partnerschaft. Key- und Verbindungsliste des Clients markieren sie mit `via_partner_org_id`, und beim Ablösen eines Partners werden sie aufgelistet.
+
+Der Client rotiert die Keys und trennt die Apps. Rotiert ein Mitglied des Clients, entfällt die Markierung.
+
+Der Audit-Eintrag `partner.removed` nennt sie in `credentials_left`. Er erscheint im Audit-Log beider Organisationen.
+
 ## Häufige Szenarien
 
 ### Ein Produkt, eine Org
 
-Der Standardfall. Eine Organisation, eine Rechnung, mehrere Sites darunter (`acme-marketing`, `acme-app`, `acme-docs`).
+Eine Organisation, eine Rechnung, mehrere Sites darunter (`acme-marketing`, `acme-app`, `acme-docs`).
 
 ### Mehrere unabhängige Produkte
 
-Wenn du zwei eigenständige Brands betreibst und Billing wie Zugriffe sauber trennen willst, leg zwei Organisationen an. Du kannst in beiden Mitglied sein.
+Für zwei eigenständige Brands mit getrenntem Billing und Zugriff legst du zwei Organisationen an. Du kannst in beiden Mitglied sein.
 
 ### Agentur, die Kunden-Sites betreibt
 
@@ -80,15 +83,17 @@ Hier passt der `partner`-Plan. Jeder Kunde ist ein **Partner-Client**: eine Sub-
 
 Ein Partner deckt Features und Pageviews pro Client mit `PATCH /organizations/{org_id}/partner/clients/{client_org_id}` ab, im Rahmen von `GET /organizations/{org_id}/partner/contract`.
 
-Jedes **Mitglied** der Partner-Organisation kann einen Client anlegen, ihn per `owner_email` an den Kunden übergeben und ihn wieder ablösen; umgekehrt kann ein Mitglied der Kunden-Organisation den Zugriff der Agentur entziehen. Diese Routen schützt die direkte Mitgliedschaft: eine Agentur, die eine Organisation über eine Partnerschaft erreicht, kann dort weder deren eigene Clients verwalten noch eine Partner-Verbindung entziehen.
+Ein **Mitglied** der Partner-Organisation legt einen Client an, übergibt ihn per `owner_email` und löst ihn wieder ab. Ein Mitglied des Clients entzieht der Agentur den Zugriff. Beides braucht direkte Mitgliedschaft, siehe [Partner-Zugriff](#partner-access).
+
+Der [Partnerfloor](/de/analytics#partnerfloor) zeigt den Live-Traffic aller Clients.
 
 ## Häufige Überraschungen
 
 - **Der Org-Switcher ist nur ein UI-Knopf.** API-Requests scopen über die URL (`/organizations/{id}/…`), nicht über irgendeinen aktiven Tab.
-- **Mitglieder sind globale fastmon-User.** Lädst du einen bestehenden User neu ein, wird der bestehende Account weiterverwendet, kein Duplikat.
-- **Eine Einladung wartet am Konto.** Wer sich ohne den Link aus der Mail registriert hat, sieht die offenen Einladungen für seine E-Mail-Adresse auf dem Startbildschirm und tritt dort bei.
+- **Mitglieder sind globale fastmon-User.** Lädst du einen bestehenden User ein, bekommt er keinen zweiten Account.
+- **Eine Einladung wartet am Konto.** Wer sich ohne den Link aus der Mail registriert hat, findet seine offenen Einladungen auf dem Startbildschirm.
 - **Ein Mitglied direkt hinzufügen darf nur ein Owner.** `POST /organizations/{id}/members` braucht `member:manage`. Mitglieder laden stattdessen ein, und die Einladung trägt die Rolle.
-- **Sites können nicht zwischen Organisationen umziehen.** Falls doch nötig: Support melden, das geht nicht per Self-Service.
+- **Sites können nicht zwischen Organisationen umziehen.** Wenn du das brauchst, melde dich beim Support.
 
 ## Verwandt
 

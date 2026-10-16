@@ -28,12 +28,12 @@ Rule of thumb: a personal key for things that should act as you (local scripts, 
 ## Creating a key
 
 - **Personal**: **Account → Access → Create key**, or `POST /account/api-keys`.
-- **Organization**: **Organization settings → Access → Create key**, or `POST /organizations/{org_id}/api-keys`. Needs `org_key:manage`, which members and owners hold and viewers do not; partner access never holds it.
+- **Organization**: **Organization settings → Access → Create key**, or `POST /organizations/{org_id}/api-keys`. Needs `org_key:manage`, which members and owners hold and viewers do not. A key issued through [partner access](/en/concepts/organizations#partner-access) carries `via_partner_org_id`.
 
 Every key names three things:
 
-- **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time, so a key never gains a permission that ships later. No key can carry `org_key:manage`: a credential must not be able to mint credentials.
-- **Where it acts**: a personal key lists at least one organization and never reaches one that was not on its list, even if you join more later. An organization key is bound to the organization it was created in. On a `partner`-plan organization, a key can instead be issued with `audience: "clients"`: it acts in whatever organizations are your clients right now, resolved on every request and capped at the member bundle.
+- **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time. No key can carry `org_key:manage`.
+- **Where it acts**: a personal key lists at least one organization and never reaches one that was not on its list, even if you join more later. An organization key is bound to the organization it was created in. On a `partner`-plan organization, a key can instead be issued with `audience: "clients"`: it acts in whatever organizations are your clients right now, resolved on every request. It is capped at what you hold in the partner organization, minus what partner access cannot do.
 - **Expiry**: a date, or never. An expired key answers `401 credential_expired` (distinct from a wrong key, so a pipeline log says what to do).
 
 Creating a key asks for your password again and sends a security notification mail. The secret (`fm_…` or `fmo_…`) is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
@@ -65,9 +65,9 @@ curl https://api.fastmon.eu/sites \
 
 A key's name, scopes, and expiry change in place with `PATCH`; the secret stays. Re-authentication is asked only when the edit hands the key more than it had: a scope it did not carry, or a later expiry. Narrowing and renaming pass without a factor.
 
-**Rotating** (`POST …/rotate`) issues a successor with the same name, scopes, and reach and a fresh secret, then retires the old one: immediately by default, or after a grace window of up to 24 hours for the ordinary case where a deploy has to reach every consumer of the secret first. Rotating never extends the expiry.
+**Rotating** (`POST …/rotate`) issues a successor with the same name, scopes, and reach and a fresh secret, then retires the old one: immediately by default, or after a grace window of up to 24 hours for the ordinary case where a deploy has to reach every consumer of the secret first. Rotating never extends the expiry. A rotation by a client member clears `via_partner_org_id`.
 
-For organization keys, both are gated on standing: only someone who holds everything the key holds may edit, rotate, or rename it. The list reports this per key as `editable`. Revoking is deliberately not gated this way; containment must not wait for an owner to be reachable.
+For organization keys, both are gated on standing: only someone who holds everything the key holds may edit, rotate, or rename it. The list reports this per key as `editable`. Revoking is not gated this way.
 
 ## Managing keys
 

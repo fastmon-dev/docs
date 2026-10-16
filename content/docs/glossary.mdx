@@ -37,6 +37,8 @@ Compact definitions. For depth, follow the link on each term.
 
 **CSP report**: A report the browser sends when a page breaks its Content Security Policy, once the policy names fastmon in `report-to` and `report-uri`. See [Content Security Policy](/en/csp).
 
+**Event**: A named step without a URL of its own, such as an add-to-cart or a signup, with up to 30 properties. See [Custom events](/en/events).
+
 **Tracker**: The running JavaScript agent the beacon script starts in the visitor's browser. It registers the observers, buffers values, strips URLs, and sends the beacons.
 
 **Collector**: The server endpoint at `/c/{collector_hash}` that receives beacons, validates them, and writes them to the analytics store.
@@ -53,7 +55,7 @@ Compact definitions. For depth, follow the link on each term.
 
 ## Resources and accounts
 
-**Organization**: Top-level account container. Owns applications, members, notification rules. See [Organizations](/en/concepts/organizations).
+**Organization**: your company's or team's account, with its plan, members, and applications. See [Organizations](/en/concepts/organizations).
 
 **Application**: One tracking snippet. Owns the served bundle, both hashes, and every [tracker setting](/en/tracker), and serves one or more sites. See [Applications](/en/concepts/applications).
 
@@ -65,7 +67,7 @@ Compact definitions. For depth, follow the link on each term.
 
 **Session**: A 30-minute window of page-views from the same browser, grouped by `session_id`. One of the two visitor identities, and consent-gated. See [Visitors and sessions](/en/concepts/sessions).
 
-**Release**: Versioned deploy marker, scoped to an application. Used by analytics `compare_to_release_id` for before/after comparisons. See [Releases](/en/concepts/releases).
+**Release**: Versioned deploy marker, scoped to an application. Used by analytics `compare_to` for before/after comparisons. See [Releases](/en/concepts/releases).
 
 **Tag**: Free-form label on a site (max 10) for organizing sites. Cross-site analytics scoping by tag is planned; tags don't filter analytics yet. Conventions: `env:production`, `team:growth`, etc.
 

@@ -9,19 +9,19 @@ Analytics ist die Erkundungsebene über allem, was dein Tracker sammelt: Wer ist
 
 Die Analytics-Hauptansicht einer Site zeigt:
 
-- **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde plus den Seiten, die gerade angesehen werden, und den Quellen, über die die Besucher kommen. Bei Shops zeigt die Karte zusätzlich, wie viele davon gerade im Warenkorb, im Checkout oder auf der Abschlussseite sind.
-- **Zentrale Kennzahlen**: Besucher, Pageviews, Pageviews pro Besucher und bei einem Shop Bestellungen und Conversion, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Vorperiode sind dieselben Wochentage und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht. Die Zähl-Kacheln zeigen außerdem einen Durchschnitt pro Minute über den gewählten Zeitraum. Ein Klick auf die Kachel erklärt, was sie zählt.
-- **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`), ein geteilter Link öffnet also dieselbe Kennzahl. Die Legende steht darüber, zusammen mit dem Umschalter für Balken und Fläche, und jede Serie lässt sich einzeln abschalten und trägt ihren eigenen Vorperioden-Wert.
-- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen (Channel vs. UTM-Quelle, Länderlisten, Browser vs. Betriebssystem und so weiter). Der dritte Tab des Seiten-Panels listet die **Domains** aus den Seiten-URLs. Jedes Panel erklärt am Titel, was es zählt, nennt in der Fußzeile, wie viele Werte hinter den acht angezeigten Zeilen stecken, und führt über „Alle anzeigen" in den [Explorer](#explorer). Einzelne Zeilen öffnen sich dort ebenfalls direkt.
-- **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Der Globus öffnet dort, wo dein Traffic ist, Ziehen dreht ihn und das Mausrad zoomt. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
-- **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte, alle gleichzeitig sichtbar, jede mit einem Share-Link, der genau diese Karte wieder öffnet. Jeder Balken ist grau und sagt wie viel, die Zahl daneben trägt die Farbe, und jede Liste sagt, wie viel der Antwort sie zeigt, bevor sie mit den Filtern der Seite in den Explorer führt.
-- **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor, damit sichtbar wird, wo Leute abbrechen. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
-- **Bots im Zeitverlauf**: „Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter oben zieht mit und springt zurück, wenn du die Ansicht wieder ausschaltest. Ein Cmd- oder Strg-Klick auf einen Legendeneintrag zeigt nur diesen.
+- **Aktuelle Besucher**: eindeutige Besucher der letzten 5 Minuten, aufklappbar zu einem Pro-Minute-Chart der letzten Viertelstunde plus den aktuellen Seiten und ihren Quellen. Bei Shops zeigt die Karte zusätzlich, wie viele davon gerade im Warenkorb, im Checkout oder auf der Abschlussseite sind.
+- **Zentrale Kennzahlen**: Besucher, Pageviews, Pageviews pro Besucher und bei einem Shop Bestellungen und Conversion, jeweils mit Sparkline und Veränderung zur Vorperiode. Die Vorperiode sind dieselben Wochentage und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht. Die Zähl-Kacheln zeigen außerdem den Durchschnitt pro Minute.
+- **Trend-Chart**: die gewählte Kennzahl über den Zeitraum, optional mit Vorperioden-Overlay. Die Auswahl steht in der URL (`?metric=`). Jede Serie in der Legende lässt sich abschalten und trägt ihren eigenen Vorperioden-Wert.
+- **Breakdowns**: vier Panels für Quellen, Seiten, Standorte und Geräte, jedes mit Unter-Tabs zum Reinzoomen. Der dritte Tab des Seiten-Panels listet die **Domains** aus den Seiten-URLs. Die Fußzeile nennt, wie viele Werte hinter den acht Zeilen stecken. „Alle anzeigen" oder eine einzelne Zeile öffnet den [Explorer](#explorer).
+- **Geografische Verteilung**: Globus, flache Karte oder Länderliste. Die gewählte Ansicht steht in der URL, und ein Klick auf ein Land bietet seine Filter an.
+- **Aufschlüsselungs-Raster**: auf der eigenen Seite einer Metrik ist jede Dimension eine Karte mit Share-Link. Jede Liste sagt, wie viel der Antwort sie zeigt, und führt mit den Filtern der Seite in den Explorer.
+- **Checkout-Funnel**: eine Leiste je Stufe an gemeinsamer Kante, dazu der Anteil an der Stufe davor. Darunter die Warenkorb-Requests nach Art. Siehe [Checkout-Funnel](/de/checkout-funnel).
+- **Bots im Zeitverlauf**: „Bots“ neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Der Bot-Filter zieht mit und springt zurück, wenn du die Ansicht ausschaltest. Ein Cmd- oder Strg-Klick auf einen Legendeneintrag zeigt nur diesen.
 - **Traffic-Qualität**: Pageviews gestapelt nach Menschen, Wahrscheinlich Bots und Bots, die Besucher als Linie darüber. Darunter die Bot-Klassifizierung als eine Leiste, dann als klickbare Zeilen.
-- **Aktive Stunden**: Stunde des Tages nach Wochentag, damit sichtbar wird, wann auf der Seite wirklich etwas passiert. Das Raster zeigt nur die Wochentage, die der gewählte Zeitraum erreicht hat.
-- **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Keine Bounce-Rate: ob jemand danach gegangen ist, steht nicht in den Daten.
+- **Aktive Stunden**: Stunde des Tages nach Wochentag. Das Raster zeigt nur Wochentage im gewählten Zeitraum.
+- **Engagement**: Anteil der Besucher mit nur einer Seite, darunter die Verteilung der Seiten pro Besucher mit Median. Das ist keine Bounce-Rate.
 
-Besucherzahlen sind anonym per Konstruktion; was ein „Besucher" hier bedeuten kann und was nicht, steht unter [Privacy](/de/privacy).
+Was ein „Besucher" hier bedeutet, steht unter [Privacy](/de/privacy).
 
 ## Shopfloor [#shopfloor]
 
@@ -36,6 +36,18 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 - **Er braucht [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zeigt niemanden und sagt das auch.
 
 Die API dazu: [`POST /analytics/live`](/de/api/analytics/queryAnalyticsLive) und [`POST /analytics/live-summary`](/de/api/analytics/queryAnalyticsLiveSummary).
+
+### Partnerfloor [#partnerfloor]
+
+Partner-Organisationen finden den Partnerfloor in der Seitenleiste unter **Partner**. Jeder Live-Client ist dort eine Zone.
+
+- **Größe und Farbe**: Eine Zone wächst mit dem Anteil des Clients an deinem Traffic der letzten Stunde. Ihre Farbe zeigt seinen LCP p75.
+- **Jede Zone** zeigt die Leute darin, Warenkorb und Checkout, die Bestellungen von heute und die Veränderung zur Vorwoche.
+- **Ein Klick** öffnet den Shopfloor des Clients direkt hier.
+- **Bedienung**: Filtern kannst du nur nach Traffic-Klasse. Zeitfenster, Pause, Kiosk-Modus und Ton funktionieren wie auf dem Shopfloor.
+- **Live** ist ein Client, dessen Organisation aktiv und freigegeben ist und der eine aktivierte, aktive Site auf einer aktiven Production-Application hat.
+
+Die API ist `POST /organizations/{org_id}/partner/live`, abgefragt im Takt von `meta.next_poll_ms`. Sie braucht direkte Mitgliedschaft in der Partner-Organisation mit `partner:read` und `analytics:read`. Sie nimmt nur `bot_class`, und `data_total`, `client_count` und `site_count` zählen nur die gelisteten Clients.
 
 ## Zeitraum [#time-range]
 
@@ -144,9 +156,10 @@ Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/q
 
 ## Besucher [#visitors]
 
-Die Besucher-Seite listet eindeutige Besucher mit Startzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und Fehlern. Zwei Spalten zeigen auf einen Blick, wie der Besuch lief:
+Die Besucher-Seite listet eindeutige Besucher mit Startzeit, Dauer, Seitenanzahl, Land, Gerät, durchschnittlichem LCP und Fehlern. Drei Spalten zeigen auf einen Blick, wie der Besuch lief:
 
 - **Ausgang**: bestellt, Checkout verlassen, Warenkorb, gestöbert oder abgesprungen.
+- **Quelle**: woher der Besucher kam, etwa Google-Suche, Newsletter oder direkt.
 - **Verlauf**: ein Block pro Seite, die Breite ist die Verweildauer, die Farbe der Seitentyp. Eine rote Marke steht für Fehler, ein Haken für eine Bestellung.
 
 Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Seitenaufrufe pro Besucher und der Anteil mit JavaScript-Fehler, langsame Besucher (durchschnittlicher LCP über 4 s) und Käufer. **Segment-Chips** (mit Fehlern, langsam, bestellt, Checkout erreicht, Warenkorb-Aktivität, nur eine Seite) setzen die Verhaltensfilter und zeigen, wie viele Besucher sie listen. „Verhalten anpassen“ öffnet alle Filter: Seiten, Fehler, Dauer, LCP, Seitentyp und Funnel-Stufe. Bestellungen, Checkout und Warenkorb erscheinen nur bei einem Shop.
@@ -154,12 +167,12 @@ Die Zusammenfassung über der Liste gilt für den ganzen Zeitraum: Besucher, Sei
 **Ein Besucher öffnet sich überall, wo er verlinkt ist, in einem Dialog**: in dieser Liste, bei NEL- und CSP-Reports, im Explorer und bei Checkout-Events. Auf dem Handy ist er ein Sheet von unten, und `?visitor=` verlinkt direkt darauf.
 
 - **Die Journey** zeigt jeden Pageview der Reihe nach mit Web Vitals, Fehlern, Seitentyp und bei Shops der [Checkout-Stufe](/de/checkout-funnel) und den Warenkorb-Aktionen. Checkout-Events und [NEL-](/de/nel#dashboard) und [CSP-Reports](/de/csp#dashboard) stehen dazwischen, abgebrochene Ladevorgänge erst, wenn du sie einschaltest.
+- **Der Einstieg und jede Rückkehr von außen** stehen auf der Zeitleiste und vor der jeweiligen Seite, mit Kampagne, wenn es eine gibt. Siehe [`arrival`](/de/concepts/sessions#arrival).
 - **Ohne Pageviews** im Zeitraum listet sie nur die Reports und Events des Besuchers.
 - **Ein Klick auf eine Seite** öffnet ihr volles Detail, und „Im Explorer öffnen“ listet dort alle Pageviews des Besuchers.
 - **Aktualisieren** holt neue Seiten eines laufenden Besuchs nach. Der Live-Schalter macht das alle 7 Sekunden.
-- **Ein Cmd- oder Strg-Klick** auf einen Besucher-Link öffnet die Visitors-Seite in einem neuen Tab.
 
-Gezählt wird entlang einer Identitätsachse: [`stitch`](/de/tracker#store-stitch) oder `session`, und die `count_visitors_by` der Application legt den Standard fest. Neue Sites starten auf `Standard`, das `stitch` speichert; das Preset `Minimal` speichert keine der beiden und lässt die Liste leer. Das Replay je Besucher braucht die `session`-Identität. Siehe [Besucher und Sessions](/de/concepts/sessions).
+Gezählt wird nach [`stitch`](/de/tracker#store-stitch) oder `session`, je nach `count_visitors_by`. Das Preset `Minimal` speichert keins von beiden und lässt die Liste leer. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
 ## Fetch/XHR und Server-Timing
 

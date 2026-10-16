@@ -9,19 +9,19 @@ Analytics is the exploration layer on top of everything your beacons collect: wh
 
 The main Analytics view for a site shows:
 
-- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the pages being viewed right now and the sources they came through. On shops the card also shows how many of them are at the cart, checkout, and success stage.
-- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline and the change against the previous period. The previous period is the same weekdays and hours, the fewest whole weeks earlier that cover the window. The count tiles also show an average per minute over the selected range. Clicking a tile explains what it counts.
-- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`), so a shared link opens on the same metric. The legend sits above it with the bar/area switch, and each series can be switched off on its own and carries its own previous-period value.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down (channel vs. UTM source, country lists, browser vs. OS, and so on). The Pages panel's third tab lists the **domains** out of the page URLs. Each panel says what it counts, reports in its footer how many values sit behind the eight rows shown, and leads into the [Explorer](#explorer) through "Show all". A single row opens there too.
-- **Geographic distribution**: a globe, a flat map, or a country list. The globe opens turned towards your traffic, drag turns it, and the wheel zooms. The chosen view stays in the URL, and clicking a country offers its filters.
-- **Breakdown grid**: on a metric's own page every dimension is a card, all of them visible at once, each with a share link that reopens it. Every bar is grey and says how much, the number beside it carries the colour, and each list says how much of the answer it is showing before leading into the Explorer with the page's filters applied.
-- **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it, so where people drop out is visible. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
-- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. It moves the bot filter along and puts it back when you switch the view off. Cmd or Ctrl click on a legend entry shows only that one.
+- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the current pages and their sources. On shops the card also shows how many of them are at the cart, checkout, and success stage.
+- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline and the change against the previous period. The previous period is the same weekdays and hours, the fewest whole weeks earlier that cover the window. Count tiles also show the average per minute.
+- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`). Each series in the legend can be switched off and carries its own previous-period value.
+- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down. The Pages panel's third tab lists the **domains** out of the page URLs. Each footer counts the values behind the eight rows shown, and "Show all" or a single row opens the [Explorer](#explorer).
+- **Geographic distribution**: a globe, a flat map, or a country list. The chosen view stays in the URL, and clicking a country offers its filters.
+- **Breakdown grid**: on a metric's own page every dimension is a card with a share link. Each list says how much of the answer it shows and leads into the Explorer with the page's filters.
+- **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
+- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The bot filter follows and is restored when you switch the view off. Cmd or Ctrl click on a legend entry shows only that one.
 - **Traffic quality**: pageviews stacked into Humans, Likely bots, and Bots, with visitors as a line. Below it the bot classification as one bar, then as clickable rows.
-- **Active hours**: hour of day by weekday, so it is visible when something actually happens on the site. The grid only shows the weekdays the selected window reached.
-- **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. Not a bounce rate: whether somebody left afterwards is not in the data.
+- **Active hours**: hour of day by weekday. The grid only shows the weekdays the selected window reached.
+- **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. It is not a bounce rate.
 
-Visitor counts are anonymous by construction; see [Privacy](/en/privacy) for what a "visitor" can and cannot mean here.
+See [Privacy](/en/privacy) for what a "visitor" means here.
 
 ## Shopfloor [#shopfloor]
 
@@ -36,6 +36,18 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 - **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
 
 The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/analytics/queryAnalyticsLiveSummary).
+
+### Partnerfloor [#partnerfloor]
+
+A partner organization finds the Partnerfloor under **Partner** in the sidebar. Every live client is one zone.
+
+- **Size and colour**: a zone grows with the client's share of your traffic in the last hour and is coloured by its LCP p75.
+- **Each zone** shows its people, cart and checkout, today's orders, and the change against last week.
+- **A click** opens the client's Shopfloor in place.
+- **Controls**: the only filter is the traffic class. Window, pause, kiosk mode, and sound work as on the Shopfloor.
+- **Live** means an active, approved organization with an activated, active site on an active production application.
+
+The API is `POST /organizations/{org_id}/partner/live`, polled at `meta.next_poll_ms`. It needs direct membership in the partner organization with `partner:read` and `analytics:read`. It takes only `bot_class`, and `data_total`, `client_count`, and `site_count` cover listed clients only.
 
 ## Time range [#time-range]
 
@@ -144,9 +156,10 @@ The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/quer
 
 ## Visitors [#visitors]
 
-The Visitors page lists distinct visitors with start time, duration, page count, country, device, average LCP, and errors. Two columns read the visit at a glance:
+The Visitors page lists distinct visitors with start time, duration, page count, country, device, average LCP, and errors. Three columns read the visit at a glance:
 
 - **Outcome**: ordered, left the checkout, cart, browsed, or bounced.
+- **Source**: where the visitor came in, such as Google search, a newsletter, or direct.
 - **Journey**: one block per page, its width the time spent there and its colour the page type. A red mark flags errors, a check an order.
 
 The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage. Orders, checkout, and cart show only on a shop.
@@ -154,12 +167,12 @@ The summary above the list covers the whole period: visitors, pageviews per visi
 **A visitor opens in a dialog** wherever it is linked: in this list, on NEL and CSP reports, in the Explorer, and on checkout events. On a phone it is a sheet from the bottom, and `?visitor=` links to it.
 
 - **The journey** shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between them, abandoned loads only once you switch them on.
+- **The entry and every return from outside** show on the timeline and before that page, with any campaign. See [`arrival`](/en/concepts/sessions#arrival).
 - **Without pageviews** in the period, it lists the visitor's reports and events alone.
 - **A click on a page** opens its full detail, and "Open in Explorer" lists all of the visitor's pageviews there.
 - **Refresh** picks up new pages of a visit still going on. The live switch does it every 7 seconds.
-- **Cmd or Ctrl click** on a visitor link opens the Visitors page in a new tab.
 
-A visitor is counted along an identity axis: [`stitch`](/en/tracker#store-stitch) or `session`, and the application's `count_visitors_by` sets the default. New sites start on `Standard`, which stores `stitch`; the `Minimal` preset stores neither and leaves the list empty. The per-visitor replay needs the `session` identity. See [Visitors and sessions](/en/concepts/sessions).
+A visitor is counted by [`stitch`](/en/tracker#store-stitch) or `session`, as `count_visitors_by` sets. The `Minimal` preset stores neither and leaves the list empty. See [Visitors and sessions](/en/concepts/sessions).
 
 ## Fetch/XHR and Server-Timing
 

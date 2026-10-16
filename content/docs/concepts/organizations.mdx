@@ -1,23 +1,9 @@
 ---
 title: Organizations
-description: The top-level account container. Everything in fastmon belongs to one.
+description: Your company's or team's account, with its plan, billing, and members.
 ---
 
-An **organization** is the top-level container in fastmon. Every [site](/en/concepts/sites), member, invite, and notification rule belongs to exactly one organization; nothing crosses that line.
-
-## Why it matters
-
-Organizations are how fastmon keeps customers apart, how billing and plans hang together, and how access control is scoped.
-
-Most accounts only ever have one organization.
-
-## When you'd touch it
-
-- **First-time setup.** The "create your account" flow makes one for you.
-- **Adding teammates.** Invite by email, give them a role.
-- **Buying a plan.** Plans live on the organization, not the user.
-- **DPA or invoice request.** The organization is the legal counterparty.
-- **Compliance review.** "Who can see this data?" is answered at the organization level.
+An **organization** is your company's or team's account in fastmon. It holds the plan, billing, and members. Every [site](/en/concepts/sites), invite, and notification rule belongs to exactly one organization.
 
 ## What's on an organization
 
@@ -58,21 +44,38 @@ A role is a fixed bundle of **permissions**. A permission is one capability in `
 | `member` | Everyday work: create and change sites, applications, releases, and synthetic pages; start synthetic runs; ask the AI assistant; invite people; read the invoices (`billing:read`); on a `partner` organization, manage its clients (`partner:manage`). |
 | `viewer` | Read-only. Sees dashboards, analytics, releases, synthetic results, notification rules, and the member list. Changes nothing, triggers nothing that costs money or sends mail, and does not see billing. |
 
-**Billing is two permissions, not one role.** `billing:read` opens the invoices, the billing address, and the VAT id; `billing:manage` moves the money. Reading is a member permission, so a viewer does not see the Billing tab. Paying stays with the owner. An agency reading its client's invoices resolves to member there, which is exactly `billing:read` without `billing:manage`.
+**Billing is two permissions, not one role.** `billing:read` opens the invoices, the billing address, and the VAT id; `billing:manage` moves the money.
 
 The bundles nest: a member holds everything a viewer holds, an owner everything a member holds. [Personal API keys](/en/api/authentication) are cut from the same bundles: a key's scopes are permissions, intersected with your current role on every request. An [organization key](/en/api/authentication#two-kinds-of-key) belongs to the organization instead and stands on its scopes alone, capped at issue time. Managing organization keys and [connected apps](/en/api/oauth) takes `org_key:manage`, which members and owners hold and viewers do not.
 
 An organization can have several owners. Owners change roles under **Members** (`PATCH /members/{member_id}`); only an owner can hand out the owner role. The last owner cannot be demoted or leave while other members remain (`last_owner`). **Transfer ownership** hands the organization to another member in one step.
 
+### Partner access [#partner-access]
+
+In a client organization, a partner employee acts with the role they hold in the partner organization: `owner`, `member`, or `viewer`. With two agencies serving one client, the stronger role applies. A direct membership in the client wins.
+
+Partner access can issue organization keys and connect org-owned apps in a client, such as the Shopware plugin through OAuth. Even an agency owner cannot do the following in a client:
+
+- Delete it, remove its last member, transfer it, or manage its billing.
+- Demote or remove its owners, or grant the owner role while it has an owner.
+- Add members without an invite, or manage its partner links.
+- Issue keys for the client's own clients.
+
+**Partner-minted credentials** outlive the partnership. The client's key and connection lists mark them with `via_partner_org_id`, and detaching a partner lists them.
+
+The client rotates the keys and disconnects the apps. A rotation by a client member clears the mark.
+
+The `partner.removed` audit entry lists them as `credentials_left`. It shows in the audit logs of both organizations.
+
 ## Common scenarios
 
 ### One product, one org
 
-The default. One organization, one billing relationship, several sites under it (`acme-marketing`, `acme-app`, `acme-docs`).
+One organization, one billing relationship, several sites under it (`acme-marketing`, `acme-app`, `acme-docs`).
 
 ### Multiple unrelated products
 
-Run two unrelated brands and want billing and access cleanly separated? Create two organizations. You can be a member of both.
+For two unrelated brands with separate billing and access, create two organizations. You can be a member of both.
 
 ### Agency running client sites
 
@@ -80,15 +83,17 @@ Use the `partner` plan. Each client is a **partner client**: a sub-organization 
 
 A partner covers features and pageviews per client with `PATCH /organizations/{org_id}/partner/clients/{client_org_id}`, within the contract at `GET /organizations/{org_id}/partner/contract`.
 
-Any **member** of the partner organization can create a client, hand it to the customer with `owner_email`, and detach one again; on the other side, a member of the client organization can revoke the agency's access. What guards those routes is direct membership: an agency reaching an organization through a partnership can neither manage that organization's own clients nor revoke a partner link there.
+A **member** of the partner organization creates a client, hands it over with `owner_email`, and detaches it. A member of the client revokes the agency's access. Both need direct membership; see [Partner access](#partner-access).
+
+The [Partnerfloor](/en/analytics#partnerfloor) shows the live traffic of every client.
 
 ## Common surprises
 
 - **The org switcher is just UI.** API requests scope by the URL (`/organizations/{id}/…`), not by whichever tab you've got open.
-- **Members are global fastmon users.** Invite an existing user and the existing account gets reused; no duplicate.
-- **An invite waits on the account.** Someone who signed up without the mail link sees the open invites for their email on the start screen and joins from there.
+- **Members are global fastmon users.** Inviting an existing user reuses their account.
+- **An invite waits on the account.** Someone who signed up without the mail link finds their open invites on the start screen.
 - **Adding a member directly needs an owner.** `POST /organizations/{id}/members` requires `member:manage`. Members invite instead, and an invite carries the role.
-- **Sites can't move between organizations.** If you genuinely need this, ping support. No self-serve action for it.
+- **Sites can't move between organizations.** Ask support if you need this.
 
 ## Related
 

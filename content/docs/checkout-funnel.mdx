@@ -1,11 +1,11 @@
 ---
 title: Checkout funnel
-description: Cart, checkout, and success per visitor, derived from the page URL and the shop's own cart requests. On by default; a Shopify shop adds a pixel for its checkout.
+description: Cart, checkout, and success per visitor, counted from stage events, with the shop's cart requests beside them. On by default; a Shopify shop adds a pixel for its checkout.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The checkout funnel counts how far visitors get through your shop. fastmon marks every pageview whose URL is a cart, checkout, or success page, records the cart requests your pages send, and counts per visitor which stages they reached.
+The checkout funnel counts how far visitors get through your shop. It counts per visitor which stages they reached, from stage events, and records the cart requests your pages send.
 
 <Callout type="info" title="Facts only">
   Every number is a count of something observed: a visitor loaded a cart page, a visitor loaded a thank-you page. There is no "abandoned" metric, because that would be a claim built from a missing observation. The visitor may have bought on another device, after the daily `stitch` rotation, or on a thank-you page without the tracker.
@@ -13,13 +13,13 @@ The checkout funnel counts how far visitors get through your shop. fastmon marks
 
 ## How a pageview gets its stage
 
-At ingest the collector matches the sanitized page URL (origin and path, plus any query keys you opted into) against a list of patterns per stage and stamps `cart`, `checkout`, or `success` on the pageview. Pageviews that match nothing keep an empty stage. The tracker sends no extra field.
+At ingest the collector matches the sanitized page URL (origin and path, plus any query keys you opted into) against a list of patterns per stage and stamps `cart`, `checkout`, or `success` on the pageview. A pageview with a stage also writes a [stage event](#stage-events), which is what the funnel counts. The tracker sends no extra field.
 
 The built-in patterns cover Shopware 5 and 6, WooCommerce (English and German slugs), Magento 2, PrestaShop, JTL Shop 5, and Shopify. Every pattern tolerates a language or shop prefix, so `/de/warenkorb` and `/fr/cart` count like their root variants.
 
-Matching order is fixed: `success`, then `cart`, then `checkout`. Success pages often live under the checkout path (`/checkout/finish`), and Shopware and Magento put the cart there too.
+Matching order is fixed: `success`, then `cart`, then `checkout`.
 
-The marks are stored with the pageview and never recomputed. Changing the patterns affects pageviews from that moment on.
+The marks and stage events are stored at ingest and never recomputed. Changing the patterns affects pageviews from that moment on.
 
 ### Default patterns [#default-patterns]
 
@@ -62,17 +62,32 @@ The URL stages see pages. A visitor who adds a product from a listing or a drawe
 
 On Shopify a quantity of 0 is a remove and arrives as `change`. The kind of an `other` row lives in the request body, which fastmon never reads.
 
-Cart interactions need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr) (on under Standard). With it off, the URL stages still work and the cart counts stay empty. Adds that go out as a classic form POST (OXID, WooCommerce single-product pages) are invisible to fetch/XHR. The endpoint list is maintained server-side and grows without a tracker release.
+Cart interactions need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr) (on under Standard). With it off, the URL stages still work and the cart counts stay empty. Adds that go out as a classic form POST (OXID, WooCommerce single-product pages) are invisible to fetch/XHR.
 
-Cart interactions are reported **beside** the funnel steps, never as one: their coverage depends on the shop system and on the fetch/XHR setting.
+Cart interactions are reported **beside** the funnel steps, never as one.
 
 ## Stage events and sampling [#stage-events]
 
-Every pageview with a stage also writes a **stage event**: `view_cart`, `begin_checkout`, or `order_placed`, with `source` `collector`. The Shopify pixel uses the same names, so only `source` tells the two apart. Stage events need checkout tracking, a shop, and a stored `stitch`.
+The funnel counts events only. A pageview's `checkout_stage` does not count as a stage on its own. A visitor reaches a stage through any event with one of these names, whatever sent it:
 
-They are written for every visitor, also those [sampling](/en/concepts/applications#sampling) drops. The funnel steps, cohort sizes, stage series, and purchases read them, so they stay exact at any rate. `visitors_total`, the conversion rate, and the cart interactions come from pageviews and are estimates on a sampled shop.
+| Stage        | Event names                 |
+| ------------ | --------------------------- |
+| **cart**     | `view_cart`                 |
+| **checkout** | `begin_checkout`            |
+| **success**  | `order_placed`, `purchase`  |
 
-A filter the events cannot answer, such as a URL or a campaign, reads the weighted pageview funnel instead. `meta.sampling.estimated_metrics` names the estimated fields.
+- **Checkout pages** write a stage event with `source` `collector` for every pageview with a stage. These need checkout tracking, a shop, and a stored `stitch`, and they cannot be edited or deleted.
+- **The Shopify pixel** sends `begin_checkout` and `order_placed`, see [Shopify checkout events](#shopify).
+- **Your own [events](/en/events)** count too, such as a GA4 `purchase` from the dataLayer. A buyer with `order_placed` and `purchase` counts once.
+
+Events are never [sampled](/en/concepts/applications#sampling), so the steps, cohort sizes, stage series, and purchases are exact at any rate. `visitors_total` and the cart interactions come from sampled pageviews and are estimates. The conversion rate divides exact buyers by estimated visitors.
+
+### Filters [#filters]
+
+- **Site, country, device, and the other edge dimensions** narrow the events exactly.
+- **Page filters** (URL, page type, login state, connection, viewport class) narrow the events by the page they were sent from, exactly. Events stored before 2026-10-16 carry no page and match none.
+- **Campaign and referrer** match the visitor's entry pageview. On a sampled application the result is an estimate, and `meta.sampling.estimated_metrics` says so.
+- **Refused with `422`**: the technical page filters (navigation type, protocol, cache status, origin host, error origin, third-party category), a metric range, `checkout_stage`, and the identity `session`.
 
 ## What the numbers mean [#what-the-numbers-mean]
 
@@ -81,12 +96,10 @@ A filter the events cannot answer, such as a URL or a campaign, reads the weight
 - **Visitors per step.** Each visitor counts once per step they reached in the window, grouped on the visitor identity (`stitch` by default, see [Visitors and sessions](/en/concepts/sessions)). Nothing per visitor is stored; the grouping happens at query time.
 - **Bucketed by entry.** In the series a visitor lands in the bucket of their first funnel row, not of their success. Bucket visitors do not add up to the window total. A day is final once the day, the 24-hour `stitch` window, and the ingest lag have passed.
 - **Add-to-cart rate** (`cart_interaction_rate`): visitors who used the cart over all visitors, typically 5 to 6 %. Read it as a floor wherever the shop's cart calls are invisible to fetch/XHR.
-- **Visitors whose cart calls failed** (`cart_interaction_error_visitors`): against `cart_interactions`, the share of shoppers who hit a broken cart. It moves before the conversion rate does.
-- **Time to purchase** (`time_to_success_seconds`): seconds from funnel entry to the first success, as p50, p75 and p90. A p90 pulling away from the p50 is the checkout getting in the way.
-- **Success is a page, not a payment** (outside Shopify). A shop whose thank-you page does not load the tracker shows checkouts without successes. That is the most common setup issue.
+- **Visitors whose cart calls failed** (`cart_interaction_error_visitors`): against `cart_interactions`, the share of shoppers who hit a broken cart.
+- **Time to purchase** (`time_to_success_seconds`): seconds from funnel entry to the first success, as p50, p75 and p90.
+- **Success is a page or an event, not a payment.** Without a Shopify pixel or a `purchase` event, a shop whose thank-you page does not load the tracker shows checkouts without successes. That is the most common setup issue.
 - **A rate that could not be measured is absent.** If the visitor count times out, the response keeps its steps and omits `visitors_total` and `conversion_rate` rather than reporting 0 %.
-
-Filters that pick funnel pages (`checkout_stage`, the cart interaction thresholds) narrow the steps but not the denominator. Audience filters (site, country, device, campaign) narrow both halves.
 
 ## Shopify checkout events [#shopify]
 
@@ -99,23 +112,23 @@ What changes in the funnel once the pixel runs:
 - **Purchases are a lower bound.** Shopify does not fire its checkout completed event for most Shop Pay and Apple Pay orders. A visitor with a payment and no success most likely bought through a wallet.
 - **Content blockers stop the pixel.** EasyList's EasyPrivacy list blocks Shopify's custom-pixel sandbox path, and uBlock Origin ships that list by default. Those visitors contribute storefront pageviews but no checkout events, so the conversion rate reads low. See [content blockers](/en/guides/shopify-checkout#blockers).
 - **Cart to checkout can exceed 100 %.** A buyer who went straight into the checkout never loaded a cart page.
-- **Events need the edge identifier** ([`store_stitch`](/en/tracker#store-stitch)). A filter the event rows cannot answer (URL, page type, campaign, a metric threshold) leaves them out of that request.
-- **Cohorts and journeys stay on pageviews.** A buyer whose whole run is checkout events appears in the success step and in no cohort, and the sessions explorer does not show the Shopify checkout.
+- **Page filters leave the pixel's events out.** They carry no page, so a [page filter](#filters) matches none of them.
+- **No pageviews in the checkout.** A buyer seen only in the checkout counts in a cohort without Web Vitals, and the sessions explorer does not show the Shopify checkout.
 
-The events carry the step, the visitor's country, device, browser and traffic class, and the edge identifier. No URL, no session id, no order value, and no Web Vitals: the Shopify checkout is counted, not measured.
+The events carry the step, the visitor's country, device, browser and traffic class, and the edge identifier. No URL, session id, or order value: the Shopify checkout is counted, not measured.
 
 ## Where it shows up [#where-it-shows-up]
 
 - **Analytics dashboard.** Orders and Conversion are headline metrics. Orders draws the success series with cart and checkout as context lines. Conversion draws the rate against the previous period, and its tooltip names the visitors behind each point.
 - **Checkout card.** The steps, the cart requests by kind, the visitors whose cart broke, and the time to purchase.
 - **Buyers compared.** A card at the bottom, closed by default, compares visitors with a seen purchase against those who reached the checkout without one. It loads only when opened.
-- **Stage chart.** Visitors per stage over time, counted when they reached it and including a Shopify pixel's checkout events, with the previous period compared the same way for all three.
+- **Stage chart.** Visitors per stage over time, counted when they reached it, against the previous period.
 - **`checkout_stage` filter.** Cart, checkout, and ordered are fixed options in the filter bar, the chips, and the command palette. On the metric pages Web Vitals per funnel stage is a filtered query.
 - **Explorer.** Group by Checkout Stage, chart Cart Actions and Failed Cart Actions, and read stage and kinds as columns. A "Checkout" preset brings stages over time and LCP per stage.
 - **Visitors.** Filter the list to everyone who reached a stage or issued a cart interaction. On the journey each pageview carries a Funnel chip colored by stage.
 - **Business Impact.** Where the funnel has data, the page shows the same conversion rate instead of the estimate derived from LCP and INP.
 
-The checkout numbers follow the page's filters, except filters that pick a checkout stage. They show only on a shop: an application whose platform is unknown counts as one until `shop.active` is `false`.
+The checkout numbers follow the page's [filters](#filters). The checkout panel names a filter it cannot use, with a button to remove it. They show only on a shop: an application whose platform is unknown counts as one until `shop.active` is `false`.
 
 ## Settings
 
@@ -123,7 +136,7 @@ The switch and the patterns live on the application under **Settings → Shop & 
 
 - **`checkout_tracking`** is on by default and is the opt-out. It covers the URL stages and the cart interactions together. Marking is forward-only, so turning it off leaves a gap you cannot fill later.
 - **Per-stage paths.** Each stage either inherits the built-in patterns (the default, `null`) or replaces them wholesale. There is no merge. Up to 10 patterns per stage, each up to 200 characters, lowercase printable ASCII, in the [pattern syntax](#pattern-syntax). Improvements to the built-in list reach every site that did not override that stage.
-- **Requirements.** Counting visitors per stage needs a stored visitor identity ([`store_stitch`](/en/tracker#store-stitch), or sessions); without one the funnel endpoints answer `422`. Cart interactions additionally need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr).
+- **Requirements.** Counting visitors per stage needs the stored [`stitch`](/en/tracker#store-stitch); without it, or under the identity `session`, the funnel endpoints answer `422`. Cart interactions additionally need [`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr).
 
 ### Query-based checkouts (OXID and others) [#oxid]
 
@@ -135,16 +148,16 @@ A generic `?step=` checkout needs the key in [`collect_query_values_for`](/en/tr
 
 The stage is a four-value label computed from the URL the site already stores; the cart interaction is a flag computed from fetch/XHR paths it already stores. Neither adds a field to the beacon or visitor entropy, and a [stage event](#stage-events) copies only what the pageview row already holds. The funnel is computed at query time in every collection mode, including `anonymous`.
 
-The Shopify pixel is the one part that sends its own events. What it carries is listed under [Shopify checkout events](#shopify). See [Privacy](/en/privacy#what-we-collect).
+What the Shopify pixel carries is listed under [Shopify checkout events](#shopify), your own events under [Privacy](/en/privacy#events).
 
 ## API
 
 - `POST /organizations/{org_id}/analytics/funnels/checkout`: the steps with visitor counts and `reach_rate`, the window `conversion_rate` and `visitors_total`, the cart interaction counts by kind, `time_to_success_seconds`, and the series bucketed by funnel entry. See the [reference](/en/api/analytics/queryAnalyticsCheckoutFunnel).
-- `POST /organizations/{org_id}/analytics/funnels/checkout/cohorts`: visitors with an observed success against those who reached the checkout without one. Per group, the Web Vitals over the whole journey and per stage, plus how many cart calls went out, how slow they were and how many failed. Both groups need a stored visitor identity, or the endpoint answers `422`. See the [reference](/en/api/analytics/queryAnalyticsCheckoutCohorts).
-- `POST /organizations/{org_id}/analytics/funnels/checkout/stages`: the visitors who reached each stage per hour or day, checkout events included, for the stage chart. `compare_to` adds the previous period, and it reaches back only as far as a Shopify pixel has been installed, so an earlier comparison shows the installation as a rise. `events_read` says whether the events were counted.
-- `POST /organizations/{org_id}/analytics/funnels/checkout/journeys`: the pageviews around a visitor's hit on a given step, with the visitor's checkout `events` beside `pages`. Visitors are selected from both sources, so one known only from events comes back with an empty `pages`. See the [reference](/en/api/analytics/queryAnalyticsCheckoutJourneys).
-- `POST /organizations/{org_id}/analytics/visitors` accepts `contains_checkout_stage` and `contains_cart_interaction` as filters, and a checkout event counts as reaching its stage. Each row is a pageview row, so a visitor known only from events has none. The visitor detail answers `events` beside `pages`, each with the name, the stage, the source and the time.
-- `POST /organizations/{org_id}/analytics/events` lists the checkout events themselves, newest first and cursor paginated, so a test order can be held against the Shopify order list. `name` is `view_cart`, `begin_checkout`, `add_payment_info`, or `order_placed`, and `source` is `collector` or `shopify_pixel`. Narrow it with `names`, the site scope, `filters.stitch` for one visitor, and the edge-derived dimensions.
+- `POST /organizations/{org_id}/analytics/funnels/checkout/cohorts`: visitors with an observed success against those who reached the checkout without one. Per group, the Web Vitals over the whole journey and per stage, plus how many cart calls went out, how slow they were and how many failed. See the [reference](/en/api/analytics/queryAnalyticsCheckoutCohorts).
+- `POST /organizations/{org_id}/analytics/funnels/checkout/stages`: the visitors who reached each stage per hour or day, checkout events included, for the stage chart. `compare_to` adds a second window, in the same forms as on `/analytics/query`. A comparison reaching back before a Shopify pixel was installed shows the installation as a rise.
+- `POST /organizations/{org_id}/analytics/funnels/checkout/journeys`: the pageviews around a visitor's hit on a given step, with the visitor's checkout `events` beside `pages`. With `full_journey: false`, `pages` holds the pages the stage events were sent from. See the [reference](/en/api/analytics/queryAnalyticsCheckoutJourneys).
+- `POST /organizations/{org_id}/analytics/visitors` accepts `contains_checkout_stage` and `contains_cart_interaction` as filters, and the stage comes from events. Under the identity `session` it answers `422` for `contains_checkout_stage` and leaves out `outcome`, `ordered_visitors`, and `checkout_visitors`. The visitor detail answers `events` beside `pages`.
+- `POST /organizations/{org_id}/analytics/events` lists the checkout events beside your own, newest first, so a test order can be held against the Shopify order list. See [Custom events](/en/events#api).
 - `checkout_stage` is a filter and exclude dimension on every analytics endpoint that takes `filters` (`exclude: {checkout_stage: ['']}` keeps only funnel pageviews), and a group-by dimension in `POST /analytics/query`. `cart_interactions` and `cart_interaction_errors` are metrics there (and therefore usable in notification rules) and metric ranges. `POST /analytics/beacons` projects `checkout_stage`, the two counters, and the `cart_interaction_kinds` map onto each row.
 
 ## What's next

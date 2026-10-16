@@ -53,7 +53,7 @@ Max 10 Tags pro Site.
 
 ## Welche Domains senden dürfen
 
-Die frühere Per-Site-Allow-List `allowed_origins` und der Schalter `enforce_domain_match` sind weg. Der Ingest wird über die [`site_policy`](/de/tracker#site-policy) der Application gesteuert: `strict` akzeptiert nur exakt registrierte Domains, `open` (der Default) vermerkt einen unbekannten Hostnamen als vorgeschlagene Domain, die du adoptieren kannst, und `auto` legt ihn automatisch als Site an. Gesetzt wird das an der Application.
+Daten senden nur registrierte Domains. Einen Beacon von einem anderen Host behandelt die [`site_policy`](/de/tracker#site-policy) der Application: Sie schlägt ihn als Domain vor (`open`, Default), legt eine Site an (`auto`) oder verwirft ihn (`strict`). Das gilt auch bei nur einer Site, ein `www.`-Host oder ein eigener Checkout-Host braucht also eine eigene Site.
 
 ## Häufige Szenarien
 

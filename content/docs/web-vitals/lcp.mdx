@@ -3,13 +3,13 @@ title: Largest Contentful Paint (LCP)
 description: "What LCP is, what's a good LCP, and how to debug a slow one, with fastmon's data."
 ---
 
-**LCP** measures how long it takes for the largest visible element on a page to actually show up. When someone says "the page felt slow to load," they're usually talking about LCP: the moment when something meaningful is finally on screen.
+**LCP** measures how long it takes for the largest visible element on a page to show up. It is the moment something meaningful is finally on screen.
 
 LCP is part of [Core Web Vitals](/en/web-vitals), Google's standard user-experience set, and it counts toward search ranking.
 
 ## What's a good LCP?
 
-LCP is reported in milliseconds and bucketed into three ranges. The threshold to track is the **75th percentile** across pageviews, as Google reports it.
+LCP is reported in milliseconds. Track the **75th percentile** across pageviews, as Google does.
 
 | LCP at p75      | Rating       |
 | --------------- | ------------ |
@@ -28,7 +28,7 @@ The browser tracks the largest element that has finished painting in the visible
 
 The "size" is the rendered area on screen, intersected with the viewport. Off-screen content does not count, even if it's bigger.
 
-The "largest" can change as the page loads. The browser keeps emitting LCP entries until the user interacts with the page (clicks, scrolls, or keys). The **last entry before that interaction** is the LCP value.
+The "largest" can change as the page loads. The browser emits LCP entries until the user clicks, scrolls, or presses a key. The **last entry before that** is the LCP value.
 
 ## When LCP is reported
 
@@ -37,7 +37,7 @@ LCP is finalized:
 - when the user scrolls, clicks, or presses a key (whichever comes first), or
 - when the page becomes hidden (`visibilitychange`).
 
-Fastmon's tracker picks up the final LCP at that moment and includes it in the next batched payload.
+The tracker sends the final LCP with its next batch.
 
 ## Examples
 
@@ -45,32 +45,24 @@ Fastmon's tracker picks up the final LCP at that moment and includes it in the n
 
 **SaaS dashboard with a skeleton loader.** LCP is the skeleton container until real content paints, then it jumps to the largest data element. Watch out for falsely "fast" LCPs caused by a chunky skeleton box.
 
-**Article with embedded video.** LCP is the video poster, not the article text. Optimizing the poster image improves LCP, even though it's the article body the visitor actually reads.
+**Article with embedded video.** LCP is the video poster, not the article text. A lighter poster improves LCP.
 
 ## How to see LCP in fastmon [#how-to-see-lcp-in-fastmon]
 
 The LCP page sits under **Core Web Vitals → LCP**. Two tiles show the LCP with its rating and the share of pageviews measured.
 
 - **Where the time goes**: server response, load delay, load duration, and render delay as one bar, against the web.dev target split.
-- **History**: the selected percentile against the rating zones, or one line per phase, beside the distribution.
+- **History**: the selected percentile against the rating zones, one line per phase, or one line per page type, beside the distribution. The maximize icon next to the share link fills the window with the chart.
 - **Where the LCP is poor**: page type and device, or another dimension, ranked by pageviews over 4 s. A row opens its own chart and breakdown.
 - **LCP elements**: each element with selector, kind, discovery path, and phases. Its detail checks HTML discovery, preload, `fetchpriority`, lazy loading, and browser cache, and **AI prompt** hands it to an assistant.
 
-The API is [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets), with `fetch_priority_high_rate`, `lazy_rate`, and `cache_rate` per element. To check a deploy, set `compare_to_release_id` in the [Analytics API](/en/api/analytics/queryAnalytics).
+The API is [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets), with `fetch_priority_high_rate`, `lazy_rate`, and `cache_rate` per element.
 
-Programmatically:
+### Compare with an earlier window [#compare]
 
-```bash
-curl https://api.fastmon.eu/organizations/$ORG/analytics/query \
-  -H "Authorization: Bearer fm_$TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "time_range": { "from": "2026-05-01T00:00:00Z", "to": "2026-05-07T00:00:00Z" },
-    "metrics": ["lcp"],
-    "aggregations": ["p75"],
-    "group_by": { "granularity": "day", "dimensions": ["url"] }
-  }'
-```
+**Compare** next to the time range sets a second window: the period, day, week, or month before, a window you type, or a release against the one before it. The comparison is part of the page link.
+
+With a comparison on, the summary says what changed instead of how the LCP stands. Every chart shows the second window beside the first, and **Where the LCP is poor** sorts by the largest regression. The API takes it as `compare_to`, see [Compare releases](/en/guides/compare-releases#compare-metrics).
 
 ## How to improve a slow LCP
 
@@ -81,7 +73,7 @@ LCP splits into four phases, and **Where the time goes** shows each. Start with 
 3. **Resource load duration.** The LCP image is too big or served slowly. Use modern formats (AVIF/WebP), serve responsive sizes via `srcset`, and put it on a CDN close to your visitors.
 4. **Element render delay.** The browser has the bytes but is blocked by render-blocking CSS or JavaScript. Inline critical CSS, defer non-critical scripts.
 
-web.dev's [Optimize LCP](https://web.dev/articles/optimize-lcp) covers each phase in depth.
+More per phase: web.dev's [Optimize LCP](https://web.dev/articles/optimize-lcp).
 
 ## Common surprises
 
@@ -91,6 +83,6 @@ web.dev's [Optimize LCP](https://web.dev/articles/optimize-lcp) covers each phas
 
 ## What's next
 
-- [Interaction to Next Paint (INP)](/en/web-vitals/inp): the responsiveness metric that often regresses when you optimize LCP by adding more JavaScript.
+- [Interaction to Next Paint (INP)](/en/web-vitals/inp): the responsiveness metric.
 - [Cumulative Layout Shift (CLS)](/en/web-vitals/cls): the visual-stability metric.
-- [Web Vitals overview](/en/web-vitals): all five metrics and their thresholds.
+- [Web Vitals overview](/en/web-vitals): all metrics and thresholds.

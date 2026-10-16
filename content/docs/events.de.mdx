@@ -1,0 +1,121 @@
+---
+title: Eigene Events
+description: Sende eigene Events wie Warenkorb-Adds, Logins oder Anmeldungen, aus dem Tracker, per Klick, aus dem GA4-dataLayer oder als einzelnen POST.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Ein Event hält einen Schritt fest, der keine eigene URL hat: ein Warenkorb-Add aus dem Offcanvas, ein Login, eine Suche, eine Newsletter-Anmeldung. Es besteht aus einem Namen und optional bis zu 30 Properties.
+
+## Aus dem Tracker [#tracker]
+
+Rufe `fastmon.event` mit Namen und Properties auf:
+
+```js
+fastmon.event('add_to_cart', { value: 129.9, currency: 'EUR', sku: 'SW-100' });
+```
+
+Das Event fährt mit dem nächsten Beacon des Seitenaufrufs mit und kostet keinen eigenen Request. Der Tracker setzt die Zeit und kopiert die Properties beim Aufruf. Ist ein Event noch offen, wenn der Tab in den Hintergrund geht, geht es mit diesem letzten Beacon raus.
+
+Rufst du `fastmon.event` auf, bevor der Tracker geladen ist, brauchst du vorher diesen Queue-Stub. Der Tracker schickt das Gesammelte mit seinem ersten Beacon.
+
+```html
+<script>
+  window.fastmon = window.fastmon || {};
+  fastmon.event = fastmon.event || function () { (fastmon._q = fastmon._q || []).push(arguments); };
+</script>
+```
+
+### Per Klick [#click]
+
+Ein Klick auf ein Element mit `data-fm-event` oder auf etwas darin sendet ein Event mit diesem Namen. Jedes weitere `data-fm-event-*`-Attribut wird zur Property, ihr Wert ist immer ein String.
+
+```html
+<button data-fm-event="add_to_cart" data-fm-event-sku="SW-100" data-fm-event-value="129.9">
+  In den Warenkorb
+</button>
+```
+
+Es zählt das nächstgelegene Element mit dem Attribut. Ein leeres `data-fm-event=""` sorgt dafür, dass Klicks in einem markierten Container nicht zählen.
+
+### Aus dem GA4-dataLayer [#data-layer]
+
+Ist die Application-Einstellung [`collection.data_layer`](/de/concepts/applications#events) an, liest der Tracker GA4-E-Commerce-Pushes auf `window.dataLayer`. Standardmäßig ist sie aus. Pushes von vor dem Laden des Trackers zählen mit.
+
+- **Übernommene Namen**: `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info` und `purchase`. Alle anderen Pushes werden ignoriert.
+- **Behalten**: `value`, `currency`, die Anzahl der Artikel als `item_count` und pro Artikel `items.<n>.item_id`, `items.<n>.item_name`, `items.<n>.price` und `items.<n>.quantity`.
+- **Artikel**: kommen dazu, solange sie unter 30 Keys passen, eine große Bestellung behält also mindestens die ersten sechs. Ein Text über 500 Zeichen bleibt weg.
+- **Nicht behalten**: die Bestellnummer und jedes andere Feld.
+
+`view_cart`, `begin_checkout` und `purchase` erreichen außerdem ihre Stufe im [Checkout-Funnel](/de/checkout-funnel#stage-events).
+
+## Ohne Tracker [#collector]
+
+Jedes Skript auf deinen Seiten kann ein einzelnes Event posten, auch ein Tag-Manager. Schick es als `text/plain`, dann sendet der Browser keinen Preflight.
+
+```http
+POST https://fastmon.site/c/e/{collector_hash}
+Content-Type: text/plain
+
+{"u": "https://shop.example/cart", "n": "add_to_cart", "p": {"value": 129.9, "currency": "EUR"}}
+```
+
+| Key    | Pflicht | Bedeutung |
+| ------ | ------- | --------- |
+| `u`    | ja      | Die Seiten-URL. Ihr Host bestimmt die Site. Gespeichert wie die URL eines Seitenaufrufs. |
+| `n`    | ja      | Der Event-Name. |
+| `p`    | nein    | Die Properties als Objekt. Verschachtelte Objekte werden zu `parent.child`. |
+| `ts`   | nein    | Zeitpunkt in Epoch-Millisekunden. Standard ist die Empfangszeit. |
+| `pvid` | nein    | Der zugehörige Seitenaufruf. Ohne ihn hängt das Event an keinem Seitenaufruf und zählt nur. |
+| `sq`   | nein    | Zählt deine Events eines Seitenaufrufs ab 1. Ohne ihn bekommt jedes Event einen zufälligen Wert. |
+
+Die Route antwortet immer mit `204`. Ein Body, der eine [Regel](#limits) verletzt, wird still verworfen. Zwei Posts mit gleichem `pvid`, `ts` und `sq` sind ein Event, ein Retry sollte sein `sq` also mitschicken.
+
+Ist der POST blockiert, nimmt `GET /c/e/{collector_hash}.gif` dieselben Keys im Query-String, `p` als JSON-Text des Objekts.
+
+<Callout type="warn" title="Nur aus dem Browser">
+  Land, Gerät und Bot-Einstufung liest der Collector aus dem Request. Ein Event von deinem Server zählt als Bot am Standort des Servers.
+</Callout>
+
+## Limits und Regeln [#limits]
+
+| Regel | Wert |
+| ----- | ---- |
+| Name | `a-z`, `0-9`, `_`, `.`, `-`, 1 bis 48 Zeichen nach Kleinschreibung |
+| Events pro Beacon | 20, der Rest geht verloren |
+| Events pro Seitenaufruf | 100, danach sendet der Tracker keine mehr |
+| Property-Keys | 30 nach dem Abflachen |
+| Key-Länge | 128 Zeichen |
+| Wert-Länge | 500 Zeichen |
+
+- **Über einem Limit**: Das ganze Event wird verworfen, der Beacon dazu bleibt.
+- **Typen**: Zahl oder Boolean werden als Text gespeichert, ein Array als JSON-Text.
+- **Umsatz**: Nenne die Properties `value` und `currency`. Nichts rechnet Währungen um oder prüft sie.
+- **Sampling**: Events werden nie gesampelt, nicht abgerechnet und pro Site nicht gedeckelt.
+- **Abschalten**: Die Application-Einstellung [`event_tracking`](/de/concepts/applications#events) schaltet deine eigenen Events ab.
+
+## Datenschutz [#privacy]
+
+Namen und Properties dürfen keine personenbezogenen Daten wie Namen, E-Mail-Adressen oder Kundennummern enthalten. Was fastmon verwirft und maskiert, steht unter [Datenschutz → Event-Properties](/de/privacy#events).
+
+## Event korrigieren oder löschen [#edit]
+
+Owner und Member können einen falschen Namen, einen falschen Wert oder eine Testbestellung an einem einzelnen Event korrigieren. Öffne dazu die Zeile im Tab Events, oder rufe `PATCH /sites/{site_id}/events/{event_id}` mit neuem Namen oder neuen Properties auf. `DELETE` auf demselben Pfad entfernt es.
+
+Die `event_id` steht in der Event-Liste. Jede Zählung und Liste zieht nach, und das Audit-Log hält `event.updated` oder `event.deleted` fest. Stage-Events aus [Checkout-Seiten](/de/checkout-funnel#stage-events) lassen sich nicht ändern und antworten mit `409`.
+
+## Wo Events auftauchen [#where-it-shows-up]
+
+Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
+
+- **Tab Overview**: Events über die Zeit nach Name, die Namen nach Häufigkeit, Umsatz pro Event und Währung und die häufigsten Werte jeder Property.
+- **Tab Events**: eine Zeile pro Event mit den Properties als Chips. Eine Zeile öffnet jedes gespeicherte Feld und hat einen Share-Link.
+- **Namensfilter**: schlägt die Namen des Zeitraums nach Häufigkeit vor und nimmt jeden gültigen Namen.
+- **Seitenfilter**: URL, Seitentyp, Login-Status, Verbindung und Viewport-Klasse grenzen die Events ein. Events von vor dem 16.10.2026 tragen keine Seite und treffen keinen davon.
+- **Besucher-Journey**: zeigt die Events eines Besuchers mit ihren Properties. Ein `purchase` schließt einen Besuch ab wie `order_placed`.
+
+## API [#api]
+
+- `POST /organizations/{org_id}/analytics/events` listet Events, neueste zuerst, jedes mit `event_id`, `name`, `source` und `props`. `names` nimmt jeden Namen, `source` ist `tracker`, `collector` oder `shopify_pixel`. Siehe die [Referenz](/en/api/analytics/listAnalyticsEvents) (nur auf Englisch).
+- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit, als Umsatz pro Währung und pro Property-Wert.
+- **MCP und Ask**: Das Tool `get_events` liefert dieselben Zahlen. Siehe [MCP-Server](/de/mcp#tools).

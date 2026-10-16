@@ -37,6 +37,8 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **CSP-Report**: Ein Report, den der Browser schickt, wenn eine Seite gegen ihre Content Security Policy verstößt, sobald die Policy fastmon in `report-to` und `report-uri` nennt. Siehe [Content Security Policy](/de/csp).
 
+**Event**: Ein benannter Schritt ohne eigene URL, etwa ein Warenkorb-Add oder eine Anmeldung, mit bis zu 30 Properties. Siehe [Eigene Events](/de/events).
+
 **Tracker**: Der laufende JavaScript-Agent, den das Beacon-Script im Browser des Besuchers startet. Er registriert die Observer, puffert Werte, bereinigt URLs und sendet die Beacons.
 
 **Collector**: Der Server-Endpunkt unter `/c/{collector_hash}`, der Beacons empfängt, validiert und in den Analytics-Store schreibt.
@@ -53,7 +55,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 ## Ressourcen und Accounts
 
-**Organisation**: Top-Level-Account-Container. Besitzt Applications, Mitglieder, Notification Rules. Siehe [Organisationen](/de/concepts/organizations).
+**Organisation**: das Konto deiner Firma oder deines Teams, mit Plan, Mitgliedern und Applications. Siehe [Organisationen](/de/concepts/organizations).
 
 **Application**: Ein Tracking-Snippet. Ihr gehören das ausgelieferte Bundle, beide Hashes und jede [Tracker-Einstellung](/de/tracker); sie bedient eine oder mehrere Sites. Siehe [Applications](/de/concepts/applications).
 
@@ -65,7 +67,7 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **Session**: 30-Minuten-Fenster von Pageviews desselben Browsers, gruppiert über `session_id`. Eine der beiden Besucher-Identitäten, und consent-gated. Siehe [Besucher und Sessions](/de/concepts/sessions).
 
-**Release**: Versionierter Deploy-Marker, an eine Application gebunden. Wird von Analytics über `compare_to_release_id` für Vorher/Nachher genutzt. Siehe [Releases](/de/concepts/releases).
+**Release**: Versionierter Deploy-Marker, an eine Application gebunden. Wird von Analytics über `compare_to` für Vorher/Nachher genutzt. Siehe [Releases](/de/concepts/releases).
 
 **Tag**: Freies Label auf einer Site (max. 10) zum Organisieren von Sites. Ein Cross-Site-Analytics-Scope per Tag ist geplant; Tags filtern Analytics noch nicht. Konventionen: `env:production`, `team:growth` etc.
 

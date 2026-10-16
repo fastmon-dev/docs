@@ -17,6 +17,172 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-16" type="new" area="tracker" title="Eigene Events">
+
+Der Tracker schickt Events, die dein Shop selbst festlegt: einen Namen und bis zu 30 Properties.
+
+- **`fastmon.event(name, props)`** stellt ein Event in die Warteschlange. Ein Queue-Stub nimmt Aufrufe an, bevor der Tracker geladen ist.
+- **Ein Klick auf ein Element mit `data-fm-event`** schickt ein Event mit diesem Namen, jedes `data-fm-event-*`-Attribut wird zur Property. Mit einem leeren `data-fm-event=""` zählt ein Klick innerhalb eines markierten Containers nicht.
+- **GA4-Ecommerce-Pushes auf `window.dataLayer`** werden zu Events, wenn `collection.data_layer` für die Application an ist. Standardmäßig ist es aus. Der Tracker übernimmt `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info` und `purchase` und lässt Texte über 500 Zeichen weg.
+- **Kein eigener Request**: Events fahren mit dem nächsten Beacon des Seitenaufrufs mit, höchstens 20 pro Beacon und 100 pro Seitenaufruf. Ein Event nach dem Verbergen der Seite öffnet den `hidden`-Beacon erneut.
+
+Doku: [Eigene Events](/de/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="new" area="dashboard" title="Eigene Events auf der Events-Seite">
+
+Die Events-Seite zählt und listet jetzt auch die eigenen Events deines Shops, nicht nur den Checkout.
+
+- **Übersicht** zeigt die Events im Zeitverlauf nach Name, die Namen nach Häufigkeit, den Umsatz pro Event und Währung aus `value` und `currency` und die häufigsten Werte jeder Property.
+- **Events** listet sie einzeln mit ihren Properties. Eine Zeile klappt alle gespeicherten Felder auf und hat einen Link zum Teilen.
+- **Korrigieren oder löschen** kannst du ein einzelnes Event in seiner aufgeklappten Zeile, als Owner oder Member. Stage-Events aus Checkout-Seiten bleiben, wie sie sind.
+- **Filter**: Die Namensauswahl nimmt jeden Namen, und URL, Page-Type, Login-Status, Verbindung und Viewport-Klasse grenzen die Events ebenfalls ein.
+
+Die Besucher-Journey zeigt die Events mit ihren Properties. Doku: [Eigene Events](/de/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="new" area="api" title="Eigene Events in der API">
+
+Die API speichert, zählt und korrigiert Events mit beliebigem Namen, nicht nur die Checkout-Namen.
+
+- **`POST /c/e/{collector_hash}`** nimmt ein einzelnes Event mit beliebigem Namen aus jedem Browser an, ohne Tracker.
+- **`POST /analytics/events/overview`** zählt die Events eines Zeitraums pro Name, im Zeitverlauf, als Umsatz pro Währung und pro Property-Wert.
+- **`PATCH` und `DELETE /sites/{site_id}/events/{event_id}`** ändern oder entfernen ein Event. Das Audit-Log hält `event.updated` und `event.deleted` fest.
+- **Breaking**: `name` und `source` an einer Event-Zeile sind Strings statt Enums, `source` kennt zusätzlich `tracker`. Ein Listen-Cursor von vor der Änderung antwortet mit 400.
+- **Ask und MCP** bekommen `get_events`, und `list_sites` meldet `event_tracking` und `collect_data_layer`.
+
+Doku: [Eigene Events](/de/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="changed" area="platform" title="Der Checkout-Funnel zählt nur noch Events">
+
+Checkout-Stufen und Käufer kommen jetzt auf jeder Site und in jedem Zeitraum aus Events. Die `checkout_stage` eines Seitenaufrufs zählt nicht mehr als Stufe.
+
+- **Exakte Zahlen**: Funnel, Stufen, Kohorten, Journeys und die Käufe der Live-Übersicht zählen bei jeder Sampling-Rate exakt. Besucher bleiben geschätzt, die Conversion-Rate teilt also exakte Käufer durch geschätzte Besucher.
+- **`purchase`** erreicht die Erfolgsstufe neben `order_placed`, ein Käufer mit beiden zählt einmal.
+- **Filter**: URL, Page-Type, Login-Status, Verbindung und Viewport-Klasse filtern die Events exakt. Kampagne und Referrer filtern auf den Einstiegs-Seitenaufruf des Besuchers.
+- **Breaking**: Die Checkout-Routen antworten mit 422 auf technische Seitenfilter, einen Metrikbereich, einen Filter auf die Checkout-Stufe und die Identität `session`. Unter `session` hat die Besucherliste keine Checkout-Stufe, kein `outcome` und keine Stufenzahlen.
+
+Doku: [Checkout-Funnel](/de/checkout-funnel).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="new" area="dashboard" title="Der Partnerfloor">
+
+Partner-Organisationen bekommen unter Partner in der Seitenleiste den Partnerfloor: jeder live Client als eigene Zone auf einer Bühne. Die Größe einer Zone folgt dem Anteil des Clients am Traffic der letzten Stunde, die Farbe dem LCP p75. Sie zeigt die Leute, Warenkorb und Checkout, die heutigen Bestellungen und die Veränderung zur Vorwoche.
+
+Ein Klick auf einen Client öffnet seinen Shopfloor an Ort und Stelle. `POST /organizations/{org_id}/partner/live` liefert den Floor und braucht `partner:read` und `analytics:read`. Doku: [Analytics → Partnerfloor](/de/analytics#partnerfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="new" area="dashboard" title="Vergleichsmodus auf den LCP- und TTFB-Seiten">
+
+Ein Button „Vergleichen“ neben dem Zeitraum setzt ein zweites Fenster. Das kann der vorige Zeitraum, Tag, Woche oder Monat sein, ein beliebiges eingetipptes Fenster oder ein Release im Vergleich zum vorigen.
+
+- **Die Zusammenfassung** sagt, was sich gegenüber diesem Fenster geändert hat, und die Wert-Kachel zeigt die Veränderung.
+- **Jedes Diagramm** zeichnet das zweite Fenster neben das erste: den Trend gestrichelt, die Verteilung als Umriss, die Phasen als blassen Balken.
+- **„Wo der LCP schlecht ist“ und „Wo der TTFB langsam ist“** ergänzen pro Zeile den Wert des Fensters und die Veränderung, die größte Verschlechterung zuerst.
+
+Der Vergleich steckt im Link der Seite. Doku: [LCP → Vergleichen](/de/web-vitals/lcp#compare).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="fixed" area="dashboard" title="Tabellenspalten lassen sich wieder verbreitern">
+
+Beim Ziehen an einer Spaltenkante in der Explorer-Tabelle wurde jede Spalte gedeckelt, die URL-Spalte ließ sich nur noch schmaler machen. Spalten werden wieder breiter, und ein Doppelklick auf die Kante passt die Spalte an ihren Inhalt an.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="api" title="Vergleich mit beliebigem Fenster oder Release">
+
+`compare_to` nimmt neben den vier Modus-Strings ein Fenster `{from, to}` beliebiger Länge oder ein Release `{release_id}`.
+
+- **Wo**: `POST /analytics/query`, `/analytics/funnels/checkout/stages`, `/analytics/error-types`, `/analytics/histogram` und `/analytics/metric-summary`. Jede Route gibt das verwendete Fenster als `request.comparison_time_range` zurück.
+- **Ein Release** vergleicht ab seinem `released_at` über die Länge von `time_range`, bis zum nächsten Release oder bis jetzt. Release-Zeilen haben `window`, das du als `time_range` schicken kannst.
+- **Breaking**: `facts.previous_period` in der Metrik-Zusammenfassung und `previous_period` an den Zeilen der Fehlertypen heißen jetzt `comparison`.
+- **Deprecated**: `compare_to_release_id` funktioniert weiter. Schick stattdessen ein Fenster in `compare_to`.
+
+Mit `compare_to` sagt die Metrik-Zusammenfassung, was sich geändert hat, statt wie die Metrik steht, und sie deckt jetzt auch TTFB ab. Doku: [Releases vergleichen → Metriken vergleichen](/de/guides/compare-releases#compare-metrics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="Eine neue TTFB-Seite">
+
+Die TTFB-Seite ist aufgebaut wie die LCP-Seite: der Wert mit Bewertung und Trend, die Seitenaufrufe nach Bewertung und eine kurze Zusammenfassung.
+
+- **Wohin die Zeit geht** teilt das erste Byte in Verbindung, Server, den Weg dazwischen und die Wartezeit, die niemand gemessen hat. Bei Sites mit 103 Early Hints siehst du, wo der Browser das erste Byte gezählt hat.
+- **Mit Server-Timing** teilt sich der Server-Anteil in Edge, Origin, Datenbank, Cache, Suche, HTTP-Aufrufe, eigenen Code und Templates.
+- **Wo der TTFB langsam ist** sortiert Page-Types, Seiten, Cache-Status, Login-Status und Origin-Hosts nach ihren langsamen Seitenaufrufen.
+- **Cache und Origin** zeigt jede Cache-Ebene mit und ohne Treffer und hebt einen Origin-Host hervor, der aus der Reihe fällt.
+- **Verlauf** zeichnet auf der TTFB- und der LCP-Seite eine Linie pro Page-Type, und das Panel lässt sich auf Fenstergröße bringen.
+
+Doku: [TTFB → TTFB in fastmon](/de/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="Woher ein Besucher kam">
+
+Die Besucherliste zeigt, über welche Quelle und welchen Kanal jemand gekommen ist, etwa Google-Suche oder Newsletter. Das Besucher-Pop-up markiert jede Rückkehr von außen in der Zeitleiste und in der Journey, mit Kampagne. In der API haben Journey-Schritte `arrival`, und `journey[0].arrival` ist die Einstiegsquelle.
+
+Neu laden, Routenwechsel und der Rückweg von einer Zahlungsseite zählen nie als Rückkehr. Doku: [Sessions → Einstieg](/de/concepts/sessions#arrival).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="SPA-Routenwechsel zählen als interner Traffic">
+
+Routenwechsel von Single-Page-Apps und Wiederherstellungen aus dem BFCache haben jetzt die Quelle `internal`. Sie wiederholen nicht mehr Quelle und Medium der Einstiegsseite. Auf einer SPA-Site zeigen Ansichten nach Referrer-Quelle daher weniger Seitenaufrufe für benannte Quellen und Direktzugriffe, auch in den gespeicherten Daten.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="Das Passwort wählst du nach der Bestätigung">
+
+Bei der Registrierung fragen wir kein Passwort mehr ab. Der Bestätigungslink öffnet eine Seite, auf der du es wählst, und ein abgelaufener Link bietet dir einen neuen an. Eine Einladung fragt das Passwort weiterhin im Formular ab.
+
+In der API nimmt `POST /auth/verify-email` den Token und das Passwort, `GET /auth/verify-email` gibt es nicht mehr.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="Unbekannte Hosts bei einer Application mit einer Site">
+
+Die `site_policy` „Suggest“ verwirft einen Beacon von einem unbekannten Host jetzt auch bei einer Application mit nur einer Site und schlägt den Host als Site vor. Bisher landete jeder Host auf dieser einen Site, etwa `127.0.0.1` aus einem Testlauf. Ein `www.`-Host oder ein eigener Checkout-Host braucht eine eigene Site. Doku: [Tracker → `site_policy`](/de/tracker#site-policy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="fastmon stellt die Sampling-Rate ein">
+
+Unter Besucher & Sampling überlässt du mit „Anteil automatisch festlegen“ fastmon die Sampling-Rate einer Produktions-Application. fastmon leitet sie aus deinen gebuchten Pageviews ab und ändert sie höchstens um eine Stufe pro Tag, zwischen 100 und 1 %. Das gilt nur für Pläne mit einer festen Zahl an Pageviews.
+
+Die manuelle Rate geht jetzt bis 1 % hinunter, das API-Feld heißt `collection.sampling_mode`. Doku: [Applications → Sampling-Modus](/de/concepts/applications#sampling-mode).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="fixed" area="dashboard" title="Zeitdiagramme behalten ihren rechten Rand">
+
+Ein Zeitdiagramm über mehr als 6 Stunden fällt am rechten Rand nicht mehr auf null. Der laufende Abschnitt wird als unfertig gezeichnet, so weit die Daten vollständig sind, der Rest ist schraffiert.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="platform" title="Partner handeln mit ihrer eigenen Rolle">
+
+Die Leute eines Partners handeln in einem Client mit der Rolle, die sie in der Partner-Organisation haben: Owner, Member oder Viewer. Eine direkte Mitgliedschaft im Client hat weiterhin Vorrang.
+
+- **Neu im Client**: Ein Partner kann Apps auf Organisationsebene verbinden, etwa das Shopware-Plugin, und Org-Keys ausstellen.
+- **Weiterhin nicht erlaubt**: den Client löschen, die Inhaberschaft übertragen, Abrechnung oder Partner-Verbindungen verwalten und seine Owner herabstufen.
+- **Zugänge bleiben**: Keys und Verbindungen, die ein Partner angelegt hat, tragen `via_partner_org_id` und funktionieren nach dem Trennen weiter. Beim Trennen werden sie aufgelistet, damit der Client sie rotieren oder trennen kann.
+
+Doku: [Organisationen → Partner-Zugriff](/de/concepts/organizations#partner-access).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="dashboard" title="Das Dashboard öffnet dort, wo du aufgehört hast">
+
+fastmon öffnet mit dem Bereich, den du zuletzt gewählt hast: eine Application, eine Auswahl von Sites, ein Tag oder die ganze Organisation. Beim ersten Besuch öffnet es die Produktions-Application als Ganzes statt einer ihrer Sites.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-13" type="new" area="tracker" title="Page-Type aus einem Meta-Tag">
 
 Der Tracker liest den Page-Type aus `<meta name="fm-page-type" content="product">` und schickt ihn als `pt`, in jedem Datenschutzmodus.

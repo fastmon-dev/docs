@@ -223,11 +223,15 @@ Two setup helpers answer the two questions the setting asks. Both run from the d
 
 ### `site_policy` [#site-policy]
 
-Decides what happens when a beacon arrives from a hostname that isn't a registered [site](/en/concepts/sites) of this application. `open` (the default) drops the beacon but records the hostname as a **suggested domain** you can adopt in one click; `auto` creates a site for it and keeps its traffic from then on; `strict` drops it with no suggestion and no auto-provisioning, so only exactly-registered domains are served. Set on the application.
+Decides what happens to a beacon whose page-URL host is not a registered [site](/en/concepts/sites) of this application. Set on the application.
 
-This replaces the former `allowed_origins` allow-list and the per-site `enforce_domain_match` guard, which no longer exist: matching now happens on the reported page-URL host rather than the `Origin` header, which `sendBeacon` often omits. `strict` is how you lock ingest to domains you have explicitly registered.
+- **`open`** (default, "Suggest"): drops the beacon and lists the host as a **suggested domain** to adopt.
+- **`auto`** ("Auto-create"): creates a site for the host and keeps its traffic.
+- **`strict`** ("Ignore"): drops the beacon with no suggestion.
 
-**PII:** none. This is ingest hardening, not a data-collection switch.
+This holds for an application with a single site too, so a `www.` host beside the apex or a separate checkout host needs a site of its own. Checkout events and NEL and CSP reports follow the same rule. A hostless `<noscript>` pixel beacon is dropped.
+
+**PII:** none.
 
 ### `collector_mode` [#collector-mode]
 

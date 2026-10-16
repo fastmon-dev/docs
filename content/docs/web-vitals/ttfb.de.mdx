@@ -3,9 +3,9 @@ title: Time to First Byte (TTFB)
 description: "Wie lange der Server bis zum ersten Byte braucht und warum jede andere Metrik darauf aufsetzt."
 ---
 
-**TTFB** misst die Zeit zwischen Navigation Start und dem ersten Byte, das beim Browser ankommt. Das ist der Boden, auf dem alles andere steht: bevor das erste Byte da ist, kann visuell nichts passieren.
+**TTFB** misst die Zeit zwischen Navigation Start und dem ersten Byte, das beim Browser ankommt. Bevor es da ist, kann visuell nichts passieren.
 
-TTFB ist **kein** Core Web Vital. Eine diagnostische Metrik, aber die wichtigste, wenn du langsamen [LCP](/de/web-vitals/lcp) oder [FCP](/de/web-vitals/fcp) auseinandernehmen willst.
+TTFB ist **kein** Core Web Vital. Bei langsamem [LCP](/de/web-vitals/lcp) oder [FCP](/de/web-vitals/fcp) ist es die Diagnose-Metrik, die du zuerst prüfst.
 
 ## Was ist ein guter TTFB?
 
@@ -17,7 +17,7 @@ TTFB wird in Millisekunden gemessen. Beobachte das **75. Perzentil**.
 | ≤ 1.800 ms      | Verbesserungswürdig |
 | > 1.800 ms      | Schlecht            |
 
-Die Schwellen rechnen die realistischen Kosten eines kalten Caches auf typischen Mobilnetzen schon ein. TTFB unter 200 ms (warmer Cache, naher PoP) ist top. Über 1 Sekunde fühlt sich für den Besucher an wie eine Seite, die einfach nicht losläuft.
+TTFB unter 200 ms ist top.
 
 ## Was in TTFB einfließt
 
@@ -37,7 +37,7 @@ TTFB wird aus der Navigation-Timing-API als `responseStart - fetchStart` errechn
 
 ## TTFB hinter 103 Early Hints [#early-hints]
 
-Auf Sites hinter 103 Early Hints (Shopify-Storefronts, Cloudflare) liegt TTFB regelmäßig *unter* den [Server-Timing](/de/guides/server-timing)-Phasen des Servers für denselben Pageview. Beides stimmt. `responseStart` markiert das erste Byte der *ersten* Response, und mit Early Hints ist das die vorläufige 103, die die Edge in etwa einem Roundtrip beantwortet; die echte Antwort deines Servers, mit dem `Server-Timing`-Header darauf, kommt später. Die beiden messen unterschiedliche Responses desselben Requests.
+Auf Sites hinter 103 Early Hints (Shopify-Storefronts, Cloudflare) liegt TTFB regelmäßig *unter* den [Server-Timing](/de/guides/server-timing)-Phasen des Servers für denselben Pageview. Beides stimmt. `responseStart` markiert das erste Byte der *ersten* Response, und mit Early Hints ist das die vorläufige 103, die die Edge in etwa einem Roundtrip beantwortet; die echte Antwort deines Servers, mit dem `Server-Timing`-Header darauf, kommt später.
 
 Um sie auseinanderzuhalten, speichert fastmon zusätzlich **`ttfb_final`**: das `finalResponseHeadersStart` des Browsers, das erste Byte der finalen Response. Der Tracker liest es mit derselben Aktivierungs-Korrektur und derselben 60-Sekunden-Kappung wie TTFB (Wire-Key `frs`), und der Collector verwirft einen Wert unter `ttfb`. So liest du das Paar:
 
@@ -49,23 +49,26 @@ Um sie auseinanderzuhalten, speichert fastmon zusätzlich **`ttfb_final`**: das 
 
 TTFB selbst bleibt `responseStart` und damit vergleichbar mit CrUX und den Web-Vitals-Felddaten. `ttfb_final` ist ein Zeilenfeld auf `POST /analytics/beacons`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik (avg, p50 bis p99).
 
-Im Dashboard zeigt die TTFB-Seite ein Panel **Early Hints**, wo sich die beiden Werte unterscheiden: den Vorsprung am gewählten Perzentil, die zwei ersten Bytes als einen geteilten Balken und den Anteil der Pageviews, auf denen das finale gemessen wurde (ein Chromium-Timing, und Soft-Navigationen haben keins). Die [Response-Aufschlüsselung](/de/analytics#fetchxhr-und-server-timing) zeichnet den Vorsprung als eigene Zeile „Early Hints" innerhalb der Wartezeit, lässt die Server-Phasen dort enden und beginnt den Übertragungsbalken bei den finalen Response-Headern statt beim ersten Byte. Im Explorer ist `ttfb_final` eine zeichenbare Metrik, eine sortierbare Spalte und ein Drawer-Feld; der Pageview-Drawer zeigt es nur, wenn es von TTFB abweicht.
+Im Dashboard laufen die Balken von [Wohin die Zeit geht](#how-to-see-ttfb-in-fastmon) bis zum finalen ersten Byte, und eine Marke zeigt, wo der Browser das erste Byte gezählt hat. Die [Response-Aufschlüsselung](/de/analytics#fetchxhr-und-server-timing) zeichnet den Vorsprung als eigene Zeile „Early Hints" in der Wartezeit und lässt den Übertragungsbalken bei den finalen Response-Headern beginnen. Im Explorer ist `ttfb_final` Metrik, Spalte und Drawer-Feld; der Pageview-Drawer zeigt es nur, wenn es von TTFB abweicht.
 
-## TTFB in fastmon ansehen
+## TTFB in fastmon ansehen [#how-to-see-ttfb-in-fastmon]
 
-Der **Performance**-Bereich zeigt TTFB bei p50, p75, p95.
+Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert mit Bewertung und Trend, die Seitenaufrufe nach Bewertung und ein paar Sätze dazu, wohin die Zeit geht.
 
-- **Nach Land**: Group by `country`. RTT zu deinem Origin ist der dominante Faktor für kalte Verbindungen, und er ist regional schief. Liegt dein Origin in Frankfurt, ist TTFB nach São Paulo schlecht, egal wie schnell dein Server ist.
-- **Nach URL**: Group by URL. Wenn eine einzelne Seite deutlich schlechter ist, macht die Application Per-Page-Arbeit (DB-Query, Third-Party-Fetch), die andere nicht haben.
-- **Nach Release**: `compare_to_release_id`. Ein Backend-Deploy mit einem neuen synchronen externen Call zeigt sich hier zuerst.
+- **Wohin die Zeit geht**: Verbindung, Server, der Weg dazwischen und bei Seitenaufrufen ohne Server-Timing die ungemessene Wartezeit. Je ein Balken für alle Seitenaufrufe und für die, die CDN, Origin-Cache oder keins von beiden beantwortet hat.
+- **Server-Aufteilung**: was [Server-Timing](/de/guides/server-timing) meldet, also Edge, Origin, Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates. Ohne den Header siehst du einen Block und einen Link zur Einrichtung.
+- **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
+- **Wo der TTFB langsam ist**: Seitentypen, Seiten, CDN-Status, Login-Status, Origin-Hosts und mehr, nach langsamen Seitenaufrufen sortiert, jede Zeile mit Aufteilung.
+- **Cache und Origin**: jede Cache-Ebene mit und ohne Hit, ihre Hit-Rate und die Backend-Zeit pro Origin-Host. Ein Host, der aus der Reihe fällt, wird hervorgehoben.
+- **Vergleichen**: funktioniert wie auf der LCP-Seite, siehe [Mit einem früheren Zeitraum vergleichen](/de/web-vitals/lcp#compare).
 
 ## Schlechten TTFB verbessern
 
-1. **HTML am Edge cachen.** Eine statische oder nahezu statische Seite sollte aus einem CDN-Cache kommen, nicht von deinem Origin. Der größte Hebel.
+1. **HTML am Edge cachen.** Eine statische oder nahezu statische Seite sollte aus einem CDN-Cache kommen, nicht von deinem Origin.
 2. **Näher an deine Besucher rücken.** Multi-Region-Origins oder ein gut verteilter Edge-Layer senken die RTT für alle außerhalb deiner Hauptregion.
 3. **Server-Response profilen.** APM, Server-Logs oder ein Server-Timing-Header, um den Engpass zu finden. Üblicherweise: eine langsame DB-Query, ein synchroner Third-Party-Call, oder SSR-React-Hydration, die zu viele Daten durchläuft.
 4. **Redirect-Ketten reduzieren.** Jeder Redirect ist ein voller Roundtrip. `http://` → `https://` → `www.` → Final-URL sind drei Roundtrips, bevor der Browser überhaupt das HTML hat.
-5. **HTTP/2 oder HTTP/3 nutzen.** Die meisten modernen Stacks tun das schon, aber prüfen; ältere Origins handeln noch HTTP/1.1 aus.
+5. **HTTP/2 oder HTTP/3 nutzen.** Ältere Origins handeln noch HTTP/1.1 aus.
 
 ## Häufige Überraschungen
 

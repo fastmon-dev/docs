@@ -40,7 +40,7 @@ The hashes, the preset and its switches, the privacy settings, the collector, `s
 
 ## Tags
 
-Tags are short labels you attach to a site to group related properties (a "production sites" or "marketing sites" grouping). The sidebar's per-site tag filter was removed; a proper cross-site analytics scope that reports on every site carrying a tag together is planned. For now, tags are labels and don't filter analytics.
+Tags are short labels you attach to a site to group related properties (a "production sites" or "marketing sites" grouping). A cross-site scope by tag is planned. For now, tags don't filter analytics.
 
 Conventions that work well:
 
@@ -53,7 +53,7 @@ Max 10 tags per site.
 
 ## Which domains may send data
 
-The former per-site `allowed_origins` allow-list and `enforce_domain_match` guard are gone. Ingest is governed by the application's [`site_policy`](/en/tracker#site-policy): `strict` accepts only exactly-registered domains, `open` (the default) records an unknown hostname as a suggested domain you can adopt, and `auto` provisions it as a site automatically. Set it on the application.
+Only registered domains send data. A beacon from any other host is handled by the application's [`site_policy`](/en/tracker#site-policy): suggested as a domain (`open`, the default), added as a site (`auto`), or dropped (`strict`). This holds for an application with one site too, so a `www.` host or a separate checkout host needs a site of its own.
 
 ## Common scenarios
 

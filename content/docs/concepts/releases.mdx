@@ -12,7 +12,7 @@ Performance regressions almost always line up with a deploy. Without release mar
 ## When you'd touch it
 
 - **Every deploy.** Cleanest setup: a `POST /sites/{id}/releases` from CI/CD after a successful deploy.
-- **Investigating a regression.** Use the release picker in the dashboard to overlay metrics across releases.
+- **Investigating a regression.** On the LCP or TTFB page, **Compare → Release, against the one before** shows a release next to the previous one.
 - **Rolling back.** Tag the rollback as a release too; you want both transitions visible.
 
 If you don't tag releases, nothing breaks. The dashboard still works without them. You just lose the deploy-correlation shortcut.
@@ -21,10 +21,11 @@ If you don't tag releases, nothing breaks. The dashboard still works without the
 
 | Field         | Type        | Notes                                                                  |
 | ------------- | ----------- | ---------------------------------------------------------------------- |
-| `id`          | UUID v7     | Used in `compare_to_release_id` queries.                               |
+| `id`          | UUID v7     | Used as `compare_to: { "release_id": … }` in analytics queries.     |
 | `site_id`     | UUID v7     | The site this release belongs to.                                      |
 | `version`     | string      | Required. Free-form (`v2.4.1`, `2026-05-07`, `git:abcdef0`).          |
 | `released_at` | timestamp   | Optional. When the deploy went live. Defaults to "now" if omitted.    |
+| `window`      | time range  | Read-only. From `released_at` to the next release, at most 14 days.   |
 
 That's the whole resource. Releases are minimal on purpose; the goal is correlation, not building a deploy database.
 
@@ -53,26 +54,15 @@ A final step in the deploy job, with `${{ github.sha }}` or `${{ github.ref_name
 
 A `release` stage after the deploy stage, using `$CI_COMMIT_SHA` or `$CI_COMMIT_TAG`.
 
-## Comparing releases
+## Comparing releases [#comparing-releases]
 
-Pass `compare_to_release_id` to the analytics query. The result includes a `compare` block with the same metrics computed for the window *before* that release.
-
-```json
-{
-  "time_range": { "from": "2026-05-07T00:00:00Z", "to": "2026-05-08T00:00:00Z" },
-  "metrics": ["lcp", "inp"],
-  "aggregations": ["p75"],
-  "compare_to_release_id": "01HZX..."
-}
-```
-
-The window for the "before" comparison is the same length as `time_range`, ending at the release's `released_at`. So a 24-hour post-release window is compared against the 24 hours immediately preceding the release.
+Send a release's `window` as `time_range` and the previous release as `compare_to: { "release_id": … }`. Each row of the result then carries a `comparison` with the same metrics. The steps and an example are in [Compare releases](/en/guides/compare-releases#compare-metrics).
 
 ## Common scenarios
 
 ### Continuous deploys
 
-Ten deploys a day? Tag every single one. Volume isn't a problem. The release picker shows the most recent ones first; older ones stay queryable by ID.
+Tag every deploy, volume is no problem. The **Compare** picker lists the releases of the last 90 days, newest first, and older ones stay queryable by ID.
 
 ### Long-running release branches
 
@@ -86,10 +76,10 @@ Tag the rollback as a separate release with a version like `rollback-v2.4.0`. Th
 
 - **`released_at` matters more than `id`.** Sorting is by `released_at`. Back-date a release and the order will look wrong.
 - **Releases are per site.** A monorepo shipping several sites needs one release call per site, even if the version string is identical.
-- **Deleting a release breaks `compare_to_release_id` requests that reference it.** The endpoint returns `404`. Metrics already rendered aren't affected.
+- **Deleting a release breaks comparisons that reference it.** The endpoint returns `404`. Metrics already rendered aren't affected.
 
 ## Related
 
 - [Sites](/en/concepts/sites): releases live under a site.
-- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to_release_id`.
+- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to`.
 - [Compare releases](/en/guides/compare-releases): step-by-step guide for hooking up CI/CD.

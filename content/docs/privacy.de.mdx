@@ -46,10 +46,10 @@ Genau das, was wir brauchen, um Web Vitals und Performance pro Seite auszurechne
 - **LCP-Image-URL, LoAF-Script-Pfade, Third-Party-Domain-Map**: in jeder Konfiguration erfasst, bei der Erfassung auf Origin + Pathname reduziert. Sie beschreiben die Seitenzusammensetzung des Kunden (siehe [Site-Metadaten vs. Besucherdaten](#site-metadaten-vs-besucherdaten)), nicht den Besucher.
 - **Page-Type-Tag**: der `content` deines Tags `<meta name="fm-page-type">`, bis 32 Zeichen, in jeder Konfiguration.
 - **Fetch/XHR-Aggregate**: Opt-in ([`collect_fetch_xhr`](/de/tracker#collect-fetch-xhr)). Aufruf-Counts, Dauern und Fehlercodes pro Endpunkt für deine eigenen APIs. Pfade werden strenger als Seiten-URLs bereinigt (Query, Fragment und ID-artige Segmente entfernt).
-- **Checkout-Stufe und Warenkorb-Interaktion**: zwei serverseitig abgeleitete Labels, beim Ingest aus Werten berechnet, die schon auf dem Beacon stehen. Die Stufe (`cart`, `checkout`, `success` oder leer) entsteht durch Abgleich der bereinigten Seiten-URL mit URL-Mustern; der Warenkorb-Merker aus einem Fetch/XHR-`POST` an einen bekannten Warenkorb-Endpunkt. Keines von beiden fügt dem Beacon ein Feld hinzu oder liest etwas, das deine Einstellungen nicht schon erlaubt haben, und pro Besucher wird nichts gespeichert: Der Funnel wird zur Abfragezeit berechnet. Standardmäßig an, mit Opt-out (`checkout_tracking`). Siehe [Checkout-Funnel](/de/checkout-funnel#privacy).
+- **Checkout-Stufe und Warenkorb-Interaktion**: zwei serverseitig abgeleitete Labels, beim Ingest aus Werten berechnet, die schon auf dem Beacon stehen. Die Stufe (`cart`, `checkout`, `success` oder leer) entsteht durch Abgleich der bereinigten Seiten-URL mit URL-Mustern; der Warenkorb-Merker aus einem Fetch/XHR-`POST` an einen bekannten Warenkorb-Endpunkt. Keines von beiden fügt dem Beacon ein Feld hinzu oder liest etwas, das deine Einstellungen nicht schon erlaubt haben. Standardmäßig an, mit Opt-out (`checkout_tracking`). Siehe [Checkout-Funnel](/de/checkout-funnel#privacy).
 - **Session-ID**: nur wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist (das Preset Full, oder nachdem dein CMP `grantConsent()` aufruft). Liegt im `sessionStorage`, gruppiert Pageviews einer Session, stirbt mit dem Tab.
 
-Mehr schickt der Beacon nicht, und kein Opt-in schaltet mehr frei.
+Mehr schickt der Beacon nicht, außer den [Events](#events), die dein Shop selbst sendet.
 
 ### Bot- und Rechenzentrums-Labels [#bot-and-datacenter-labels]
 
@@ -72,7 +72,7 @@ abgeschnitten auf 128 Bit (32 Hex-Zeichen auf dem Wire). Er wird gespeichert, wa
 - **Forward Secrecy by Construction.** Das Salt ist ein 32-Byte-Wert aus `crypto/rand`, lebt ausschließlich im RAM des aktiven Edge und rotiert alle 24 Stunden. Es wird nie persistiert, nie verteilt, nie geloggt. Wer später Zugriff auf die Zeile bekommt, kann `stitch` nicht zurück auf (IP, UA) rechnen: das Salt, mit dem es produziert wurde, ist weg.
 - **Verknüpfbarkeit gedeckelt, höchstens ~24 h.** Bei jeder Salt-Rotation bekommt derselbe Besucher einen neuen `stitch`-Wert. Cross-Pageview-Verknüpfung kann nicht über ein Salt-Fenster hinaus anwachsen.
 - **Auf eine Application begrenzt.** Der `collector_hash` steckt im HMAC-Input, dieselbe (IP, UA) ergibt also pro Application einen anderen `stitch`, und nichts verknüpft einen Besucher mit der Seite eines anderen Betreibers. Innerhalb einer Application ist der Wert auf allen Domains gleich, die sie bedient. Genau das lässt einen org-weiten Tracker einen wiederkehrenden Besucher einmal zählen statt einmal pro Domain.
-- **Nichts, was die Seite behauptet, geht in den Input.** Der Host aus dem Beacon-Body bleibt bewusst draußen, eine Seite kann also nicht beeinflussen, welche Kennung ihr Besucher bekommt. Deshalb joint auch ein Shopify-Checkout-Pixel, das in einer Sandbox läuft und keine Domain nennen kann, noch auf den Besucher, der im Storefront unterwegs war.
+- **Nichts, was die Seite behauptet, geht in den Input.** Der Host aus dem Beacon-Body bleibt bewusst draußen, eine Seite kann also nicht beeinflussen, welche Kennung ihr Besucher bekommt.
 - **Das Salt ist das einzige Geheimnis.** Die übrigen HMAC-Inputs sind öffentlich oder stehen in der gespeicherten Zeile selbst, und der Eingaberaum ist klein genug zum Durchprobieren; wer das lebende Salt hätte, könnte ein vermutetes (IP, UA)-Paar durch Nachrechnen bestätigen. Niemand hat es: es existiert nur im laufenden Edge-Prozess und ist nach der Rotation weg. Die Garantie ist operativ (RAM-only-Salt, 24-h-Rotation), nicht mathematisch.
 
 Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung. Weil er unter dem Default-Preset Standard an ist, benenne ihn in deiner Datenschutzerklärung. Wenn du lieber gar keinen Besucher-Identifier speicherst, hält `store_stitch` aus (das Preset Minimal) die Zeile echt anonym.
@@ -81,10 +81,8 @@ Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Bes
 
 Zwei Schalter pro Site entscheiden, ob überhaupt ein Besucher-Identifier in die Speicherung gelangt. Unter dem Default-Preset Standard ist `store_stitch` **an** und `collect_sessions` **aus**; das Preset Minimal schaltet beide aus.
 
-- **[`store_stitch`](/de/tracker#store-stitch).** An speichert den am Edge abgeleiteten `stitch` für Unique-Visitor-Zahlen und besucherbezogene Metriken (Bounce-Rate, Seiten pro Besuch, Verweildauer). Aus lässt eine Zeile ganz ohne Besucher-Identifier zurück, vollständig anonym. Alle Per-Pageview-Signale (Web Vitals, Fehler, Third-Party, Attribution) bleiben so oder so unberührt.
-- **[`collect_sessions`](/de/tracker#collect-sessions).** An schreibt die tab-gebundene `sessionStorage`-Session-ID für seitenübergreifende Journeys und Funnels. Aus fasst das ausgelieferte Bundle `sessionStorage` gar nicht erst an: der Schreibvorgang auf dem Gerät entfällt, er wird nicht bloß serverseitig verworfen.
-
-Die beiden sind unabhängig: schalte einen an, beide oder keinen.
+- **[`store_stitch`](/de/tracker#store-stitch).** An speichert den am Edge abgeleiteten `stitch` für Unique-Visitor-Zahlen und besucherbezogene Metriken (Bounce-Rate, Seiten pro Besuch, Verweildauer). Aus lässt die Zeile vollständig anonym.
+- **[`collect_sessions`](/de/tracker#collect-sessions).** An schreibt die tab-gebundene `sessionStorage`-Session-ID für seitenübergreifende Journeys und Funnels. Aus fasst das ausgelieferte Bundle `sessionStorage` gar nicht erst an.
 
 ### NEL-Reports [#nel-reports]
 
@@ -103,13 +101,21 @@ Nennt die [Content Security Policy](/de/guides/content-security-policy) einer Si
 - **Besucher**: der Edge-[`stitch`](#der-am-edge-abgeleitete-stitch-identifier) unter [`store_stitch`](/de/tracker#store-stitch) und dieselben Labels für Land, Gerät, Browser, OS und Bots wie bei einem Seitenaufruf.
 - **Verworfen**: das Code-Sample von `'report-sample'`, ungelesen und in jedem Modus, der Inhalt einer `data:`- oder `blob:`-URL, Reports, die Browser-Erweiterungen auslösen, und jeder Referrer von einem anderen Host.
 
+### Event-Properties [#events]
+
+Ein Shop kann eigene [Events](/de/events) senden, jedes ein Name mit bis zu 30 Properties. Personenbezogene Daten gehören weder in Namen noch in Properties, und dafür bist du verantwortlich.
+
+- **Verworfen**: jeder Key wie `email`, `password` oder `token` und jeder Key mit einem `@`.
+- **Maskiert**: eine E-Mail-Adresse in einem Wert wird zu `[email]`.
+- **Mitgespeichert**: die Seiten-URL, gekürzt wie bei einem Seitenaufruf, und dieselben Besucher-Labels wie bei einem Seitenaufruf.
+
 ### Suchbegriffe der Site-Suche [#search-terms]
 
 Auf einer Seite vom Typ `search` behält die gespeicherte URL den Wert von `q`, `search` und `searchparam`, gekürzt auf 64 Zeichen. Eine Seite vom Typ `category` behält `searchparam`, das OXID für sein Filterformular nutzt. Das gilt in jedem Modus, auch in `anonymous`, ohne Opt-in und ohne Opt-out. Auf allen anderen Seiten fallen diese Werte weg.
 
 ### Site-Metadaten vs. Besucherdaten
 
-Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch. Sie sagen dir, welches deiner CDNs langsam ist; sie identifizieren niemanden.
+Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch.
 
 Das macht sie zu Site-Konfiguration, nicht zu Besucherdaten. Wir behandeln sie trotzdem sorgfältig (Script-URLs und LCP-Image-URLs werden bei der Erfassung auf Origin + Pathname reduziert), aber sie sind nicht das, worum es bei den Consent- und Verknüpfbarkeits-Reglern geht.
 

@@ -3,65 +3,53 @@ title: Applications
 description: "Eine Application ist ein Tracking-Snippet: ihre Hashes, Erfassungs-Config und die Sites (Domains), die sie bedient."
 ---
 
-Eine **Application** ist der Tracking-Embed. Sie bedient eine oder
-viele Domains, jede davon eine **Site**.
-
-Die Hierarchie ist **Organization → Application → Site**:
-
-- Eine **Organization** besitzt Applications, Members und Tokens.
-- Eine **Application** besitzt das Snippet und die komplette
-  Erfassungs-Config.
-- Eine **Site** ist eine einzelne Domain unter der Application, mit
-  eigenem Dashboard. Siehe [Sites](/de/concepts/sites).
+Eine **Application** ist der Tracking-Embed: Ihr gehören das Snippet und
+die komplette Erfassungs-Config. Sie bedient eine oder mehrere Domains, jede
+davon eine [Site](/de/concepts/sites) mit eigenem Dashboard.
 
 ## Die zwei Hashes
 
-Eine Application hat zwei kurze Hashes:
+Beide Hashes findest du auf der Karte der Application unter
+**··· → IDs & Hashes**.
 
-- **`source_hash`** steht in der **Script-URL** (`/s/{source_hash}.js`)
-  und wählt das Bundle, das an den Browser geht.
-- **`collector_hash`** steht in der **Ingest-URL** (`/c/{collector_hash}`)
-  und sagt, zu welcher Application ein Beacon gehört. Er ist im Script
-  eingebacken.
+- **`source_hash`** steht in der Script-URL (`/s/{source_hash}.js`) und
+  wählt das Bundle.
+- **`collector_hash`** steht in der Ingest-URL (`/c/{collector_hash}`) und
+  sagt, zu welcher Application ein Beacon gehört.
 
-Beide findest du auf der Karte der Application unter
-**··· → IDs & Hashes**. Beim Rotieren werden beide neu erzeugt, das
-ausgelieferte Script wird invalidiert, und ein eingefügtes
-[Shopify-Pixel](/de/guides/shopify-checkout) geht kaputt.
+Rotieren erzeugt beide neu, invalidiert das ausgelieferte Script und macht
+ein eingefügtes [Shopify-Pixel](/de/guides/shopify-checkout) kaputt.
 
 ## Was erfasst wird: Presets
 
-Die Erfassungs-Config lebt auf der Application: ein
-[Preset](/de/tracker) (`minimal` / `standard` / `full`, Default
-`standard`), das sich in Einzelflags entfaltet, alle ins
-ausgelieferte Bundle gebacken.
+Ein [Preset](/de/tracker) (`minimal` / `standard` / `full`, Default
+`standard`) setzt die einzelnen Flags, die ins ausgelieferte Bundle
+gebacken werden.
 
 ## Wohin die Beacons gehen: der Collector
 
 `collector_mode` bestimmt den Host im Snippet:
 
-- **`default`**: fastmons geteilter Collector (`fastmon.site`); aus
-  Sicht deiner Seite Third-Party.
-- **`relative`**: hostlose `/s/`- und `/c/`-Pfade, same-origin über
-  deinen Reverse-Proxy ausgeliefert; First-Party.
-- **`custom`**: ein absoluter `collector_endpoint`-Host, den du
-  kontrollierst.
+- **`default`**: fastmons geteilter Collector (`fastmon.site`), Third-Party.
+- **`relative`**: hostlose `/s/`- und `/c/`-Pfade über deinen
+  Reverse-Proxy, First-Party.
+- **`custom`**: ein `collector_endpoint`-Host, den du kontrollierst.
 
-Er wird beim Anlegen gesetzt. Siehe
-[Implementierung](/de/install/html).
+Er wird beim Anlegen gesetzt. Siehe [Implementierung](/de/install/html).
 
 ## Unbekannte Domains: `site_policy`
 
 Kommt ein Beacon von einem Hostnamen, der keine registrierte Site
 ist, entscheidet die **`site_policy`**:
 
-- **`open`** (Default): der Beacon wird verworfen, der Hostname aber
-  als **vorgeschlagene Domain** vermerkt, die du mit einem Klick
-  adoptierst.
-- **`auto`**: für den Hostnamen wird eine Site angelegt, ihr Traffic
-  wird ab dann behalten.
-- **`strict`**: der Beacon wird verworfen, ohne Vorschlag; nur
-  registrierte Domains werden bedient.
+- **`open`** (Default, „Vorschlagen“): Der Beacon wird verworfen, der
+  Hostname landet als **vorgeschlagene Domain** in der Liste. Du übernimmst
+  sie mit einem Klick.
+- **`auto`**: Für den Hostnamen wird eine Site angelegt, ihr Traffic bleibt.
+- **`strict`**: Der Beacon wird ohne Vorschlag verworfen.
+
+Das gilt auch für eine Application mit nur einer Site. Ein `www.`-Host neben
+der Apex-Domain oder ein eigener Checkout-Host braucht eine eigene Site.
 
 ## Environment
 
@@ -78,32 +66,23 @@ gesetzte Plattform ist `manual` und wird von späterer Erkennung nicht
 
 `shop.active` sagt, ob die Application ein Shop ist, dazu
 `shop.source` für die Herkunft. Ohne Einstellung folgt der Wert der
-Plattform; bei unbekannter Plattform bleibt er `null`. `spa` markiert
-eine Single-Page-App und wird von Hand gesetzt.
+Plattform; bei unbekannter Plattform bleibt er `null`. `spa` setzt du von Hand.
 
 Eine Shopify-Application liefert zusätzlich das
-[Checkout-Event-Pixel](/de/guides/shopify-checkout) aus, gebaut aus
-`source_hash` und den Collector-Einstellungen.
+[Checkout-Event-Pixel](/de/guides/shopify-checkout) aus.
 
 ## Page-Type-Detection [#page-type-detection]
 
-`platform` sagt, worauf die
-Application läuft; `page_type.body_class` schaltet das Lesen des
-Page-Types (Home, Product, Cart, Checkout) aus der `<body>`-Klasse
-ein. Eine Plattform zu wählen schaltet das Lesen nicht ein, und für
-Shopify und PrestaShop bleibt es aus, weil es für sie kein Ruleset
-gibt.
+`page_type.body_class` liest den Page-Type (Home, Product, Cart, Checkout)
+mit dem Ruleset der Plattform aus der `<body>`-Klasse. Die Plattform allein
+schaltet das nicht ein, und Shopify und PrestaShop haben kein Ruleset.
 
-Ein Theme, das eine dieser Klassen umbenannt hat, erfasst nichts.
-`pagetype_rules` benennt deine eigenen: bis zu 24 exakte Klassennamen,
-jeder auf einen Page-Type abgebildet. `page_type.url_rules` ordnet
-Seiten über die URL zu: bis zu 10 Muster in der
-[Mustersyntax](/de/checkout-funnel#pattern-syntax), jedes mit einem
-Page-Type, das erste passende gewinnt.
-
-Eine Seite kann ihren Typ selbst nennen, mit
-`<meta name="fm-page-type" content="product">` oder `page-type`, wenn
-das fehlt oder leer ist. Soft-Pageviews lesen es, sobald deine App es neu setzt.
+- **`pagetype_rules`**: bis zu 24 Klassennamen deines eigenen Themes, jeder
+  auf einen Page-Type abgebildet.
+- **`page_type.url_rules`**: bis zu 10 URL-Muster in der
+  [Mustersyntax](/de/checkout-funnel#pattern-syntax), das erste passende gewinnt.
+- **Meta-Tag**: `<meta name="fm-page-type" content="product">` oder
+  `page-type`. Soft-Pageviews lesen es, sobald deine App es neu setzt.
 
 Der Collector nimmt die erste Quelle, die einen Page-Type liefert:
 
@@ -114,29 +93,26 @@ Der Collector nimmt die erste Quelle, die einen Page-Type liefert:
 5. Die Checkout-Stufe: `cart` auf einem Warenkorb-Pfad, `checkout` auf einem Checkout- oder Erfolgs-Pfad.
 
 [`page-type-sources`](/de/api/applications/getApplicationPageTypeSources)
-listet diese Quellen einer Application in genau dieser Reihenfolge.
-Zwei Endpunkte schlagen vor, was zu setzen ist, und schreiben nichts:
+listet diese Quellen in genau dieser Reihenfolge.
 [`detect-pagetype`](/de/api/applications/detectApplicationPageType)
 nennt das Shop-System,
 [`pagetype/discover`](/de/api/applications/discoverApplicationPageTypeRules)
-findet die Klassennamen. Siehe
+schlägt Klassennamen vor. Beide schreiben nichts. Siehe
 [Tracker → `pagetype_rules`](/de/tracker#pagetype-rules).
 
 ## Checkout-Funnel [#checkout-funnel]
 
 Standardmäßig an, unter `shop.checkout`. Der Collector markiert jeden
-Pageview, dessen URL auf ein Warenkorb-, Checkout- oder
-Abschluss-Muster passt, und registriert die Warenkorb-Requests der
-Shopseiten aus Fetch/XHR. `checkout_tracking` ist das Opt-out; die
-drei Pfadlisten erben jeweils die eingebauten Muster (`null`) oder
-ersetzen sie komplett. Die Markierung wirkt nur vorwärts, und
-Besucher pro Stufe zu zählen braucht `store_stitch`. Siehe
+Pageview, dessen URL auf ein Warenkorb-, Checkout- oder Abschluss-Muster
+passt, und erfasst Warenkorb-Requests aus Fetch/XHR. Die drei Pfadlisten
+erben die eingebauten Muster (`null`) oder ersetzen sie. Die Markierung
+wirkt nur vorwärts, und Besucher pro Stufe brauchen `store_stitch`. Siehe
 [Checkout-Funnel](/de/checkout-funnel).
 
 ## Traffic-Sampling [#sampling]
 
 `collection.sampling_rate` speichert nur einen Teil deiner Besucher statt
-aller. Der Default ist `1.0`, eine Rate unter `0.1` lehnt die API ab. Die Edge
+aller. Der Default ist `1.0`, eine Rate unter `0.01` lehnt die API ab. Die Edge
 behält oder verwirft die Pageviews eines Besuchers gemeinsam, und eine
 neue Rate greift nach etwa einer Minute.
 
@@ -159,6 +135,18 @@ PATCH /applications/{app_id}
 Im Dashboard heißt die Rate **Erfasster Besucheranteil** unter Besucher &
 Sampling.
 
+### Automatisches Sampling [#sampling-mode]
+
+`collection.sampling_mode` legt fest, wer die Rate setzt: du (`manual`, der
+Default) oder fastmon anhand deiner gebuchten Pageviews (`automatic`). Im
+Dashboard ist das **Anteil automatisch festlegen** unter Besucher & Sampling.
+
+- **Stufen**: eine feste Leiter von 100 % bis 1 %, höchstens eine Stufe pro Tag.
+- **Geltung**: Produktions-Applications einer Organisation mit festem Pageview-Kontingent. Free, Enterprise, Partner-Tarife, voll abgedeckte Kunden und Trials bleiben unberührt.
+- **Kontingent**: Manuelle Applications bekommen ihren Teil zuerst, die automatischen teilen sich den Rest nach Traffic.
+- **Rate schreiben**: Im Modus `automatic` gibt eine geänderte `sampling_rate` 422 zurück, außer derselbe Body setzt `sampling_mode` auf `manual`.
+- **Änderungen**: `sampling_rate_changed_at` und der Audit-Log-Eintrag `application.sampling_rate_changed` halten jeden Schritt fest. Zurück auf `manual` bleibt die letzte Stufe.
+
 ### Fetch- und XHR-Sampling [#fetch-xhr-sampling]
 
 `collection.fetch_xhr_sampling_rate` behält die Fetch- und XHR-Aufrufe nur für
@@ -170,18 +158,21 @@ Aufrufe und Fehler werden hochgerechnet. Perzentile und die gelisteten Aufrufe
 beruhen nur auf den behaltenen Aufrufen.
 [Warenkorb-Interaktionen](/de/checkout-funnel#cart-interactions) zählen mit
 der Pageview-Rate. Im Dashboard heißt das Feld **Besucheranteil mit
-Fetch/XHR** und erscheint, solange die Fetch/XHR-Erfassung an ist.
+Fetch/XHR**.
 
 ### Empfohlene Rate [#sampling-recommendation]
 
 `GET /applications/{app_id}/sampling-recommendation` empfiehlt die Rate, die
 über die letzten sieben vollen Tage etwa 20.000 Pageviews am Tag behält. Sie
-rundet auf die nächsten `0.05` auf, geht nie unter `0.2` und antwortet bei
-weniger Traffic mit `1.0`. `inputs` enthält `pageviews_per_day` und
-`pageviews_per_month`, und die Abfrage ändert nichts.
+rundet auf die nächsten `0.05` auf, geht nie unter `0.2` und ändert nichts.
+Das Dashboard zeigt sie unter dem Feld, **Übernehmen** trägt sie ein.
 
-Das Dashboard zeigt die Empfehlung unter dem Feld. **Übernehmen** trägt sie
-ein, speichern musst du selbst.
+## Events [#events]
+
+| Einstellung             | Default | Wirkung                                                                                     |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------- |
+| `event_tracking`        | an      | Nimmt die eigenen [Events](/de/events) eines Shops an. fastmon schaltet es auf Anfrage ab. Die Checkout-Schritte des Shopify-Pixels bleiben. |
+| `collection.data_layer` | aus     | Liest GA4-E-Commerce-Pushes auf `window.dataLayer` als Events. Dashboard: **GA4-E-Commerce-Events lesen** (Shop). |
 
 ## Datenschutz-Einstellungen für alle Sites [#site-defaults]
 
@@ -194,21 +185,23 @@ Domain andere Werte, gehört sie in eine eigene Application.
 
 Die Response gruppiert ihre Felder in `page_type`, `shop`, `collection`,
 `collector`, `script` und `site_defaults`. Create und Update nehmen dieselben
-Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab. Die flachen
-Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
+Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab.
 
 | Feld                         | Typ               | Hinweise                                                              |
 | ---------------------------- | ----------------- | --------------------------------------------------------------------- |
 | `id`                         | UUID v7           | Stabiler Identifier.                                                  |
 | `organization_id`            | UUID v7           | Die besitzende Organisation.                                          |
-| `name`                       | string            | Wie die Application im UI erscheint.                                  |
+| `name`                       | string            | Anzeigename.                                                          |
 | `environment`                | enum              | `prod` oder `dev`. Default `prod`.                                     |
 | `platform`                   | object · nullable | Shopsystem oder CMS: `key`, `source`, `detected_via`, `detected_at`.  |
 | `shop.active`                | bool · nullable   | Ob das ein Shop ist. `null` folgt der Plattform.                      |
 | `spa`                        | bool              | Single-Page-App. Von Hand gesetzt, Default `false`.                   |
 | `collection.*`               | bool · enum       | Die Preset-Flags: Sessions, Fetch/XHR, Fehlermessages und -Frames, Query-Keys und -Werte, `session_consent`, `template_url_ids`. Siehe [Presets](/de/tracker). |
-| `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.1` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
-| `collection.fetch_xhr_sampling_rate` | number | Anteil der Besucher, deren Fetch/XHR-Aufrufe gespeichert werden, Default `0.25` für eine neue Application. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
+| `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.01` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
+| `collection.sampling_mode`   | enum              | `manual` (Default) oder `automatic`. Siehe [Automatisches Sampling](#sampling-mode). |
+| `collection.sampling_rate_changed_at` | timestamp · nullable | Wann fastmon die Rate zuletzt verschoben hat.                 |
+| `collection.data_layer`      | bool              | GA4-E-Commerce-Events, Default `false`. Siehe [Events](#events).       |
+| `collection.fetch_xhr_sampling_rate` | number | Anteil der Besucher mit gespeicherten Fetch/XHR-Aufrufen. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
 | `page_type.url_rules`        | list · nullable   | Deine eigenen URL-Muster, auf Page-Types abgebildet. Wird nach deinen Body-Klassen gelesen. |
@@ -217,8 +210,8 @@ Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |
 | `collector.endpoint`         | string · nullable | Eigener Collector-Host (nur bei `custom`).                            |
 | `collector.proxy_secret`     | object            | Das gemeinsame Secret für einen [First-Party-Proxy](/de/guides/first-party-proxy). |
-| `script.source_hash`         | string            | Global eindeutig; in der Script-URL (`/s/{source_hash}.js`).          |
-| `script.collector_hash`      | string            | Global eindeutig; in der Ingest-URL (`/c/{collector_hash}`).          |
+| `script.source_hash`         | string            | Global eindeutig, steht in der Script-URL.                            |
+| `script.collector_hash`      | string            | Global eindeutig, steht in der Ingest-URL.                            |
 | `script.source_version`      | string            | Gepinnte Beacon-Template-Version (`v1`).                              |
 | `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. Gilt für alle Sites. |
 | `site_policy`                | enum              | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
@@ -227,18 +220,3 @@ Zwillinge, die diese Gruppen ersetzt haben, antworten nicht mehr.
 Sechs Felder bleiben für das Shopware-Plugin flach: `source_hash`,
 `collector_hash`, `proxy_secret`, `collector_mode`, `collector_endpoint`
 und `pagetype_ruleset`.
-
-## Sites: adoptieren, verschieben, löschen
-
-- **Domain hinzufügen**: eine Site anlegen oder eine vorgeschlagene
-  Domain adoptieren.
-- **Site verschieben**: sie übernimmt die Config der neuen
-  Application. Eine Domain gehört immer zu genau einer Application.
-- **Site löschen**: entfernt die Daten dieser Domain, mit Bestätigung.
-
-## Verwandt
-
-- [Sites](/de/concepts/sites): die Per-Domain-Einheit.
-- [Presets](/de/tracker): was der Beacon erfasst.
-- [Implementierung](/de/install): eine anlegen und das Snippet einbetten.
-- [Der RUM-Beacon](/de/concepts/beacon): was das ausgelieferte Script tut.

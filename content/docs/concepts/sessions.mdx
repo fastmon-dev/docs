@@ -21,16 +21,6 @@ With `stitch` stored (the default `Standard` preset), and no cookie or consent n
 
 What it doesn't give you: a long-term identity (it rotates), a link across applications, or the strict 30-minute **visit** boundary. That boundary, and the per-visit metrics built on it (pages per visit, bounce rate), come from the `session` identity ([`collect_sessions`](/en/tracker#collect-sessions)).
 
-## Why two identities
-
-`stitch` answers "how many distinct visitors?" whenever it's collected, because it's computed at the edge and never needs a cookie. `session` answers the questions that need a visit boundary:
-
-- "How many visits crossed a Web Vitals threshold?" (a multi-page visit might have one bad page and several good ones).
-- "Did the error on the checkout step come after a slow page load?" (the answer is in the earlier page-views of the same visit).
-- "What's the distribution of pages per visit on each entry path?"
-
-The first question works on any site that stores `stitch`. The rest need `session`, so they only fill in once a site collects `sid` ([`collect_sessions`](/en/tracker#collect-sessions) on).
-
 ## What counts as one session
 
 A session contains the page-views that share **all** of these:
@@ -69,9 +59,17 @@ The Visitors view lists one row per visitor, grouped by the resolved identity:
 | `avg_fcp`      | number              | Average FCP across the visitor's pages.                        |
 | `total_errors` | int                 | Total errors across the visitor's pages.                       |
 | `outcome`      | enum                | How the visit ended: `ordered`, `checkout`, `cart`, `browsed`, or `bounced`. The highest stage wins. |
-| `journey`      | list                | The first 50 pageviews in order, each with page type, time on page, errors, and checkout stage. `journey_truncated` marks a longer visit. |
+| `journey`      | list                | The first 50 pageviews in order, each with page type, time on page, errors, checkout stage, and [`arrival`](#arrival). `journey_truncated` marks a longer visit. |
 
 Note what's absent: no user ID, no fingerprint, no IP. Neither identifier is meant to be used outside the analytics window: `stitch` rotates on its salt schedule (see Privacy), and `session_id` is short-lived.
+
+## Where a visitor came in [#arrival]
+
+A journey step of `POST /analytics/visitors` and a page of `/visitors/detail` can carry `arrival`: `arrival_type`, `traffic_source`, `traffic_medium`, and `utm_campaign`. The UTM value wins over the referrer.
+
+- **Entry**: `journey[0].arrival` is always set, with `arrival_type = first`. Direct traffic has an empty source.
+- **Return**: a later step has `arrival_type = return` when the visitor came back from outside, such as a newsletter link after a Google visit.
+- **No return**: reloads, back and forward, SPA route changes, checkout pages, and referrers missing from the referrer catalog, such as another host of the same shop.
 
 ## Several sites [#several-sites]
 

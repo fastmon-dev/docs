@@ -46,10 +46,10 @@ Just enough to compute Web Vitals and per-page performance breakdowns. The exact
 - **LCP image URL, LoAF script paths, third-party domain map**: collected in every configuration, sanitized to origin + pathname at collection. These describe the customer's own page composition (see [Site metadata vs. visitor data](#site-metadata-vs-visitor-data)), not the visitor.
 - **Page type tag**: the `content` of your `<meta name="fm-page-type">` tag, up to 32 characters, always.
 - **Fetch/XHR aggregates**: opt-in ([`collect_fetch_xhr`](/en/tracker#collect-fetch-xhr)). Per-endpoint call counts, durations, and error codes for your own APIs. Paths are sanitized harder than page URLs (query, fragment, and id-like segments removed).
-- **Checkout stage and cart interaction**: two server-derived labels, computed at ingest from values already on the beacon. The stage (`cart`, `checkout`, `success`, or empty) comes from matching the sanitized page URL against URL patterns; the cart interaction flag comes from a fetch/XHR `POST` to a known cart endpoint. Neither adds a field to the beacon or reads anything your settings did not already allow, and nothing is stored per visitor: the funnel is computed at query time. On by default with an opt-out (`checkout_tracking`). See [Checkout funnel](/en/checkout-funnel#privacy).
+- **Checkout stage and cart interaction**: two server-derived labels, computed at ingest from values already on the beacon. The stage (`cart`, `checkout`, `success`, or empty) comes from matching the sanitized page URL against URL patterns; the cart interaction flag comes from a fetch/XHR `POST` to a known cart endpoint. Neither adds a field to the beacon or reads anything your settings did not already allow. On by default with an opt-out (`checkout_tracking`). See [Checkout funnel](/en/checkout-funnel#privacy).
 - **Session ID**: only when [`collect_sessions`](/en/tracker#collect-sessions) is on (the Full preset, or after your CMP calls `grantConsent()`). Lives in `sessionStorage`, groups pageviews of the same session together, dies with the tab.
 
-That's the whole payload. No opt-in unlocks more.
+That's the whole payload, apart from the [events](#events) your shop sends itself.
 
 ### Bot and datacenter labels [#bot-and-datacenter-labels]
 
@@ -72,7 +72,7 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 - **Forward secrecy by construction.** The salt is a 32-byte `crypto/rand` value held only in the active edge's RAM and rotated every 24 hours. It is never persisted, never distributed, never logged. An attacker who later gains row access cannot reverse `stitch` back to (IP, UA): the salt that produced it is gone.
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
 - **Scoped to one application.** The `collector_hash` is in the HMAC input, so the same (IP, UA) yields a different `stitch` for every application, and nothing links a visitor to another operator's site. Inside one application the value is the same on every domain it serves, which is what lets an organization-wide tracker count a returning visitor once rather than once per domain.
-- **Nothing the page says goes into the input.** The host in the beacon body is deliberately left out, so a page cannot influence which identifier its visitor gets. That is also why a Shopify checkout pixel, which runs in a sandbox and can name no domain, still joins the visitor who browsed the storefront.
+- **Nothing the page says goes into the input.** The host in the beacon body is deliberately left out, so a page cannot influence which identifier its visitor gets.
 - **The salt is the only secret.** The other HMAC inputs are public or sit on the stored row itself, and the input space is small enough to enumerate, so whoever held the live salt could confirm a suspected (IP, UA) pair by recomputing. Nobody holds it: it exists only inside the running edge process and is gone after rotation. The guarantee is operational (RAM-only salt, 24 h rotation), not mathematical.
 
 Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
@@ -81,10 +81,8 @@ Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visit
 
 Two per-site switches decide whether any visitor identifier reaches storage. Under the default Standard preset `store_stitch` is **on** and `collect_sessions` is **off**; the Minimal preset turns both off.
 
-- **[`store_stitch`](/en/tracker#store-stitch).** On stores the edge-derived `stitch` for unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time). Off leaves a row with no visitor identifier at all, fully anonymous. Every per-pageview signal (Web Vitals, errors, third-party, attribution) is unaffected either way.
-- **[`collect_sessions`](/en/tracker#collect-sessions).** On writes the tab-scoped `sessionStorage` session id for cross-page journeys and funnels. Off means the served bundle never touches `sessionStorage` at all: the on-device write is skipped, not merely dropped server-side.
-
-The two are independent: enable either, both, or neither.
+- **[`store_stitch`](/en/tracker#store-stitch).** On stores the edge-derived `stitch` for unique-visitor counts and visitor-level metrics (bounce rate, pages per visit, dwell time). Off leaves the row fully anonymous.
+- **[`collect_sessions`](/en/tracker#collect-sessions).** On writes the tab-scoped `sessionStorage` session id for cross-page journeys and funnels. Off means the served bundle never touches `sessionStorage` at all.
 
 ### NEL reports [#nel-reports]
 
@@ -103,13 +101,21 @@ A site whose [Content Security Policy](/en/guides/content-security-policy) names
 - **Visitor**: the edge [`stitch`](#the-edge-derived-stitch-identifier) under [`store_stitch`](/en/tracker#store-stitch), and the same country, device, browser, OS and bot labels as a pageview.
 - **Dropped**: the code sample of `'report-sample'`, unread and in every mode, the payload of a `data:` or `blob:` URL, reports caused by browser extensions, and any referrer from another host.
 
+### Event properties [#events]
+
+A shop can send its own [events](/en/events), each a name with up to 30 properties. Personal data does not belong in names or properties, and keeping it out is your obligation.
+
+- **Dropped**: any key such as `email`, `password` or `token`, and any key holding an `@`.
+- **Masked**: an email address inside a value becomes `[email]`.
+- **Stored with it**: the page URL, reduced like a pageview URL, and the same visitor labels as a pageview.
+
 ### Site search terms [#search-terms]
 
 On a page typed `search`, the stored URL keeps the value of `q`, `search`, and `searchparam`, cut to 64 characters. A page typed `category` keeps `searchparam`, which OXID uses for its filter form. This holds in every mode, `anonymous` included, with no opt-in and no opt-out. Every other page drops these values.
 
 ### Site metadata vs. visitor data
 
-A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page. They tell you which of your CDNs is slow; they do not identify anyone.
+A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page.
 
 That makes them site configuration, not visitor data. We still treat them carefully (script URLs and LCP image URLs are sanitized to origin + pathname at collection), but they're not what the consent and linkability controls are about.
 

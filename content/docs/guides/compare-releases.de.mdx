@@ -3,19 +3,19 @@ title: Releases vergleichen
 description: Deploys aus CI/CD taggen und „hat dieser Deploy LCP verschlechtert?" in einer Query beantworten.
 ---
 
-Wenn du Performance-Regressionen sauber erwischen willst, taggst du jeden Deploy als [Release](/de/concepts/releases), und die Analytics-API macht den Vorher-Nachher-Vergleich. Dieser Guide deckt den kompletten Ablauf ab: API-Key, Release-Call aus CI/CD, Vergleichs-Query.
+Du taggst jeden Deploy als [Release](/de/concepts/releases) und vergleichst die Metriken davor und danach. Der Guide zeigt API-Key, Release-Call aus CI/CD und Vergleich.
 
 **Setup-Zeit:** 10–15 Minuten. **Was du brauchst:** authentifizierten fastmon-Account, Edit-Zugriff auf die CI/CD-Pipeline, eine Site, die schon [Beacons empfängt](/de/install/verify).
 
 ## 1. API-Key erstellen
 
-1. Öffne in fastmon die Einstellungen deiner Organisation, dann **Zugriff**, und klicke **Key erstellen**. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) gehört der Organisation und gilt darum auch dann noch, wenn die Person geht, die ihn angelegt hat: die richtige Form für eine Pipeline. (Ein persönlicher Key unter **Account → Zugriff** geht auch, folgt aber deiner Rolle und deinen Mitgliedschaften.)
+1. Öffne in fastmon die Einstellungen deiner Organisation, dann **Zugriff**, und klicke **Key erstellen**. Ein [Organisations-Key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) gehört der Organisation und gilt weiter, wenn die Person geht, die ihn angelegt hat. (Ein persönlicher Key unter **Account → Zugriff** geht auch, folgt aber deiner Rolle und deinen Mitgliedschaften.)
 2. Hake `release:write` und `analytics:read` an; mehr brauchen der Release-Call und die Vergleichs-Query unten nicht. Wähle ein Ablaufdatum.
 3. Kopier den Wert: Er wird nur einmal angezeigt. Leg ihn im Secret-Store deines CI als `FASTMON_API_KEY` ab.
 
 Eine Pipeline, die nur Releases meldet, kommt ohne die Einstellungen aus: Der **CI/CD**-Schnipsel auf der Application-Seite erstellt direkt dort einen `release:write`-Key, fragt, ob er dir oder der Organisation gehören soll, und schreibt ihn in den curl-Befehl.
 
-Key geleakt? Widerrufe ihn. Brauchst du nur ein frisches Secret, rotiere ihn (der Nachfolger behält Name, Scopes und Ablaufdatum, mit optionalem Übergangsfenster für den Wechsel). Was ein Key darf und was nicht, steht unter [Authentication](/en/api/authentication) (nur auf Englisch).
+Ist der Key geleakt, widerrufe ihn. Für ein frisches Secret rotierst du ihn, siehe [Authentication](/en/api/authentication).
 
 ## 2. Site-ID finden
 
@@ -35,7 +35,7 @@ curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   }"
 ```
 
-Die `-fsS`-Flags lassen curl bei Non-2xx-Responses laut scheitern und unterdrücken den Progress-Output. `released_at` ist optional; wenn du's weglässt, setzt der Server einfach „jetzt".
+Mit `-fsS` scheitert curl bei Non-2xx-Responses und spart sich den Progress-Output. Ohne `released_at` setzt der Server „jetzt".
 
 ### GitHub Actions
 
@@ -82,13 +82,13 @@ curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
-Im `data`-Array sollte dein neuer Release stehen, mit der übergebenen `version`.
+Im `data`-Array sollte dein neuer Release stehen, mit der übergebenen `version` und seinem `window`: von `released_at` bis zum nächsten Release, höchstens 14 Tage.
 
-Im Dashboard taucht er im Release-Picker der **Performance**-Ansicht auf.
+## 5. Metriken vergleichen [#compare-metrics]
 
-## 5. Metriken vergleichen
+Auf der LCP- und der TTFB-Seite setzt **Vergleichen → Release, gegen das davor** beide Zeiträume, siehe [Mit einem früheren Zeitraum vergleichen](/de/web-vitals/lcp#compare).
 
-Das Dashboard hat einen Release-Picker auf **Performance**: Release auswählen, Chart überlagert Vorher/Nachher. Programmatischer Vergleich: `compare_to_release_id` setzen:
+Per API schickst du das `window` des Releases aus der Release-Liste als `time_range` und das vorherige Release als `compare_to`:
 
 ```bash
 curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
@@ -99,26 +99,28 @@ curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
     "metrics": ["lcp", "inp", "cls"],
     "aggregations": ["p75"],
     "filters": { "site_id": "01HZX..." },
-    "compare_to_release_id": "01HZY..."
+    "compare_to": { "release_id": "01HZY..." }
   }'
 ```
 
-Die Response enthält einen `compare`-Block mit denselben Metriken für ein **gleich langes Fenster, das beim `released_at` des Releases endet**. Beispiel oben: 24 Stunden nach dem Release vs. die 24 Stunden direkt davor.
+Jede Zeile hat dann ein `comparison` mit denselben Metriken, und `request.comparison_time_range` nennt den verwendeten Zeitraum. Der Zeitraum des vorherigen Release beginnt bei seinem `released_at`, ist so lang wie `time_range` und endet früher, wenn das nächste Release oder jetzt davor liegt.
+
+`compare_to` nimmt auch einen beliebigen Zeitraum `{ "from": …, "to": … }` oder einen der Modi `previous_period`, `previous_day`, `previous_week`, `previous_month`. Das ältere `compare_to_release_id` ist veraltet, wird aber weiter bedient.
 
 ## Was gut aussieht
 
-- Jeder erfolgreiche Deploy taggt automatisch einen Release. Nichts von Hand.
-- Die Release-Version lässt sich auf einen Commit zurückführen: Git-SHA, Tag, Build-Nummer, was auch immer du nutzt.
-- Im CI gibt's einen Schritt, der den Deploy scheitern lässt, wenn der Release-Call hängt. Sonst hast du irgendwann stille Lücken und glaubst den Vergleichen nicht mehr.
+- Jeder erfolgreiche Deploy taggt automatisch einen Release.
+- Die Release-Version führt auf einen Commit zurück: Git-SHA, Tag oder Build-Nummer.
+- Im CI gibt's einen Schritt, der den Deploy scheitern lässt, wenn der Release-Call hängt.
 
 ## Häufige Stolperfallen
 
-- **Ein Release ohne `released_at` setzt „jetzt".** Meistens passt das. Aufpassen, wenn dein Deploy-Job Minuten vor dem tatsächlichen Live-Gehen läuft (Blue/Green-Flip kommt später); dann lieber zurückdatieren.
+- **Ein Release ohne `released_at` setzt „jetzt".** Geht dein Deploy erst Minuten nach dem Job live, etwa bei Blue/Green, datier ihn zurück.
 - **Releases hängen an einer Site.** Wer in einem Monorepo drei Sites ausliefert, braucht drei Release-Calls.
-- **Vergleichsfenster richtet sich nach der Query-Länge.** Eine 7-Tage-Query vergleicht gegen die 7 Tage davor. Wenn du Regressionen scharf sehen willst, halt das Fenster kurz (1–24 h).
+- **Der Vergleich richtet sich nach der Query-Länge.** Eine `time_range` von 7 Tagen vergleicht mit den ersten 7 Tagen des vorherigen Release. Für scharfe Regressionen halt sie kurz (1–24 h).
 
 ## Verwandt
 
 - [Releases-Konzept](/de/concepts/releases): was ein Release ist.
-- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to_release_id`-Details.
+- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to`-Details.
 - [Notification Rules](/de/guides/notification-rules): automatisch alarmieren bei Per-Release-Regressionen.

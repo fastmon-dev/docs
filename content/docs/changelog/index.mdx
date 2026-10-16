@@ -12,6 +12,172 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-16" type="new" area="tracker" title="Custom events">
+
+The tracker sends events your shop defines itself: a name and up to 30 properties.
+
+- **`fastmon.event(name, props)`** queues an event. A queue stub takes calls made before the tracker has loaded.
+- **A click on an element with `data-fm-event`** sends an event of that name, and every `data-fm-event-*` attribute becomes a property. An empty `data-fm-event=""` keeps a click inside a marked container from counting.
+- **GA4 ecommerce pushes on `window.dataLayer`** become events when `collection.data_layer` is on for the application, off by default. The tracker takes `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info`, and `purchase`, and leaves out a text over 500 characters.
+- **No request of its own**: events ride on the next beacon of the pageview, at most 20 per beacon and 100 per pageview. An event queued after the page was hidden reopens the `hidden` beacon.
+
+Docs: [Custom events](/en/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="new" area="dashboard" title="Your own events on the Events page">
+
+The Events page counts and lists your shop's own events, not only the checkout.
+
+- **Overview** shows the events over time by name, the names ranked, the revenue per event and currency from `value` and `currency`, and the most frequent values of each property.
+- **Events** lists them one by one with their properties. A row opens to every stored field and has a share link.
+- **Correct or delete** a single event from its opened row, as an owner or member. Stage events derived from checkout pages stay as they are.
+- **Filters**: the name picker takes any name, and URL, page type, login state, connection, and viewport class narrow the events too.
+
+The visitor journey shows the events with their properties. Docs: [Custom events](/en/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="new" area="api" title="Custom events in the API">
+
+The API stores, counts, and corrects any event name, not only the checkout names.
+
+- **`POST /c/e/{collector_hash}`** takes a single event of any name from any browser, without the tracker.
+- **`POST /analytics/events/overview`** counts the events of a window per name, over time, as revenue per currency, and per property value.
+- **`PATCH` and `DELETE /sites/{site_id}/events/{event_id}`** change or remove one event. The audit log records `event.updated` and `event.deleted`.
+- **Breaking**: `name` and `source` on an event row are strings, no longer enums, and `source` gains `tracker`. A list cursor from before the change answers 400.
+- **Ask and MCP** gain `get_events`, and `list_sites` reports `event_tracking` and `collect_data_layer`.
+
+Docs: [Custom events](/en/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-16" type="changed" area="platform" title="The checkout funnel counts events only">
+
+Checkout stages and buyers now come from events on every site and window. A pageview's `checkout_stage` no longer counts as a stage.
+
+- **Exact counts**: the funnel, its stages, cohorts, journeys, and the live summary's purchases count exactly at any sampling rate. Visitors stay estimated, so the conversion rate divides exact buyers by estimated visitors.
+- **`purchase`** reaches the success stage beside `order_placed`, and a buyer with both counts once.
+- **Filters**: URL, page type, login state, connection, and viewport class filter the events exactly. Campaign and referrer filter on the visitor's entry pageview.
+- **Breaking**: the checkout routes answer 422 for technical page filters, a metric range, a checkout stage filter, and the identity `session`. Under `session` the visitors list has no checkout stage, `outcome`, or stage counts.
+
+Docs: [Checkout funnel](/en/checkout-funnel).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="new" area="dashboard" title="The Partnerfloor">
+
+Partner organizations get the Partnerfloor under Partner in the sidebar: every live client as a zone on one stage. A zone's size follows the client's share of the last hour's traffic, its colour the LCP p75. It shows the people, cart and checkout, today's orders, and the change against last week.
+
+A click on a client opens its Shopfloor in place. `POST /organizations/{org_id}/partner/live` serves the floor and needs `partner:read` and `analytics:read`. Docs: [Analytics → Partnerfloor](/en/analytics#partnerfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="new" area="dashboard" title="Compare mode on the LCP and TTFB pages">
+
+A "Compare" button next to the time range sets a second window. It can be the period, day, week, or month before, any window you type, or a release against the one before it.
+
+- **The summary** says what changed against that window, and the value tile shows the change.
+- **Every chart** draws the second window beside the first: the trend dashed, the distribution as an outline, the phases as a faded bar.
+- **"Where the LCP is poor" and "Where the TTFB is slow"** add the window's value and the change per row, largest regression first.
+
+The comparison is part of the page's link. Docs: [LCP → Compare](/en/web-vitals/lcp#compare).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-15" type="fixed" area="dashboard" title="Table columns widen again">
+
+Dragging a column edge in the Explorer table capped every column, so the URL column could only get narrower. Columns widen again, and a double-click on an edge fits the column to its content.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="api" title="Compare with any window or a release">
+
+`compare_to` takes a window `{from, to}` of any length or a release `{release_id}`, beside the four mode strings.
+
+- **Where**: `POST /analytics/query`, `/analytics/funnels/checkout/stages`, `/analytics/error-types`, `/analytics/histogram`, and `/analytics/metric-summary`. Each echoes the window it used as `request.comparison_time_range`.
+- **A release** compares from its `released_at` for the length of `time_range`, up to the next release or now. Release rows carry `window` for use as `time_range`.
+- **Breaking**: `facts.previous_period` on the metric summary and `previous_period` on error-type rows are now `comparison`.
+- **Deprecated**: `compare_to_release_id` still works. Send a `compare_to` window instead.
+
+With `compare_to`, the metric summary says what changed instead of how the metric stands, and it covers TTFB too. Docs: [Compare releases → Compare metrics](/en/guides/compare-releases#compare-metrics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="A new TTFB page">
+
+The TTFB page is built like the LCP page: the value with rating and trend, the pageviews by rating, and a short summary.
+
+- **Where the time goes** splits the first byte into connection, server, the way in between, and the wait nobody measured. Sites with 103 Early Hints see where the browser counted the first byte.
+- **With Server-Timing** the server part splits into edge, origin, database, cache, search, HTTP calls, own code, and templates.
+- **Where the TTFB is slow** ranks page types, pages, cache status, login state, and origin hosts by their slow pageviews.
+- **Cache and origin** shows each cache layer with and without a hit, and calls out an origin host unlike its peers.
+- **History** draws one line per page type on the TTFB and LCP pages, and the panel can fill the window.
+
+Docs: [TTFB → How to see TTFB](/en/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="Where a visitor came in">
+
+The visitors list shows the source and channel each visitor came in from, such as Google search or a newsletter. The visitor pop-up marks every return from outside on the timeline and in the journey, with the campaign. In the API, journey steps carry `arrival`, and `journey[0].arrival` is the entry source.
+
+Reloads, route changes, and the way back from a payment page never count as a return. Docs: [Sessions → Arrival](/en/concepts/sessions#arrival).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="SPA route changes count as internal traffic">
+
+Route changes of single-page apps and BFCache restores now have the source `internal`. They no longer repeat the source and medium of the landing page. On an SPA site, views by referrer source show fewer pageviews for named sources and direct, and stored history follows the same rule.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="Choose your password after confirming your address">
+
+Registering asks for no password any more. The confirmation link opens a page where you choose it, and an expired link offers a new one. An invite still asks for the password on the form.
+
+In the API, `POST /auth/verify-email` takes the token and the password, and `GET /auth/verify-email` is gone.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="changed" area="platform" title="Unknown hosts on a one-site application">
+
+The `site_policy` "Suggest" now drops a beacon for an unknown host on an application with a single site too, and suggests the host as a site. Before, every host landed on the one site, such as `127.0.0.1` from a test run. A `www.` host or a separate checkout host needs a site of its own. Docs: [Tracker → `site_policy`](/en/tracker#site-policy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="new" area="dashboard" title="fastmon sets the sampling rate">
+
+Under Visitors & sampling, "Set the share automatically" lets fastmon set a production application's sampling rate from your booked pageviews. It moves at most one step a day, between 100 and 1 %. It applies only to plans with a fixed number of pageviews.
+
+The manual rate now goes down to 1 %, and the API field is `collection.sampling_mode`. Docs: [Applications → Sampling mode](/en/concepts/applications#sampling-mode).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-14" type="fixed" area="dashboard" title="Time charts keep their right edge">
+
+A time chart over 6 hours no longer drops to the floor at its right edge. The running bucket is drawn as in progress up to where the data is complete, and the rest is hatched.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="platform" title="Partners act with their own role">
+
+A partner's people act in a client with the role they hold in the partner organization: owner, member, or viewer. A direct membership in the client still wins.
+
+- **New in a client**: a partner can connect org-owned apps, such as the Shopware plugin, and issue org keys.
+- **Still not allowed**: deleting the client, transferring ownership, managing billing or partner links, and demoting its owners.
+- **Credentials stay**: keys and connections a partner created carry `via_partner_org_id` and keep working after a detach. Detaching lists them, so the client can rotate or disconnect them.
+
+Docs: [Organizations → Partner access](/en/concepts/organizations#partner-access).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-13" type="changed" area="dashboard" title="The dashboard opens where you left it">
+
+Opening fastmon lands on the scope you picked last: an application, a set of sites, a tag, or the whole organization. On a first visit it opens the production application as a whole instead of one of its sites.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-13" type="new" area="tracker" title="Page type from a meta tag">
 
 The tracker reads the page type from `<meta name="fm-page-type" content="product">` and sends it as `pt`, in every privacy mode.
