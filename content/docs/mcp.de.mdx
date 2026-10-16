@@ -43,7 +43,7 @@ Der Consent-Screen fragt nach:
 
 - **Einer Organisation**, aus denen, die du erreichst. Die Verbindung liest genau diese eine, zwei Organisationen heißt also zwei Verbindungen. Eine mit ausgeschaltetem MCP ist markiert und lässt sich nicht genehmigen.
 - **`analytics:read`**, ohne das kommt keine Verbindung zustande.
-- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 24 funktionieren auch ohne.
+- **`synthetic:read`**, optional. Drei Tools lesen Lighthouse-Reports und brauchen es; die anderen 25 funktionieren auch ohne.
 
 Der Screen benennt die Verbindung als MCP-Verbindung, direkt neben der Adresse, an die er dich zurückschickt. Das ist die Tatsache, die man sehen sollte: Was du hier freigibst, kann ein KI-Modell erreichen.
 
@@ -57,7 +57,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 ## Was das Modell lesen kann [#tools]
 
-27 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
+28 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
 
 | Bereich | Tools |
 | ------- | ----- |
@@ -66,6 +66,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 | Veränderung über die Zeit | `compare_periods`, `detect_changes` |
 | Fehler | `get_errors`, `get_failed_resources`, `get_error_detail`, `get_failed_resource_detail` |
 | Performance im Detail | `get_cwv_distribution`, `get_loaf_attribution`, `get_resource_breakdown`, `get_third_party_impact`, `get_fetch_xhr`, `get_server_timing` |
+| Events | `get_events` |
 | Browser-Reports | `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, `list_csp_reports` |
 | Synthetic (Labor) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
 
@@ -73,7 +74,7 @@ Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashbo
 
 Ein Aufruf ohne Site umfasst die ganze Organisation, denn eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. Geht es um eine bestimmte Site, sollte ein Modell zuerst `list_sites` aufrufen.
 
-`list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung sowie Fehlermeldungen und Stack-Frames an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Ohne das liest ein Modell das leere Ergebnis eines ausgeschalteten Schalters als „kein Problem“. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
+`list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung, Fehlermeldungen und Stack-Frames, [Events](/de/events) (`event_tracking`) und die dataLayer-Brücke (`collect_data_layer`) an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
 
 Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
 
@@ -102,7 +103,7 @@ An dem, was fastmon [überhaupt sammelt](/de/privacy), ändert sich hier nichts.
 
 Eine Partner-Organisation kann sich persönlich mit einer Kunden-Organisation verbinden: Die Kunden-Organisationen stehen auf dem Consent-Screen zur Auswahl. Partner-Zugriff wird bei jedem Request aufgelöst, die Verbindung hört also auf zu funktionieren, sobald die Partnerschaft endet, und es bleibt nichts zu widerrufen.
 
-`mcp_enabled` bleibt beim Kunden, denn es hängt an `org:update`, und das trägt Partner-Zugriff bewusst nicht. Das Onboarding kostet auf Kundenseite also einen Klick, und die Genehmigung landet im Audit-Log des Kunden, gekennzeichnet als Partner-Zugriff.
+Zum Einschalten von `mcp_enabled` brauchst du `org:update`. Ein Owner der Agentur hat das im Client, ein Member oder Viewer nicht. Das Audit-Log des Clients hält die Änderung fest.
 
 ## Einen MCP-Client bauen [#developers]
 

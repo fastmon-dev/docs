@@ -223,11 +223,15 @@ Zwei Setup-Helfer beantworten die zwei Fragen, die die Einstellung stellt. Beide
 
 ### `site_policy` [#site-policy]
 
-Entscheidet, was passiert, wenn ein Beacon von einem Hostnamen kommt, der keine registrierte [Site](/de/concepts/sites) dieser Application ist. `open` (der Default) verwirft das Beacon, vermerkt den Hostnamen aber als **vorgeschlagene Domain**, die du mit einem Klick adoptierst; `auto` legt dafür eine Site an und behält ihren Traffic ab dann; `strict` verwirft ohne Vorschlag und ohne Auto-Provisioning, sodass nur exakt registrierte Domains bedient werden. Wird an der Application gesetzt.
+Legt fest, was mit einem Beacon passiert, dessen Seiten-URL-Host keine registrierte [Site](/de/concepts/sites) dieser Application ist. Wird an der Application gesetzt.
 
-Das ersetzt die frühere `allowed_origins`-Allow-List und den per-Site-Schalter `enforce_domain_match`, die es beide nicht mehr gibt: Abgeglichen wird jetzt der gemeldete Seiten-URL-Host statt des `Origin`-Headers, den `sendBeacon` oft weglässt. Mit `strict` nagelst du den Ingest auf explizit registrierte Domains fest.
+- **`open`** (Default, „Vorschlagen“): verwirft den Beacon und listet den Host als **vorgeschlagene Domain** zum Übernehmen.
+- **`auto`** („Automatisch anlegen“): legt eine Site für den Host an und behält ihren Traffic.
+- **`strict`** („Ignorieren“): verwirft den Beacon ohne Vorschlag.
 
-**PII:** keine. Das ist Ingest-Härtung, kein Datenerhebungsschalter.
+Das gilt auch für eine Application mit nur einer Site. Ein `www.`-Host neben der Apex-Domain oder ein eigener Checkout-Host braucht also eine eigene Site. Checkout-Events sowie NEL- und CSP-Reports folgen derselben Regel, ein `<noscript>`-Pixel-Beacon ohne Host wird verworfen.
+
+**PII:** keine.
 
 ### `collector_mode` [#collector-mode]
 

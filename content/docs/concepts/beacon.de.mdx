@@ -100,8 +100,6 @@ Der Payload ist JSON mit absichtlich kurzen Keys, um den Body klein zu halten. D
 }
 ```
 
-In der Praxis musst du das nicht lesen; Dashboard und [Analytics-API](/en/api/analytics/queryAnalytics) packen das für dich aus.
-
 Schlüssel-Abkürzungen:
 
 - `sid`: Session-ID. Liegt im `sessionStorage._fms`. Nur wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist (beim Load oder nach `grantConsent()`, je nach [`session_consent`](/de/tracker#session-consent)).
@@ -110,7 +108,7 @@ Schlüssel-Abkürzungen:
 - `lcy`: Lifecycle-Marker, einer von `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Gecachte ältere Bundles senden ihn als langen `lifecycle`-Key, den der Collector ebenfalls akzeptiert.)
 - `pst`: Page-Started-Timestamp, Besucher-Wallclock (ms seit Epoch).
 - `cst`: Client-Sent-At-Timestamp, Besucher-Wallclock zum Flush-Zeitpunkt.
-- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf Origin + Pathname vorbereinigt (Query und Hash entfernt). `r` wird serverseitig in gebucketete Source + Medium klassifiziert und der rohe Wert vor jedem Logging-Pfad verworfen. Er persistiert nie, in keinem Modus.
+- `u`, `r`: Seiten-URL und Referrer, beide vom Tracker auf Origin + Pathname vorbereinigt (Query und Hash entfernt). `r` wird serverseitig in gebucketete Source + Medium klassifiziert, der rohe Wert wird nie geloggt oder gespeichert. Ein SPA-Routenwechsel oder eine BFCache-Wiederherstellung (`softnav`) bekommt das Medium `internal` statt der Einstiegsquelle.
 - `us`, `um`, `uc`, `ut`, `un`, `ci`: Kampagnen-Attribution (utm source / medium / campaign / term / content und das Click-ID-Plattform-Label) aus `window.location.search`. Jeweils auf 64 Zeichen begrenzt. `ci` ist nur das Plattform-*Label* (`"gclid"` / `"fbclid"` / …); der Click-ID-Wert wird vom Tracker verworfen. In jeder Konfiguration auf der Leitung, und ganz weggelassen, wenn leer.
 - `pt`: der Page-Type aus `<meta name="fm-page-type">` oder `<meta name="page-type">`, bei jedem Beacon gelesen und auf 32 Zeichen begrenzt. Bei mehreren Tags gleichen Namens gilt das letzte. In jeder Konfiguration auf der Leitung, weggelassen, wenn leer.
 - `b`, `v`, `d`, `o`, `vc`, `c`: Browser-Familie, Browser-Major, Device-Klasse, OS-Familie, Viewport-Klasse, Connection-Typ. Die ersten vier kommen aus `FM-*`-Edge-Headern; `vc` und `c` aus dem Browser. `rtt` / `dl` gesellen sich als Echtzeit-RTT- und Downlink-Schätzungen dazu.

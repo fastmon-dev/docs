@@ -3,9 +3,9 @@ title: Time to First Byte (TTFB)
 description: "How long the server took to send the first byte, and why it's the floor every other metric sits on."
 ---
 
-**TTFB** measures the time from navigation start to the first byte of response landing in the browser. It's the floor every other metric sits on: nothing visual can happen before the first byte arrives.
+**TTFB** measures the time from navigation start to the first byte of response landing in the browser. Nothing visual can happen before it arrives.
 
-TTFB is **not** a Core Web Vital. A diagnostic metric, but the single most important one when you're trying to take apart a slow [LCP](/en/web-vitals/lcp) or [FCP](/en/web-vitals/fcp).
+TTFB is **not** a Core Web Vital. It is the diagnostic metric to check first for a slow [LCP](/en/web-vitals/lcp) or [FCP](/en/web-vitals/fcp).
 
 ## What's a good TTFB?
 
@@ -17,7 +17,7 @@ TTFB is reported in milliseconds. Track the **75th percentile**.
 | ≤ 1,800 ms      | Needs improvement   |
 | > 1,800 ms      | Poor                |
 
-The thresholds already bake in the realistic costs of cold-cache visitors on typical mobile networks. TTFB under 200 ms (warm cache, close PoP) is excellent. Over 1 s feels to the visitor like a page that just won't get going.
+TTFB under 200 ms is excellent.
 
 ## What goes into TTFB
 
@@ -37,7 +37,7 @@ TTFB is captured from the Navigation Timing API as `responseStart - fetchStart`.
 
 ## TTFB behind 103 Early Hints [#early-hints]
 
-On sites behind 103 Early Hints (Shopify storefronts, Cloudflare) TTFB regularly reads *below* the server's own [Server-Timing](/en/guides/server-timing) phases for the same pageview. Both are right. `responseStart` marks the first byte of the *first* response, and with Early Hints that is the interim 103 the edge answers in about one round trip; your server's real response, and the `Server-Timing` header on it, comes later. The two measure different responses of the same request.
+On sites behind 103 Early Hints (Shopify storefronts, Cloudflare) TTFB regularly reads *below* the server's own [Server-Timing](/en/guides/server-timing) phases for the same pageview. Both are right. `responseStart` marks the first byte of the *first* response, and with Early Hints that is the interim 103 the edge answers in about one round trip; your server's real response, and the `Server-Timing` header on it, comes later.
 
 To tell them apart, fastmon also stores **`ttfb_final`**: the browser's `finalResponseHeadersStart`, the first byte of the final response. The tracker reads it with the same activation adjustment and 60-second cap as TTFB (wire key `frs`), and the collector drops a value below `ttfb`. Reading the pair:
 
@@ -49,23 +49,26 @@ To tell them apart, fastmon also stores **`ttfb_final`**: the browser's `finalRe
 
 TTFB itself stays `responseStart`, so it keeps comparing to CrUX and the web-vitals field data. `ttfb_final` is a row field on `POST /analytics/beacons`, part of the visitor pageview detail, and an aggregatable metric (avg, p50 to p99).
 
-In the dashboard, the TTFB page shows an **Early Hints** panel wherever the two values differ: the head start at the selected percentile, the two first bytes as one split bar, and the share of pageviews the final one was measured on (a Chromium-only timing, and soft navigations carry none). The [response breakdown](/en/analytics#fetchxhr-and-server-timing) draws the head start as its own "Early Hints" row inside the wait, ends the server phases on it, and starts the transfer bar at the final response headers rather than at the first byte. In the Explorer, `ttfb_final` is a chartable metric, a sortable column, and a drawer field; the pageview drawer shows it only when it differs from TTFB.
+In the dashboard, the bars of [Where the time goes](#how-to-see-ttfb-in-fastmon) run to the final first byte, and a mark shows where the browser counted the first byte. The [response breakdown](/en/analytics#fetchxhr-and-server-timing) draws the head start as its own "Early Hints" row inside the wait and starts the transfer bar at the final response headers. In the Explorer, `ttfb_final` is a metric, a column, and a drawer field, shown in the pageview drawer only when it differs from TTFB.
 
-## How to see TTFB in fastmon
+## How to see TTFB in fastmon [#how-to-see-ttfb-in-fastmon]
 
-The dashboard's **Performance** section shows TTFB at p50, p75, p95.
+The TTFB page sits under **Performance → TTFB**. On top are the value with its rating and trend, the pageviews by rating, and a few sentences on where the time goes.
 
-- **By country**: group by `country`. RTT to your origin is the dominant factor for cold connections, and it's lopsided by region. If your origin is in Frankfurt, TTFB to São Paulo will be bad regardless of your server.
-- **By URL**: group by URL. If a single page has a much worse TTFB, the application is doing per-page work (DB query, third-party fetch) that the others aren't.
-- **By release**: `compare_to_release_id`. A backend deploy that added a synchronous external call usually shows up here first.
+- **Where the time goes**: connection, server, the way in between, and the unmeasured wait of pageviews without Server-Timing. One bar each for all pageviews and for those answered by the CDN, the origin cache, or neither.
+- **Server split**: what [Server-Timing](/en/guides/server-timing) reports, as edge, origin, database, cache, search, HTTP calls, own code, and templates. Without the header you see one block and a link to the setup guide.
+- **History**: the selected percentile against the rating zones, one line per phase, or one line per page type, beside the distribution. The maximize icon fills the window with the chart.
+- **Where the TTFB is slow**: page types, pages, CDN status, login state, origin hosts, and more, ranked by slow pageviews with the split in every row.
+- **Cache and origin**: each cache layer with and without a hit, its hit rate, and the backend time per origin host. A host unlike its peers is called out.
+- **Compare**: works as on the LCP page, see [Compare with an earlier window](/en/web-vitals/lcp#compare).
 
 ## How to improve a slow TTFB
 
-1. **Cache HTML at the edge.** A static or near-static page should be served from a CDN cache, not your origin. This is the highest- leverage change you can make.
+1. **Cache HTML at the edge.** A static or near-static page should be served from a CDN cache, not your origin.
 2. **Move closer to your visitors.** Multi-region origins or a well-distributed edge layer cut RTT for everyone outside your primary region.
 3. **Profile the server response.** Use APM, server logs, or a server-timing header to find what's slow. Common culprits: a slow database query, a synchronous third-party call, or server-rendered React hydration that traverses too much data.
 4. **Reduce redirect chains.** Every redirect adds a full roundtrip. `http://` → `https://` → `www.` → final URL is three roundtrips before the browser even gets the HTML.
-5. **Use HTTP/2 or HTTP/3.** Most modern stacks already do, but double-check; older origins still negotiate HTTP/1.1.
+5. **Use HTTP/2 or HTTP/3.** Older origins still negotiate HTTP/1.1.
 
 ## Common surprises
 

@@ -3,13 +3,13 @@ title: Largest Contentful Paint (LCP)
 description: "Was LCP ist, was ein guter LCP ist und wie du einen schlechten debuggst, mit fastmon-Daten."
 ---
 
-**LCP** misst, wie lange es dauert, bis das größte sichtbare Element einer Seite tatsächlich da ist. Wenn jemand sagt „die Seite hat sich beim Laden langsam angefühlt", geht es meistens um LCP: den Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
+**LCP** misst, wie lange es dauert, bis das größte sichtbare Element einer Seite da ist. Das ist der Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
 
 LCP gehört zu den [Core Web Vitals](/de/web-vitals), Googles Standard-Set für Besuchererlebnis, und zählt fürs Suchranking.
 
 ## Was ist ein guter LCP?
 
-LCP wird in Millisekunden gemessen und in drei Kategorien eingeteilt. Maßgeblich ist das **75. Perzentil** über alle Seitenaufrufe, so wie Google es ausweist.
+LCP wird in Millisekunden gemessen. Maßgeblich ist das **75. Perzentil** über alle Seitenaufrufe, wie bei Google.
 
 | LCP bei p75     | Rating              |
 | --------------- | ------------------- |
@@ -37,7 +37,7 @@ LCP wird finalisiert:
 - wenn der Besucher scrollt, klickt oder eine Taste drückt (was zuerst kommt), oder
 - wenn die Seite versteckt wird (`visibilitychange`).
 
-Der fastmon-Tracker greift den finalen LCP in genau diesem Moment ab und packt ihn in den nächsten gebündelten Payload.
+Der Tracker schickt den finalen LCP mit seinem nächsten Batch.
 
 ## Beispiele
 
@@ -45,32 +45,24 @@ Der fastmon-Tracker greift den finalen LCP in genau diesem Moment ab und packt i
 
 **SaaS-Dashboard mit Skeleton-Loader.** LCP ist erst der Skeleton-Container, dann, sobald echter Content rendert, springt's auf das größte Daten-Element. Pass auf falsch-„schnelle" LCPs auf, die nur kommen, weil eine fette Skeleton-Box davor stand.
 
-**Artikel mit eingebettetem Video.** LCP ist das Video-Poster, nicht der Text. Wenn du das Poster-Bild optimierst, verbesserst du den LCP, auch wenn der Besucher hinterher den Body liest.
+**Artikel mit eingebettetem Video.** LCP ist das Video-Poster, nicht der Text. Ein leichteres Poster verbessert den LCP.
 
 ## LCP in fastmon ansehen [#how-to-see-lcp-in-fastmon]
 
 Die LCP-Seite findest du unter **Core Web Vitals → LCP**. Zwei Kacheln zeigen den LCP mit Bewertung und den Anteil gemessener Seitenaufrufe.
 
 - **Wohin die Zeit geht**: Serverantwort, Load Delay, Load Duration und Render Delay als ein Balken, gegen die Zielaufteilung von web.dev.
-- **Verlauf**: das gewählte Perzentil vor den Bewertungszonen oder eine Linie pro Phase, daneben die Verteilung.
+- **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon neben dem Teilen-Link zeigt das Diagramm im ganzen Fenster.
 - **Wo der LCP schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach Seitenaufrufen über 4 s. Eine Zeile öffnet ihr eigenes Diagramm und ihren Breakdown.
 - **LCP-Elemente**: jedes Element mit Selektor, Art, Discovery-Pfad und Phasen. Das Detail prüft HTML, Preload, `fetchpriority`, Lazy Loading und Browser-Cache, und **AI Prompt** gibt es an einen Assistenten weiter.
 
-Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `cache_rate` pro Element. Einen Deploy vergleichst du mit `compare_to_release_id` in der [Analytics-API](/de/api/analytics/queryAnalytics).
+Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `cache_rate` pro Element.
 
-Programmatisch:
+### Mit einem früheren Zeitraum vergleichen [#compare]
 
-```bash
-curl https://api.fastmon.eu/organizations/$ORG/analytics/query \
-  -H "Authorization: Bearer fm_$TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "time_range": { "from": "2026-05-01T00:00:00Z", "to": "2026-05-07T00:00:00Z" },
-    "metrics": ["lcp"],
-    "aggregations": ["p75"],
-    "group_by": { "granularity": "day", "dimensions": ["url"] }
-  }'
-```
+**Vergleichen** neben dem Zeitraum setzt einen zweiten Zeitraum: Zeitraum, Tag, Woche oder Monat davor, einen eigenen Zeitraum oder ein Release gegen das davor. Der Vergleich steckt im Link der Seite.
+
+Mit Vergleich sagt die Zusammenfassung, was sich geändert hat, statt wie der LCP steht. Jedes Diagramm zeigt den zweiten Zeitraum neben dem ersten, und **Wo der LCP schlecht ist** sortiert nach der größten Verschlechterung. In der API heißt das `compare_to`, siehe [Releases vergleichen](/de/guides/compare-releases#compare-metrics).
 
 ## Schlechten LCP verbessern
 
@@ -91,6 +83,6 @@ Jede Phase im Detail erklärt [Optimize LCP](https://web.dev/articles/optimize-l
 
 ## Nächste Schritte
 
-- [Interaction to Next Paint (INP)](/de/web-vitals/inp): die Responsiveness-Metrik, die häufig regrediert, wenn du LCP durch zusätzliches JavaScript optimierst.
+- [Interaction to Next Paint (INP)](/de/web-vitals/inp): die Responsiveness-Metrik.
 - [Cumulative Layout Shift (CLS)](/de/web-vitals/cls): die Visual-Stability-Metrik.
-- [Web-Vitals-Übersicht](/de/web-vitals): alle fünf Metriken und ihre Schwellen.
+- [Web-Vitals-Übersicht](/de/web-vitals): alle Metriken und Schwellenwerte.

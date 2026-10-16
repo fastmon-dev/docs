@@ -55,7 +55,7 @@ The headline number lives on the **Performance** dashboard. Below it you'll see 
 Useful slices:
 
 - **By URL**: group by URL. Find which pages dominate the average.
-- **By release**: `compare_to_release_id`. The single best signal for "did this deploy regress UX?"
+- **By release**: `compare_to` with a release, see [Compare releases](/en/guides/compare-releases#compare-metrics).
 - **By country / device**: group by `country` or `device_type`. Regional or device-class regressions are usually invisible in the global score.
 
 ## How to improve a low score
@@ -64,7 +64,7 @@ The composite is only as healthy as its weakest part:
 
 1. Open the breakdown and identify the **worst sub-score**.
 2. Read the linked metric page ([LCP](/en/web-vitals/lcp), [INP](/en/web-vitals/inp), [CLS](/en/web-vitals/cls), [FCP](/en/web-vitals/fcp), [TTFB](/en/web-vitals/ttfb)) and apply the highest-leverage fix listed there.
-3. Recheck after a release. Use `compare_to_release_id` for a clean before/after.
+3. Recheck after a release with `compare_to`.
 
 Don't try to optimize everything at once. The improvements often trade against each other: fixing LCP by adding more JavaScript can regress INP, and reserving space for ads to fix CLS can push LCP later.
 

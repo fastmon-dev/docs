@@ -21,16 +21,6 @@ Mit gespeichertem `stitch` (das Default-Preset `Standard`), ohne Cookie und ohne
 
 Was er nicht liefert: eine Langzeit-Identität (er rotiert), keine Verknüpfung über Applications hinweg und nicht die harte 30-Minuten-**Besuchs**grenze. Diese Grenze und die darauf aufbauenden Per-Besuch-Metriken (Seiten pro Besuch, Bounce Rate) liefert die `session`-Identität ([`collect_sessions`](/de/tracker#collect-sessions)).
 
-## Warum zwei Identitäten
-
-`stitch` beantwortet „wie viele eindeutige Besucher?", sobald er erfasst wird, weil er am Edge berechnet wird und nie ein Cookie braucht. `session` beantwortet die Fragen, die eine Besuchsgrenze brauchen:
-
-- „Wie viele Besuche haben eine Web-Vitals-Schwelle gerissen?" (ein Mehr-Seiten-Besuch hat vielleicht eine schlechte Seite und mehrere gute).
-- „Kam der Fehler auf der Checkout-Stufe nach einem langsamen Pageload?" (die Antwort steht in den früheren Pageviews desselben Besuchs).
-- „Wie verteilen sich die Seiten pro Besuch je Entry-Pfad?"
-
-Die erste Frage funktioniert auf jeder Site, die `stitch` speichert. Der Rest braucht `session` und füllt sich erst, wenn eine Site `sid` erfasst ([`collect_sessions`](/de/tracker#collect-sessions) an).
-
 ## Was eine Session ausmacht
 
 Eine Session enthält Pageviews, die **alles** Folgende teilen:
@@ -69,9 +59,17 @@ Der Besucher-View listet eine Zeile pro Besucher, gruppiert nach der aufgelöste
 | `avg_fcp`      | number              | Durchschnittlicher FCP über die Seiten des Besuchers.          |
 | `total_errors` | int                 | Fehler insgesamt über die Seiten des Besuchers.                |
 | `outcome`      | enum                | Wie der Besuch geendet hat: `ordered`, `checkout`, `cart`, `browsed` oder `bounced`. Die höchste erreichte Stufe zählt. |
-| `journey`      | list                | Die ersten 50 Pageviews in Reihenfolge, jeweils mit Seitentyp, Verweildauer, Fehlern und Checkout-Stufe. `journey_truncated` zeigt einen längeren Besuch an. |
+| `journey`      | list                | Die ersten 50 Pageviews in Reihenfolge, jeweils mit Seitentyp, Verweildauer, Fehlern, Checkout-Stufe und [`arrival`](#arrival). `journey_truncated` zeigt einen längeren Besuch an. |
 
 Was fehlt: keine Besucher-ID, kein Fingerprint, keine IP. Keiner der beiden Identifier ist dafür gedacht, außerhalb des Analytics-Fensters verwendet zu werden: `stitch` rotiert auf seinem Salt-Zeitplan (siehe Privacy), und `session_id` ist kurzlebig.
+
+## Woher ein Besucher kam [#arrival]
+
+Ein Journey-Schritt von `POST /analytics/visitors` und eine Seite von `/visitors/detail` können `arrival` tragen: `arrival_type`, `traffic_source`, `traffic_medium` und `utm_campaign`. Der UTM-Wert hat Vorrang vor dem Referrer.
+
+- **Einstieg**: `journey[0].arrival` ist immer gesetzt, mit `arrival_type = first`. Bei Direktaufrufen ist die Quelle leer.
+- **Rückkehr**: Ein späterer Schritt hat `arrival_type = return`, wenn der Besucher von außen zurückkam, etwa morgens über Google und abends über den Newsletter.
+- **Keine Rückkehr**: Reloads, Vor und Zurück, Routenwechsel einer SPA, Checkout-Seiten und Referrer, die nicht im Referrer-Katalog stehen, etwa ein anderer Host desselben Shops.
 
 ## Mehrere Sites [#several-sites]
 

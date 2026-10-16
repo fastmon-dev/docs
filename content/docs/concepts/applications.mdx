@@ -3,61 +3,50 @@ title: Applications
 description: "An application is one tracking snippet: its hashes, collection config, and the sites (domains) it serves."
 ---
 
-An **application** is the tracking embed. It serves one or many
-domains, each a **site**.
-
-The hierarchy is **Organization → Application → Site**:
-
-- An **organization** owns applications, members, and tokens.
-- An **application** owns the snippet and all collection config.
-- A **site** is a single domain under the application, with its own
-  dashboard. See [Sites](/en/concepts/sites).
+An **application** is the tracking embed: it owns the snippet and all
+collection config. It serves one or many domains, each a
+[site](/en/concepts/sites) with its own dashboard.
 
 ## The two hashes
 
-An application has two short hashes:
+Both hashes are on the application's card under **··· → IDs & hashes**.
 
-- **`source_hash`** sits in the **script URL** (`/s/{source_hash}.js`)
-  and picks the bundle to ship to the browser.
-- **`collector_hash`** sits in the **ingest URL** (`/c/{collector_hash}`)
-  and says which application a beacon belongs to. It's baked into the
-  script.
+- **`source_hash`** sits in the script URL (`/s/{source_hash}.js`) and
+  picks the bundle.
+- **`collector_hash`** sits in the ingest URL (`/c/{collector_hash}`) and
+  names the application a beacon belongs to.
 
-Both are on the application's card under **··· → IDs & hashes**.
-Rotating them regenerates both, invalidates the served script, and
-breaks a pasted [Shopify pixel](/en/guides/shopify-checkout).
+Rotating regenerates both, invalidates the served script, and breaks a
+pasted [Shopify pixel](/en/guides/shopify-checkout).
 
 ## What gets collected: presets
 
-The collection config lives on the application: a
-[preset](/en/tracker) (`minimal` / `standard` / `full`, default
-`standard`) that expands into individual flags, all baked into the
-served bundle.
+A [preset](/en/tracker) (`minimal` / `standard` / `full`, default
+`standard`) expands into individual flags, baked into the served bundle.
 
 ## Where beacons go: the collector
 
 `collector_mode` decides the host in the snippet:
 
-- **`default`**: fastmon's shared collector (`fastmon.site`);
-  third-party to your site.
-- **`relative`**: host-less `/s/` and `/c/` paths, served
-  same-origin via your reverse proxy; first-party.
-- **`custom`**: an absolute `collector_endpoint` host you control.
+- **`default`**: fastmon's shared collector (`fastmon.site`), third-party.
+- **`relative`**: host-less `/s/` and `/c/` paths through your reverse
+  proxy, first-party.
+- **`custom`**: a `collector_endpoint` host you control.
 
-It's set at create time. See
-[Implementation](/en/install/html).
+It's set at create time. See [Implementation](/en/install/html).
 
 ## Unknown domains: `site_policy`
 
 When a beacon arrives from a hostname that isn't a registered site,
 **`site_policy`** decides:
 
-- **`open`** (default): the beacon is dropped and the hostname is
-  recorded as a **suggested domain** you can adopt in one click.
-- **`auto`**: a site is created for the hostname and its traffic is
-  kept from then on.
-- **`strict`**: the beacon is dropped with no suggestion; only
-  registered domains are served.
+- **`open`** (default, "Suggest"): the beacon is dropped and the hostname
+  becomes a **suggested domain** you can adopt in one click.
+- **`auto`**: a site is created for the hostname and its traffic is kept.
+- **`strict`**: the beacon is dropped with no suggestion.
+
+This holds for an application with one site too. A `www.` host beside the
+apex or a separate checkout host needs a site of its own.
 
 ## Environment
 
@@ -73,30 +62,23 @@ yourself is `manual`, and later detection leaves it alone.
 
 `shop.active` says whether the application is a shop, with
 `shop.source` for where that came from. Without a setting it follows
-the platform; an unknown platform leaves it `null`. `spa` marks a
-single-page app and is set by hand.
+the platform; an unknown platform leaves it `null`. `spa` is set by hand.
 
 A Shopify application also serves the [checkout event
-pixel](/en/guides/shopify-checkout), built from `source_hash` and the
-collector settings.
+pixel](/en/guides/shopify-checkout).
 
 ## Page-type detection [#page-type-detection]
 
-`platform` says what the application runs
-on; `page_type.body_class` turns on reading the page type
-(home, product, cart, checkout) from the page's `<body>` class.
-A platform alone does not turn it on, and Shopify and PrestaShop
-have no ruleset.
+`page_type.body_class` reads the page type (home, product, cart, checkout)
+from the `<body>` class with the platform's ruleset. A platform alone does
+not turn it on, and Shopify and PrestaShop have no ruleset.
 
-A theme that renamed those classes records nothing, so
-`pagetype_rules` names your own: up to 24 exact class names, each
-mapped to a page type. `page_type.url_rules` labels pages by URL:
-up to 10 patterns in the [pattern syntax](/en/checkout-funnel#pattern-syntax),
-each with a page type, and the first match wins.
-
-A page can name its own type with
-`<meta name="fm-page-type" content="product">`, or `page-type` when that
-is missing or empty. Soft pageviews read it once your app rewrites it.
+- **`pagetype_rules`**: up to 24 class names of your own theme, each
+  mapped to a page type.
+- **`page_type.url_rules`**: up to 10 URL patterns in the
+  [pattern syntax](/en/checkout-funnel#pattern-syntax), first match wins.
+- **Meta tag**: `<meta name="fm-page-type" content="product">`, or
+  `page-type`. Soft pageviews read it once your app rewrites it.
 
 The collector takes the first source that gives a page type:
 
@@ -107,29 +89,25 @@ The collector takes the first source that gives a page type:
 5. The checkout stage: `cart` on a cart path, `checkout` on a checkout or success path.
 
 [`page-type-sources`](/en/api/applications/getApplicationPageTypeSources)
-lists these sources for an application in that order. Two endpoints
-propose what to set and write nothing:
+lists these sources in that order.
 [`detect-pagetype`](/en/api/applications/detectApplicationPageType)
-names the shop system,
+names the shop system and
 [`pagetype/discover`](/en/api/applications/discoverApplicationPageTypeRules)
-works out the class names. See
+proposes class names, without writing anything. See
 [Tracker → `pagetype_rules`](/en/tracker#pagetype-rules).
 
 ## Checkout funnel [#checkout-funnel]
 
-On by default, under `shop.checkout`. The collector marks each
-pageview whose URL matches a cart, checkout, or success pattern, and
-records the cart requests the shop's pages send via fetch/XHR.
-`checkout_tracking` is the opt-out; the three path lists each inherit
-the built-in patterns (`null`) or replace them wholesale. Marking is
-forward-only, and counting visitors per stage needs `store_stitch`.
-See [Checkout
-funnel](/en/checkout-funnel).
+On by default, under `shop.checkout`. The collector marks each pageview
+whose URL matches a cart, checkout, or success pattern, and records cart
+requests sent via fetch/XHR. The three path lists inherit the built-in
+patterns (`null`) or replace them. Marking is forward-only, and visitors
+per stage need `store_stitch`. See [Checkout funnel](/en/checkout-funnel).
 
 ## Traffic sampling [#sampling]
 
 `collection.sampling_rate` stores a share of your visitors instead of all
-of them. The default is `1.0`, and the API refuses a rate below `0.1`.
+of them. The default is `1.0`, and the API refuses a rate below `0.01`.
 The edge keeps or drops a visitor's pageviews together, and a new
 rate applies within about a minute.
 
@@ -151,6 +129,18 @@ PATCH /applications/{app_id}
 In the dashboard the rate is **Share of visitors kept** under Visitors &
 sampling.
 
+### Automatic sampling [#sampling-mode]
+
+`collection.sampling_mode` decides who sets the rate: you (`manual`, the
+default) or fastmon from the pageviews you booked (`automatic`). In the
+dashboard it is **Set the share automatically** under Visitors & sampling.
+
+- **Steps**: a fixed ladder from 100 % down to 1 %, at most one step a day.
+- **Scope**: production applications of an organization with a fixed pageview quota. Free, Enterprise, partner plans, fully covered clients and trials are left alone.
+- **Quota**: manual applications take their share first, and the automatic ones split the rest by traffic.
+- **Writing the rate**: in `automatic` mode a changed `sampling_rate` gets a 422, unless the same body sets `sampling_mode` to `manual`.
+- **Changes**: `sampling_rate_changed_at` and the audit log entry `application.sampling_rate_changed` record each move. Back in `manual`, the last step stays.
+
 ### Fetch and XHR sampling [#fetch-xhr-sampling]
 
 `collection.fetch_xhr_sampling_rate` keeps the fetch and XHR calls of a share
@@ -161,18 +151,21 @@ application starts at `0.25`, and the rate never applies above
 Call and error counts are scaled back up. Percentiles and the listed calls
 rest on the kept calls only. [Cart interactions](/en/checkout-funnel#cart-interactions)
 count at the pageview rate. In the dashboard the field is **Share of visitors
-with fetch/XHR kept**, shown while fetch/XHR capture is on.
+with fetch/XHR kept**.
 
 ### Recommended rate [#sampling-recommendation]
 
 `GET /applications/{app_id}/sampling-recommendation` recommends the rate that
 keeps about 20,000 pageviews a day over the last seven full days. It rounds up
-to the next `0.05`, never goes below `0.2`, and answers `1.0` for less traffic.
-`inputs` holds `pageviews_per_day` and `pageviews_per_month`, and reading it
-changes nothing.
+to the next `0.05`, never goes below `0.2`, and changes nothing. The dashboard
+shows it under the field, and **Use** fills it in.
 
-The dashboard shows the recommendation under the field. **Use** fills it in,
-and saving stays with you.
+## Events [#events]
+
+| Setting                 | Default | Effect                                                                                     |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `event_tracking`        | on      | Takes a shop's own [events](/en/events). fastmon turns it off on request. Shopify pixel checkout steps stay. |
+| `collection.data_layer` | off     | Reads GA4 ecommerce pushes on `window.dataLayer` as events. Dashboard: **Read GA4 ecommerce events** (Shop). |
 
 ## Privacy settings for every site [#site-defaults]
 
@@ -185,21 +178,23 @@ values belongs in an application of its own.
 
 The response groups its fields into `page_type`, `shop`, `collection`,
 `collector`, `script`, and `site_defaults`. Create and update take the same
-groups as partial objects, and reject any key they do not know. The flat
-twins these groups replaced no longer answer.
+groups as partial objects, and reject any key they do not know.
 
 | Field                        | Type              | Notes                                                                 |
 | ---------------------------- | ----------------- | --------------------------------------------------------------------- |
 | `id`                         | UUID v7           | Stable identifier.                                                    |
 | `organization_id`            | UUID v7           | The owning organization.                                              |
-| `name`                       | string            | How the application appears in the UI.                                |
+| `name`                       | string            | Display name.                                                         |
 | `environment`                | enum              | `prod` or `dev`. Default `prod`.                                       |
 | `platform`                   | object · nullable | Shop system or CMS: `key`, `source`, `detected_via`, `detected_at`.   |
 | `shop.active`                | bool · nullable   | Whether this is a shop. `null` follows the platform.                  |
 | `spa`                        | bool              | Single-page app. Set by hand, default `false`.                        |
 | `collection.*`               | bool · enum       | The preset flags: sessions, fetch/XHR, error messages and frames, query keys and values, `session_consent`, `template_url_ids`. See [Presets](/en/tracker). |
-| `collection.sampling_rate`   | number            | Share of visitors stored, `0.1` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
-| `collection.fetch_xhr_sampling_rate` | number | Share of visitors whose fetch/XHR calls are stored, default `0.25` for a new application. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
+| `collection.sampling_rate`   | number            | Share of visitors stored, `0.01` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
+| `collection.sampling_mode`   | enum              | `manual` (default) or `automatic`. See [Automatic sampling](#sampling-mode). |
+| `collection.sampling_rate_changed_at` | timestamp · nullable | When fastmon last moved the rate.                             |
+| `collection.data_layer`      | bool              | GA4 ecommerce events, default `false`. See [Events](#events).          |
+| `collection.fetch_xhr_sampling_rate` | number | Share of visitors with fetch/XHR calls stored. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
 | `page_type.url_rules`        | list · nullable   | Your own URL patterns mapped to page types. Read after your body classes. |
@@ -208,8 +203,8 @@ twins these groups replaced no longer answer.
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |
 | `collector.endpoint`         | string · nullable | Custom collector host (only for `custom`).                            |
 | `collector.proxy_secret`     | object            | The shared secret for a [first-party proxy](/en/guides/first-party-proxy). |
-| `script.source_hash`         | string            | Globally unique; in the script URL (`/s/{source_hash}.js`).           |
-| `script.collector_hash`      | string            | Globally unique; in the ingest URL (`/c/{collector_hash}`).           |
+| `script.source_hash`         | string            | Globally unique, in the script URL.                                   |
+| `script.collector_hash`      | string            | Globally unique, in the ingest URL.                                   |
 | `script.source_version`      | string            | Pinned beacon template version (`v1`).                                |
 | `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. They apply to every site. |
 | `site_policy`                | enum              | `open` / `auto` / `strict`. Unknown-hostname handling.                |
@@ -218,17 +213,3 @@ twins these groups replaced no longer answer.
 Six fields stay flat for the Shopware plugin: `source_hash`,
 `collector_hash`, `proxy_secret`, `collector_mode`, `collector_endpoint`
 and `pagetype_ruleset`.
-
-## Sites: adopt, move, delete
-
-- **Add a domain**: create a site, or adopt a suggested domain.
-- **Move a site**: it takes on the new application's config. A domain
-  always belongs to exactly one application.
-- **Delete a site**: removes that domain's data, with a confirmation.
-
-## Related
-
-- [Sites](/en/concepts/sites): the per-domain unit.
-- [Presets](/en/tracker): what the beacon collects.
-- [Implementation](/en/install): create one and embed the snippet.
-- [The RUM beacon](/en/concepts/beacon): what the served script does.

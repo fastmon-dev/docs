@@ -3,19 +3,19 @@ title: Compare releases
 description: Tag deploys from CI/CD and answer "did this deploy regress LCP?" in one query.
 ---
 
-The cleanest way to catch performance regressions is to tag every deploy as a [release](/en/concepts/releases) and let the analytics API do the before/after comparison. This guide wires it up end-to-end: API key, release call from CI/CD, comparison query.
+Tag every deploy as a [release](/en/concepts/releases) and compare the metrics before and after it. This guide covers the API key, the release call from CI/CD, and the comparison.
 
 **Time to set up:** 10–15 minutes. **You'll need:** an authenticated fastmon account, edit access to your CI/CD pipeline, and a site that's already [ingesting beacons](/en/install/verify).
 
 ## 1. Create an API key
 
-1. In fastmon, open your organization's settings, then **Access**, and click **Create key**. An [organization key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) belongs to the organization, so it keeps working when its creator leaves: the right shape for a pipeline. (A personal key under **Account → Access** works too, but follows your role and memberships.)
+1. In fastmon, open your organization's settings, then **Access**, and click **Create key**. An [organization key](/en/api/authentication#two-kinds-of-key) (`fmo_…`) belongs to the organization and keeps working when its creator leaves. (A personal key under **Account → Access** works too, but follows your role and memberships.)
 2. Tick `release:write` and `analytics:read`; the release call and the comparison query below need nothing else. Choose an expiry.
 3. Copy the value: it is shown once. Store it in your CI's secret store as `FASTMON_API_KEY`.
 
 A pipeline that only posts releases can skip the settings page: the **CI/CD** snippet on the application page creates a `release:write` key in place, asks whether it should belong to you or to the organization, and writes it into the curl command.
 
-If the key leaks, revoke it; if you just need a fresh secret, rotate it (the successor keeps name, scopes, and expiry, with an optional grace window for the switchover). See [Authentication](/en/api/authentication) for what a key can and cannot do.
+If the key leaks, revoke it. For a fresh secret, rotate it, see [Authentication](/en/api/authentication).
 
 ## 2. Find the site ID
 
@@ -35,7 +35,7 @@ curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   }"
 ```
 
-The `-fsS` flags make curl fail loudly on non-2xx responses without spamming progress output. `released_at` is optional; if you skip it, the server just sets "now."
+`-fsS` makes curl fail on non-2xx responses without progress output. Without `released_at`, the server sets now.
 
 ### GitHub Actions
 
@@ -82,13 +82,13 @@ curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
-You should see your new release in the `data` array, with the `version` you supplied.
+You should see your new release in the `data` array, with the `version` you supplied and its `window`: from `released_at` to the next release, at most 14 days.
 
-In the dashboard, the release picker on the **Performance** view will list it.
+## 5. Compare metrics [#compare-metrics]
 
-## 5. Compare metrics
+On the LCP and TTFB pages, **Compare → Release, against the one before** sets both windows, see [Compare with an earlier window](/en/web-vitals/lcp#compare).
 
-The dashboard has a release picker on **Performance**: pick the release and the chart overlays before/after. For programmatic comparison, pass `compare_to_release_id`:
+In the API, send the release's `window` from the release list as `time_range` and the previous release as `compare_to`:
 
 ```bash
 curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
@@ -99,26 +99,28 @@ curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
     "metrics": ["lcp", "inp", "cls"],
     "aggregations": ["p75"],
     "filters": { "site_id": "01HZX..." },
-    "compare_to_release_id": "01HZY..."
+    "compare_to": { "release_id": "01HZY..." }
   }'
 ```
 
-The response contains a `compare` block with the same metrics for the **same-length window ending at the release's `released_at`**. So the example above compares 24 hours after the release against the 24 hours immediately before it.
+Every row then carries a `comparison` with the same metrics, and `request.comparison_time_range` shows the window used. The previous release's window starts at its `released_at`, runs as long as `time_range`, and ends early at the next release or now.
+
+`compare_to` also takes any window `{ "from": …, "to": … }` or one of `previous_period`, `previous_day`, `previous_week`, `previous_month`. The older `compare_to_release_id` is deprecated but still served.
 
 ## What "good" looks like
 
 - Every successful deploy tags a release automatically, nothing by hand.
 - The release version is something you can resolve back to a commit: git SHA, tag, build number, whatever your team uses.
-- Your CI has a step that fails the deploy if the release call fails. Otherwise you'll get silent gaps and stop trusting the comparisons.
+- Your CI has a step that fails the deploy if the release call fails.
 
 ## Common surprises
 
 - **Omitting `released_at` defaults to "now."** That fits most of the time. Watch out when your deploy job runs minutes before the artifact is actually live (blue/green flips later, etc.). Then back-date it.
 - **Releases are per site.** A monorepo deploy that ships three sites needs three release calls.
-- **Comparison windows follow the query length.** A 7-day query compares against the 7 days before the release. Keep the window short (1–24 h) if you want to catch regressions sharply.
+- **The comparison follows the query length.** A 7-day `time_range` compares with the first 7 days of the previous release. Keep it short (1–24 h) to catch regressions sharply.
 
 ## Related
 
 - [Releases concept](/en/concepts/releases): what a release is.
-- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to_release_id` details.
+- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to` details.
 - [Notification rules](/en/guides/notification-rules): alert automatically on per-release regressions.

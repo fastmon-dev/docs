@@ -98,8 +98,6 @@ The payload is JSON with deliberately short keys to keep the wire size down. The
 }
 ```
 
-You don't usually need to read this; the dashboard and the [Analytics API](/en/api/analytics/queryAnalytics) unpack it for you.
-
 Key abbreviations:
 
 - `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`collect_sessions`](/en/tracker#collect-sessions) is on (on load, or after `grantConsent()`, per [`session_consent`](/en/tracker#session-consent)).
@@ -108,7 +106,7 @@ Key abbreviations:
 - `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
 - `cst`: client-sent-at timestamp, visitor wall-clock at flush.
-- `u`, `r`: page URL and referrer, both pre-sanitized at the tracker to origin + pathname (query and hash dropped). `r` is classified server-side into bucketed source + medium and the raw value is dropped before any logging path. It never persists, in any mode.
+- `u`, `r`: page URL and referrer, both pre-sanitized at the tracker to origin + pathname (query and hash dropped). `r` is classified server-side into bucketed source + medium, and the raw value is never logged or stored. An SPA route change or BFCache restore (`softnav`) gets medium `internal` instead of the landing source.
 - `us`, `um`, `uc`, `ut`, `un`, `ci`: campaign attribution (utm source / medium / campaign / term / content, and the click-ID platform label) extracted from `window.location.search`. Each capped at 64 chars. `ci` is the platform *label* only (`"gclid"` / `"fbclid"` / …); the click-ID value is dropped by the tracker. Emitted in every configuration, and omitted entirely when empty.
 - `pt`: the page type from `<meta name="fm-page-type">` or `<meta name="page-type">`, read on every beacon and capped at 32 chars. The last tag of a name wins. Emitted in every configuration, and omitted when empty.
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
