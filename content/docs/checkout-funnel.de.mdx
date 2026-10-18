@@ -112,10 +112,11 @@ Was sich im Funnel ändert, sobald das Pixel läuft:
 - **Käufe sind eine Untergrenze.** Shopify feuert sein Checkout-abgeschlossen-Event bei den meisten Shop-Pay- und Apple-Pay-Bestellungen nicht. Ein Besucher mit Zahlung und ohne Abschluss hat meistens über ein Wallet gekauft.
 - **Content-Blocker stoppen das Pixel.** Die EasyPrivacy-Liste des EasyList-Projekts blockt den Sandbox-Pfad von Shopifys Custom Pixels, und uBlock Origin liefert diese Liste ab Werk mit. Diese Besucher liefern Storefront-Pageviews, aber keine Checkout-Events, die Conversion-Rate liest sich also zu niedrig. Siehe [Content-Blocker](/de/guides/shopify-checkout#blockers).
 - **Warenkorb zu Checkout kann über 100 % liegen.** Wer direkt in den Checkout springt, hat nie eine Warenkorbseite geladen.
-- **Seitenfilter lassen die Pixel-Events außen vor.** Sie tragen keine Seite, ein [Seitenfilter](#filters) trifft also keines davon.
+- **[Seitenfilter](#filters)** treffen die Pixel-Events über den Seitentyp `checkout`, die Viewport-Klasse und die Verbindungsklasse. Events von vor dem 18.10.2026 tragen nichts davon.
+- **Ein Filter auf den Login-Status gibt einen 422**, sobald eine Shopify-Application im Scope ist, denn das Pixel liest keine Kundendaten. Das Dashboard zeigt dann keine Bestellungen und bietet „Login-Filter entfernen" an.
 - **Im Checkout gibt es keine Pageviews.** Ein Käufer, der nur im Checkout auftaucht, zählt in einer Kohorte ohne Web Vitals, und der Sessions-Explorer zeigt den Shopify-Checkout nicht.
 
-Die Events tragen den Schritt, Land, Gerät, Browser und Traffic-Klasse des Besuchers sowie die Edge-Kennung. Keine URL, keine Session-ID, kein Bestellwert: Der Shopify-Checkout wird gezählt, nicht gemessen.
+Die Events tragen den Schritt, Land, Gerät, Browser, Viewport, Verbindung und Traffic-Klasse des Besuchers sowie die Edge-Kennung. Keine URL, keine Session-ID, kein Bestellwert: Der Shopify-Checkout wird gezählt, nicht gemessen.
 
 ## Wo es auftaucht [#where-it-shows-up]
 

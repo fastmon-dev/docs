@@ -24,7 +24,7 @@ Open **Notifications → Rules → New rule** in the fastmon dashboard. The firs
 - *CLS regression*: CLS p75 above 0.1
 - *INP regression*: INP p75 above 200 ms
 - *Traffic drop*: pageview count down 50% vs. the previous 24 h
-- *Error rate too high*: more than 1% of pageviews with a JS error
+- *Error rate too high*: more than 1 % of pageviews with a first-party JS error
 - *Page weight bloat*: transferred bytes p75 above 3 MB over 7 days
 
 Pick the one closest to what you want. You can edit any field afterward. If nothing matches, choose **Blank rule** and skip to step 3.
@@ -47,7 +47,7 @@ The part that takes a bit of thought. A rule has three pieces:
 ### What you're measuring
 
 - A **scope**: a single site, or a site **tag** to cover a group of sites with one rule (the rule evaluates each site in the tag separately).
-- A **metric** (LCP, INP, CLS, FCP, TTFB, error rate, failed resource rate, pageviews, visitors, and the rest of the analytics metrics).
+- A **metric** (LCP, INP, CLS, FCP, TTFB, the first-party and third-party error rates, DNS lookup, TCP connection, failed resource rate, pageviews, visitors, and the rest of the analytics metrics).
 - An **aggregation** (p50, p75, p95, count, avg, …). The `visitors` and `requests` metrics are counts, so they only take `count`.
 - For the **visitors** metric, an optional **identity** picks which identifier backs the count: `stitch` (the default, edge-derived, works in every mode) or `session` (consent-gated). It applies only to `visitors`.
 - An optional **filter**, such as mobile only, a URL pattern, a country list, or `status_code = 500`.

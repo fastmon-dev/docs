@@ -17,9 +17,9 @@ Kompakte Definitionen. Tiefe gibt's über den Link am jeweiligen Begriff.
 
 **TTFB**: *Time to First Byte.* Zeit, bis das erste Response-Byte ankommt. Diagnostisch; der Boden für FCP und LCP. Siehe [TTFB](/de/web-vitals/ttfb).
 
-**Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP, INP, CLS, FCP, TTFB, Ladezeit und Fehlerrate. Gemappt auf Schulnoten A+ bis F. Siehe [Experience Score](/de/web-vitals/experience-score).
+**Experience Score**: Score von 0,0 bis 10,0, gewichtet aus LCP, INP, CLS, FCP, TTFB und der eigenen Fehlerrate. Gemappt auf Schulnoten A+ bis F. Siehe [Experience Score](/de/web-vitals/experience-score).
 
-**Fehlerrate**: Anteil der Pageviews mit mindestens einem JavaScript-Fehler (eine nicht abgefangene Exception oder eine unbehandelte Rejection). Fehlgeschlagene Ressourcen stecken nicht darin. Siehe [Fehler-Analytics](/de/analytics#error-analytics).
+**Fehlerrate**: Anteil der Pageviews mit mindestens einem JavaScript-Fehler (eine nicht abgefangene Exception oder eine unbehandelte Rejection), ohne Bewertung. Fehlgeschlagene Ressourcen stecken nicht darin. Bewertet wird `first_party_error_rate`, die nur Fehler aus dem Code der Seite zählt, `third_party_error_rate` zählt die von fremden Hosts. Siehe [Fehler-Analytics](/de/analytics#error-analytics).
 
 **Fehlgeschlagene Ressource**: Ein `<img>`, `<script>` oder `<link>`, das nicht geladen hat. Ein eigenes Signal mit eigener Rate (`failed_resource_rate`), geteilt in eigene und fremde Hosts, denn die fremde Hälfte wird von Ad-Blockern dominiert. Siehe [Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
 

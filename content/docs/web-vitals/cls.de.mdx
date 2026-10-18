@@ -50,11 +50,11 @@ CLS wird finalisiert, wenn die Seite versteckt wird. Bis dahin summieren sich al
 
 ## CLS in fastmon ansehen
 
-Der **Performance**-Bereich zeigt CLS bei p50, p75, p95.
+Die CLS-Seite findest du unter **Core Web Vitals → CLS**, aufgebaut wie die [LCP-Seite](/de/web-vitals/lcp#how-to-see-lcp-in-fastmon).
 
-- **Nach URL**: Group by URL. Seiten mit Ads, spät ladenden Widgets oder Consent-Bannern führen fast immer.
-- **Nach Device**: Group by `device_type`. Mobile-CLS ist meist schlechter.
-- **Nach Release**: `compare_to` mit einem Release, siehe [Releases vergleichen](/de/guides/compare-releases#compare-metrics). Ein getauschter Font oder ein geändertes Layout fällt sofort auf.
+- **Wo der CLS schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach schlechten Pageviews. Seiten mit Ads, spät ladenden Widgets oder Consent-Bannern stehen meist oben.
+- **Was sich verschiebt**: die Elemente hinter der größten Verschiebung oder dasselbe nach Elementtyp.
+- **Nach Release**: [vergleiche](/de/web-vitals/lcp#compare) ein Release mit dem davor. Ein getauschter Font oder ein geändertes Layout fällt sofort auf.
 
 ## Hohen CLS verbessern
 

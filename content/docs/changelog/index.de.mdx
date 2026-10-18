@@ -17,6 +17,179 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-18" type="changed" area="platform" title="Experience Score ohne Ladezeit">
+
+Der Experience Score lässt die Ladezeit weg und bewertet nur noch Fehler aus deinem eigenen Code.
+
+- **Neue Gewichte**: LCP 0,25, INP 0,20, CLS 0,15, FCP 0,15, Fehlerrate 0,15 und TTFB 0,10. Jeder Score verschiebt sich, manche Noten ändern sich.
+- **`first_party_error_rate`** ist die bewertete Fehlerrate, gut bis 1 % und schlecht über 5 %. Daneben steht `third_party_error_rate`, unbewertet.
+- **`error_rate`** zählt weiter jeden JavaScript-Fehler, wird aber nicht mehr bewertet. In `POST /analytics/experience-score` bleibt sie als veralteter Eintrag ohne Score.
+- **Überall dieselbe Rate**: Die Wochenmail, die Vorlage „Fehlerrate zu hoch“ und die Zuverlässigkeits-Kachel im Dashboard nehmen die First-Party-Rate. Bestehende Alert-Regeln bleiben, wie sie sind.
+
+Kein Score sinkt, und Sites mit Third-Party-Fehlern steigen. Doku: [Experience Score](/de/web-vitals/experience-score).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Acht weitere Metrikseiten im neuen Layout">
+
+INP, CLS, FCP, TBT, Ladezeit, DNS, Connect und Transfergröße haben jetzt Seiten wie LCP und TTFB. Jede zeigt den Wert mit Trend, die Seitenaufrufe nach Bewertung, eine Zusammenfassung, die Verteilung und eine Tabelle, wo die Metrik am schlechtesten ist.
+
+- **INP** teilt die langsamste Interaktion in Input Delay, Processing und Presentation auf.
+- **INP und CLS** listen die Elemente hinter dem Wert, **INP und TBT** die Skripte in Long Animation Frames.
+- **Transfergröße** zeigt das Gewicht pro Ressourcentyp und eine Rangliste der Third-Party-Domains.
+- **Vergleichen** geht auf allen acht Seiten und sitzt jetzt im Filter, als Chip mit einem x zum Beenden.
+- **Ein gesetzter Filter** färbt den Filter-Button schwarz, im Dark Mode weiß.
+
+Die Zusammenfassung schreibt `POST /analytics/metric-summary`, mit dem neuen Satztyp `level` und `facts.unit`. Doku: [Web Vitals](/de/web-vitals).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="dashboard" title="Eine neue Analytics-Seite">
+
+Die Analytics-Seite ist neu aufgebaut, aus Karten, die alle gleich funktionieren.
+
+- **Karten**: Ein Menü wählt die Dimension, und jede Karte blättert durch ihre Zeilen. Der Kartentitel öffnet alle Werte mit Suche, zweiter Dimension, Sortierung und CSV-Download.
+- **Seiten** bekommen eine breite Karte mit Seitenname, URL und LCP.
+- **Bestellungen** erscheinen als Linie oder als drei Bahnen: Warenkorb, Checkout erreicht und bestellt. Die Conversion-Kachel steht bei jedem Zeitraum.
+- **Seitenaufrufe** lassen sich nach Menschen und Bots aufteilen, pro Bot oder pro Bot-Typ. Die Aufteilung ändert nur das Diagramm.
+- **Live**: Eine Zeile über dem Diagramm zeigt die Besucher gerade jetzt, und „Live ansehen“ öffnet einen Ticker der neuesten Bestellungen oder Events.
+- **Besucherwege**: Funnel und Käufervergleich teilen sich eine Karte, und die Besuchstiefe zeigt, wie viele Seiten ein Besuch erreicht.
+- **Diagramme** zeichnen jeden Bucket an seinem Ende, die laufende Stunde gestrichelt bis zur Hochrechnung. Releases sind eine dünne lila Linie.
+
+Statuscodes sind von der Analytics-Seite verschwunden. Filtern auf „Direkt / keine“ und andere leere Werte bleibt vorerst aus. Doku: [Analytics](/de/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Diagramme in 5 Minuten, 15 Minuten und 6 Stunden, in deiner Zeitzone">
+
+Diagramme haben drei neue Auflösungen, und Buckets ab sechs Stunden beginnen nach deiner Uhr.
+
+- **Auto** nimmt die kleinste Breite mit höchstens 300 Buckets. Die letzten 24 Stunden zeigen 5-Minuten-Buckets, 48 Stunden 15-Minuten-Buckets, ab 28 Tagen gibt es Tage.
+- **Feine Breiten schneiden ein langes Fenster** auf seinen letzten Teil zu: Minuten auf 25 Stunden, 5 Minuten auf 5 Tage, 15 Minuten auf 15 Tage. Die Kachel sagt das dazu.
+- **Deine Zeitzone**: Ein Tag beginnt um deine Mitternacht, eine Woche am Montag, ein Monat am Ersten. Bei der Zeitumstellung hat ein Tag 23 oder 25 Stunden.
+- **Die Uhrzeit** steht in Tooltips und Achsen jedes Diagramms unter einem Tag, auch in Ask.
+- **Conversion und Bestellstufen** folgen der Auflösung des Diagramms bis zu einem Tag.
+
+Doku: [Analytics](/de/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Vergangene Zeitfenster im Zeitwähler">
+
+Das Ausdrucksfeld im Zeitwähler startet mit dem aktuellen Zeitraum, etwa `now-7d`, sodass du nur die Zahl änderst. Es nimmt auch ein Fenster in der Vergangenheit: `7d-3d` ist der Zeitraum von vor 7 bis vor 3 Tagen. Ein Info-Symbol listet alle Ausdrücke, die es versteht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="dataLayer-Einstellungen und Bestellumsatz">
+
+Die Application-Einstellungen haben einen eigenen dataLayer-Abschnitt, und die Events-Übersicht zählt den Umsatz pro Bestellung.
+
+- **dataLayer**: GA4-Ecommerce-Events lesen, jeden anderen Push nach Namen lesen, die Keys für Properties wählen und Namen behalten oder verwerfen, mit `*` als Präfix.
+- **Umsatz** zählt jede Bestellung einmal, mit ihrem größten Wert, pro Währung. Die bisherigen Summen pro Event bleiben als „Wert pro Event“.
+- **API**: `POST /analytics/events/overview` liefert `order_revenue` und `value_sums`. `revenue` ist veraltet.
+
+Eine Danke-Seite, die `purchase` bei jedem Neuladen pusht, zählt eine Bestellung pro Seitenaufruf. Doku: [Eigene Events](/de/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="tracker" title="Jeder dataLayer-Push, mit deinen Keys und maskierten Personendaten">
+
+Die dataLayer-Brücke hat zwei unabhängige Schalter, beide standardmäßig aus.
+
+- **`collection.ga4_ecommerce`** liest die sieben GA4-Ecommerce-Namen mit Wert, Währung und Artikeln. Applications mit `collection.data_layer` an wechseln auf diesen Schalter.
+- **`collection.data_layer`** liest jetzt jeden Namen, den die Seite pusht, ohne Properties. Die `gtm.*`-Pushes vom Google Tag Manager zählen nie, und ein Name zählt höchstens 10-mal pro Seitenaufruf.
+- **`collection.data_layer_prop_keys`** übernimmt bis zu 30 Top-Level-Keys eines Pushes als Properties.
+- **`collection.data_layer_mode`** mit `data_layer_names` sperrt oder erlaubt bis zu 50 Namen. Der Collector setzt das binnen fünf Minuten um, `fastmon.event()` filtert er nie.
+- **Maskierung**: Ein Property-Key mit `user`, `customer`, `email`, `mail`, `phone`, `password` oder `token` geht als `[masked]` raus.
+- **E-Mail-Adressen** in Event-Properties werden zu `[email]`, bevor das Event den Browser verlässt.
+
+Doku: [Eigene Events](/de/events) und [Datenschutz](/de/privacy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Events kommen auch hinter Blockern an">
+
+Eigene Events hängen nicht mehr an einem späteren Beacon oder an `sendBeacon`, das EasyPrivacy blockiert.
+
+- **Binnen etwa einer Sekunde**: Kommt kein Beacon, schickt der Tracker das Event per `fetch`, höchstens 20-mal pro Seitenaufruf. Ein solcher Beacon hat den Lifecycle `event_update`.
+- **Beim Verbergen der Seite** gehen wartende Events noch einmal per Keepalive-`fetch` raus, eine Kopie pro Event.
+- **Single-Page-Apps**: Ein Routenwechsel schickt jedes wartende Event unter der Seite, zu der es gehört.
+- **Falsche Browser-Uhr**: Ein Event bekommt die Uhrzeit des Beacons und zählt einmal, auch wenn es beim Verlassen erneut geht.
+- **Namen**: `fastmon.event("Add To Cart")` wird als `add_to_cart` gespeichert. Ein Name ohne Buchstaben oder Ziffer wird übersprungen.
+
+Doku: [Eigene Events](/de/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Browser-Cache-Trefferquote zählt Safari">
+
+Die Browser-Cache-Trefferquote zählt jetzt die Cache-Treffer von Safari, deshalb springt die Safari-Quote mit dem Release. Eine Cross-Origin-Ressource ohne `Timing-Allow-Origin` verbirgt ihre Bytes und bleibt jetzt aus der Quote heraus. Ein Seitenaufruf ohne Ressource mit bekanntem Cache-Status speichert keine Quote statt 0 %.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Shopify-Checkout-Pixel funktioniert mit Filtern">
+
+Ein Checkout-Funnel mit Filter auf Viewport, Verbindung oder Page-Type behält Checkout und Kauf eines Shopify-Shops, statt 0 % zu zeigen.
+
+- **Das Pixel schickt** die Viewport-Klasse, die Verbindungsklasse, wo der Browser eine meldet, und den Page-Type `checkout`. Installierte Pixel aktualisieren sich selbst.
+- **Login-Filter**: Das Pixel kennt keinen Login-Status, daher antwortet `logged_in` bei einem Shopify-Scope mit 422. Das Dashboard bietet einen Button, der den Filter entfernt.
+- **Pixel-Status** schaut 31 Tage zurück und braucht bis zu 30 Sekunden, bis eine Testbestellung erscheint.
+
+In der ersten Woche stehen die Pixel-Besucher der Vorwoche in der Live-Übersicht in einer Zeile ohne Page-Type. Doku: [Shopify-Checkout](/de/guides/shopify-checkout).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="platform" title="Collector auf deinem eigenen Host per CNAME">
+
+Richte einen CNAME auf `fastmon.site` und trag diesen Host als Collector-Endpoint im Modus „Custom collector“ ein. fastmon stellt das Zertifikat dafür aus, einen Reverse Proxy brauchst du nicht. Doku: [Tracking-Code einbinden → Eigene Domain](/de/install/html#custom-domain).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="api" title="Bucket-Breiten und Zeitzonen in der API">
+
+`POST /analytics/query` und jede Zeitreihen-Route nehmen neue Breiten und eine Zeitzone.
+
+- **Neue Breiten**: `five_minutes`, `fifteen_minutes` und `six_hours`. Breiten unter einer Stunde erlauben höchstens 1500 Buckets, `minute` reicht damit über etwa 25 Stunden.
+- **`granularity: auto`** nimmt die kleinste Breite mit höchstens 300 Buckets, ab 28 Tagen `day`. `meta.granularity_options` listet jede Breite mit 4 bis 1500 Buckets.
+- **`timezone`** nimmt einen IANA-Namen wie `Europe/Berlin`. Buckets ab sechs Stunden beginnen dann an den Grenzen dieser Zone, die Zeitstempel bleiben UTC.
+- **Wochen beginnen am Montag**, mit oder ohne `timezone`.
+- **Vergangene Fenster** lesen finalisierte Daten. Nur ein Fenster bis 6 Stunden, das kurz vor jetzt endet, liest Live-Beacons.
+- **Ask und MCP** nehmen jede Breite, die Tools für Fehler, NEL, CSP und Events nehmen `interval`.
+- **Breaking**: Ein Client, der auf `granularity` verzweigt, muss die neuen Werte akzeptieren.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="api" title="Aufschlüsselung nach der URL-Query">
+
+`POST /analytics/query` gruppiert und filtert nach Teilen der Seiten-URL.
+
+- **`url_path`** ist die URL ohne Query, so ergeben `/p?color=red` und `/p?size=m` zusammen `/p`.
+- **`url_key`** liefert eine Zeile pro Query-Key, **`url_key_set`** die Menge der Keys, die eine Seite hatte.
+- **`url_param`** mit `url_param_key` gruppiert nach dem Wert eines Keys. Es gruppiert nur und filtert nicht.
+- **`meta.pageviews`** sind die Seitenaufrufe des Fensters nach allen Filtern, der Nenner für einen Anteil.
+
+Ein Key, dessen Wert die Application nicht speichert, antwortet mit 422 und nennt `collection.query_values_for`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="api" title="Filter auf den leeren Wert">
+
+Ein Textfilter mit `""` wählt jetzt die Zeilen ohne Wert. `referrer_source: ""` liefert die direkten Besuche, bisher kam der gesamte Traffic. `exclude` nimmt die Referrer-, UTM- und `click_id_param`-Spalten, und Ask und MCP nutzen stattdessen `empty` und `not_empty`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="api" title="sample_count ersetzt beacons">
+
+`POST /analytics/query` nennt die Stichprobengröße jetzt `sample_count`, denn sie zählt Seitenaufrufe. `beacons` antwortet weiter als veralteter Zwilling. Das Dashboard zeigt die Stichprobengröße nicht mehr dort, wo das Backend keine Besucher oder Seitenaufrufe schickt.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="platform" title="Sichererer Login und sicherere Benachrichtigungen">
+
+Die Anmeldung mit GitHub oder Google braucht eine bestätigte Adresse und verknüpft sich nicht mehr mit einem unbestätigten oder gesperrten Konto. Webhook-, Slack- und Discord-Benachrichtigungen gehen nur an die öffentliche Adresse, die geprüft wurde.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-16" type="new" area="tracker" title="Eigene Events">
 
 Der Tracker schickt Events, die dein Shop selbst festlegt: einen Namen und bis zu 30 Properties.

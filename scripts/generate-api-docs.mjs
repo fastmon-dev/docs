@@ -53,12 +53,13 @@ const spec = await res.json();
 // The uptime probe is admin-only for now; its routes sit under the sites,
 // applications and organizations tags, so they are dropped by path, and its
 // application fields and schemas go with them. The support chat routes are
-// already left out of the schema by the backend.
+// already left out of the schema by the backend. Goal factors stay out of the
+// docs on purpose.
 const EXCLUDE_TAGS = new Set(["observations"]);
-const EXCLUDE_PATH = /\/uptime(\/|$)/;
+const EXCLUDE_PATH = /\/uptime(\/|$)|\/goals\/factors$/;
 const EXCLUDE_PROPERTY = /^uptime_/;
 const EXCLUDE_SCHEMA =
-  /^(Uptime|SiteUptime|ApplicationUptime|SiteCertificate|Observation|PaginatedResponse_Observation)/;
+  /^(Uptime|SiteUptime|ApplicationUptime|SiteCertificate|Observation|PaginatedResponse_Observation|Goal(Factor|BaseStage))/;
 let excludedOps = 0;
 for (const [route, methods] of Object.entries(spec.paths || {})) {
   for (const [method, op] of Object.entries(methods || {})) {
@@ -73,7 +74,7 @@ for (const [route, methods] of Object.entries(spec.paths || {})) {
 if (spec.tags) spec.tags = spec.tags.filter((t) => !EXCLUDE_TAGS.has(t.name));
 if (excludedOps) {
   console.log(
-    `Excluded ${excludedOps} operation(s) for uptime and tag(s): ${[...EXCLUDE_TAGS].join(", ")}`
+    `Excluded ${excludedOps} operation(s) for uptime, goal factors and tag(s): ${[...EXCLUDE_TAGS].join(", ")}`
   );
 }
 const schemas = spec.components?.schemas || {};

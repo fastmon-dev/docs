@@ -46,13 +46,11 @@ FCP ≈ TTFB + (request → response → first paint)
 
 ## How to see FCP in fastmon
 
-The dashboard's **Performance** section shows FCP at p50, p75, p95. The most useful comparison is FCP next to TTFB:
+The FCP page sits under **Performance → FCP** and is built like the [LCP page](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon). **Where the FCP is slow** ranks page type and device, or another dimension. Read it next to TTFB:
 
 - TTFB / FCP both slow → server-side problem.
 - TTFB fast, FCP slow → render-blocking resources.
 - FCP fast, LCP slow → the LCP image or text is the bottleneck, not the page shell.
-
-Use **By URL** breakdown to find pages where FCP is unusually bad.
 
 ## How to improve a slow FCP
 

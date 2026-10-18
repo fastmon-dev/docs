@@ -63,11 +63,11 @@ page loads
       with a versioned payload (lifecycle marks each emission)
 ```
 
-The flush uses `navigator.sendBeacon()` when it's available, so the request survives even if the page is unloading. If `sendBeacon` isn't available, the tracker falls back to `fetch` with `keepalive: true`. If *both* fail (legacy browsers, very aggressive extension blocking), it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party, resource, and Long Animation Frame breakdowns) are excluded from the pixel fallback by name, so they never travel through any access-log surface.
+The flush uses `navigator.sendBeacon()` when it's available. Otherwise it falls back to `fetch` with `keepalive: true`. If *both* fail, it falls back to a GET pixel at `/c/{collector_hash}.gif?…`. That URL serializes a safe subset of fields into the query string. Sensitive payloads (`sid`, referrer, errors, the large third-party, resource, and Long Animation Frame breakdowns) are excluded from the pixel fallback by name.
 
 ## The wire payload
 
-The payload is JSON with deliberately short keys to keep the wire size down. The body is capped at 8 KiB. All fields are optional; a representative envelope looks like:
+The payload is JSON with short keys. The body is capped at 8 KiB. All fields are optional; a representative envelope looks like:
 
 ```json
 {
@@ -103,7 +103,7 @@ Key abbreviations:
 - `sid`: session id. Lives in `sessionStorage._fms`. Only emitted when [`collect_sessions`](/en/tracker#collect-sessions) is on (on load, or after `grantConsent()`, per [`session_consent`](/en/tracker#session-consent)).
 - `pvid`: per-pageview id. New on every pageview, not persisted.
 - `ver`: monotonic version of this pageview's payload.
-- `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
+- `lcy`: lifecycle marker, one of `init`, `loaded`, `error_update`, `fetch_xhr_update`, `event_update`, `softnav`, `hidden`, `frozen`, `terminated`. (Cached older bundles send it as the long `lifecycle` key, which the collector also accepts.)
 - `pst`: page-started timestamp, visitor wall-clock (ms since epoch).
 - `cst`: client-sent-at timestamp, visitor wall-clock at flush.
 - `u`, `r`: page URL and referrer, both pre-sanitized at the tracker to origin + pathname (query and hash dropped). `r` is classified server-side into bucketed source + medium, and the raw value is never logged or stored. An SPA route change or BFCache restore (`softnav`) gets medium `internal` instead of the landing source.
@@ -111,10 +111,12 @@ Key abbreviations:
 - `pt`: the page type from `<meta name="fm-page-type">` or `<meta name="page-type">`, read on every beacon and capped at 32 chars. The last tag of a name wins. Emitted in every configuration, and omitted when empty.
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
-- Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), cache hit rate (`chr`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. `frs` is `finalResponseHeadersStart` (stored as `ttfb_final`, `null` outside Chromium), the first byte of the final response where 103 Early Hints make `ttfb` point at the interim one.
-- `errc`, `frc`: the two error counters, kept apart. `errc` counts JavaScript errors (exceptions and unhandled rejections), `frc` counts failed `<img>`/`<script>`/`<link>` loads. Both count every occurrence, not just the entries that fit below, and both are absent rather than zero when the beacon reported nothing for their channel (the pixel fallback and the oversized-payload path send fewer fields than a normal beacon). See [what counts as an error](/en/tracker#what-counts).
+- Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. `frs` is `finalResponseHeadersStart` (stored as `ttfb_final`, `null` outside Chromium), the first byte of the final response where 103 Early Hints make `ttfb` point at the interim one.
+- `chr`: browser cache hit rate over the resources whose cache state is known, Safari's cache hits included. A cross-origin resource without `Timing-Allow-Origin` stays out, and a pageview without any known resource sends `null`.
+- `evts`: your [custom events](/en/events), on the next beacon of their pageview or, after about a second without one, on an `event_update` sent by `fetch`, at most 20 per pageview. Events still queued at page hide also go by keepalive `fetch`, which EasyPrivacy does not block.
+- `errc`, `frc`: the two error counters, kept apart. `errc` counts JavaScript errors (exceptions and unhandled rejections), `frc` counts failed `<img>`/`<script>`/`<link>` loads. Both count every occurrence, not just the entries that fit below, and both are absent rather than zero when the beacon reported nothing for their channel. See [what counts as an error](/en/tracker#what-counts).
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames), up to eight: the top five JavaScript errors followed by the top three failed resources, each ranked inside its own channel. `t` and `n` ship in every configuration, and so does each frame's host (plus the path and line/column for frames in your own first-party external scripts). The message `m` is opt-in via [`collect_error_messages`](/en/tracker#collect-error-messages), and the path/line/column of inline and third-party frames via [`collect_error_frames`](/en/tracker#collect-error-frames); even then `m` runs through a scrubber that masks URLs, emails, IDs, and quoted strings. A pageview's **error origin** is derived server-side from the entries that arrived: `first` when any JavaScript entry has a frame on the page's own registrable domain, `third` when none does and a foreign host was seen, and empty when there was no error or no host to compare.
-- `snl`: **Route Load** for soft navigations (`soft_nav_load`): the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, deliberately never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
+- `snl`: **Route Load** for soft navigations (`soft_nav_load`): the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
 - `dlv`: delivery method (`b` for `sendBeacon`, empty for `fetch`).
 - Fetch/XHR and `Server-Timing`: per-endpoint Fetch/XHR aggregates (call counts, durations, duration buckets, status-error counts) and the page's `Server-Timing` metrics. Both are templated and normalized server-side (the wire is forgeable), so paths carry no query strings or raw IDs. The promoted `Server-Timing` fields include the two cache ages, `cdn_age` and `origin_age` in seconds, next to the cache statuses they qualify; see [Server-Timing](/en/guides/server-timing#cache-age).
@@ -163,16 +165,16 @@ What the beacon does is controlled per site by its [tracker settings](/en/tracke
 
 ## Rate limiting
 
-The collector rate-limits per `(collector_hash, client_ip)`. The IP is read at the edge for that bucket only; the application sees a pre-derived bucket key, not the raw IP, and the IP is not written to disk. It's defensive: a broken page or a synthetic load test shouldn't saturate ingestion for other tenants. Real traffic basically never hits it.
+The collector rate-limits per `(collector_hash, client_ip)`. The IP is read at the edge for that bucket only; the application sees a pre-derived bucket key, not the raw IP, and the IP is not written to disk.
 
 A rate-limited beacon gets a `429`. The browser drops its buffer and carries on; nothing else breaks.
 
 Payloads larger than 8 KiB return `413`. If `cst` is more than 5 minutes off the server clock, the server falls back to its own receive time instead of rejecting; the beacon is still accepted.
 
-## Things worth knowing
+## Pageviews and flushes [#things-worth-knowing]
 
 - **SPA route changes start a new pageview.** The script stays loaded, but soft-navs (patched `history.pushState` + `popstate`) mint a new `pvid`, reset the Web Vitals observers, and flush a `softnav` beacon for the previous pageview. So one tab can emit many pageviews.
-- **Multiple flushes per pageview.** The buffer flushes on lifecycle triggers (`init`, `loaded`, `error_update`, `softnav`, `hidden`, `frozen`, `terminated`), not just on tab switch. Expect more than one `POST /c/` per visit.
+- **Multiple flushes per pageview.** The buffer flushes on lifecycle triggers (`init`, `loaded`, `error_update`, `event_update`, `softnav`, `hidden`, `frozen`, `terminated`), not just on tab switch. Expect more than one `POST /c/` per visit.
 
 ## Related
 

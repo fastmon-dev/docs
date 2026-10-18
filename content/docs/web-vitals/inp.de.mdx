@@ -45,13 +45,14 @@ Wenn der Besucher nie interagiert, hat der Pageview kein INP.
 
 **SPA-Route-Wechsel.** Ein Klick auf einen Link triggert deinen Router, der gerne mal einen großen Baum komplett neu rendert. INP misst Klick → erster Paint der neuen Route. Wer Route-Chunks nicht lazy-loadet, läuft hier in einen schlechten INP rein.
 
-## INP in fastmon ansehen
+## INP in fastmon ansehen [#how-to-see-inp-in-fastmon]
 
-Der **Performance**-Bereich zeigt INP bei p50, p75, p95. Besonders nützliche Slices:
+Die INP-Seite findest du unter **Core Web Vitals → INP**, aufgebaut wie die [LCP-Seite](/de/web-vitals/lcp#how-to-see-lcp-in-fastmon).
 
-- **Nach URL**: Group by URL. Interaktive Seiten (Suche, Konfigurator, Dashboard) dominieren meist.
-- **Nach Device**: Group by `device_type`. INP ist auf günstigem Mobile deutlich härter.
-- **Nach Browser**: Group by `browser`. Firefox und Safari zeigen manchmal andere INP-Profile als Chromium.
+- **Wohin die Zeit geht**: Eingabeverzögerung, Verarbeitung und Darstellung der langsamsten Interaktion, auch in jeder Tabellenzeile.
+- **Wo der INP schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach schlechten Pageviews.
+- **Wo interagiert wird**: die Elemente der langsamsten Interaktion.
+- **Was den Main Thread beschäftigt**: die Skripte in Long Animation Frames über 50 ms.
 
 ## Schlechten INP verbessern
 

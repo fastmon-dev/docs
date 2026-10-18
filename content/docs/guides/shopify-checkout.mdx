@@ -63,7 +63,7 @@ See [First-party proxy](/en/guides/first-party-proxy).
 
 ## Check that it works
 
-Place a test order with a Bogus Gateway payment, in a browser without a content blocker. In the network tab, look for requests to <InstallValue of="events-collector-url" />: one on entry, one after the payment step, one on the thank-you page. The data reaches the dashboard within a few minutes.
+Place a test order with a Bogus Gateway payment, in a browser without a content blocker. In the network tab, look for requests to <InstallValue of="events-collector-url" />: one on entry, one after the payment step, one on the thank-you page. The data reaches the dashboard within a few minutes, and the pixel status in the application list within 30 seconds. It reads "No checkout event in the last 31 days" while nothing has arrived.
 
 ## What the numbers mean [#numbers]
 

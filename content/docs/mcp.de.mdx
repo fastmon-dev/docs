@@ -78,9 +78,13 @@ Ein Aufruf ohne Site umfasst die ganze Organisation, denn eine MCP-Verbindung ha
 
 Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
 
-**Wie Antworten qualifiziert werden.** Jedes p75 trägt die Anzahl der Messungen mit, auf denen es steht (`samples`), und das ist nicht die Zahl der Pageviews: die Vitals-Spalten sind nullable, ein LCP-p75 kann also auf einer Handvoll Messungen ruhen. Damit wird auch ein `null` lesbar, denn `inp_p75_ms: null` neben `samples.inp: 0` heißt „hier wurde nichts gemessen" und nicht „das Feature ist aus". Wo ein Tool eine Mindestzahl an Messungen anwendet, nennt es diese Schwelle: ein leeres Ergebnis unter einer Schwelle ist ein anderer Befund als eine leere Dimension. Ob eine Zahl zu dünn ist, um sie zu zitieren, bleibt die Entscheidung des Aufrufers.
+**Wie Antworten qualifiziert werden.** Jedes p75 trägt die Zahl der Messungen mit, auf denen es steht (`samples`), und das ist nicht die Zahl der Pageviews. `inp_p75_ms: null` neben `samples.inp: 0` heißt, dass nichts gemessen wurde. Wendet ein Tool eine Mindestzahl an Messungen an, nennt es diese Schwelle.
 
 **Wie Filter matchen.** Eine `url` als Pfad geschrieben (`/checkout*`) matcht den Pfad, und Textfilter matchen ohne Rücksicht auf Groß- und Kleinschreibung: `browser: ["chrome"]` und `device_type: ["Desktop"]` finden also das gespeicherte `Chrome` und `desktop`. `country` nimmt Codes, keine Namen, und repariert die, die ISO nicht vergibt (`UK` und `EN` zu `GB`, `EL` zu `GR`). Ein Tag, das keine Site trägt, wird abgewiesen, statt als Scope über null Sites beantwortet zu werden. Es gibt keine Zeitzone pro Site: ein Zeitraum ohne Offset wird als UTC gelesen.
+
+**Leere Werte.** Ein leerer String gilt als kein Filter. `empty: ["referrer_source"]` fragt nach Direkt-Traffic, `not_empty: ["utm_campaign"]` nach Kampagnen-Traffic.
+
+**Bucket-Breiten.** `get_timeseries` nimmt jede Breite von `minute` bis `month`. Die Tools für Fehler, fehlgeschlagene Ressourcen, NEL, CSP und Events nehmen ein optionales `interval`, ohne das die Reihe bis 48 Stunden stündlich und darüber täglich ist. Breiten unter einer Stunde decken höchstens 1500 Buckets ab.
 
 ## Grenzen [#limits]
 

@@ -50,11 +50,11 @@ CLS is finalized when the page becomes hidden. Until then, every shift is being 
 
 ## How to see CLS in fastmon
 
-The dashboard's **Performance** section shows CLS at p50, p75, p95.
+The CLS page sits under **Core Web Vitals → CLS** and is built like the [LCP page](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
 
-- **By URL**: group by URL. Pages with ads, late-loading widgets, or consent banners almost always lead.
-- **By device**: group by `device_type`. Mobile CLS is usually worse.
-- **By release**: `compare_to` with a release, see [Compare releases](/en/guides/compare-releases#compare-metrics). A swapped font or changed layout shows up at once.
+- **Where the CLS is poor**: page type and device, or another dimension, ranked by poor pageviews. Pages with ads, late widgets, or consent banners usually lead.
+- **What shifts**: the elements behind the largest shift, or the same by HTML element type.
+- **By release**: [compare](/en/web-vitals/lcp#compare) a release against the one before. A swapped font or changed layout shows up at once.
 
 ## How to improve a high CLS
 

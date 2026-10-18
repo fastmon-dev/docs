@@ -112,10 +112,11 @@ What changes in the funnel once the pixel runs:
 - **Purchases are a lower bound.** Shopify does not fire its checkout completed event for most Shop Pay and Apple Pay orders. A visitor with a payment and no success most likely bought through a wallet.
 - **Content blockers stop the pixel.** EasyList's EasyPrivacy list blocks Shopify's custom-pixel sandbox path, and uBlock Origin ships that list by default. Those visitors contribute storefront pageviews but no checkout events, so the conversion rate reads low. See [content blockers](/en/guides/shopify-checkout#blockers).
 - **Cart to checkout can exceed 100 %.** A buyer who went straight into the checkout never loaded a cart page.
-- **Page filters leave the pixel's events out.** They carry no page, so a [page filter](#filters) matches none of them.
+- **[Page filters](#filters)** match the pixel's events by page type `checkout`, viewport class, and connection class. Events from before 2026-10-18 carry none of them.
+- **A login state filter answers 422** on a scope with a Shopify application, since the pixel reads no customer data. The dashboard shows no orders then and offers "Remove login filter".
 - **No pageviews in the checkout.** A buyer seen only in the checkout counts in a cohort without Web Vitals, and the sessions explorer does not show the Shopify checkout.
 
-The events carry the step, the visitor's country, device, browser and traffic class, and the edge identifier. No URL, session id, or order value: the Shopify checkout is counted, not measured.
+The events carry the step, the visitor's country, device, browser, viewport, connection and traffic class, and the edge identifier. No URL, session id, or order value: the Shopify checkout is counted, not measured.
 
 ## Where it shows up [#where-it-shows-up]
 

@@ -15,7 +15,7 @@ Call `fastmon.event` with a name and the properties:
 fastmon.event('add_to_cart', { value: 129.9, currency: 'EUR', sku: 'SW-100' });
 ```
 
-The event rides on the next beacon of the pageview and costs no request of its own. The tracker stamps the time and copies the properties at the call. An event still pending when the tab is hidden leaves with that last beacon.
+The event rides on the next beacon of the pageview. Without one within about a second, the tracker sends an `event_update` beacon by `fetch`, at most 20 per pageview. At page hide, pending events also go by keepalive `fetch`, and the collector keeps one copy.
 
 A call before the tracker has loaded needs this queue stub first. The tracker sends what it queued with its first beacon.
 
@@ -38,20 +38,31 @@ A click on an element with `data-fm-event`, or on anything inside it, sends an e
 
 The closest element with the attribute decides. An empty `data-fm-event=""` keeps clicks inside a marked container from counting.
 
-### From the GA4 dataLayer [#data-layer]
+### From the dataLayer [#data-layer]
 
-With the application setting [`collection.data_layer`](/en/concepts/applications#events) on, the tracker reads GA4 ecommerce pushes on `window.dataLayer`. It is off by default. Pushes made before the tracker loaded count too.
+Two independent [application settings](/en/concepts/applications#events), both off by default, read pushes on `window.dataLayer`. Pushes before the tracker loaded count too, Google Tag Manager's `gtm.*` pushes never do.
 
-- **Names taken**: `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info`, and `purchase`. Every other push is ignored.
-- **Kept**: `value`, `currency`, the number of items as `item_count`, and per item `items.<n>.item_id`, `items.<n>.item_name`, `items.<n>.price`, and `items.<n>.quantity`.
-- **Items**: added while they fit under 30 keys, so a large order keeps at least its first six. A text longer than 500 characters is left out.
-- **Not kept**: the order id and every other field.
+- **`collection.ga4_ecommerce`** reads `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info`, and `purchase` with their ecommerce props.
+- **`collection.data_layer`** reads every push that carries an event name. The event has no props unless you list top-level keys in `collection.data_layer_prop_keys`, up to 30.
+- **Repeats**: one name counts at most 10 times per pageview.
+
+A GA4 event keeps `value`, `currency`, the number of items as `item_count`, and per item `items.<n>.item_id`, `item_name`, `price`, and `quantity`. A large order keeps at least its first six items. The order id and every other field stay in the page.
 
 `view_cart`, `begin_checkout`, and `purchase` also reach their [checkout funnel](/en/checkout-funnel#stage-events) stage.
 
+#### Keep or drop names [#data-layer-names]
+
+`collection.data_layer_mode` and `collection.data_layer_names` filter dataLayer events at the collector. A change applies within five minutes.
+
+- **`block`** (default) drops the listed names. With an empty list nothing is dropped.
+- **`allow`** keeps only the listed names, the GA4 names included. An empty list keeps no dataLayer event.
+- **List**: up to 50 names, and `eec.*` covers every name starting with `eec.`.
+
+`fastmon.event()` calls and `data-fm-event` clicks are never filtered.
+
 ## Without the tracker [#collector]
 
-Any script on your pages can post a single event, a tag manager included. Send it as `text/plain`, so the browser sends no preflight.
+Any script on your pages, a tag manager included, can post a single event. Send it as `text/plain` to avoid a preflight.
 
 ```http
 POST https://fastmon.site/c/e/{collector_hash}
@@ -74,20 +85,21 @@ The route answers `204` whatever the body holds. A body that breaks a [rule](#li
 When the POST is blocked, `GET /c/e/{collector_hash}.gif` takes the same keys in the query string, with `p` as the JSON text of the object.
 
 <Callout type="warn" title="Browsers only">
-  The collector takes country, device, and bot verdict from the request. An event posted from your server would count as a bot in the server's location.
+  Country, device, and bot verdict come from the request, so a post from your server counts as a bot.
 </Callout>
 
 ## Limits and rules [#limits]
 
 | Rule | Value |
 | ---- | ----- |
-| Name | `a-z`, `0-9`, `_`, `.`, `-`, 1 to 48 characters after lowercasing |
+| Name | `a-z`, `0-9`, `_`, `.`, `-`, 1 to 48 characters after lowercasing, at least one letter or digit |
 | Events per beacon | 20, the rest is lost |
 | Events per pageview | 100, the tracker sends no more |
 | Property keys | 30 after flattening |
 | Key length | 128 characters |
 | Value length | 500 characters |
 
+- **Name cleanup**: the tracker turns every other character into `_`, so `Add To Cart` is stored as `add_to_cart` and `Größe` as `gr_e`. It skips a name with no letter or digit left. `/c/e/` rewrites nothing and drops an invalid name.
 - **Over a limit**: the whole event is dropped, and the beacon carrying it is kept.
 - **Types**: a number or a boolean is stored as text, an array as its JSON text.
 - **Revenue**: name the properties `value` and `currency`. Nothing converts or checks a currency.
@@ -96,7 +108,7 @@ When the POST is blocked, `GET /c/e/{collector_hash}.gif` takes the same keys in
 
 ## Privacy [#privacy]
 
-Names and properties must not hold personal data such as names, email addresses, or customer ids. What fastmon drops and masks is listed under [Privacy → Event properties](/en/privacy#events).
+Names and properties must not hold personal data. The tracker masks keys and email addresses as described under [Privacy → Event properties](/en/privacy#events).
 
 ## Correct or delete an event [#edit]
 
@@ -108,7 +120,9 @@ The `event_id` comes from the event list. Every count and list follows, and the 
 
 The page sits under **Explorer → Events** in the sidebar.
 
-- **Overview tab**: events over time by name, the names ranked, revenue per event and currency, and the most frequent values of each property.
+- **Overview tab**: events over time by name, the names ranked, and the most frequent values of each property.
+- **Revenue**: one order per pageview with `order_placed` or `purchase`, at its largest `value`, per currency. A reloaded thank-you page counts again.
+- **Value per event**: the sum of `value` per name and currency.
 - **Events tab**: one row per event with its properties as chips. A row opens to every stored field and has a share link.
 - **Name filter**: suggests the names of the period by count and accepts any valid name.
 - **Page filters**: URL, page type, login state, connection, and viewport class narrow the events. Events stored before 2026-10-16 carry no page and match none.
@@ -117,5 +131,5 @@ The page sits under **Explorer → Events** in the sidebar.
 ## API [#api]
 
 - `POST /organizations/{org_id}/analytics/events` lists events newest first, each with `event_id`, `name`, `source`, and `props`. `names` takes any name, and `source` is `tracker`, `collector`, or `shopify_pixel`. See the [reference](/en/api/analytics/listAnalyticsEvents).
-- `POST /organizations/{org_id}/analytics/events/overview` counts the events of a window per name, over time, as revenue per currency, and per property value.
+- `POST /organizations/{org_id}/analytics/events/overview` counts the events of a window per name, over time, and per property value, with `order_revenue` and `value_sums`. `revenue` is deprecated.
 - **MCP and Ask**: the `get_events` tool answers the same counts. See [MCP server](/en/mcp#tools).

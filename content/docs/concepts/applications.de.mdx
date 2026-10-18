@@ -172,7 +172,13 @@ Das Dashboard zeigt sie unter dem Feld, **Übernehmen** trägt sie ein.
 | Einstellung             | Default | Wirkung                                                                                     |
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------- |
 | `event_tracking`        | an      | Nimmt die eigenen [Events](/de/events) eines Shops an. fastmon schaltet es auf Anfrage ab. Die Checkout-Schritte des Shopify-Pixels bleiben. |
-| `collection.data_layer` | aus     | Liest GA4-E-Commerce-Pushes auf `window.dataLayer` als Events. Dashboard: **GA4-E-Commerce-Events lesen** (Shop). |
+| `collection.ga4_ecommerce` | aus | Liest die sieben GA4-E-Commerce-Pushes mit Wert, Währung und Artikeln. Dashboard: **GA4-E-Commerce-Events lesen**. |
+| `collection.data_layer` | aus     | Liest jeden dataLayer-Push mit Event-Namen, ohne Properties. Dashboard: **Alle dataLayer-Events lesen**. |
+| `collection.data_layer_prop_keys` | leer | Bis zu 30 Top-Level-Keys, die `data_layer`-Events als Properties behalten. Dashboard: **Keys als Properties übernehmen**. |
+| `collection.data_layer_mode` | `block` | `block` verwirft die gelisteten Namen, `allow` behält nur sie. Dashboard: **Nach Namen filtern**. |
+| `collection.data_layer_names` | leer | Bis zu 50 Namen für den Modus, `prefix*` erlaubt. Greift im Collector binnen fünf Minuten. |
+
+Die dataLayer-Einstellungen findest du unter **Events aus dem dataLayer** im Tab Shop. Siehe [Eigene Events → dataLayer](/de/events#data-layer).
 
 ## Datenschutz-Einstellungen für alle Sites [#site-defaults]
 
@@ -200,7 +206,7 @@ Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab.
 | `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.01` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
 | `collection.sampling_mode`   | enum              | `manual` (Default) oder `automatic`. Siehe [Automatisches Sampling](#sampling-mode). |
 | `collection.sampling_rate_changed_at` | timestamp · nullable | Wann fastmon die Rate zuletzt verschoben hat.                 |
-| `collection.data_layer`      | bool              | GA4-E-Commerce-Events, Default `false`. Siehe [Events](#events).       |
+| `collection.ga4_ecommerce`, `collection.data_layer*` | bool · list · enum | Die dataLayer-Brücke. Siehe [Events](#events). |
 | `collection.fetch_xhr_sampling_rate` | number | Anteil der Besucher mit gespeicherten Fetch/XHR-Aufrufen. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |

@@ -17,9 +17,9 @@ Compact definitions. For depth, follow the link on each term.
 
 **TTFB**: *Time to First Byte.* Time until the first response byte arrives. Diagnostic; the floor for FCP and LCP. See [TTFB](/en/web-vitals/ttfb).
 
-**Experience Score**: Composite score from 0.0 to 10.0, weighted across LCP, INP, CLS, FCP, TTFB, page-load time, and error rate. Mapped to letter grades A+ through F. See [Experience Score](/en/web-vitals/experience-score).
+**Experience Score**: Composite score from 0.0 to 10.0, weighted across LCP, INP, CLS, FCP, TTFB, and the first-party error rate. Mapped to letter grades A+ through F. See [Experience Score](/en/web-vitals/experience-score).
 
-**Error rate**: Share of pageviews with at least one JavaScript error (an uncaught exception or an unhandled rejection). Failed resource loads are not in it. See [Error Analytics](/en/analytics#error-analytics).
+**Error rate**: Share of pageviews with at least one JavaScript error (an uncaught exception or an unhandled rejection), unrated. Failed resource loads are not in it. The rated `first_party_error_rate` counts only errors from the site's own code, `third_party_error_rate` those from foreign hosts. See [Error Analytics](/en/analytics#error-analytics).
 
 **Failed resource load**: An `<img>`, `<script>`, or `<link>` that did not load. Its own signal with its own rate (`failed_resource_rate`), split into your own hosts and foreign ones, because the foreign half is dominated by ad blockers. See [Failed resource loads](/en/analytics#failed-resources).
 

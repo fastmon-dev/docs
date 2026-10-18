@@ -165,7 +165,13 @@ shows it under the field, and **Use** fills it in.
 | Setting                 | Default | Effect                                                                                     |
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------ |
 | `event_tracking`        | on      | Takes a shop's own [events](/en/events). fastmon turns it off on request. Shopify pixel checkout steps stay. |
-| `collection.data_layer` | off     | Reads GA4 ecommerce pushes on `window.dataLayer` as events. Dashboard: **Read GA4 ecommerce events** (Shop). |
+| `collection.ga4_ecommerce` | off | Reads the seven GA4 ecommerce pushes with value, currency, and items. Dashboard: **Read GA4 ecommerce events**. |
+| `collection.data_layer` | off     | Reads every dataLayer push with an event name, without props. Dashboard: **Read every dataLayer event**. |
+| `collection.data_layer_prop_keys` | empty | Up to 30 top-level keys kept as props of `data_layer` events. Dashboard: **Keys kept as properties**. |
+| `collection.data_layer_mode` | `block` | `block` drops the listed names, `allow` keeps only them. Dashboard: **Filter by name**. |
+| `collection.data_layer_names` | empty | Up to 50 names for the mode, `prefix*` allowed. Applies at the collector within five minutes. |
+
+The dataLayer settings sit under **Events from the dataLayer** on the Shop tab. See [Custom events → dataLayer](/en/events#data-layer).
 
 ## Privacy settings for every site [#site-defaults]
 
@@ -193,7 +199,7 @@ groups as partial objects, and reject any key they do not know.
 | `collection.sampling_rate`   | number            | Share of visitors stored, `0.01` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
 | `collection.sampling_mode`   | enum              | `manual` (default) or `automatic`. See [Automatic sampling](#sampling-mode). |
 | `collection.sampling_rate_changed_at` | timestamp · nullable | When fastmon last moved the rate.                             |
-| `collection.data_layer`      | bool              | GA4 ecommerce events, default `false`. See [Events](#events).          |
+| `collection.ga4_ecommerce`, `collection.data_layer*` | bool · list · enum | The dataLayer bridge. See [Events](#events). |
 | `collection.fetch_xhr_sampling_rate` | number | Share of visitors with fetch/XHR calls stored. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
