@@ -1,15 +1,13 @@
 ---
 title: Web Vitals
-description: "Die fünf Performance-Metriken, die fastmon trackt: was sie messen und wie du sie liest."
+description: "Die Web Vitals und die weiteren Metrik-Seiten in fastmon: was sie messen und wie sie bewertet werden."
 ---
 
-**Web Vitals** sind ein Set von Performance-Metriken, die in Zahlen fassen, wie sich eine Seite beim Laden und Benutzen anfühlt. Definitionen und Schwellen kommen von Google, die APIs vom Browser, und unser Tracker sammelt das Ganze direkt bei deinen echten Besuchern.
-
-Diese Seite ist nur die Übersicht. Zu jeder Metrik gibt's eine eigene Seite mit Schwellen, Debug-Tipps und Anleitung, wie du sie in fastmon abfragst.
+**Web Vitals** sind Googles Standardmetriken dafür, wie schnell und stabil sich eine Seite anfühlt, hier gemessen im Browser deiner echten Besucher. Diese Seite listet sie und die weiteren Metrik-Seiten in fastmon.
 
 ## Die fünf Metriken
 
-Fastmon erfasst die drei Core Web Vitals (die Metriken, die im Google-Ranking zählen) plus zwei diagnostische Metriken, die dir bei Regressionen helfen.
+LCP, INP und CLS sind die Core Web Vitals, die Google fürs Ranking nutzt. Mit FCP und TTFB findest du heraus, *warum* dein LCP langsam ist.
 
 | Metrik                                                    | Was sie misst                                            | Gut (p75)  |
 | --------------------------------------------------------- | -------------------------------------------------------- | ---------- |
@@ -19,33 +17,40 @@ Fastmon erfasst die drei Core Web Vitals (die Metriken, die im Google-Ranking z�
 | [FCP](/de/web-vitals/fcp), First Contentful Paint      | Zeit, bis Text oder Bild erstmals erscheint.             | ≤ 1.800 ms |
 | [TTFB](/de/web-vitals/ttfb), Time to First Byte        | Zeit, bis das erste Response-Byte ankommt.               | ≤ 800 ms   |
 
-Die ersten drei (LCP, INP, CLS) zählt Google fürs Ranking. Die beiden anderen (FCP, TTFB) sind diagnostisch, nützlich, wenn du herausfinden willst, *warum* dein LCP langsam ist.
+## Weitere Metrik-Seiten [#other-metric-pages]
+
+Fünf weitere Seiten sind aufgebaut wie die LCP-Seite: der Wert mit Trend, die Pageviews nach Bewertung, eine Zusammenfassung, der Verlauf neben der Verteilung und wo die Metrik am schlechtesten ist.
+
+| Seite                | Sidebar                 | Gut (p75)     | Schlecht (p75) |
+| -------------------- | ----------------------- | ------------- | -------------- |
+| TBT                  | Performance → TBT       | ≤ 200 ms      | > 600 ms       |
+| Seitenladezeit       | Performance → Page load | nicht bewertet | nicht bewertet |
+| DNS-Lookup           | Netzwerk → DNS          | ≤ 60 ms       | > 100 ms       |
+| TCP-Verbindung       | Netzwerk → Connect      | ≤ 200 ms      | > 600 ms       |
+| Übertragungsgröße    | Netzwerk → Transfer size | nicht bewertet | nicht bewertet |
+
+- **DNS und Connect** zählen nur Pageviews, die wirklich einen Lookup gemacht (`performed_dns_lookup`) oder eine neue Verbindung geöffnet haben (`new_tcp_connection`). Die Zusammenfassung nennt ohne Bewertung, wie viele Pageviews den Lookup übersprungen oder eine Verbindung wiederverwendet haben.
+- **TBT** listet die Skripte in Long Animation Frames über 50 ms, wie die INP-Seite.
+- **Übertragungsgröße** teilt das Gewicht nach Ressourcentyp auf und listet die Drittanbieter-Domains.
+
+Jede Bewertung kommt aus [`GET /metric-thresholds`](/de/web-vitals/experience-score#thresholds).
 
 ## Perzentile lesen
 
-Web Vitals betrachtest du üblicherweise auf dem **75. Perzentil**. Heißt: über alle Pageviews im Zeitraum hatten 75 % der Besucher einen besseren Wert als p75, 25 % einen schlechteren.
-
-Wenn dein LCP bei p75 bei 2.400 ms liegt, dann sieht das *schlechteste Viertel deines Traffics* genau diese Zahl. p50 ist „was die meisten sehen": bequem, aber als Optimierungsziel ungeeignet, wenn dir Besucher mit schwacher Verbindung oder älteren Geräten wichtig sind.
+Web Vitals liest du auf dem **75. Perzentil**: 75 % der Pageviews im Zeitraum hatten einen besseren Wert, 25 % einen schlechteren. Liegt dein LCP bei p75 bei 2.400 ms, wartet das langsamste Viertel deines Traffics mindestens so lange.
 
 ## Wie fastmon sie erfasst
 
-Der Tracker nutzt dieselben Browser-APIs wie die [`web-vitals`](https://github.com/GoogleChrome/web-vitals)-Library:
-
-- `PerformanceObserver` für `largest-contentful-paint`, `layout-shift`, `paint` und `event`-Einträge.
-- `Navigation Timing` für TTFB.
-- Die browser-eigenen Attribution-Daten für INP.
-
-Jede Metrik wird zu einem anderen Zeitpunkt finalisiert, meistens wenn die Seite versteckt wird oder der Besucher interagiert. Der Tracker bündelt die Werte und schickt sie über den Lebenszyklus des Pageviews verteilt in einigen wenigen Beacons. Mehr dazu unter [Der RUM-Beacon](/de/concepts/beacon).
+Der Tracker liest dieselben Browser-APIs wie die [`web-vitals`](https://github.com/GoogleChrome/web-vitals)-Library: `PerformanceObserver`-Einträge, Navigation Timing für TTFB und die Attribution-Daten des Browsers für INP. Jeder Wert steht zu seinem eigenen Zeitpunkt fest, meist wenn die Seite versteckt wird, und geht in wenigen Beacons pro Pageview raus. Siehe [Der RUM-Beacon](/de/concepts/beacon).
 
 ## Wo sie im Produkt auftauchen
 
 - **Performance-Dashboard**: p50/p75/p95 pro Metrik, slicebar nach URL, Device, Land und Release.
-- **Experience Score**: eine Zahl von 0–10, die LCP, INP, CLS, FCP, TTFB, Fehlerrate und Page Load Time zusammenfasst. Siehe [Experience Score](/de/web-vitals/experience-score).
+- **Experience Score**: LCP, INP, CLS, FCP, TTFB und die eigene Fehlerrate als eine Zahl von 0–10. Siehe [Experience Score](/de/web-vitals/experience-score).
 - **Notification Rules**: Alarm, wenn eine Metrik eine Schwelle überschreitet oder sich gegen das Vorfenster verschlechtert.
 - **Analytics-API**: jede Metrik programmatisch abfragen. Siehe die [Analytics-Endpunkte](/en/api/analytics/queryAnalytics).
 
 ## Nächste Schritte
 
-- Starte mit [LCP](/de/web-vitals/lcp), meist die erste Metrik, die du optimierst.
-- Dann [INP](/de/web-vitals/inp); regrediert oft, wenn du LCP durch zusätzliches JavaScript fixt.
+- Starte mit [LCP](/de/web-vitals/lcp), dann [INP](/de/web-vitals/inp): INP leidet oft, wenn ein LCP-Fix mehr JavaScript mitbringt.
 - Für eine einzelne Zahl über Zeit: [Experience Score](/de/web-vitals/experience-score).

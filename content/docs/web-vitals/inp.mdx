@@ -45,13 +45,14 @@ If the visitor never interacts, the page-view has no INP.
 
 **SPA route change.** A link click runs your router, which can re-render a big tree. INP captures click → first paint of the new route. INP gets ugly here if you're not lazy-loading route chunks.
 
-## How to see INP in fastmon
+## How to see INP in fastmon [#how-to-see-inp-in-fastmon]
 
-The dashboard's **Performance** section shows INP at p50, p75, and p95. Specifically useful slices:
+The INP page sits under **Core Web Vitals → INP** and is built like the [LCP page](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
 
-- **By URL**: group by URL. Interactive pages (search, configurator, dashboard) usually dominate.
-- **By device**: group by `device_type`. INP is much harder on low-end mobile.
-- **By browser**: group by `browser`. Firefox and Safari sometimes show different INP behavior than Chromium.
+- **Where the time goes**: input delay, processing, and presentation of the slowest interaction, also in every table row.
+- **Where the INP is poor**: page type and device, or another dimension, ranked by poor pageviews.
+- **Where people interact**: the elements of the slowest interaction.
+- **What keeps the main thread busy**: the scripts in long animation frames over 50 ms.
 
 ## How to improve a slow INP
 

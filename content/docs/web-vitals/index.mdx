@@ -1,15 +1,13 @@
 ---
 title: Web Vitals
-description: The five performance metrics fastmon tracks, what they measure, and how to read them.
+description: The Web Vitals and the other metric pages fastmon has, what they measure, and how they are rated.
 ---
 
-**Web Vitals** are a set of standardized performance metrics that turn "how does this page feel?" into actual numbers. Google publishes the definitions and thresholds, browsers expose the APIs, and our beacon collects them straight from your real visitors.
-
-This page is the overview. Each metric has its own page with thresholds, debug tips, and how to query it in fastmon.
+**Web Vitals** are Google's standard metrics for how fast and stable a page feels, measured here in your real visitors' browsers. This page lists them and the other metric pages in fastmon.
 
 ## The five metrics
 
-Fastmon tracks the three Core Web Vitals (the ones Google uses for ranking) plus two diagnostic metrics that help when something regresses.
+LCP, INP, and CLS are the Core Web Vitals Google uses for ranking. FCP and TTFB help you find out *why* LCP is slow.
 
 | Metric                                          | What it measures                                       | Good (p75) |
 | ----------------------------------------------- | ------------------------------------------------------ | ---------- |
@@ -19,33 +17,40 @@ Fastmon tracks the three Core Web Vitals (the ones Google uses for ranking) plus
 | [FCP](/en/web-vitals/fcp), First Contentful Paint    | Time until the first text or image appears.            | ≤ 1,800 ms |
 | [TTFB](/en/web-vitals/ttfb), Time to First Byte      | Time until the first response byte arrives.            | ≤ 800 ms   |
 
-The first three (LCP, INP, CLS) are what Google's ranking signal counts. The other two (FCP, TTFB) are diagnostic, useful when you need to find out *why* LCP is slow.
+## Other metric pages [#other-metric-pages]
+
+Five more pages share the layout of the LCP page: the value with its trend, the pageviews by rating, a summary, the history beside the distribution, and where the metric is worst.
+
+| Page           | Sidebar                 | Good (p75) | Poor (p75) |
+| -------------- | ----------------------- | ---------- | ---------- |
+| TBT            | Performance → TBT       | ≤ 200 ms   | > 600 ms   |
+| Page load time | Performance → Page load | not rated  | not rated  |
+| DNS lookup     | Network → DNS           | ≤ 60 ms    | > 100 ms   |
+| TCP connect    | Network → Connect       | ≤ 200 ms   | > 600 ms   |
+| Transfer size  | Network → Transfer size | not rated  | not rated  |
+
+- **DNS and connect** count only pageviews that did a lookup (`performed_dns_lookup`) or opened a new connection (`new_tcp_connection`). The summary gives the unrated share that skipped the lookup or reused a connection.
+- **TBT** lists the scripts in long animation frames over 50 ms, as the INP page does.
+- **Transfer size** splits the weight by resource type and lists the third-party domains.
+
+Every rating comes from [`GET /metric-thresholds`](/en/web-vitals/experience-score#thresholds).
 
 ## How to read a percentile
 
-By convention, Web Vitals are reported at the **75th percentile**. That means: across all the page-views in the time window, 75% of visitors had a better value than p75 and 25% had a worse one.
-
-If your LCP at p75 is 2,400 ms, that's the value the *worst quarter of your traffic* is actually living with. p50 is "what most people see": comfortable, but not a useful target if you care about visitors on slow networks or older devices.
+Web Vitals are reported at the **75th percentile**: 75 % of the pageviews in the window had a better value, 25 % a worse one. If your LCP at p75 is 2,400 ms, the slowest quarter of your traffic waits at least that long.
 
 ## How fastmon collects them
 
-The tracker uses the same browser APIs the [`web-vitals`](https://github.com/GoogleChrome/web-vitals) library is built on:
-
-- `PerformanceObserver` for `largest-contentful-paint`, `layout-shift`, `paint`, and `event` entries.
-- `Navigation Timing` for TTFB.
-- The browser's own attribution data for INP.
-
-Each metric is finalized at a different moment, usually when the page becomes hidden, or when the user interacts. The tracker batches values and sends them in a handful of beacons over the page-view's lifecycle. Details under [The RUM Beacon](/en/concepts/beacon).
+The tracker reads the same browser APIs as the [`web-vitals`](https://github.com/GoogleChrome/web-vitals) library: `PerformanceObserver` entries, Navigation Timing for TTFB, and the browser's attribution data for INP. Each value is final at its own moment, usually when the page is hidden, and travels in a few beacons per pageview. See [The RUM Beacon](/en/concepts/beacon).
 
 ## Where they show up in the product
 
 - **Performance dashboard**: p50/p75/p95 for every metric, sliceable by URL, device, country, and release.
-- **Experience Score**: a composite that combines LCP, INP, CLS, FCP, TTFB, error rate, and page load time into a single 0–10 number. See [Experience Score](/en/web-vitals/experience-score).
+- **Experience Score**: LCP, INP, CLS, FCP, TTFB, and the first-party error rate as one 0–10 number. See [Experience Score](/en/web-vitals/experience-score).
 - **Notification rules**: alert when a metric crosses a threshold or worsens against the previous window.
 - **Analytics API**: query any metric programmatically. See the [Analytics endpoints](/en/api/analytics/queryAnalytics).
 
 ## What's next
 
-- Start with [LCP](/en/web-vitals/lcp), usually the first metric to optimize.
-- Then [INP](/en/web-vitals/inp), which often regresses when you fix LCP by adding JavaScript.
-- For a single number to track over time, see [Experience Score](/en/web-vitals/experience-score).
+- Start with [LCP](/en/web-vitals/lcp), then [INP](/en/web-vitals/inp), which often regresses when a fix for LCP adds JavaScript.
+- For one number to track over time, see [Experience Score](/en/web-vitals/experience-score).

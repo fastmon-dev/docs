@@ -15,7 +15,7 @@ Rufe `fastmon.event` mit Namen und Properties auf:
 fastmon.event('add_to_cart', { value: 129.9, currency: 'EUR', sku: 'SW-100' });
 ```
 
-Das Event fährt mit dem nächsten Beacon des Seitenaufrufs mit und kostet keinen eigenen Request. Der Tracker setzt die Zeit und kopiert die Properties beim Aufruf. Ist ein Event noch offen, wenn der Tab in den Hintergrund geht, geht es mit diesem letzten Beacon raus.
+Das Event fährt mit dem nächsten Beacon des Seitenaufrufs mit. Kommt binnen etwa einer Sekunde keiner, schickt der Tracker einen `event_update`-Beacon per `fetch`, höchstens 20 pro Seitenaufruf. Beim Verlassen der Seite gehen offene Events zusätzlich per Keepalive-`fetch` raus, der Collector behält eine Kopie.
 
 Rufst du `fastmon.event` auf, bevor der Tracker geladen ist, brauchst du vorher diesen Queue-Stub. Der Tracker schickt das Gesammelte mit seinem ersten Beacon.
 
@@ -38,16 +38,27 @@ Ein Klick auf ein Element mit `data-fm-event` oder auf etwas darin sendet ein Ev
 
 Es zählt das nächstgelegene Element mit dem Attribut. Ein leeres `data-fm-event=""` sorgt dafür, dass Klicks in einem markierten Container nicht zählen.
 
-### Aus dem GA4-dataLayer [#data-layer]
+### Aus dem dataLayer [#data-layer]
 
-Ist die Application-Einstellung [`collection.data_layer`](/de/concepts/applications#events) an, liest der Tracker GA4-E-Commerce-Pushes auf `window.dataLayer`. Standardmäßig ist sie aus. Pushes von vor dem Laden des Trackers zählen mit.
+Zwei unabhängige [Application-Einstellungen](/de/concepts/applications#events), beide standardmäßig aus, lesen Pushes auf `window.dataLayer`. Pushes von vor dem Laden des Trackers zählen mit, die eigenen `gtm.*`-Pushes des Google Tag Managers nie.
 
-- **Übernommene Namen**: `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info` und `purchase`. Alle anderen Pushes werden ignoriert.
-- **Behalten**: `value`, `currency`, die Anzahl der Artikel als `item_count` und pro Artikel `items.<n>.item_id`, `items.<n>.item_name`, `items.<n>.price` und `items.<n>.quantity`.
-- **Artikel**: kommen dazu, solange sie unter 30 Keys passen, eine große Bestellung behält also mindestens die ersten sechs. Ein Text über 500 Zeichen bleibt weg.
-- **Nicht behalten**: die Bestellnummer und jedes andere Feld.
+- **`collection.ga4_ecommerce`** liest `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_payment_info` und `purchase` mit ihren E-Commerce-Properties.
+- **`collection.data_layer`** liest jeden Push, der einen Event-Namen trägt. Properties bekommt das Event nur über die Top-Level-Keys in `collection.data_layer_prop_keys`, höchstens 30.
+- **Wiederholungen**: Ein Name zählt pro Seitenaufruf höchstens 10-mal.
+
+Ein GA4-Event behält `value`, `currency`, die Anzahl der Artikel als `item_count` und pro Artikel `items.<n>.item_id`, `item_name`, `price` und `quantity`. Eine große Bestellung behält mindestens die ersten sechs Artikel. Bestellnummer und alle anderen Felder bleiben auf der Seite.
 
 `view_cart`, `begin_checkout` und `purchase` erreichen außerdem ihre Stufe im [Checkout-Funnel](/de/checkout-funnel#stage-events).
+
+#### Namen behalten oder verwerfen [#data-layer-names]
+
+`collection.data_layer_mode` und `collection.data_layer_names` filtern dataLayer-Events im Collector. Eine Änderung greift binnen fünf Minuten.
+
+- **`block`** (Standard) verwirft die gelisteten Namen. Bei leerer Liste fällt nichts weg.
+- **`allow`** behält nur die gelisteten Namen, die GA4-Namen eingeschlossen. Bei leerer Liste bleibt kein dataLayer-Event übrig.
+- **Liste**: bis zu 50 Namen, `eec.*` deckt jeden Namen ab, der mit `eec.` beginnt.
+
+Aufrufe von `fastmon.event()` und Klicks über `data-fm-event` werden nie gefiltert.
 
 ## Ohne Tracker [#collector]
 
@@ -81,13 +92,14 @@ Ist der POST blockiert, nimmt `GET /c/e/{collector_hash}.gif` dieselben Keys im 
 
 | Regel | Wert |
 | ----- | ---- |
-| Name | `a-z`, `0-9`, `_`, `.`, `-`, 1 bis 48 Zeichen nach Kleinschreibung |
+| Name | `a-z`, `0-9`, `_`, `.`, `-`, 1 bis 48 Zeichen nach Kleinschreibung, mindestens ein Buchstabe oder eine Ziffer |
 | Events pro Beacon | 20, der Rest geht verloren |
 | Events pro Seitenaufruf | 100, danach sendet der Tracker keine mehr |
 | Property-Keys | 30 nach dem Abflachen |
 | Key-Länge | 128 Zeichen |
 | Wert-Länge | 500 Zeichen |
 
+- **Namen bereinigen**: Der Tracker macht aus jedem anderen Zeichen ein `_`, aus `Add To Cart` wird also `add_to_cart` und aus `Größe` wird `gr_e`. Bleibt kein Buchstabe und keine Ziffer übrig, schickt er das Event nicht. `/c/e/` schreibt nichts um und verwirft einen ungültigen Namen.
 - **Über einem Limit**: Das ganze Event wird verworfen, der Beacon dazu bleibt.
 - **Typen**: Zahl oder Boolean werden als Text gespeichert, ein Array als JSON-Text.
 - **Umsatz**: Nenne die Properties `value` und `currency`. Nichts rechnet Währungen um oder prüft sie.
@@ -96,7 +108,7 @@ Ist der POST blockiert, nimmt `GET /c/e/{collector_hash}.gif` dieselben Keys im 
 
 ## Datenschutz [#privacy]
 
-Namen und Properties dürfen keine personenbezogenen Daten wie Namen, E-Mail-Adressen oder Kundennummern enthalten. Was fastmon verwirft und maskiert, steht unter [Datenschutz → Event-Properties](/de/privacy#events).
+Namen und Properties dürfen keine personenbezogenen Daten wie Namen, E-Mail-Adressen oder Kundennummern enthalten. Wie der Tracker Keys und E-Mail-Adressen maskiert, steht unter [Datenschutz → Event-Properties](/de/privacy#events).
 
 ## Event korrigieren oder löschen [#edit]
 
@@ -108,7 +120,9 @@ Die `event_id` steht in der Event-Liste. Jede Zählung und Liste zieht nach, und
 
 Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
 
-- **Tab Overview**: Events über die Zeit nach Name, die Namen nach Häufigkeit, Umsatz pro Event und Währung und die häufigsten Werte jeder Property.
+- **Tab Overview**: Events über die Zeit nach Name, die Namen nach Häufigkeit und die häufigsten Werte jeder Property.
+- **Umsatz**: eine Bestellung pro Seitenaufruf mit `order_placed` oder `purchase`, mit dem größten `value`, pro Währung. Eine neu geladene Danke-Seite zählt erneut.
+- **Wert je Event**: die Summe von `value` pro Name und Währung.
 - **Tab Events**: eine Zeile pro Event mit den Properties als Chips. Eine Zeile öffnet jedes gespeicherte Feld und hat einen Share-Link.
 - **Namensfilter**: schlägt die Namen des Zeitraums nach Häufigkeit vor und nimmt jeden gültigen Namen.
 - **Seitenfilter**: URL, Seitentyp, Login-Status, Verbindung und Viewport-Klasse grenzen die Events ein. Events von vor dem 16.10.2026 tragen keine Seite und treffen keinen davon.
@@ -117,5 +131,5 @@ Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
 ## API [#api]
 
 - `POST /organizations/{org_id}/analytics/events` listet Events, neueste zuerst, jedes mit `event_id`, `name`, `source` und `props`. `names` nimmt jeden Namen, `source` ist `tracker`, `collector` oder `shopify_pixel`. Siehe die [Referenz](/en/api/analytics/listAnalyticsEvents) (nur auf Englisch).
-- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit, als Umsatz pro Währung und pro Property-Wert.
+- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit und pro Property-Wert, dazu `order_revenue` und `value_sums`. `revenue` ist deprecated.
 - **MCP und Ask**: Das Tool `get_events` liefert dieselben Zahlen. Siehe [MCP-Server](/de/mcp#tools).

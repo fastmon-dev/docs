@@ -12,6 +12,179 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-18" type="changed" area="platform" title="Experience score without page load time">
+
+The Experience Score drops page load time and rates only errors from your own code.
+
+- **New weights**: LCP 0.25, INP 0.20, CLS 0.15, FCP 0.15, error rate 0.15, and TTFB 0.10. Every score moves, and some grades change.
+- **`first_party_error_rate`** is the rated error rate, good up to 1 % and poor above 5 %. `third_party_error_rate` sits next to it, unrated.
+- **`error_rate`** still counts every JavaScript error, but nothing rates it any more. In `POST /analytics/experience-score` it stays as a deprecated entry without a score.
+- **Same rate everywhere**: the weekly mail, the "Error rate too high" alert preset, and the dashboard's reliability tile use the first-party rate. Existing alert rules stay unchanged.
+
+No score falls, and sites with third-party errors rise. Docs: [Experience Score](/en/web-vitals/experience-score).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Eight more metric pages in the new layout">
+
+INP, CLS, FCP, TBT, page load, DNS, connect, and transfer size now have pages like LCP and TTFB. Each shows the value with its trend, the pageviews by rating, a summary, the distribution, and a table of where the metric is worst.
+
+- **INP** splits the slowest interaction into input delay, processing, and presentation.
+- **INP and CLS** list the elements behind the value, and **INP and TBT** list the scripts in long animation frames.
+- **Transfer size** shows the weight per resource type and ranks the third-party domains.
+- **Compare** works on all eight pages and now lives in the filter, as a chip with an x to end it.
+- **A set filter** turns the filter button black, or white in dark mode.
+
+`POST /analytics/metric-summary` writes the summary for these metrics, with the new sentence type `level` and `facts.unit`. Docs: [Web Vitals](/en/web-vitals).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="dashboard" title="A new Analytics page">
+
+The Analytics page is rebuilt around cards that all work the same way.
+
+- **Cards**: one menu picks the dimension, and each card pages through its rows. A card's title opens every value with a search, a second dimension, sorting, and a CSV download.
+- **Pages** get a wide card with the page name, its URL, and its LCP.
+- **Orders** show as a line or as three lanes: cart, checkout reached, and ordered. The Conversion tile shows on every time range.
+- **Pageviews** split into humans and bots, per bot or per bot type. The split only changes the chart.
+- **Live**: a line above the chart shows the visitors right now, and "Watch live" opens a ticker of the newest orders or events.
+- **Visitor paths**: the funnel and the buyer comparison share a card, and visit depth shows how many pages a visit reaches.
+- **Charts** draw each bucket at its end, and the running hour is dashed towards a projection. Releases are a thin purple line.
+
+Status codes left the Analytics page. Filtering on "Direct / none" and other empty values stays off for now. Docs: [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Five-minute, fifteen-minute, and six-hour charts in your time zone">
+
+Charts have three new resolutions, and buckets of six hours or longer start on your clock.
+
+- **Auto** picks the smallest width with at most 300 buckets. The last 24 hours show five-minute buckets, 48 hours fifteen-minute ones, and 28 days or more show days.
+- **Fine widths crop a long window** to its last part: minutes to 25 hours, 5 minutes to 5 days, 15 minutes to 15 days. The tile says so.
+- **Your time zone**: a day starts at your midnight, a week on Monday, and a month on the first. Across a clock change a day has 23 or 25 hours.
+- **Time of day** shows in tooltips and axes of every chart below a day, also in Ask.
+- **Conversion and order stages** follow the chart's resolution up to a day.
+
+Docs: [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="Past windows in the time picker">
+
+The time picker's expression field starts with the current range, such as `now-7d`, so you only change the number. It also takes a window in the past: `7d-3d` is the window from 7 to 3 days ago. An info icon lists every expression it understands.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="dashboard" title="dataLayer settings and order revenue">
+
+The application settings have their own dataLayer section, and the events overview counts revenue per order.
+
+- **dataLayer**: read the GA4 ecommerce events, read every other push by name, pick the keys kept as properties, and keep or drop names with `*` for a prefix.
+- **Revenue** counts each order once, at its largest value, per currency. The old sums per event stay as "Value per event".
+- **API**: `POST /analytics/events/overview` returns `order_revenue` and `value_sums`. `revenue` is deprecated.
+
+A thank-you page that pushes `purchase` on every reload counts one order per pageview. Docs: [Custom events](/en/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="tracker" title="Every dataLayer push, with your keys and masked personal data">
+
+The dataLayer bridge has two independent switches, both off by default.
+
+- **`collection.ga4_ecommerce`** reads the seven GA4 ecommerce names with value, currency, and items. Applications that had `collection.data_layer` on move to this switch.
+- **`collection.data_layer`** now reads every name the page pushes, without properties. Google Tag Manager's `gtm.*` pushes never count, and one name counts at most 10 times per pageview.
+- **`collection.data_layer_prop_keys`** keeps up to 30 top-level keys of a push as properties.
+- **`collection.data_layer_mode`** with `data_layer_names` blocks or allows up to 50 names. The collector applies it within five minutes, and it never filters `fastmon.event()`.
+- **Masking**: a property key containing `user`, `customer`, `email`, `mail`, `phone`, `password`, or `token` is sent as `[masked]`.
+- **E-mail addresses** in event properties become `[email]` before the event leaves the browser.
+
+Docs: [Custom events](/en/events) and [Privacy](/en/privacy).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Events arrive behind blockers">
+
+Custom events no longer depend on a later beacon or on `sendBeacon`, which EasyPrivacy blocks.
+
+- **Within about a second**: when no beacon follows, the tracker sends the event by `fetch`, at most 20 times per pageview. Such a beacon has the lifecycle `event_update`.
+- **At page hide**, queued events go out once more by keepalive `fetch`, one copy per event.
+- **Single-page apps**: a route change sends every queued event under the page it belongs to.
+- **Wrong browser clocks**: an event is stamped on the beacon's clock and counts once, also when resent on unload.
+- **Names**: `fastmon.event("Add To Cart")` is stored as `add_to_cart`. A name without a letter or digit is skipped.
+
+Docs: [Custom events](/en/events).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Browser cache hit rate counts Safari">
+
+The browser cache hit rate now counts Safari's cache hits, so Safari's rate jumps at the release. A cross-origin resource without `Timing-Allow-Origin` hides its byte counts and now stays out of the rate. A pageview with no resource of known cache state stores no rate instead of 0 %.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="tracker" title="Shopify checkout pixel works with filters">
+
+A checkout funnel filtered by viewport, connection, or page type keeps a Shopify shop's checkout and purchase instead of reading 0 %.
+
+- **The pixel sends** the viewport class, the connection class where the browser reports one, and page type `checkout`. Installed pixels update by themselves.
+- **Login filter**: the pixel has no login state, so `logged_in` on a Shopify scope answers 422. The dashboard offers a button that removes the filter.
+- **Pixel status** looks back 31 days and can take 30 seconds to show a test order.
+
+For the first week, last week's pixel visitors in the live summary sit in a row without a page type. Docs: [Shopify checkout](/en/guides/shopify-checkout).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="platform" title="Collector on your own host by CNAME">
+
+Point a CNAME at `fastmon.site` and enter that host as the collector endpoint in mode "Custom collector". fastmon issues the certificate for it, so you need no reverse proxy. Docs: [Install the tracking code → Custom domain](/en/install/html#custom-domain).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="api" title="Bucket widths and time zones in the API">
+
+`POST /analytics/query` and every series route take new widths and a time zone.
+
+- **New widths**: `five_minutes`, `fifteen_minutes`, and `six_hours`. Widths under an hour allow at most 1500 buckets, so `minute` now covers about 25 hours.
+- **`granularity: auto`** picks the smallest width with at most 300 buckets, and `day` from 28 days. `meta.granularity_options` lists every width with 4 to 1500 buckets.
+- **`timezone`** takes an IANA name such as `Europe/Berlin`. Buckets of six hours or more then start at that zone's boundaries, and timestamps stay UTC.
+- **Weeks start on Monday**, with or without `timezone`.
+- **Past windows** read finalized data. Only a window of at most 6 hours ending near now reads live beacons.
+- **Ask and MCP** take every width, and the error, NEL, CSP, and events tools take `interval`.
+- **Breaking**: a client that switches on `granularity` has to accept the new values.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="new" area="api" title="Breakdowns by the URL query">
+
+`POST /analytics/query` groups and filters by parts of the page URL.
+
+- **`url_path`** is the URL without its query, so `/p?color=red` and `/p?size=m` add up to `/p`.
+- **`url_key`** gives one row per query key, and **`url_key_set`** the set of keys a page carried.
+- **`url_param`** with `url_param_key` groups by the value of one key. It groups only and does not filter.
+- **`meta.pageviews`** is the window's pageviews after filters, the denominator for a share.
+
+A key whose value the application does not store answers 422 naming `collection.query_values_for`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="api" title="Filters on the empty value">
+
+A text filter set to `""` now selects the rows without a value. `referrer_source: ""` answers the direct visits, where it used to answer all traffic. `exclude` takes the referrer, UTM, and `click_id_param` columns, and Ask and MCP use `empty` and `not_empty` instead.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="changed" area="api" title="sample_count replaces beacons">
+
+`POST /analytics/query` names its sample size `sample_count`, since it counts pageviews. `beacons` still answers as a deprecated twin. The dashboard no longer shows the sample count where the backend sends no visitors or pageviews.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-18" type="fixed" area="platform" title="Safer sign-in and notifications">
+
+Sign in with GitHub or Google needs a verified address and no longer links onto an unconfirmed or blocked account. Webhook, Slack, and Discord notifications go only to the public address that was checked.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-16" type="new" area="tracker" title="Custom events">
 
 The tracker sends events your shop defines itself: a name and up to 30 properties.

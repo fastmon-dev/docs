@@ -1,11 +1,9 @@
 ---
 title: Experience Score
-description: "Eine einzelne 0–10-Zahl aus Core Web Vitals, Page Load Time und Fehlerrate: die Headline-Metrik fürs UX-Tracking über Zeit."
+description: "Eine Zahl von 0–10 aus den Web Vitals und der eigenen Fehlerrate, mit Buchstaben-Grade."
 ---
 
-**Experience Score** ist eine Composite-Metrik. Sie verdichtet LCP, INP, CLS, FCP, TTFB, Page Load Time und Fehlerrate zu einer einzigen Zahl von 0–10 mit einem Buchstaben-Grade. Praktisch ist das die Zahl fürs Dashboard, fürs Status-Reporting und für den Moment, in dem du Performance jemandem erklärst, der keinen Engineering-Hintergrund hat.
-
-Die Schwellen folgen Googles „gut"-/„schlecht"-Grenzen für die Web Vitals; den Score rechnen wir aus deinen Real-User-Daten.
+Der **Experience Score** fasst LCP, INP, CLS, FCP, TTFB und die eigene Fehlerrate in einer Zahl von 0–10 mit Buchstaben-Grade zusammen.
 
 ## Was ist ein guter Score?
 
@@ -30,19 +28,24 @@ Jede Metrik wird per linearer Interpolation gegen ihre Gut-/Schlecht-Schwellen a
 - Wert bei **schlecht** → 5
 - Wert bei **2 × schlecht** oder darüber → 0
 
-| Metrik         | Gut        | Schlecht   | Gewicht |
-| -------------- | ---------- | ---------- | ------- |
-| LCP            | ≤ 2.500 ms | > 4.000 ms | 25 %    |
-| INP            | ≤ 200 ms   | > 500 ms   | 15 %    |
-| FCP            | ≤ 1.800 ms | > 3.000 ms | 15 %    |
-| Fehlerrate     | ≤ 0,5 %    | > 2 %      | 15 %    |
-| Page Load Time | ≤ 3.000 ms | > 6.000 ms | 10 %    |
-| CLS            | ≤ 0,1      | > 0,25     | 10 %    |
-| TTFB           | ≤ 800 ms   | > 1.800 ms | 10 %    |
+| Metrik            | Gut        | Schlecht   | Gewicht |
+| ----------------- | ---------- | ---------- | ------- |
+| LCP               | ≤ 2.500 ms | > 4.000 ms | 25 %    |
+| INP               | ≤ 200 ms   | > 500 ms   | 20 %    |
+| CLS               | ≤ 0,1      | > 0,25     | 15 %    |
+| FCP               | ≤ 1.800 ms | > 3.000 ms | 15 %    |
+| Eigene Fehlerrate | ≤ 1 %      | > 5 %      | 15 %    |
+| TTFB              | ≤ 800 ms   | > 1.800 ms | 10 %    |
 
 Die gewichtete Summe der Sub-Scores ist der Experience Score. Fehlt für ein Segment ein Wert (z. B. INP, wenn niemand interagiert hat), wird das Gewicht anteilig auf die vorhandenen Metriken verteilt.
 
-Die Fehlerrate ist hier der Anteil der Pageviews mit mindestens einem **JavaScript**-Fehler. Fehlgeschlagene Ressourcen sind ein eigenes Signal und gehen nicht in den Score ein, eine Seite wird also nicht dafür abgewertet, dass ihre Besucher einen Tracker blocken. Siehe [Fehlgeschlagene Ressourcen](/de/analytics#failed-resources).
+Die Schwellenwerte liefert [`GET /metric-thresholds`](#thresholds). Die eigene Fehlerrate ist der Anteil der Pageviews mit einem JavaScript-Fehler aus dem Code der Seite selbst. Fehler fremder Skripte, fehlgeschlagene Ressourcen und die Seitenladezeit zählen nicht mit.
+
+### Bewertete Metriken [#thresholds]
+
+`GET /metric-thresholds` listet jede Metrik, die fastmon bewertet, mit Gut- und Schlecht-Schwelle, Einheit und Quelle. Das Dashboard bewertet danach und hat keine eigenen Schwellen. Bis zur Gut-Schwelle ist ein Wert gut, über der Schlecht-Schwelle schlecht, und genau auf der Schlecht-Schwelle hat er Verbesserungsbedarf.
+
+Außer den Score-Metriken bewertet fastmon TBT, [DNS-Lookup und TCP-Verbindung](/de/web-vitals#other-metric-pages). Seitenladezeit, Übertragungsgröße, `error_rate`, `third_party_error_rate` und die Cache-, CDN- und Origin-Trefferquoten zeigen ihren Wert ohne Bewertung.
 
 ## Wann der Score berechnet wird
 
@@ -72,7 +75,7 @@ Nicht versuchen, alles gleichzeitig zu optimieren. Die Verbesserungen beißen si
 
 - **Der Score kann fallen, ohne dass eine einzelne Metrik eine Schwelle reißt.** Eine kleine Regression in zwei Metriken kann den Composite um einen halben Punkt bewegen, während jede Metrik einzeln noch „Gut" sagt.
 - **Ein einzelner Deploy kann eine permanente Score-Lücke erzeugen.** Sobald eine Regression live ist, trägt jeder folgende Pageview die schlechtere Zahl in den Durchschnitt. Den Tag des Deploys zu erwischen, zählt.
-- **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.** Wenn Besucher nie interagieren, fällt INP weg; der Score reflektiert dann nur LCP und CLS, was meist leichter ist.
+- **Seiten mit wenigen Interaktionen haben aufgeblasene Scores.** Wenn Besucher nie interagieren, fällt INP weg; der Score stützt sich dann auf die übrigen fünf Metriken.
 - **Interner vs. externer Traffic verzerrt den Composite.** Office-Traffic auf warmen Caches und schnellen Laptops schneidet super ab; echte Besucher auf Mobile in einem Tunnel schneiden schlechter ab. Internen Traffic an der Quelle ausfiltern, damit die Zahl ehrlich bleibt; siehe [Internen Traffic filtern](/de/guides/filter-internal-traffic).
 
 ## Nächste Schritte

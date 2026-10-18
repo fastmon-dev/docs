@@ -209,12 +209,18 @@ Alles andere an der Zone behält seinen normalen Origin; nur `/s/` und
 `/c/` gehen zu fastmon. Passende Regeln stapeln sich, setz `stop` also
 nur, wenn du die nachfolgenden Regeln bewusst überspringen willst.
 
-### Eigene Domain
+### Eigene Domain [#custom-domain]
 
-Derselbe First-Party-Vorteil, aber das Snippet zeigt auf einen
-Collector-Host, den du kontrollierst (`metrics.example.com`), statt auf
-relative Pfade. Praktisch, wenn eine Application mehrere Domains umfasst
-und du einen einzigen stabilen Collector-Host willst.
+Die Beacons gehen an einen Host von dir, etwa `rum.example.com`, ohne
+dass du einen Proxy betreibst.
+
+1. Leg den DNS-Eintrag `rum.example.com CNAME fastmon.site` an.
+2. Wähl in den Collector-Einstellungen der Application **Eigener
+   Collector** und trag `rum.example.com` ohne Pfad ein.
+
+Ab der nächsten Auslieferung sendet das Skript an den neuen Host. Der
+erste Request wartet ein paar Sekunden auf das Zertifikat, und ein Host
+ohne CNAME bekommt keins. Pro Application geht ein Host.
 
 ## Wie es weitergeht
 

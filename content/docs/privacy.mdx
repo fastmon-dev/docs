@@ -24,7 +24,7 @@ These rules hold regardless of how the site is configured:
 
 fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`collect_sessions`](/en/tracker#collect-sessions) is on. By default it writes nothing: the Standard preset new sites start on stores no session id, so no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
 
-Storage-free is about what the beacon keeps on the device. Reading the browser's performance APIs is, in our assessment, not access to stored information under the TDDDG, because the values only come into being at runtime; a stricter reading sees it differently. See [Consent and the TDDDG](#consent-and-the-tdddg).
+Storage-free is about what the beacon keeps on the device. Whether reading the performance APIs counts as access under the TDDDG is covered in [Consent and the TDDDG](#consent-and-the-tdddg).
 
 When `collect_sessions` is on, whether the session id is written on page load or deferred until your CMP grants consent is the [`session_consent`](/en/tracker#session-consent) switch. The id lives in `sessionStorage` and is gone when the tab closes. There is no persistent identifier and no cross-page cookie anywhere in the design.
 
@@ -72,7 +72,7 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 - **Forward secrecy by construction.** The salt is a 32-byte `crypto/rand` value held only in the active edge's RAM and rotated every 24 hours. It is never persisted, never distributed, never logged. An attacker who later gains row access cannot reverse `stitch` back to (IP, UA): the salt that produced it is gone.
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
 - **Scoped to one application.** The `collector_hash` is in the HMAC input, so the same (IP, UA) yields a different `stitch` for every application, and nothing links a visitor to another operator's site. Inside one application the value is the same on every domain it serves, which is what lets an organization-wide tracker count a returning visitor once rather than once per domain.
-- **Nothing the page says goes into the input.** The host in the beacon body is deliberately left out, so a page cannot influence which identifier its visitor gets.
+- **Nothing the page says goes into the input.** The host in the beacon body is left out.
 - **The salt is the only secret.** The other HMAC inputs are public or sit on the stored row itself, and the input space is small enough to enumerate, so whoever held the live salt could confirm a suspected (IP, UA) pair by recomputing. Nobody holds it: it exists only inside the running edge process and is gone after rotation. The guarantee is operational (RAM-only salt, 24 h rotation), not mathematical.
 
 Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
@@ -105,8 +105,9 @@ A site whose [Content Security Policy](/en/guides/content-security-policy) names
 
 A shop can send its own [events](/en/events), each a name with up to 30 properties. Personal data does not belong in names or properties, and keeping it out is your obligation.
 
-- **Dropped**: any key such as `email`, `password` or `token`, and any key holding an `@`.
-- **Masked**: an email address inside a value becomes `[email]`.
+- **Masked in the browser**: the value of a key containing `user`, `customer`, `email`, `mail`, `phone`, `password` or `token` is sent as `[masked]`, whatever setting lists the key.
+- **Redacted in the browser**: an email address inside a value becomes `[email]`. The collector repeats this for events from other senders.
+- **Dropped by the collector**: any key with a word such as `email`, `user`, `phone` or `token`, and any key holding an `@`.
 - **Stored with it**: the page URL, reduced like a pageview URL, and the same visitor labels as a pageview.
 
 ### Site search terms [#search-terms]
@@ -117,7 +118,7 @@ On a page typed `search`, the stored URL keeps the value of `q`, `search`, and `
 
 A handful of fields describe **the customer's own site** rather than the visitor: which third-party domains the page loads, the script / image / font byte breakdown, the LCP image origin, the LoAF script paths. These are identical across every visitor of the same page.
 
-That makes them site configuration, not visitor data. We still treat them carefully (script URLs and LCP image URLs are sanitized to origin + pathname at collection), but they're not what the consent and linkability controls are about.
+That makes them site configuration, not visitor data, outside the consent and linkability controls.
 
 ## Personal data: what's ruled out, and what isn't [#personal-data]
 

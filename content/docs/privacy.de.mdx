@@ -24,7 +24,7 @@ Diese Regeln gelten unabhängig davon, wie die Site konfiguriert ist:
 
 fastmon setzt **überhaupt keine Cookies**, in keiner Konfiguration. Das Einzige, was der Tracker auf das Gerät des Besuchers schreiben kann, ist ein einzelner `sessionStorage`-Eintrag (`_fms`), die Session-ID, und das nur, wenn [`collect_sessions`](/de/tracker#collect-sessions) an ist. Per Default schreibt er nichts: das Standard-Preset, mit dem neue Sites starten, speichert keine Session-ID, also keine Cookies, kein `localStorage`, kein `sessionStorage`, kein IndexedDB, keine Cache API.
 
-Speicherfrei bezieht sich darauf, was auf dem Gerät liegt. Das Auslesen der Performance-APIs ist nach unserer Einschätzung kein Zugriff auf gespeicherte Informationen im Sinne des TDDDG, weil die Werte erst zur Laufzeit entstehen; eine strengere Lesart sieht das anders. Siehe [Consent und TDDDG](#consent-and-the-tdddg).
+Speicherfrei bezieht sich darauf, was auf dem Gerät liegt. Ob das Auslesen der Performance-APIs ein Zugriff im Sinne des TDDDG ist, steht unter [Consent und TDDDG](#consent-and-the-tdddg).
 
 Wenn `collect_sessions` an ist, entscheidet der Schalter [`session_consent`](/de/tracker#session-consent), ob die Session-ID beim Pageload geschrieben oder aufgeschoben wird, bis dein CMP Consent erteilt. Die ID liegt im `sessionStorage` und verschwindet beim Schließen des Tabs. Es gibt nirgends im Design einen persistenten Identifier oder ein seitenübergreifendes Cookie.
 
@@ -72,7 +72,7 @@ abgeschnitten auf 128 Bit (32 Hex-Zeichen auf dem Wire). Er wird gespeichert, wa
 - **Forward Secrecy by Construction.** Das Salt ist ein 32-Byte-Wert aus `crypto/rand`, lebt ausschließlich im RAM des aktiven Edge und rotiert alle 24 Stunden. Es wird nie persistiert, nie verteilt, nie geloggt. Wer später Zugriff auf die Zeile bekommt, kann `stitch` nicht zurück auf (IP, UA) rechnen: das Salt, mit dem es produziert wurde, ist weg.
 - **Verknüpfbarkeit gedeckelt, höchstens ~24 h.** Bei jeder Salt-Rotation bekommt derselbe Besucher einen neuen `stitch`-Wert. Cross-Pageview-Verknüpfung kann nicht über ein Salt-Fenster hinaus anwachsen.
 - **Auf eine Application begrenzt.** Der `collector_hash` steckt im HMAC-Input, dieselbe (IP, UA) ergibt also pro Application einen anderen `stitch`, und nichts verknüpft einen Besucher mit der Seite eines anderen Betreibers. Innerhalb einer Application ist der Wert auf allen Domains gleich, die sie bedient. Genau das lässt einen org-weiten Tracker einen wiederkehrenden Besucher einmal zählen statt einmal pro Domain.
-- **Nichts, was die Seite behauptet, geht in den Input.** Der Host aus dem Beacon-Body bleibt bewusst draußen, eine Seite kann also nicht beeinflussen, welche Kennung ihr Besucher bekommt.
+- **Nichts, was die Seite behauptet, geht in den Input.** Der Host aus dem Beacon-Body bleibt draußen.
 - **Das Salt ist das einzige Geheimnis.** Die übrigen HMAC-Inputs sind öffentlich oder stehen in der gespeicherten Zeile selbst, und der Eingaberaum ist klein genug zum Durchprobieren; wer das lebende Salt hätte, könnte ein vermutetes (IP, UA)-Paar durch Nachrechnen bestätigen. Niemand hat es: es existiert nur im laufenden Edge-Prozess und ist nach der Rotation weg. Die Garantie ist operativ (RAM-only-Salt, 24-h-Rotation), nicht mathematisch.
 
 Ehrlich eingeordnet: solange das Salt lebt, ist `stitch` ein **pseudonymer** Besucher-Identifier und damit personenbezogenes Datum, verarbeitet nach Art. 6 Abs. 1 lit. f DSGVO mit dokumentierter Interessenabwägung. Weil er unter dem Default-Preset Standard an ist, benenne ihn in deiner Datenschutzerklärung. Wenn du lieber gar keinen Besucher-Identifier speicherst, hält `store_stitch` aus (das Preset Minimal) die Zeile echt anonym.
@@ -105,8 +105,9 @@ Nennt die [Content Security Policy](/de/guides/content-security-policy) einer Si
 
 Ein Shop kann eigene [Events](/de/events) senden, jedes ein Name mit bis zu 30 Properties. Personenbezogene Daten gehören weder in Namen noch in Properties, und dafür bist du verantwortlich.
 
-- **Verworfen**: jeder Key wie `email`, `password` oder `token` und jeder Key mit einem `@`.
-- **Maskiert**: eine E-Mail-Adresse in einem Wert wird zu `[email]`.
+- **Im Browser maskiert**: Enthält ein Key `user`, `customer`, `email`, `mail`, `phone`, `password` oder `token`, geht sein Wert als `[masked]` raus, egal welche Einstellung ihn listet.
+- **Im Browser ersetzt**: Eine E-Mail-Adresse in einem Wert wird zu `[email]`. Der Collector macht das noch einmal für Events aus anderen Quellen.
+- **Vom Collector verworfen**: jeder Key mit einem Wort wie `email`, `user`, `phone` oder `token` und jeder Key mit einem `@`.
 - **Mitgespeichert**: die Seiten-URL, gekürzt wie bei einem Seitenaufruf, und dieselben Besucher-Labels wie bei einem Seitenaufruf.
 
 ### Suchbegriffe der Site-Suche [#search-terms]
@@ -117,7 +118,7 @@ Auf einer Seite vom Typ `search` behält die gespeicherte URL den Wert von `q`, 
 
 Eine Handvoll Felder beschreibt **die Site des Kunden**, nicht den Besucher: welche Third-Party-Domains die Seite lädt, der Byte-Mix nach Script / Image / Font, die Origin des LCP-Bilds, die LoAF-Script-Pfade. Diese Werte sind über alle Besucher derselben Seite identisch.
 
-Das macht sie zu Site-Konfiguration, nicht zu Besucherdaten. Wir behandeln sie trotzdem sorgfältig (Script-URLs und LCP-Image-URLs werden bei der Erfassung auf Origin + Pathname reduziert), aber sie sind nicht das, worum es bei den Consent- und Verknüpfbarkeits-Reglern geht.
+Das macht sie zu Site-Konfiguration, nicht zu Besucherdaten, und die Consent- und Verknüpfbarkeits-Regler betreffen sie nicht.
 
 ## Personenbezogene Daten: was ausgeschlossen ist, und was nicht [#personal-data]
 

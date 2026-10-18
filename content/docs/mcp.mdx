@@ -78,9 +78,13 @@ A call without a site covers the whole organization, since an MCP connection has
 
 The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/synthetic) enabled for the organization. Missing either one is a refusal with a reason, never an empty report.
 
-**How answers are qualified.** Every p75 carries the measurement count behind it (`samples`), which is not the pageview count: the vital columns are nullable, so an LCP p75 can rest on a handful of measurements. It also makes a null legible, since `inp_p75_ms: null` beside `samples.inp: 0` reads as "nothing measured here" rather than as a disabled feature. Where a tool applies a sample floor it reports the floor it used, so an empty result under a floor is a different finding from an empty dimension. Whether a number is too thin to quote stays the caller's judgement.
+**How answers are qualified.** Every p75 carries the number of measurements behind it (`samples`), which is not the pageview count. `inp_p75_ms: null` beside `samples.inp: 0` means nothing was measured. A tool that applies a sample floor reports the floor it used.
 
 **How filters match.** A `url` written as a path (`/checkout*`) matches the path, and text filter values match case-insensitively, so `browser: ["chrome"]` and `device_type: ["Desktop"]` find the stored `Chrome` and `desktop`. `country` takes codes, not names, and repairs the ones ISO does not assign (`UK` and `EN` to `GB`, `EL` to `GR`). A tag no site carries is refused rather than answered as a scope of zero sites. There is no per-site timezone: a period without an offset is read as UTC.
+
+**Empty values.** An empty string counts as no filter. `empty: ["referrer_source"]` asks for direct traffic, `not_empty: ["utm_campaign"]` for campaign traffic.
+
+**Bucket widths.** `get_timeseries` takes every width from `minute` to `month`. The error, failed-resource, NEL, CSP, and events tools take an optional `interval`, and without it the series is hourly up to 48 hours and daily above. Widths under an hour cover at most 1500 buckets.
 
 ## Limits [#limits]
 

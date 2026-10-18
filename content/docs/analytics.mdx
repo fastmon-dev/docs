@@ -3,23 +3,22 @@ title: Analytics
 description: Traffic, visitors, errors, and the Experience Score. The field-data dashboards on top of your beacons.
 ---
 
-Analytics is the exploration layer on top of everything your beacons collect: who is on the site right now, where traffic comes from, which pages get viewed, which errors fire, and how whole visits unfold.
+Analytics shows who is on your site, where they come from, which pages and errors they see, and how their visits unfold.
 
 ## The dashboard [#the-dashboard]
 
-The main Analytics view for a site shows:
+The main Analytics view for a site shows, from top to bottom:
 
-- **Current visitors**: unique visitors in the last 5 minutes, expandable to a per-minute chart of the last 15 plus the current pages and their sources. On shops the card also shows how many of them are at the cart, checkout, and success stage.
-- **Headline metrics**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline and the change against the previous period. The previous period is the same weekdays and hours, the fewest whole weeks earlier that cover the window. Count tiles also show the average per minute.
-- **Trend chart**: the selected headline metric over the range, with an optional previous-period overlay. The selection lives in the URL (`?metric=`). Each series in the legend can be switched off and carries its own previous-period value.
-- **Breakdowns**: four panels for Sources, Pages, Locations, and Devices, each with sub-tabs for drilling down. The Pages panel's third tab lists the **domains** out of the page URLs. Each footer counts the values behind the eight rows shown, and "Show all" or a single row opens the [Explorer](#explorer).
-- **Geographic distribution**: a globe, a flat map, or a country list. The chosen view stays in the URL, and clicking a country offers its filters.
-- **Breakdown grid**: on a metric's own page every dimension is a card with a share link. Each list says how much of the answer it shows and leads into the Explorer with the page's filters.
-- **Checkout funnel**: one bar per stage on a shared edge, with the share of the stage before it. Underneath, cart requests by kind. See [Checkout funnel](/en/checkout-funnel).
-- **Bots over time**: "Bots" beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The bot filter follows and is restored when you switch the view off. Cmd or Ctrl click on a legend entry shows only that one.
-- **Traffic quality**: pageviews stacked into Humans, Likely bots, and Bots, with visitors as a line. Below it the bot classification as one bar, then as clickable rows.
-- **Active hours**: hour of day by weekday. The grid only shows the weekdays the selected window reached.
-- **Engagement**: the share of visitors who saw a single page, with the distribution of pages per visitor and its median underneath. It is not a bounce rate.
+- **Live line**: the visitors on the site right now. "Watch live" opens a ticker of the newest events: the orders with their value by default, the whole purchase, or every event. Each row opens its visitor.
+- **Headline tiles**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline over the whole range. The change compares against the same weekdays and hours, the fewest whole weeks earlier that cover the window.
+- **Trend chart**: the selected tile over the range (`?metric=`). Orders show as a line or as three lanes, cart, checkout reached, and ordered, each on its own scale.
+- **Bots** beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The tiles and cards keep the page's bot filter.
+- **Breakdown**: cards for Pages, Page types, Sources, Locations, Devices, Traffic quality, Campaigns, and Access. A menu picks a card's dimension, the card pages through its rows, and a click on a row filters the page.
+- **All values of a card** open from its title in a pop-up with a search, a second dimension, sortable columns, and a CSV download.
+- **Visitor paths**: the [checkout funnel](/en/checkout-funnel) and the buyer comparison in one card, visit depth, and visitor lists that open the Visitors page.
+- **Active hours**: pageviews by time of day and by weekday as bars. The heatmap is one toggle away.
+
+Line charts draw each bucket at its end. The running bucket of a count, an hour or longer, is dashed towards a projection of the full bucket once a third of it has passed. Release markers are a thin purple line, tracker releases blue.
 
 See [Privacy](/en/privacy) for what a "visitor" means here.
 
@@ -56,13 +55,29 @@ The range pill in the header sets the window for every chart on the page.
 - **Zoom**: minus doubles the window, plus halves it, also on the `-` and `+` keys. A live window keeps its end at now.
 - **Drag across a trend chart** to zoom into that stretch. The charts reload at the resolution it gets.
 - **Jump to now**: while the window lies in the past, a button moves it to the present at the same length.
-- **Resolution** is a row of tiles, each with the number of intervals it gives. "By minute" on a window longer than 6 hours cuts it to its last 6 hours.
-- **Date and time** are fields that apply at once. The expression field also takes a clock range such as `14:00-16:30`.
+- **Date and time** are fields that apply at once. The expression field shows the current range, such as `now-7d`, and also takes a past window (`7d-3d`) or a clock range (`14:00-16:30`).
 - **The timeline** at the top of the picker shows the window on the days around it. Drag it, pull an edge, or scroll to zoom.
+
+### Resolution [#resolution]
+
+The picker and the command palette offer each bucket width with the number of buckets it gives. A width needs 4 to 1500 buckets over the window.
+
+| Width | Fits | On a longer window |
+| ----- | ---- | ------------------ |
+| Minute | 25 hours | cropped to the last 25 hours |
+| 5 minutes | 5 days | cropped to the last 5 days |
+| 15 minutes | 15 days | cropped to the last 15 days |
+| Hour, 6 hours, day, week, month | 4 to 1500 buckets | not offered |
+
+**Auto** picks the smallest width with at most 300 buckets, and days from 28 days on. The last 24 hours get 5-minute buckets, 48 hours 15-minute buckets, and 7 days hourly ones.
+
+Buckets of 6 hours and longer start on your clock: 6-hour buckets at 00, 06, 12, and 18 local time, a day at midnight, a week on Monday. A day across a clock change is 23 or 25 hours long.
 
 ## Filtering
 
-A filter bar sits next to the time picker on the dashboard, the overview, and every metric detail page. Type a dimension and value (for example `country = DE`) and press Enter to add a filter chip; the value field autocompletes with the real values for the current time range and shows how many pageviews each one has. The dimension picker lists the most-used dimensions first (Page, Country, Device), then the rest: browser, OS, connection, viewport, referrer source and medium, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel) (cart, checkout, ordered).
+A filter bar sits next to the time picker on every analytics page. Type a dimension and value, for example `country = DE`, and press Enter to add a filter chip. The value field suggests the real values of the time range with their pageviews.
+
+The dimension picker lists Page, Country, and Device first, then browser, OS, connection, viewport, referrer, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel). Empty values such as "Direct / none" cannot be filtered yet.
 
 Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
 
@@ -80,15 +95,15 @@ An **Events** page sits beside the table, one row per [checkout event](/en/check
 
 **A pageview opens in a detail with fixed places.** Eight facts and six vital tiles sit at the top, and nine collapsible sections below each show a one-line summary. The field search opens the section that holds a value, for example `ttfb`, and a shared link reopens the same sections.
 
-Results can be copied as Markdown or downloaded as CSV: same rows in the same order, values unformatted, the unit in the header, so a spreadsheet can compute with them.
+Results copy as Markdown or download as CSV, with raw values and the unit in the header.
 
 ## Navigating with the command palette [#command-palette]
 
-Press `Cmd`/`Ctrl`+`K` (or the command button in the top bar) to open a searchable command menu that drives the whole app: jump to any page, switch organization or site, change the time range and granularity, and add, remove, or clear filters. Start typing to search everything at once, or drill into a category with `Enter` or `→`; `←` or `Backspace` steps back and `Esc` closes.
+`Cmd`/`Ctrl`+`K` opens a command menu for the whole app: pages, organizations, sites, time range, resolution, and filters. `Enter` or `→` opens a category, `←` or `Backspace` steps back, and `Esc` closes.
 
 Typing searches **across every organization you can reach**: your own memberships, the client organizations of any agency you belong to, and the applications and domains inside them. Each hit says which organization it lives in. Applications lead the results, prod before dev among equally good matches, and picking one sets the application filter on the page you are on. Inactive sites and applications are listed and flagged.
 
-Every page is listed with the group it belongs to, so typing a group ("network") lists everything under it, and a page is also found by what it is called elsewhere ("API" finds Fetch/XHR). Opening an organization lists its applications above its domains.
+Typing a group ("network") lists every page under it, and "API" finds Fetch/XHR.
 
 The same search is available from a script as [`GET /search`](/en/api/search/search).
 
@@ -99,37 +114,37 @@ Errors is a group in the sidebar with four pages: JavaScript errors, [Failed res
 - **Affected pageviews over time**: pageviews with at least one JavaScript error, as a share of all pageviews or, under "Absolute", as a count. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
 - **An error's own page** has the same share and count switch.
 - **The list filters by origin**: All, First-party (your own hosts), or Third-party. The choice stays in the link, and the chart and error rate still count every error.
-- **The list is one row per fault.** Browsers report the same throw site a few characters apart, and a second caller of the same function is a second stack, so a row counts every variant and says how many signatures it stands for. On the API this is `group_variants` on `POST /analytics/error-types`.
+- **The list is one row per fault.** A row counts every variant of a throw site and says how many signatures it stands for. On the API this is `group_variants` on `POST /analytics/error-types`.
 - **A row leads with what broke, in a sentence**: what happened, whose code it is, the file it was thrown from, how often it occurred and when it last did, to the minute. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
 - **Ranked by the pageviews an error reached**, not by how often it fired. A single visit stuck in a loop is marked as a loop instead of topping the list, and "Most frequent" is still an ordering you can pick.
 - **Every error has its own page** at `/org/<org>/errors/<fingerprint>`, which is also its share link. Existing `?error=` links redirect there.
-- **Pages with the most errors**: ranked by how many errors a page threw, not by its error rate. A page with one pageview that threw once has a rate of 100 % and is not the broken checkout.
+- **Pages with the most errors**: ranked by how many errors a page threw, not by its error rate.
 - **Error origin**: how pageviews with an error split between your own hosts and foreign ones. The third bar holds pageviews without an error plus errors with no host to attribute them to.
 
 ### What broke, and where [#error-detail]
 
 **An error says what broke in a sentence**, even where the site keeps no error messages. The tracker recognizes the browser's wording and sends its [shape](/en/tracker#message-shape) rather than the text, so a row reads "`uc.setServiceAlias` was called, but `uc` does not exist at this point" instead of showing a stack alone.
 
-**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side. The snippet is laid out in lines with the throwing line marked, and only whitespace is inserted, so the reported column still points at its code.
+**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side. The throwing line is marked.
 
 - A run of frames in the same vendor bundle folds into one row naming the library. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames.
-- A frame that only passes the error on is marked as a rethrow, and the cause sits further down. The top frame of a minified stack is regularly a rethrow inside a promise polyfill.
+- A frame that only passes the error on is marked as a rethrow, and the cause sits further down.
 - A frame that cannot be read says why: no path was stored, the file sits on somebody else's host, the file is the fastmon tracker, or you deployed again under the same name and the position is gone.
 - The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/analytics/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
 
 **"Where it happens" is the breakdown grid the metric pages carry**: page, page type, domain, country, device, browser, OS, connection, navigation, caches, bots, and network. Bots and network are among them, so you can see whether an error reaches real visitors or only crawlers.
 
-**An error with nothing in it says why.** A signature can arrive with a five-figure count, no message, and no stack: messages or frames switched off for this application, a third-party script served without the CORS opt-in, or collection on and nothing sent anyway. The chart and the breakdown work either way.
+**An error without message or stack says why**: messages or frames switched off, a third-party script without the CORS opt-in, or nothing sent. The chart and the breakdown work either way.
 
-**"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect, so nothing reads as a zero that is really a setting.
+**"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect.
 
 **Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error. It says endpoints occur together, never that one caused the other.
 
-**An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list, so LCP, browsers, countries, or the checkout funnel can be read over the traffic where one thing breaks. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`). A query using it reads the raw rows rather than a rollup, and costs accordingly.
+**An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`).
 
 **Your own subdomains count as yours.** First party means the same registrable domain as the page, in the error rate, the error origin, the Fetch/XHR split, and the resource list alike.
 
-`ScriptError` is an uncaught exception in a script from another origin loaded without CORS opt-in, so the browser hides the filename, line, and message. Load the script with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin` and the browser reports the real error. See [Tracker → What counts as an error](/en/tracker#what-counts). Where `ScriptError` is present, the error-types response lists `own_subdomain_hosts`, usually where the header is missing.
+`ScriptError` is an error in a cross-origin script loaded without CORS, whose details the browser hides. Load it with `crossorigin="anonymous"` from a host that sends `Access-Control-Allow-Origin`. See [Tracker → What counts as an error](/en/tracker#what-counts). Where `ScriptError` is present, the error-types response lists `own_subdomain_hosts`, usually where the header is missing.
 
 How much detail you see depends on the site's [tracker settings](/en/tracker): error **type**, **count**, and [**message shape**](/en/tracker#message-shape) arrive always. The error **message** needs [`collect_error_messages`](/en/tracker#collect-error-messages), and full **stack frames** need [`collect_error_frames`](/en/tracker#collect-error-frames).
 
@@ -138,17 +153,17 @@ How much detail you see depends on the site's [tracker settings](/en/tracker): e
 A failed `<img>`, `<script>`, or `<link>` is its own signal, with its own tab, its own rate (`failed_resource_rate`), and its own curve beside the error rate. It is split into two buckets:
 
 - **Your own hosts**: the actionable half. A broken image path, a bundle that 404s after a deploy.
-- **Foreign hosts**: dominated by ad blockers and tracking protection, so not a defect of the site.
+- **Foreign hosts**: mostly ad blockers and tracking protection.
 
 Ownership is the registrable-domain rule above. **The list groups by host**, each with its share of all failed loads, and opening a host shows the individual resources under it. A second view ranks pages by the share of their pageviews that lost a resource.
 
-**Hide a host and the list becomes readable.** `host` and `exclude_hosts` narrow the totals as well, unlike `ownership`, so the share bars and the big number keep agreeing with the rows.
+**Hiding a host** narrows the totals too: `host` and `exclude_hosts` do, `ownership` does not.
 
 **Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS, and country, the visitors affected, and sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/analytics/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key.
 
 `Failed resources` is a filter and a metric of its own, so `>= 1` scopes any view to pageviews where something did not load. In the pageview drill-down the failed loads have their own block, separate from the JavaScript errors.
 
-The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames). A failed load can also be a shaky connection or a request the visitor interrupted, not necessarily something wrong on your server.
+The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames).
 
 Ad-blocked requests to known tracker hosts stay visible as a subset of the foreign bucket, reported as `blocked_count`: read it as "N excluded as ad-blocked", not as a failure.
 
@@ -182,15 +197,27 @@ An expanded endpoint shows its own p75 or p95 over time with its calls and relea
 
 The Fetch/XHR error rate counts failures on your own hosts, by the same registrable-domain rule as the [error rate](#failed-resources). Failures on foreign hosts are reported beside it as their own number, mostly the visitor's ad blocker. The panel's 1P/3P filter follows the same rule.
 
-The beacon reads the header on every pageview, and the dashboards on top of it are still being tuned. To emit the header and learn how fastmon splits it into backend phases, cache status, and custom keys, see [Server-Timing headers](/en/guides/server-timing).
+To emit the header and see how fastmon splits it, read [Server-Timing headers](/en/guides/server-timing).
 
 ## Experience Score
 
 The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it.
 
-## API
+## API [#api]
 
-Every panel maps to a query endpoint under `/organizations/{org_id}/analytics/…`: a flexible [query endpoint](/en/api/analytics/queryAnalytics) for time series and breakdowns, plus dedicated endpoints for histograms, error types and details, visitors, Fetch/XHR, Server-Timing, resource and third-party breakdowns, LoAF, the [checkout funnel](/en/api/analytics/queryAnalyticsCheckoutFunnel), and the Experience Score. See the [Analytics endpoint reference](/en/api/analytics/queryAnalytics).
+Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, most of them to the [query endpoint](/en/api/analytics/queryAnalytics). Others serve histograms, errors, visitors, Fetch/XHR, Server-Timing, LoAF, the [checkout funnel](/en/api/analytics/queryAnalyticsCheckoutFunnel), and the Experience Score.
+
+| Field | What it does |
+| ----- | ------------ |
+| `granularity` | `minute`, `five_minutes`, `fifteen_minutes`, `hour`, `six_hours`, `day`, `week`, `month`, or `auto` by the [rule above](#resolution). Widths under an hour allow at most 1500 buckets, a longer request is a 422. |
+| `timezone` | An IANA name such as `Europe/Berlin`. Buckets of 6 hours and longer start at its boundaries, timestamps stay UTC. Weeks start on Monday either way. |
+| `meta.granularity_options` | The widths with 4 to 1500 buckets over the window. |
+| `sample_count` | The pageviews behind a row, unweighted under sampling. `beacons` is its deprecated twin. |
+| `url_path`, `url_key`, `url_key_set` | Group or filter by the URL without its query, by each query key, or by the set of keys. A pageview counts once per key, and `meta.pageviews` is the denominator. |
+| `url_param` + `url_param_key` | Group by the value of one query key. A key the application does not store answers 422 naming `collection.query_values_for`. |
+| `""` as a text filter | Selects the rows without a value: `referrer_source: ""` answers direct visits. `exclude: {utm_campaign: [""]}` keeps the pageviews with a campaign. |
+
+Only a window of at most 6 hours that ends within 10 minutes of now reads live beacons. Every other window reads the finalized pageviews.
 
 ## What's next
 

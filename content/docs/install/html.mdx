@@ -198,12 +198,18 @@ Everything else on the zone keeps its normal origin; only `/s/` and
 `/c/` go to fastmon. Matching rules stack, so set `stop` only if you
 deliberately want to skip the rules after this one.
 
-### Custom domain
+### Custom domain [#custom-domain]
 
-Same first-party benefit, but you point the snippet at a collector host
-you control (`metrics.example.com`) instead of relative paths. Useful
-when one application spans several domains and you want a single stable
-collector host.
+The beacons go to a host of your own, such as `rum.example.com`, with no
+proxy to run.
+
+1. Create the DNS record `rum.example.com CNAME fastmon.site`.
+2. In the application's collector settings, pick **Custom collector** and
+   enter `rum.example.com` without a path.
+
+The script posts to the new host from its next delivery. The first
+request waits a few seconds for the certificate, and a host without the
+CNAME gets none. Each application takes one host.
 
 ## What's next
 
