@@ -17,6 +17,118 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-26" type="new" area="dashboard" title="Beobachtungen, als Beta">
+
+fastmon hält jetzt Veränderungen fest, die es von selbst erkennt, jede mit Beginn und Ende. Beobachtungen waren eine Admin-Vorschau und stehen jetzt jeder Rolle einer Organisation mit dem Watchdog-Feature offen.
+
+- **Shifts** vergleichen eine Viertelstunde Traffic, TTFB, LCP, JavaScript-Fehler oder Bots mit derselben Viertelstunde an den 7 Tagen davor. Eine Verschlechterung erscheint nach 30 Minuten, alles andere nach 2 Stunden.
+- **Trends** vergleichen die letzten 7 Tage von LCP, INP, CLS, TTFB oder Fehleranteil mit den 14 Tagen davor, einmal täglich. Ein offener Trend sagt, seit wann die Metrik auf dem neuen Niveau liegt.
+- **Als gesehen markieren** nimmt eine Beobachtung aus den offenen, mit einer Notiz für das Team. Sie verlässt die Karten und den Zähler in der Seitenleiste und endet weiter von allein. Owner und Member können markieren.
+- **Die Wochenmail nennt die offenen Trends** einer Application nach der Tabelle, und die Trends, die besser wurden, als gute Nachricht. Ein offener Trend ersetzt den Wochenvergleich seiner Metrik.
+
+Doku: [Beobachtungen](/de/observations).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="new" area="dashboard" title="Fehler als gesehen markieren">
+
+Einen Fehler auf der Seite JavaScript-Fehler kannst du als gesehen markieren, mit einer Notiz für das Team. Die Liste zeigt standardmäßig die offenen Fehler, die gesehenen hinter einem Schalter. Die Markierung gilt für den Fehler selbst, ein Deploy, der das Bundle verschiebt, behält sie.
+
+Die Fehlerrate und jede Summe zählen den Fehler weiter, und der Wochenüberblick öffnet keinen neuen Befund dafür. Owner und Member können markieren, und ein gesehener Fehler lässt sich auf seiner Seite wieder öffnen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="new" area="api" title="Gesehen-Markierungen in der API">
+
+Beobachtungen und Fehler-Signaturen lassen sich über die API als gesehen markieren. Beides braucht die neue Berechtigung `observation:write`, die Owner und Member haben.
+
+- **`PATCH /observations/{observation_id}`** mit `status: acknowledged` markiert eine Beobachtung als gesehen, `status: open` nimmt es zurück, und `note` fasst bis zu 1.000 Zeichen. Beide Listen und der Zähler in der Seitenleiste überspringen eine gesehene Beobachtung unter `status=open`. Sie steht unter `status: acknowledged`, bis sie endet.
+- **`POST /organizations/{org_id}/error-acknowledgements`** mit dem `fingerprint` einer Fehlerzeile markiert den Fehler als gesehen, mit optionaler `note`. `GET` auf demselben Pfad listet sie, `PATCH /error-acknowledgements/{acknowledgement_id}` ändert die Notiz, und `DELETE` öffnet die Signatur wieder.
+- **Die Fehlerliste trägt `status`** in jeder Zeile von `POST /analytics/error-types`, `open` oder `acknowledged`, und nimmt ihn als Filter. Ohne Filter liefert sie beide.
+- **Audit-Einträge** `observation.updated`, `error.acknowledged` und `error.reopened` halten jede Änderung fest.
+- **Beobachtungen tragen `reference_unit`**, eins von `share`, `page_views`, `milliseconds` oder `days`. Ein Trend trägt `evidence.since`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="changed" area="platform" title="Bot-Erkennung und Besucher-Stitching">
+
+- **`navigator.webdriver` zählt als `bot`**, auch wenn der Besucher als `hyperactive` oder `unnamed` markiert war. Der Bot-Filter blendet ihn jetzt aus. Zuvor geschriebene Zeilen behalten ihr Label.
+- **`ua_anomaly` hat zwei neue Werte.** `hyperactive` markiert einen Besucher mit mehr als 1.000 Beacon-Requests in einer laufenden Stunde, für 24 Stunden. `unnamed` markiert einen Desktop-Client, dessen User-Agent keinem Browser und keinem bekannten Bot zuzuordnen war. Beide zählen als `suspect` und fallen aus der Sicht auf Menschen heraus.
+- **Das Besucher-Stitching rotiert um 02:00 UTC** statt 24 Stunden nach dem Start des Edge, damit ein Besucher tagsüber nicht mehr in zwei zerfällt.
+
+Doku: [Datenschutz → Der stitch-Identifier](/de/privacy#der-am-edge-abgeleitete-stitch-identifier).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="dashboard" title="Filter im Pop-up, Explorer auf dem Server, Tastaturkürzel">
+
+- **Filter bearbeitest du in einem Pop-up.** „Filter“ im Header, ein Filter-Chip oder die Taste `f` öffnet es: links die aktiven Filter, rechts die Werte des offenen Filters nach Name und nach Seitenaufrufen, dazu ein Katalog aller Felder. Nichts ändert sich vor „Anwenden“.
+- **Perzentil, Vergleich, Gerät und Traffic** bleiben als kleine Menüs im Header und wirken sofort. Die gespeicherten Abfragen des Explorers sind ins Pop-up gewandert.
+- **Browser und Browser-Version sind ein Filter.** Der Versionsbereich steht unter den gewählten Browsern.
+- **Explorer-Filter und Sortierung laufen auf dem Server.** Der Trichter einer Spalte filtert jeden Seitenaufruf, nicht nur die 50 auf dem Bildschirm. Spalten wählst du in einem Pop-up und ziehst sie in die Reihenfolge.
+- **Ein Seitenaufruf öffnet sich als Pop-up**, und Links und Rechts blättern durch die Liste.
+- **Kürzel**: `v` maximiert das Diagramm oder die Tabelle unter der Maus, `?` listet jedes Kürzel, `l` startet und stoppt den Live-Modus. `r` aktualisiert, und das Symbol dreht sich, bis die Daten da sind.
+
+Doku: [Analytics](/de/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="dashboard" title="Suchende Picker und eine neue Account-Seite">
+
+- **Der Application-Picker sucht.** Tippe eine Application, eine Domain oder einen Tag. Domains stehen gruppiert unter ihrer Application, Development-Applications in einer eigenen Gruppe, und ein Punkt zeigt, ob eine Domain in den letzten 24 Stunden Daten geschickt hat.
+- **Mehrere Domains oder Tags wechselst du auf einmal.** Der Kreis am Ende einer Zeile sammelt sie, und „Anwenden“ wechselt zu allen.
+- **Der Organisations-Picker funktioniert genauso**, mit den zuletzt geöffneten Organisationen oben und deiner Rolle und deinem Plan unter jedem Namen.
+- **Die Account-Seite ist aufgebaut wie die Application-Einstellungen.** Profil, Darstellung, Sicherheit, Benachrichtigungen und Zugriff zeigen, was gesetzt ist, und deine Organisationen stehen unter Profil. Alte Links auf die Tabs öffnen weiter den richtigen Abschnitt.
+- **Das Avatar-Menü** öffnet Account, Benachrichtigungen und API-Keys direkt und stellt Theme und Sprache mit beschrifteten Schaltern um.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="platform" title="Wochenüberblick mit weniger Fehlalarmen">
+
+- **Ein neuer Fehler ist erst ein Alarm, wenn er Besucher erreicht hat.** Unter 0,5 % der Seitenaufrufe der Woche heißt er „Verbesserungsbedarf“, nicht „schlecht“.
+- **Die Schwere wählt die drei Befunde** einer Application. Drei neue Fehler verdrängen keine LCP- oder TTFB-Verschlechterung mehr aus der Mail.
+- **Eine Verschlechterung, die in beiden Wochen dieselbe Zahl druckt, entfällt**, etwa 1.180 zu 1.245 ms, beide als 1,2 s.
+- **„Eine Seite lädt schneller“ öffnet diese Seite**, mit der Vorwoche daneben.
+- **Eine Metrik, die schlecht bleibt, hat einen eigenen Titel**, etwa „Fehlerrate weiterhin hoch“, und die mittlere Bewertung heißt „Verbesserungsbedarf“ wie im Dashboard.
+- **Die Seite ist aufgebaut wie die Metrik-Seiten**: zwei Kacheln zählen die Befunde, der Einleitungsabsatz der Mail folgt, und „Über mehrere Wochen“ nennt die offenen Trends, die die Mail schon hatte.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="dashboard" title="JavaScript-Fehler nach Ursache gruppiert">
+
+- **Ein Fehler, der in eine andere Zeile derselben Datei gewandert ist, bleibt eine Zeile.** Die Liste gruppiert nach Typ, Form der Meldung und Datei, ein Deploy, der das Bundle verschiebt, macht aus einem bekannten Fehler also keinen neuen. „Neu“ und „Nimmt zu“ vergleichen auf derselben Gruppierung.
+- **Ein Script vom Host einer deiner Sites ist auf jeder Seite der Application First Party.** Das Bundle eines Shops auf einem Übersetzungs-Proxy oder einer Preview-Domain ist nicht mehr Third Party. Eine Zeile, deren Vorkommen sich widersprechen, heißt „Gemischt“.
+- **Raten auf gesampelten Applications stimmen.** Der Anteil betroffener Seitenaufrufe, die Top 5 und die Spalte Seitenaufrufe nehmen gewichtete Seitenaufrufe, das Diagramm liegt also nicht mehr über 100 %.
+- **`/analytics/query` gruppiert nach `errors.fingerprint`** liefert `error_beacons` und `error_rate`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="dashboard" title="Das Dashboard beantwortet drei Fragen">
+
+Das Dashboard ist von oben nach unten neu gebaut. Ein Statusband sagt, ob Besucher kommen, das Tracking läuft und Beobachtungen offen sind. Besucher-Kacheln und ein Experience-Panel zeigen, was sich geändert hat, und jede Kachel öffnet ihre Seite.
+
+- **Das Experience-Panel** hat den Score oben und acht Metrik-Kacheln darunter, jede mit Wert, Bewertung, Veränderung und dem Anteil guter und schlechter Seitenaufrufe. Eine Kachel wählt das Diagramm darunter.
+- **Die Antwort-Aufschlüsselung** läuft über alle Seiten, von DNS über die Server-Timing-Phasen bis zum LCP, je Seitentyp oder Seite. Ihre zweite Ansicht reiht Seitentypen oder Seiten nach LCP, INP, TTFB und Fehlerrate.
+- **„Wohin die Zeit geht“** teilt den LCP in seine vier Phasen und zeigt das erste Byte mit und ohne Cache-Treffer.
+- **Der Globus** färbt Länder nach LCP, TTFB oder Traffic und maximiert wie ein Diagramm. Ein maximiertes Diagramm steht als `max=` in der Adresse, ein Link öffnet es also.
+- **Weniger Abfragen**: Die Karten eines Breakdown-Rasters laden, sobald sie ins Bild scrollen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="new" area="dashboard" title="Seiten">
+
+**Seiten** ist ein neuer Eintrag in der Seitenleiste unter Untersuchen. Er listet zuerst deine Seitentypen, dann jede Seite nach URL mit Suche, jeweils mit LCP, INP, CLS und Seitenaufrufen, sortiert nach Seitenaufrufen oder nach dem schlechtesten Wert.
+
+Jede Seite und jeder Seitentyp öffnet eine eigene Seite, aufgebaut wie die LCP- und TTFB-Seiten. Oben stehen die vier Metriken, ein Klick auf eine öffnet darunter ihre Metrik-Seite, eingegrenzt auf diese Seite oder diesen Seitentyp. Ein Seitentyp endet mit der Liste seiner Seiten, und ein Button öffnet die Seite im Explorer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="platform" title="Ask hat ein Tagesbudget">
+
+Das Budget von Ask zählt pro Tag statt pro Minute, eine zweite Frage direkt nach der ersten wird also nicht mehr abgelehnt. Ist das Tagesbudget aufgebraucht, antwortet Ask ab 00:00 UTC wieder.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-18" type="changed" area="platform" title="Experience Score ohne Ladezeit">
 
 Der Experience Score lässt die Ladezeit weg und bewertet nur noch Fehler aus deinem eigenen Code.

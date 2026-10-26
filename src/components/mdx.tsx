@@ -8,6 +8,7 @@ import {
   InstallSnippet,
   InstallValue,
 } from "@/components/install-config";
+import { ShiftDiagram, TrendDiagram } from "@/components/observation-diagrams";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -24,6 +25,9 @@ export function getMDXComponents(components?: MDXComponents) {
     InstallSnippet,
     InstallCode,
     InstallValue,
+    // Observations page: how a shift, a trend and an outage open and end.
+    ShiftDiagram,
+    TrendDiagram,
     ...components,
   } satisfies MDXComponents;
 }

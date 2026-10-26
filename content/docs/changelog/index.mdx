@@ -12,6 +12,118 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-10-26" type="new" area="dashboard" title="Observations, in beta">
+
+fastmon now writes down changes it finds on its own, each with a start and an end. Observations were an admin preview and are open to every role of an organization with the Watchdog feature.
+
+- **Shifts** compare a quarter hour of traffic, TTFB, LCP, JavaScript errors, or bots with the same quarter hour on the 7 days before. A degradation shows after 30 minutes, everything else after 2 hours.
+- **Trends** compare the last 7 days of LCP, INP, CLS, TTFB, or error share with the 14 days before, once a day. An open trend says since when the metric sits on its new level.
+- **Acknowledge** marks an observation as seen, with a note for the team. It leaves the open cards and the sidebar count and still ends on its own. Owners and members can acknowledge.
+- **The weekly mail lists the open trends** of an application after the table, and the trends that got better as good news. An open trend replaces the week-over-week finding of its metric.
+
+Docs: [Observations](/en/observations).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="new" area="dashboard" title="Acknowledge an error">
+
+An error on the JavaScript errors page can be acknowledged, with a note for the team. The list shows open errors by default and the acknowledged ones behind a switch. The acknowledgement holds for the fault, so a deploy that moves the bundle keeps it.
+
+The error rate and every total keep counting the error, and the weekly overview opens no new finding for it. Owners and members can acknowledge, and a quiet error can be reopened from its page.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="new" area="api" title="Acknowledgements in the API">
+
+Observations and error signatures can be acknowledged through the API. Both need the new permission `observation:write`, which owners and members have.
+
+- **`PATCH /observations/{observation_id}`** with `status: acknowledged` marks an observation as seen, `status: open` takes it back, and `note` holds up to 1,000 characters. Both observation lists and the sidebar count skip an acknowledged observation under `status=open`. It lists under `status: acknowledged` until it ends.
+- **`POST /organizations/{org_id}/error-acknowledgements`** with the `fingerprint` of an error row acknowledges the fault, with an optional `note`. `GET` on the same path lists them, `PATCH /error-acknowledgements/{acknowledgement_id}` changes the note, and `DELETE` reopens the signature.
+- **The error list carries `status`** on every row of `POST /analytics/error-types`, `open` or `acknowledged`, and takes it as a filter. Without the filter it returns both.
+- **Audit entries** `observation.updated`, `error.acknowledged`, and `error.reopened` record every change.
+- **Observations carry `reference_unit`**, one of `share`, `page_views`, `milliseconds`, or `days`. A trend carries `evidence.since`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-26" type="changed" area="platform" title="Bot detection and visitor stitching">
+
+- **`navigator.webdriver` counts as `bot`**, also when the visitor was labelled `hyperactive` or `unnamed`. The bot filter now hides it. Rows written before keep their label.
+- **`ua_anomaly` has two new values.** `hyperactive` marks a visitor with more than 1,000 beacon requests in a rolling hour, for 24 hours. `unnamed` marks a desktop client whose User-Agent parsed to no browser and matched no named bot. Both count as `suspect` and leave the humans scope.
+- **Visitor stitching rotates at 02:00 UTC** instead of 24 hours after the edge started, so a visitor is no longer cut in two during the day.
+
+Docs: [Privacy → The stitch identifier](/en/privacy#the-edge-derived-stitch-identifier).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="dashboard" title="Filters in a pop-up, Explorer on the server, keyboard shortcuts">
+
+- **Filters are edited in a pop-up.** "Filter" in the header, a filter chip, or the `f` key opens it: the filters in force on the left, the values of the open filter on the right by name and by pageviews, and a catalog of every field. Nothing changes until "Apply".
+- **Percentile, comparison, device, and traffic** stay in the header as small menus and apply at once. The Explorer's saved queries moved into the pop-up.
+- **Browser and browser version are one filter.** The version range sits under the browsers you pick.
+- **Explorer filters and sorting run on the server.** A column's funnel filters every pageview, not only the 50 on screen. Columns are picked in a pop-up and dragged into order.
+- **A pageview opens as a pop-up**, and Left and Right step through the list.
+- **Shortcuts**: `v` maximizes the chart or table under the mouse, `?` lists every shortcut, `l` starts and stops live mode. `r` refreshes, and the icon turns until the data is back.
+
+Docs: [Analytics](/en/analytics).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="dashboard" title="Pickers that search, and a new account page">
+
+- **The application picker searches.** Type an application, a domain, or a tag. Domains are grouped under their application, development applications sit in their own group, and a dot shows whether a domain sent data in the last 24 hours.
+- **Several domains or tags switch at once.** The circle at the end of a row collects it, and "Apply" switches to all of them.
+- **The organization picker works the same way**, with the organizations you opened last on top and your role and plan under each name.
+- **The account page is laid out like the application settings.** Profile, Appearance, Security, Notifications, and Access each show what is set, and your organizations are listed under Profile. Old links to the tabs still open the right section.
+- **The avatar menu** opens your account, notifications, and API keys directly and sets theme and language with labelled toggles.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-23" type="changed" area="platform" title="Weekly overview with fewer false alarms">
+
+- **A new error is an alarm only once it reached the visitors.** Below 0.5 % of the week's pageviews it reads "needs improvement", not "poor".
+- **Severity picks the three findings** of an application. Three new errors no longer push an LCP or TTFB regression out of the mail.
+- **A regression that prints the same number in both weeks is left out**, such as 1,180 to 1,245 ms, which both read 1.2 s.
+- **"A page loads faster" opens that page**, with the week before beside it.
+- **A metric that stays poor has its own title**, such as "Error rate still high", and the middle rating reads "needs improvement" as on the dashboard.
+- **The page is laid out like the metric pages**: two tiles count the findings, the mail's opening paragraph follows, and "Over several weeks" lists the open trends, which the mail already had.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="dashboard" title="JavaScript errors grouped by fault">
+
+- **A fault that moved to another line of the same file stays one row.** The list groups on type, message shape, and file, so a deploy that shifts a bundle no longer turns a known fault into a new one. "New" and "Rising" compare on the same grouping.
+- **A script on the host of one of your sites is first party on every page of the application.** A shop's bundle on a translation proxy or a preview domain is no longer third party. A row whose occurrences disagree reads "Mixed".
+- **Rates on sampled applications are right.** The share of affected pageviews, the top 5, and the pageviews column use weighted pageviews, so the chart no longer reads past 100 %.
+- **`/analytics/query` grouped by `errors.fingerprint`** answers `error_beacons` and `error_rate`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="dashboard" title="The dashboard answers three questions">
+
+The dashboard is rebuilt from top to bottom. A status band says whether visitors arrive, tracking runs, and observations are open. Visitor tiles and an experience panel show what changed, and every tile opens its page.
+
+- **The experience panel** has the score on top and eight metric tiles below it, each with value, rating, change, and the share of good and poor pageviews. A tile picks the chart underneath.
+- **The response breakdown** runs over all pages, from DNS through the Server-Timing phases to the LCP, per page type or page. Its other view ranks page types or pages by LCP, INP, TTFB, and error rate.
+- **"Where the time goes"** splits the LCP into its four phases and shows the first byte with and without a cache hit.
+- **The globe** colours countries by LCP, TTFB, or traffic and maximizes like a chart. A maximized chart is in the address as `max=`, so a link opens it.
+- **Fewer queries**: the cards of a breakdown grid load once they scroll into view.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="new" area="dashboard" title="Pages">
+
+**Pages** is a new entry in the sidebar under Investigate. It lists your page types first, then every page by URL with a search, each with LCP, INP, CLS, and its pageviews, ranked by pageviews or by the slowest value.
+
+Each page and page type opens a page of its own, built like the LCP and TTFB pages. The four metrics sit on top, and a click on one opens its metric page below, narrowed to this page or page type. A page type ends with the list of its pages, and one button opens the page in the Explorer.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-20" type="changed" area="platform" title="Ask has a daily budget">
+
+Ask's budget is counted per day instead of per minute, so a second question right after the first is no longer refused. Once the day's budget is used up, Ask answers again at 00:00 UTC.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-18" type="changed" area="platform" title="Experience score without page load time">
 
 The Experience Score drops page load time and rates only errors from your own code.
