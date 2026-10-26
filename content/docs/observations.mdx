@@ -1,0 +1,87 @@
+---
+title: Observations
+description: Changes fastmon found on its own and recorded with a start and an end. Sudden shifts and slow trends. Beta.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+An observation is a change fastmon noticed by itself and wrote down with a start, an end, and the numbers behind it. You configure nothing. An observation opens and ends on its own, and your team can mark it as seen.
+
+<Callout type="warn" title="Beta">
+  Observations are in beta. Thresholds, texts, and the layout of the page may still change.
+</Callout>
+
+## Two kinds [#kinds]
+
+| Kind | What it catches | Compared against | Visible after |
+| --- | --- | --- | --- |
+| **Shift** | a sudden change within a quarter hour: traffic, TTFB, LCP, JavaScript errors, bots | the same quarter hour on the 7 days before | 30 minutes for a degradation, 2 hours for an improvement or a note |
+| **Trend** | a slow change over weeks: LCP, INP, CLS, TTFB, error share | the 14 days before the last 7 | the next midnight UTC |
+
+Every observation has a **direction**. A degradation is a problem and an improvement a highlight. A note is information nobody can act on: a traffic rise, or any change of bot traffic.
+
+## States [#states]
+
+| State | Meaning |
+| --- | --- |
+| **going on** | the change is measurable right now |
+| **open** | a recurring shift between two occurrences, or a trend waiting for its next midnight |
+| **paused** | a trend with too little data in the last 7 days. It neither ends nor moves |
+| **acknowledged** | a team member marked it as seen. It leaves the open cards and the sidebar count, and still ends on its own |
+| **ended** | the change is gone, or it became the new usual level |
+
+## Shifts [#shifts]
+
+A shift is a quarter hour far from what is usual for that quarter hour. **Usual** is the median of the same quarter hour on the 7 days before, per metric. It needs 4 of those days with data, so a new application opens nothing in its first 4 days.
+
+The diagram shows the two ways a shift opens, and how it ends.
+
+<ShiftDiagram lang="en" />
+
+**Opens** in one of two ways. The shift starts at the first of these quarter hours.
+
+- Two quarter hours in a row at 3 times the usual value, or a third of it.
+- Eight quarter hours in a row, 2 hours, at twice the usual value in the worse direction.
+
+Each of these quarter hours needs at least 150 page views, 500 for bots. A degradation at 3 times is written after its second quarter hour. Everything else once it has lasted 2 hours.
+
+**Ends** when a quarter hour is back under 1.5 times the usual value, or above two thirds of it after a drop. The observation says why:
+
+| Reason | Meaning |
+| --- | --- |
+| **back to normal** | the metric returned to its usual level |
+| **new level** | the shift lasted 4 days or more and became the usual level. The problem did not go away, fastmon just no longer reports it |
+| **no data** | 4 days in a row without a reference, as a dead tracker leaves |
+
+**Recurs** when a shift of the same metric and direction starts within 2 hours of the same time of day, no more than 7 days after the last one ended. It stays one observation, labelled "Shift, recurring", lists every occurrence, and ends 7 days after its last end. Bot shifts recur at any time of day and in either direction.
+
+| Metric | Measured per quarter hour | Direction |
+| --- | --- | --- |
+| **Traffic** | human page views | a drop is a degradation, a rise a note |
+| **Server response time (TTFB)** | p75 in ms | slower is a degradation, faster an improvement |
+| **Load time (LCP)** | p75 in ms | slower is a degradation, faster an improvement |
+| **JavaScript errors** | share of page views with a first-party error | more is a degradation, fewer an improvement |
+| **Bots** | page views that are not human | a surge or a collapse is a note |
+
+A degradation and every traffic or bot shift also list what carried the change: the countries, page types, devices, and domains with the largest share of it, and the releases around its start.
+
+## Trends [#trends]
+
+A trend is a slow change over weeks, judged once a day at midnight UTC over whole days. The measure is the share of page views above the poor threshold of LCP, INP, CLS, or TTFB, or the share with a first-party error. The diagram shows the reference, the line where a trend opens, and the line where it ends.
+
+<TrendDiagram lang="en" />
+
+- **Reference** is the pooled share of the 14 days before the last 7. It is frozen when the trend opens.
+- **Opens** when the last 7 days reach 1.3 times the reference and at least 2 percentage points more. An improvement opens at 1/1.3 of the reference and 2 points less.
+- **Ends** at the first midnight whose last 7 days are under 1.1 times the frozen reference. A metric that settles at a new level keeps its trend open for months.
+- **Pauses** while one of the last 7 days is missing or the week holds fewer than 1,000 page views with the metric.
+
+The first verdict needs 14 whole days of data. An open trend shows since when the metric has been at its new level.
+
+## On the Observations page [#page]
+
+**Observations** in the sidebar shows what is open now as cards, the selected time range as a timeline per area, and every observation of the range as a table. Each row opens a detail page with the title, the state, the period, and the change against the usual value. A shift adds its drivers and the releases around its start.
+
+**Acknowledge** at the top right marks an observation as seen, with a note of up to 1,000 characters for the team. Owners and members can acknowledge, viewers see it. A new occurrence of a recurring shift keeps the acknowledgement, and the note stays after the observation ended.
+
+Observations send no notification. The weekly overview mentions trends: the open degradations and the improvements of the week.

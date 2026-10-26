@@ -1,0 +1,87 @@
+---
+title: Beobachtungen
+description: Veränderungen, die fastmon von selbst erkennt und mit Beginn und Ende festhält. Plötzliche Shifts und schleichende Trends. Beta.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Eine Beobachtung ist eine Veränderung, die fastmon von selbst bemerkt und mit Beginn, Ende und den Zahlen dahinter festhält. Du konfigurierst nichts. Eine Beobachtung öffnet und endet von allein, und dein Team kann sie als gesehen markieren.
+
+<Callout type="warn" title="Beta">
+  Beobachtungen sind Beta. Schwellenwerte, Texte und der Aufbau der Seite können sich noch ändern.
+</Callout>
+
+## Zwei Arten [#kinds]
+
+| Art | Was sie erkennt | Verglichen mit | Sichtbar nach |
+| --- | --- | --- | --- |
+| **Shift** | eine plötzliche Veränderung innerhalb einer Viertelstunde: Traffic, TTFB, LCP, JavaScript-Fehler, Bots | derselben Viertelstunde an den 7 Tagen davor | 30 Minuten bei einer Verschlechterung, 2 Stunden bei einer Verbesserung oder einem Hinweis |
+| **Trend** | eine schleichende Veränderung über Wochen: LCP, INP, CLS, TTFB, Fehleranteil | den 14 Tagen vor den letzten 7 | der nächsten Mitternacht UTC |
+
+Jede Beobachtung hat eine **Richtung**. Eine Verschlechterung ist ein Problem, eine Verbesserung ein Highlight. Ein Hinweis ist Information, bei der niemand etwas tun kann: ein Traffic-Anstieg oder jede Veränderung des Bot-Traffics.
+
+## Zustände [#states]
+
+| Zustand | Bedeutung |
+| --- | --- |
+| **läuft** | die Veränderung ist gerade messbar |
+| **offen** | ein wiederkehrender Shift zwischen zwei Vorkommen, oder ein Trend bis zur nächsten Mitternacht |
+| **pausiert** | ein Trend mit zu wenig Daten in den letzten 7 Tagen. Er endet nicht und bewegt sich nicht |
+| **gesehen** | jemand aus dem Team hat sie als gesehen markiert. Sie verlässt die offenen Karten und den Zähler in der Seitenleiste und endet weiter von allein |
+| **beendet** | die Veränderung ist vorbei oder zum neuen Normalwert geworden |
+
+## Shifts [#shifts]
+
+Ein Shift ist eine Viertelstunde, die weit von dem abweicht, was für diese Viertelstunde üblich ist. **Üblich** ist der Median derselben Viertelstunde an den 7 Tagen davor, je Metrik. Dafür müssen 4 dieser Tage Daten haben, eine neue Application öffnet in den ersten 4 Tagen also nichts.
+
+Die Grafik zeigt die zwei Wege, auf denen ein Shift öffnet, und wie er endet.
+
+<ShiftDiagram lang="de" />
+
+**Öffnet** auf einem von zwei Wegen. Der Shift beginnt mit der ersten dieser Viertelstunden.
+
+- Zwei Viertelstunden in Folge beim Dreifachen des üblichen Werts oder bei einem Drittel davon.
+- Acht Viertelstunden in Folge, also 2 Stunden, beim Doppelten in der schlechteren Richtung.
+
+Jede dieser Viertelstunden braucht mindestens 150 Seitenaufrufe, bei Bots 500. Eine Verschlechterung beim Dreifachen wird nach ihrer zweiten Viertelstunde geschrieben. Alles andere erst, wenn es 2 Stunden angehalten hat.
+
+**Endet**, sobald eine Viertelstunde wieder unter dem 1,5-Fachen des üblichen Werts liegt, nach einem Einbruch über zwei Dritteln davon. Die Beobachtung nennt den Grund:
+
+| Grund | Bedeutung |
+| --- | --- |
+| **zurück zur Normalität** | die Metrik ist wieder auf ihrem üblichen Niveau |
+| **neues Niveau** | der Shift hielt 4 Tage oder länger an und wurde zum Normalwert. Das Problem ist nicht weg, fastmon meldet es nur nicht mehr |
+| **keine Daten** | 4 Tage in Folge ohne Referenz, wie ein toter Tracker sie hinterlässt |
+
+**Kehrt wieder**, wenn ein Shift derselben Metrik und Richtung innerhalb von 2 Stunden um dieselbe Tageszeit beginnt, höchstens 7 Tage nach dem Ende des letzten. Er bleibt eine Beobachtung mit dem Label „Shift, wiederkehrend“, listet jedes Vorkommen und endet 7 Tage nach seinem letzten Ende. Bot-Shifts kehren zu jeder Tageszeit und in beiden Richtungen wieder.
+
+| Metrik | Gemessen je Viertelstunde | Richtung |
+| --- | --- | --- |
+| **Traffic** | menschliche Seitenaufrufe | ein Einbruch ist eine Verschlechterung, ein Anstieg ein Hinweis |
+| **Server-Antwortzeit (TTFB)** | p75 in ms | langsamer ist eine Verschlechterung, schneller eine Verbesserung |
+| **Ladezeit (LCP)** | p75 in ms | langsamer ist eine Verschlechterung, schneller eine Verbesserung |
+| **JavaScript-Fehler** | Anteil der Seitenaufrufe mit einem First-Party-Fehler | mehr ist eine Verschlechterung, weniger eine Verbesserung |
+| **Bots** | Seitenaufrufe, die nicht von Menschen stammen | ein Anstieg oder Einbruch ist ein Hinweis |
+
+Eine Verschlechterung und jeder Traffic- oder Bot-Shift zeigen auch, was die Veränderung getragen hat: die Länder, Seitentypen, Geräte und Domains mit dem größten Anteil daran, und die Releases rund um den Beginn.
+
+## Trends [#trends]
+
+Ein Trend ist eine schleichende Veränderung über Wochen, einmal täglich um Mitternacht UTC über ganze Tage beurteilt. Gemessen wird der Anteil der Seitenaufrufe über dem Poor-Schwellenwert von LCP, INP, CLS oder TTFB, oder der Anteil mit einem First-Party-Fehler. Die Grafik zeigt die Referenz, die Linie, an der ein Trend öffnet, und die, an der er endet.
+
+<TrendDiagram lang="de" />
+
+- **Referenz** ist der gemeinsame Anteil der 14 Tage vor den letzten 7. Sie wird beim Öffnen eingefroren.
+- **Öffnet**, wenn die letzten 7 Tage das 1,3-Fache der Referenz erreichen und mindestens 2 Prozentpunkte darüber liegen. Eine Verbesserung öffnet bei 1/1,3 der Referenz und 2 Punkten darunter.
+- **Endet** an der ersten Mitternacht, deren letzte 7 Tage unter dem 1,1-Fachen der eingefrorenen Referenz liegen. Eine Metrik, die sich auf einem neuen Niveau einpendelt, hält ihren Trend monatelang offen.
+- **Pausiert**, solange einer der letzten 7 Tage fehlt oder die Woche weniger als 1.000 Seitenaufrufe mit der Metrik hat.
+
+Das erste Urteil braucht 14 ganze Tage mit Daten. Ein offener Trend zeigt, seit wann die Metrik auf dem neuen Niveau liegt.
+
+## Auf der Seite Beobachtungen [#page]
+
+**Beobachtungen** in der Seitenleiste zeigt, was gerade offen ist, als Karten, den gewählten Zeitraum als Zeitstrahl je Bereich und jede Beobachtung des Zeitraums als Tabelle. Jede Zeile öffnet eine Detailseite mit Titel, Zustand, Zeitraum und der Veränderung gegenüber dem üblichen Wert. Ein Shift zeigt zusätzlich seine Treiber und die Releases rund um den Beginn.
+
+**Als gesehen markieren** oben rechts nimmt eine Beobachtung aus den offenen, mit einer Notiz von bis zu 1.000 Zeichen für das Team. Owner und Member können markieren, Viewer sehen es. Ein neues Vorkommen eines wiederkehrenden Shifts behält die Markierung, und die Notiz bleibt auch nach dem Ende der Beobachtung.
+
+Beobachtungen verschicken keine Benachrichtigung. Der Wochenüberblick erwähnt Trends: die offenen Verschlechterungen und die Verbesserungen der Woche.

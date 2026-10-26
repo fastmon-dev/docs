@@ -13,6 +13,10 @@ services:
     command: sleep infinity
     container_name: fastmon-docs
     hostname: fastmon-docs
+    # Published by Compose, not only via forwardPorts: Zed and other editors
+    # without devcontainer tooling reach the dev server on localhost:3000 too.
+    ports:
+      - "3000:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # Cap the container so a Next.js build cannot starve the other dev stacks.
