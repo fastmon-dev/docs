@@ -10,7 +10,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Das Modell ist deins. Fastmon antwortet aus den eigenen Daten, aber das Modell läuft beim Anbieter hinter deinem Client, und den wählen wir weder aus noch haben wir einen Vertrag mit ihm. Deshalb muss ein Owner den Server erst öffnen.
 
 <Callout type="info">
-  Alle Tools sind **read-only**. Nichts hier ändert eine Einstellung, löscht etwas oder startet einen Run.
+  Alle Tools sind **read-only** und sagen das in `tools/list` (`readOnlyHint`, `idempotentHint`, keine offene Welt), damit ein Client die Rückfrage vor jedem Aufruf überspringen kann. Nichts hier ändert eine Einstellung, löscht etwas oder startet einen Run.
 </Callout>
 
 ## Einschalten [#turning-it-on]
@@ -72,7 +72,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Rohe Beacon-Zeilen gibt kein Tool zurück, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung.
 
-Ein Aufruf ohne Site umfasst die ganze Organisation, denn eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. Geht es um eine bestimmte Site, sollte ein Modell zuerst `list_sites` aufrufen.
+Jedes Tool über mehrere Sites nimmt `site_id`, `application_id` (jede Domain dieser Application) oder `tags`, in dieser Rangfolge. Ein Aufruf ohne alles drei umfasst die ganze Organisation, denn eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. `list_sites` meldet je Site `application_id` und `application_name`, ein Modell sollte es also zuerst aufrufen.
 
 `list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung, Fehlermeldungen und Stack-Frames, [Events](/de/events) (`event_tracking`) und die dataLayer-Brücke (`collect_data_layer`) an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
 
@@ -99,7 +99,7 @@ Die Antworten: Seiten-URLs, Referrer und UTM-Parameter, Geografie auf Länderebe
 
 Zu prüfen ist, wohin diese Antworten gehen. Empfänger ist, wer das Modell hinter deinem Client betreibt, und das ist deine Beziehung, nicht unsere: Fastmon wählt diesen Anbieter nicht aus, hat keinen Vertrag mit ihm und führt ihn nicht als Unterauftragsverarbeiter. Ob deine Organisation diese Übermittlung vornehmen darf und auf welcher Grundlage, ist deine Bewertung. Daher der Schalter auf Owner-Ebene mit Audit-Eintrag.
 
-Der eingebaute **Ask**-Assistent ist eine eigene Entscheidung: Er gibt Daten an unseren eigenen Unterauftragsverarbeiter unter unserer DPA. Zwei Empfänger, zwei Schalter, keiner impliziert den anderen.
+Der eingebaute **fastmon ask**-Assistent ist eine eigene Entscheidung: Er gibt Daten an unseren eigenen Unterauftragsverarbeiter unter unserer DPA. Zwei Empfänger, zwei Schalter, keiner impliziert den anderen.
 
 An dem, was fastmon [überhaupt sammelt](/de/privacy), ändert sich hier nichts. Ein Feld, das der Tracker nie erfasst hat, kann das Modell auch nicht abfragen.
 

@@ -10,7 +10,7 @@ The Model Context Protocol (MCP) lets an AI client you run yourself ask question
 The model is yours. Fastmon answers from its own data, but the provider behind your client runs the model, and we neither pick that provider nor have a contract with it. That is why an owner has to open the server first.
 
 <Callout type="info">
-  Every tool is **read-only**. Nothing here changes a setting, deletes anything, or starts a run.
+  Every tool is **read-only**, and says so in `tools/list` (`readOnlyHint`, `idempotentHint`, no open world), so a client can skip the confirmation it asks before each call. Nothing here changes a setting, deletes anything, or starts a run.
 </Callout>
 
 ## Turning it on [#turning-it-on]
@@ -72,7 +72,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 
 Answers are aggregates and ranked lists, the same ones behind the dashboard. Nothing returns raw beacon rows, and no tool takes an organization: it comes off the connection.
 
-A call without a site covers the whole organization, since an MCP connection has no "current site" the way a dashboard tab does. For a question about one site, a model should call `list_sites` first.
+Every tool over a set of sites takes `site_id`, `application_id` (every domain of that application), or `tags`, in that precedence. A call with none covers the whole organization, since an MCP connection has no "current site" the way a dashboard tab does. `list_sites` reports each site's `application_id` and `application_name`, so a model should call it first.
 
 `list_sites` also reports what each site **collects**: whether fetch/XHR collection, page-type detection, checkout tracking, session collection, error messages and stack frames, [events](/en/events) (`event_tracking`) and the dataLayer bridge (`collect_data_layer`) are on, plus which visitor identifier its counts use. Visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites with different identifiers says so rather than quietly mixing them.
 
@@ -99,7 +99,7 @@ The answers do: page URLs, referrers and UTM parameters, country-level geography
 
 Where those answers go is the part to assess. The recipient is whoever runs the model behind your client, which is your relationship rather than ours: fastmon does not choose that provider, has no contract with it, and does not list it as a sub-processor. Whether your organization may make that transfer, and on what basis, is your assessment. Hence the owner-level switch with an audit entry.
 
-The built-in **Ask** assistant is a separate decision: it sends data to our own sub-processor under our DPA. Two recipients, two switches, neither implies the other.
+The built-in **fastmon ask** assistant is a separate decision: it sends data to our own sub-processor under our DPA. Two recipients, two switches, neither implies the other.
 
 Fastmon's own [collection rules](/en/privacy) do not change here. A field the tracker never collected is a field the model cannot ask for.
 

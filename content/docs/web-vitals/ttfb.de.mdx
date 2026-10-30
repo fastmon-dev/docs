@@ -33,7 +33,22 @@ Wird dein TTFB von Schritt 4 dominiert, liegt der Fix in deiner Application. Wir
 
 ## Wann TTFB reportet wird
 
-TTFB wird aus der Navigation-Timing-API als `responseStart - fetchStart` errechnet. Der Tracker nimmt es bei jedem Pageview mit neuem Navigation-Eintrag mit.
+TTFB ist `responseStart` des Navigation-Timing-Eintrags, gezählt ab dem Start der Navigation. Der Tracker schickt es mit jedem Pageview, der einen eigenen Navigation-Eintrag hat.
+
+## Redirects vor dem ersten Byte [#redirects]
+
+Der Tracker hält außerdem fest, wo der Browser das endgültige Dokument zu laden begann. Ein Login-POST, der mit einem Redirect antwortet, sieht damit nicht mehr wie ein langsamer Server aus.
+
+| Feld | Was es enthält |
+| ---- | -------------- |
+| `fetch_start` | Wann der Browser begann, das endgültige Dokument zu laden. Die Redirects liegen davor. |
+| `request_start` | Wann der Browser begann, den Request zu senden. Dazwischen und dem ersten Byte sitzt der Server. |
+| `redirect_count` | Die Redirects, die der Browser gezählt hat. Ein Cross-Origin-Redirect, etwa ein Single-Sign-on-Hop, liest 0, während `fetch_start` seine Zeit weiter trägt. |
+| `redirect_kind` | `same_origin`, `cross_origin`, `none`, `not_applicable` bei einer Soft Navigation oder einem BFCache-Restore, oder `unknown` ohne `fetch_start` oder mit aktivem Service Worker. |
+
+Alle drei Zeiten sind bei einer Soft Navigation und einem BFCache-Restore leer, die beiden Positionen auch bei einem Prerender. Sie sind Metriken auf `POST /analytics/query`, in Bereichsfiltern und Alert-Regeln und im Pageview-Detail. Safari meldet einen Cross-Origin-Redirect anders, und die Grenzwerte, die ihn benennen, sind vorläufig.
+
+**Wohin die Zeit geht** hat eine Redirect-Phase (`ttfb_phase_redirect`), die Zeit vor `fetch_start`. Die Latenz beginnt bei `request_start`, und die Zeit zwischen Verbindung und Request, etwa der Fetch-Handler eines Service Workers, zählt als nicht gemessen. Die [Response-Aufschlüsselung](/de/analytics#fetchxhr-und-server-timing) eines Pageviews zeigt die Redirects als eigene Zeile.
 
 ## TTFB hinter 103 Early Hints [#early-hints]
 
@@ -55,7 +70,7 @@ Im Dashboard laufen die Balken von [Wohin die Zeit geht](#how-to-see-ttfb-in-fas
 
 Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert mit Bewertung und Trend, die Seitenaufrufe nach Bewertung und ein paar Sätze dazu, wohin die Zeit geht.
 
-- **Wohin die Zeit geht**: Verbindung, Server, der Weg dazwischen und bei Seitenaufrufen ohne Server-Timing die ungemessene Wartezeit. Je ein Balken für alle Seitenaufrufe und für die, die CDN, Origin-Cache oder keins von beiden beantwortet hat.
+- **Wohin die Zeit geht**: Redirects, Verbindung, Server, der Weg dazwischen und bei Seitenaufrufen ohne Server-Timing die ungemessene Wartezeit. Je ein Balken für alle Seitenaufrufe und für die, die CDN, Origin-Cache oder keins von beiden beantwortet hat.
 - **Server-Aufteilung**: was [Server-Timing](/de/guides/server-timing) meldet, also Edge, Origin, Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates. Ohne den Header siehst du einen Block und einen Link zur Einrichtung.
 - **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
 - **Wo der TTFB langsam ist**: Seitentypen, Seiten, CDN-Status, Login-Status, Origin-Hosts und mehr, nach langsamen Seitenaufrufen sortiert, jede Zeile mit Aufteilung.
@@ -72,9 +87,9 @@ Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert m
 
 ## Häufige Überraschungen
 
-- **Ein schneller TTFB auf Vercel/Netlify kann einen langsamen Origin verbergen.** Der Edge cacht die Response; Cache-Misses können 10× langsamer sein. Cache-Hit-Rate neben TTFB checken.
-- **TTFB enthält keine Client-Render-Zeit.** Eine Seite mit schnellem TTFB und langsamem LCP schickt viel Arbeit an den Browser, nicht den Server. SSR hilft nicht, wenn Hydration der Bottleneck ist.
-- **Service-Worker-Caches beeinflussen den TTFB-Wert.** Wenn dein Service Worker die Navigation bedient, kann TTFB bei Wiederbesuchen nahezu null sein.
+- **Ein schneller TTFB auf Vercel/Netlify kann einen langsamen Origin verbergen.** Der Edge cacht die Response, und ein Cache-Miss kann 10× langsamer sein. Prüf die Cache-Hit-Rate neben dem TTFB.
+- **TTFB enthält keine Client-Render-Zeit.** Schneller TTFB mit langsamem LCP heißt: Der Browser macht die Arbeit, nicht der Server.
+- **Ein Service Worker, der die Navigation bedient**, drückt den TTFB bei Wiederbesuchen auf fast null.
 
 ## Nächste Schritte
 

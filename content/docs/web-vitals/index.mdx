@@ -31,7 +31,8 @@ Five more pages share the layout of the LCP page: the value with its trend, the 
 
 - **DNS and connect** count only pageviews that did a lookup (`performed_dns_lookup`) or opened a new connection (`new_tcp_connection`). The summary gives the unrated share that skipped the lookup or reused a connection.
 - **TBT** lists the scripts in long animation frames over 50 ms, as the INP page does.
-- **Transfer size** splits the weight by resource type and lists the third-party domains.
+- **Transfer size** splits the weight by resource type and lists the third-party domains. It counts the bytes a view downloaded, so a warm view reads light.
+- **Page weight** (`page_weight`) is the weight of a first view, browser cache hits included: good up to 2,667 KiB, poor above 4,000 KiB. With `browser_cache_bytes`, `browser_cache_saving`, and `warm_view_rate` it is a metric in the Explorer, in filters, and in alert rules, not a page. A warm view in Safari sends none.
 
 Every rating comes from [`GET /metric-thresholds`](/en/web-vitals/experience-score#thresholds).
 

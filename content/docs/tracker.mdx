@@ -98,7 +98,7 @@ Picks which identifier the dashboard counts distinct visitors by, `stitch` or `s
 
 Keeps the **names** of query parameters on the page URL (for example `?page`, `?variant`), so you can break analytics down by parameterized routes. Parameter **values** are always dropped at collection regardless of this switch. Off drops the query string entirely, storing origin plus path only. On by default (part of the Standard preset).
 
-**PII:** low. Only key names are kept, and every value is stripped before the URL leaves the browser. A fixed set of ad-attribution and click-id parameters (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, and the `utm_*` and `gad_*` families) is always dropped, key and value, on page URLs and fetch/XHR paths. Naming one in [`collect_query_values_for`](#collect-query-values-for) keeps it.
+**PII:** low. Only key names are kept, and every value is stripped before the URL leaves the browser. A fixed set of ad-attribution and click-id parameters (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, the affiliate ids `awc`, `cjevent`, `tduid`, and the `utm_*` and `gad_*` families) is always dropped, key and value, on page URLs and fetch/XHR paths. Naming one in [`collect_query_values_for`](#collect-query-values-for) keeps it.
 
 ### `collect_query_values_for` [#collect-query-values-for]
 

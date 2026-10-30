@@ -10,8 +10,8 @@ Analytics zeigt, wer auf deiner Site ist, woher die Besucher kommen, welche Seit
 Die Analytics-Hauptansicht einer Site zeigt von oben nach unten:
 
 - **Live-Zeile**: die Besucher, die gerade auf der Site sind. „Live ansehen" öffnet einen Ticker der neuesten Events: standardmäßig die Bestellungen mit ihrem Wert, wahlweise den ganzen Kaufweg oder jedes Event. Jede Zeile öffnet ihren Besucher.
-- **Kacheln**: Besucher, Pageviews, Pageviews pro Besucher und im Shop Bestellungen und Conversion, jede mit einer Sparkline über den ganzen Zeitraum. Die Veränderung vergleicht mit denselben Wochentagen und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht.
-- **Trend-Chart**: die gewählte Kachel über den Zeitraum (`?metric=`). Bestellungen zeigt es als Linie oder als drei Bahnen für Warenkorb, Checkout erreicht und bestellt, jede mit eigener Skala.
+- **Kacheln**: Besucher, Pageviews, Pageviews pro Besucher und im Shop Bestellungen mit ihrem Umsatz und Conversion, jede mit einer Sparkline über den ganzen Zeitraum. Die Veränderung vergleicht mit denselben Wochentagen und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht.
+- **Trend-Chart**: die gewählte Kachel über den Zeitraum (`?metric=`). Bestellungen zeigt es als Linie, als Umsatz je Währung oder als drei Bahnen für Warenkorb, Checkout erreicht und bestellt, jede mit eigener Skala.
 - **Bots** neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Kacheln und Karten behalten den Bot-Filter der Seite.
 - **Aufschlüsselung**: Karten für Seiten, Seitentypen, Quellen, Standorte, Geräte, Traffic-Qualität, Kampagnen und Zugriff. Ein Menü wählt die Dimension einer Karte, die Karte blättert durch ihre Zeilen, und ein Klick auf eine Zeile filtert die Seite.
 - **Alle Werte einer Karte** öffnest du über ihren Titel, in einem Pop-up mit Suche, zweiter Dimension, sortierbaren Spalten und CSV-Download.
@@ -28,7 +28,7 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 
 - **Die Zonen** sind die Seitentyp-Gruppen deiner Plattform: Home, Kategorie (PLP), Suche, Produkt (PDP), Checkout, Konto, Content und Sonstiges. Ihre Färbung zeigt, wie schnell ihre Seiten sind.
 - **Jeder Besucher ist ein Punkt** in der Zone der Seite, auf der er gerade ist. Ein Tab im Hintergrund wird blass gezeichnet. Ein Käufer läuft zum Ausgang, und dort zählt die Bestellung sofort.
-- **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche. Bestellungen zählen bis zur Sekunde und sagen das („Stand 14:32“), die Vorwoche läuft bis zur gleichen Uhrzeit.
+- **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen, Umsatz und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche. Bestellungen zählen bis zur Sekunde und sagen das („Stand 14:32“), die Vorwoche läuft bis zur gleichen Uhrzeit.
 - **Ein Klick auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
 - **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus.
 - **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
@@ -41,7 +41,7 @@ Die API dazu: [`POST /analytics/live`](/de/api/analytics/queryAnalyticsLive) und
 Partner-Organisationen finden den Partnerfloor in der Seitenleiste unter **Partner**. Jeder Live-Client ist dort eine Zone.
 
 - **Größe und Farbe**: Eine Zone wächst mit dem Anteil des Clients an deinem Traffic der letzten Stunde. Ihre Farbe zeigt seinen LCP p75.
-- **Jede Zone** zeigt die Leute darin, Warenkorb und Checkout, die Bestellungen von heute und die Veränderung zur Vorwoche.
+- **Jede Zone** zeigt die Leute darin, Warenkorb und Checkout, Bestellungen und Umsatz von heute und die Veränderung zur Vorwoche.
 - **Ein Klick** öffnet den Shopfloor des Clients direkt hier.
 - **Bedienung**: Filtern kannst du nur nach Traffic-Klasse. Zeitfenster, Pause, Kiosk-Modus und Ton funktionieren wie auf dem Shopfloor.
 - **Live** ist ein Client, dessen Organisation aktiv und freigegeben ist und der eine aktivierte, aktive Site auf einer aktiven Production-Application hat.
@@ -192,6 +192,8 @@ Gezählt wird nach [`stitch`](/de/tracker#store-stitch) oder `session`, je nach 
 ## Fetch/XHR und Server-Timing
 
 Der Fetch/XHR-View hat einen aggregierten Wasserfall (Start-Offsets je Endpunkt, Dauer-Histogramme und -Perzentile, eine Statusfehler-Verteilung) plus ein Per-Beacon-Detail. Der Server-Timing-View schlüsselt die Metriken deines Backends auf. Beide lesen Felder, die der Tracker jedem Beacon hinzufügt (siehe [der Beacon](/de/concepts/beacon)).
+
+Die Response-Aufschlüsselung eines Pageviews gruppiert ihre Zeilen danach, wer daran etwas ändern kann: Netzwerk und Besucher, Server, Browser. Die [Redirects](/de/web-vitals/ttfb#redirects) vor dem Fetch sind eine eigene Zeile, und ein fehlender Wert sagt, warum er fehlt.
 
 Ein aufgeklappter Endpunkt zeigt seinen eigenen p75 oder p95 im Zeitverlauf mit Aufrufen und Release-Markern und steht in der URL. Eine Seite mit mehr als 24 API-Endpunkten behält 24 davon benannt, der Rest summiert sich in eine namenlose `other`-Zeile. Von Adblockern geblockte Calls zählen darin nicht als Fehler.
 

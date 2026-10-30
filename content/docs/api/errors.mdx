@@ -30,7 +30,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `details`     | optional | Code-specific. Validation errors put the offending `field` here.       |
 
 <Callout type="info">
-  Switch on `code` in client code; render `message` to humans. The `code` is part of our public contract; `message` may be reworded for clarity at any time.
+  Switch on `code` in client code; render `message` to humans. The schema lists the codes under `x-extensible-enum`, and new ones are added without a breaking change, so accept a code you do not know. `message` may be reworded at any time.
 </Callout>
 
 ## Status codes
@@ -46,7 +46,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `403`  | Authenticated, but not allowed. Missing permission, wrong organization, or paused resource. |
 | `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
 | `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
-| `422`  | Validation failed. `details.field` carries the offending field.                      |
+| `422`  | Validation failed, in the same envelope. `details.field` carries the offending field. |
 | `429`  | Rate-limited. Wait and retry; `Retry-After` is set.                                  |
 
 </Tab>

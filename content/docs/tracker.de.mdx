@@ -98,7 +98,7 @@ Wählt, nach welchem Identifier das Dashboard eindeutige Besucher zählt, `stitc
 
 Behält die **Namen** der Query-Parameter der Seiten-URL (etwa `?page`, `?variant`), sodass du Analytics nach parametrisierten Routen aufschlüsseln kannst. Parameter-**Werte** werden bei der Erhebung immer verworfen, unabhängig von diesem Schalter. Aus verwirft die Query-Strings komplett und speichert nur Origin plus Pfad. An per Default (Teil des Standard-Presets).
 
-**PII:** gering. Nur Schlüsselnamen bleiben, und die tragen selten besucherspezifische Daten; jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Um einen konkreten Wert zu behalten, musst du ihn explizit über [`collect_query_values_for`](#collect-query-values-for) freigeben. Ein fester Satz an Ad-Attribution- und Click-ID-Parametern (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid` sowie die `utm_*`- und `gad_*`-Familien) wird unabhängig von diesem Schalter immer verworfen, Schlüssel und Wert, auf Seiten-URLs wie auf Fetch/XHR-Pfaden: Sie tragen kein Routing-Signal, und ihr Schlüsselsatz ändert sich pro eingehendem Link. Nennst du einen davon in [`collect_query_values_for`](#collect-query-values-for), überschreibt das die Regel und der Parameter bleibt.
+**PII:** gering. Nur Schlüsselnamen bleiben, jeder Wert wird gestrippt, bevor die URL den Browser verlässt. Ein fester Satz an Ad-Attribution- und Click-ID-Parametern (`gclid`, `gbraid`, `wbraid`, `msclkid`, `fbclid`, die Affiliate-IDs `awc`, `cjevent`, `tduid` sowie die `utm_*`- und `gad_*`-Familien) wird immer verworfen, Schlüssel und Wert, auf Seiten-URLs wie auf Fetch/XHR-Pfaden. Nennst du einen davon in [`collect_query_values_for`](#collect-query-values-for), bleibt er.
 
 ### `collect_query_values_for` [#collect-query-values-for]
 

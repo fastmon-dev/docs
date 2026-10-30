@@ -33,7 +33,22 @@ If your TTFB is dominated by step 4, the fix is in your application. If it's dom
 
 ## When TTFB is reported
 
-TTFB is captured from the Navigation Timing API as `responseStart - fetchStart`. The tracker includes it with every page-view that has a new navigation entry.
+TTFB is `responseStart` of the Navigation Timing entry, counted from the navigation start. The tracker sends it with every pageview that has its own navigation entry.
+
+## Redirects before the first byte [#redirects]
+
+The tracker also records where the browser started fetching the final document, so a login POST answered by a redirect no longer reads as a slow server.
+
+| Field | What it holds |
+| ----- | ------------- |
+| `fetch_start` | When the browser began fetching the final document. The redirects lie before it. |
+| `request_start` | When the browser began sending the request. The server sits between it and the first byte. |
+| `redirect_count` | The redirects the browser counted. A cross-origin redirect, such as a single sign-on hop, reads 0 while `fetch_start` still holds its time. |
+| `redirect_kind` | `same_origin`, `cross_origin`, `none`, `not_applicable` on a soft navigation or BFCache restore, or `unknown` without `fetch_start` or with an active service worker. |
+
+All three timings are empty on a soft navigation and a BFCache restore, the two positions on a prerender too. They are metrics on `POST /analytics/query`, in range filters and alert rules, and in the pageview detail. Safari reports a cross-origin redirect differently, and the cutoffs that name it are provisional.
+
+**Where the time goes** has a redirect phase (`ttfb_phase_redirect`), the time before `fetch_start`. Latency starts at `request_start`, and the time between the connection and the request, such as a service worker's fetch handler, counts as unmeasured. The [response breakdown](/en/analytics#fetchxhr-and-server-timing) of a pageview shows the redirects as their own row.
 
 ## TTFB behind 103 Early Hints [#early-hints]
 
@@ -55,7 +70,7 @@ In the dashboard, the bars of [Where the time goes](#how-to-see-ttfb-in-fastmon)
 
 The TTFB page sits under **Performance → TTFB**. On top are the value with its rating and trend, the pageviews by rating, and a few sentences on where the time goes.
 
-- **Where the time goes**: connection, server, the way in between, and the unmeasured wait of pageviews without Server-Timing. One bar each for all pageviews and for those answered by the CDN, the origin cache, or neither.
+- **Where the time goes**: redirects, connection, server, the way in between, and the unmeasured wait of pageviews without Server-Timing. One bar each for all pageviews and for those answered by the CDN, the origin cache, or neither.
 - **Server split**: what [Server-Timing](/en/guides/server-timing) reports, as edge, origin, database, cache, search, HTTP calls, own code, and templates. Without the header you see one block and a link to the setup guide.
 - **History**: the selected percentile against the rating zones, one line per phase, or one line per page type, beside the distribution. The maximize icon fills the window with the chart.
 - **Where the TTFB is slow**: page types, pages, CDN status, login state, origin hosts, and more, ranked by slow pageviews with the split in every row.
@@ -66,15 +81,15 @@ The TTFB page sits under **Performance → TTFB**. On top are the value with its
 
 1. **Cache HTML at the edge.** A static or near-static page should be served from a CDN cache, not your origin.
 2. **Move closer to your visitors.** Multi-region origins or a well-distributed edge layer cut RTT for everyone outside your primary region.
-3. **Profile the server response.** Use APM, server logs, or a server-timing header to find what's slow. Common culprits: a slow database query, a synchronous third-party call, or server-rendered React hydration that traverses too much data.
-4. **Reduce redirect chains.** Every redirect adds a full roundtrip. `http://` → `https://` → `www.` → final URL is three roundtrips before the browser even gets the HTML.
+3. **Profile the server response.** Use APM, server logs, or a [Server-Timing](/en/guides/server-timing) header to find the slow query or the slow third-party call.
+4. **Reduce redirect chains.** `http://` → `https://` → `www.` → final URL is three roundtrips before the browser gets the HTML.
 5. **Use HTTP/2 or HTTP/3.** Older origins still negotiate HTTP/1.1.
 
 ## Common surprises
 
-- **A fast TTFB on Vercel/Netlify can hide a slow origin.** The edge caches the response; cache misses might be 10× slower. Check your cache hit rate alongside TTFB.
-- **TTFB doesn't include client-side render time.** A page with a fast TTFB and a slow LCP is shipping a lot of work to the browser, not the server. SSR doesn't help if hydration is the bottleneck.
-- **Service-worker caches affect TTFB the visitor experiences.** If your service worker serves the navigation, TTFB can be near zero on repeat visits.
+- **A fast TTFB on Vercel/Netlify can hide a slow origin.** The edge caches the response, and a cache miss can be 10× slower. Check the cache hit rate alongside TTFB.
+- **TTFB doesn't include client-side render time.** A fast TTFB with a slow LCP means the browser does the work, not the server.
+- **A service worker that serves the navigation** makes TTFB near zero on repeat visits.
 
 ## What's next
 

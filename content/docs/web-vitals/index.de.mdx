@@ -31,7 +31,8 @@ Fünf weitere Seiten sind aufgebaut wie die LCP-Seite: der Wert mit Trend, die P
 
 - **DNS und Connect** zählen nur Pageviews, die wirklich einen Lookup gemacht (`performed_dns_lookup`) oder eine neue Verbindung geöffnet haben (`new_tcp_connection`). Die Zusammenfassung nennt ohne Bewertung, wie viele Pageviews den Lookup übersprungen oder eine Verbindung wiederverwendet haben.
 - **TBT** listet die Skripte in Long Animation Frames über 50 ms, wie die INP-Seite.
-- **Übertragungsgröße** teilt das Gewicht nach Ressourcentyp auf und listet die Drittanbieter-Domains.
+- **Übertragungsgröße** teilt das Gewicht nach Ressourcentyp auf und listet die Drittanbieter-Domains. Sie zählt die Bytes, die ein Aufruf heruntergeladen hat, ein warmer Aufruf liest also leicht.
+- **Seitengewicht** (`page_weight`) ist das Gewicht eines ersten Aufrufs, Browser-Cache-Treffer eingeschlossen: gut bis 2.667 KiB, schlecht über 4.000 KiB. Mit `browser_cache_bytes`, `browser_cache_saving` und `warm_view_rate` ist es eine Metrik im Explorer, in Filtern und in Alert-Regeln, keine Seite. Ein warmer Aufruf in Safari sendet keins.
 
 Jede Bewertung kommt aus [`GET /metric-thresholds`](/de/web-vitals/experience-score#thresholds).
 

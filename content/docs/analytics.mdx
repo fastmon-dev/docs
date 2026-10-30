@@ -10,8 +10,8 @@ Analytics shows who is on your site, where they come from, which pages and error
 The main Analytics view for a site shows, from top to bottom:
 
 - **Live line**: the visitors on the site right now. "Watch live" opens a ticker of the newest events: the orders with their value by default, the whole purchase, or every event. Each row opens its visitor.
-- **Headline tiles**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders and Conversion, each with a sparkline over the whole range. The change compares against the same weekdays and hours, the fewest whole weeks earlier that cover the window.
-- **Trend chart**: the selected tile over the range (`?metric=`). Orders show as a line or as three lanes, cart, checkout reached, and ordered, each on its own scale.
+- **Headline tiles**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders with their revenue and Conversion, each with a sparkline over the whole range. The change compares against the same weekdays and hours, the fewest whole weeks earlier that cover the window.
+- **Trend chart**: the selected tile over the range (`?metric=`). Orders show as a line, as revenue per currency, or as three lanes, cart, checkout reached, and ordered, each on its own scale.
 - **Bots** beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The tiles and cards keep the page's bot filter.
 - **Breakdown**: cards for Pages, Page types, Sources, Locations, Devices, Traffic quality, Campaigns, and Access. A menu picks a card's dimension, the card pages through its rows, and a click on a row filters the page.
 - **All values of a card** open from its title in a pop-up with a search, a second dimension, sortable columns, and a CSV download.
@@ -28,7 +28,7 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 
 - **Zones** are your platform's page type groups: Home, Category (PLP), Search, Product (PDP), Checkout, Account, Content, and Other. Each is tinted by how fast its pages are.
 - **Every visitor is a dot** in the zone of the page they are on. A tab in the background is drawn faint, and a buyer runs to the exit, where the order counts at once.
-- **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, and Conversion Rate from your midnight, each beside the same weekday last week. Orders count up to the second and say so ("as of 14:32"), and last week runs to the same clock time.
+- **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, revenue, and Conversion Rate from your midnight, each beside the same weekday last week. Orders count up to the second and say so ("as of 14:32"), and last week runs to the same clock time.
 - **A click on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
 - **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default.
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
@@ -41,7 +41,7 @@ The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`
 A partner organization finds the Partnerfloor under **Partner** in the sidebar. Every live client is one zone.
 
 - **Size and colour**: a zone grows with the client's share of your traffic in the last hour and is coloured by its LCP p75.
-- **Each zone** shows its people, cart and checkout, today's orders, and the change against last week.
+- **Each zone** shows its people, cart and checkout, today's orders and revenue, and the change against last week.
 - **A click** opens the client's Shopfloor in place.
 - **Controls**: the only filter is the traffic class. Window, pause, kiosk mode, and sound work as on the Shopfloor.
 - **Live** means an active, approved organization with an activated, active site on an active production application.
@@ -192,6 +192,8 @@ A visitor is counted by [`stitch`](/en/tracker#store-stitch) or `session`, as `c
 ## Fetch/XHR and Server-Timing
 
 The Fetch/XHR view has an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, a status-error distribution) plus a per-beacon detail. The Server-Timing view breaks out the metrics your backend reports. Both read fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
+
+The response breakdown of one pageview groups its rows by who can act on them: network and visitor, server, browser. The [redirects](/en/web-vitals/ttfb#redirects) before the fetch are their own row, and a missing value says why it is missing.
 
 An expanded endpoint shows its own p75 or p95 over time with its calls and release markers, and stays in the URL. A page with more than 24 API endpoints keeps 24 of them named, and the rest sum into a nameless `other` row. Ad-blocked calls in that row do not count as failures.
 
