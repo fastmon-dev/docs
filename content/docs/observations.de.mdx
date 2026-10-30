@@ -84,4 +84,10 @@ Das erste Urteil braucht 14 ganze Tage mit Daten. Ein offener Trend zeigt, seit 
 
 **Als gesehen markieren** oben rechts nimmt eine Beobachtung aus den offenen, mit einer Notiz von bis zu 1.000 Zeichen für das Team. Owner und Member können markieren, Viewer sehen es. Ein neues Vorkommen eines wiederkehrenden Shifts behält die Markierung, und die Notiz bleibt auch nach dem Ende der Beobachtung.
 
-Beobachtungen verschicken keine Benachrichtigung. Der Wochenüberblick erwähnt Trends: die offenen Verschlechterungen und die Verbesserungen der Woche.
+## Mail [#mail]
+
+fastmon mailt Owner und Member, sobald ein Problem aufgeht: ein Traffic-Einbruch, langsamere Server-Antworten oder Seitenladezeiten oder mehr JavaScript-Fehler, und noch einmal bei jedem Wiederauftreten eines Shifts. Ein langsamer Trend mailt einmal, wenn er aufgeht. Verbesserungen und Hinweise verschicken keine Mail.
+
+Die Mail geht an direkte Mitglieder und an die einer Partner-Organisation, in ihrer Sprache und Zeitzone, mit dem Satz der Beobachtung und einem Link zur Seite. Viewer bekommen keine.
+
+Abschalten kannst du sie unter **Konto → E-Mails** oder über den Abmeldelink im Fuß der Mail. In der API heißt die Einstellung `observation_mail` auf `GET` und `PATCH /account/notifications`, standardmäßig an.

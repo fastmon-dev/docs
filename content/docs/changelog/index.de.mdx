@@ -17,6 +17,144 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-10-30" type="new" area="platform" title="Eine Mail, wenn eine Beobachtung schlechter wird">
+
+fastmon mailt Owner und Member, sobald ein Problem aufgeht: ein Traffic-Einbruch, langsamere Server-Antworten oder Seitenladezeiten oder mehr JavaScript-Fehler, und noch einmal bei jedem Wiederauftreten eines Shifts. Ein langsamer Trend bei LCP, INP, CLS, TTFB oder Fehlern mailt einmal, wenn er aufgeht. Verbesserungen und Hinweise verschicken keine Mail.
+
+- **Wer sie bekommt**: Owner und Member, direkte und die einer Partner-Organisation, in ihrer Sprache und Zeitzone. Viewer bekommen keine.
+- **Abschalten** kannst du sie unter Konto → E-Mails oder über den Abmeldelink im Fuß der Mail. In der API heißt die Einstellung `observation_mail` auf `GET|PATCH /account/notifications`, standardmäßig an.
+
+Doku: [Beobachtungen → Mail](/de/observations#mail).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="new" area="dashboard" title="Redirects vor dem ersten Byte">
+
+Ein Login-POST, der mit einem Redirect antwortet, sah bisher wie ein langsamer Server aus. Der Tracker hält jetzt fest, wo der Browser das endgültige Dokument zu laden begann.
+
+- **Die Response-Aufschlüsselung eines Pageviews zeigt seine Redirects** als eigene Zeile vor dem Fetch: wie viele, wo der Browser sie zählt, oder die Herkunft des Klicks und die Ad-Plattform oder das Affiliate-Netzwerk, wenn der Besucher über eine andere Site kam. Die Zeilen sind danach gruppiert, wer daran etwas ändern kann: Netzwerk und Besucher, Server, Browser.
+- **Die TTFB-Seite trennt die Redirect-Phase ab.** Die Latenz beginnt jetzt beim Request, und die Wartezeit, die der Server nicht meldet, heißt „Nicht zugeordnet“.
+- **Fetch-Start, Request-Start und Redirects** sind Metriken im Explorer, in Bereichsfiltern, in Alert-Regeln und im Pageview-Detail.
+- **Ein fehlender Wert sagt, warum**: in diesem Browser nicht messbar, für diese Navigation nicht anwendbar, Tab vor dem ersten Paint verborgen oder keine Interaktion. Die Browser-Zone nennt außerdem die LCP-Prüfungen, die auf dem Pageview fehlschlagen.
+
+Doku: [TTFB → Redirects vor dem ersten Byte](/de/web-vitals/ttfb#redirects).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="new" area="api" title="Redirect-Felder in der API">
+
+- **`fetch_start`, `request_start` und `redirect_count`** lassen sich auf `POST /analytics/query` abfragen, in `metric_ranges`-Filtern und Alert-Regeln nutzen und stehen auf den Beacon-Zeilen. `redirect_count` liest nach einem Cross-Origin-Redirect 0, während `fetch_start` dessen Zeit weiter trägt.
+- **`ttfb_phase_redirect`** ist die Zeit vor `fetch_start`. Die Latenz-Phase beginnt bei `request_start`, und die Zeit zwischen Verbindung und Request wandert nach `ttfb_phase_unmeasured`.
+- **Beacon-Zeilen tragen `redirect_kind`**: `same_origin`, `cross_origin`, `none`, `not_applicable` bei einer Soft Navigation oder einem BFCache-Restore, oder `unknown`. Die Grenzwerte für `cross_origin` sind vorläufig.
+- **Beacon-Zeilen tragen `metric_states`**: je Metrik `measured`, `unsupported` durch den Browser, `not_applicable` oder `absent` mit einem Grund, wo einer bekannt ist. Zeilen älterer Tracker fallen auf eine Tabelle je Browser zurück.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="tracker" title="Affiliate-Click-IDs">
+
+`click_id_param` nennt jetzt auch die Affiliate-Netzwerke Awin (`awc`), CJ (`cjevent`) und Tradedoubler (`tduid`). Eine Click-ID einer Ad-Plattform auf derselben URL gewinnt weiterhin. Auf einer Site, die Query-Keys behält, fallen die drei Keys jetzt wie `gclid` aus gespeicherten Seiten-URLs und Fetch/XHR-Pfaden, damit eine Seite nicht mehr pro Affiliate-Klick zerfällt.
+
+Doku: [Tracker-Einstellungen → collect_query_keys](/de/tracker#collect-query-keys).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="dashboard" title="fastmon ask: eine Seite, jeder Scope">
+
+fastmon AI heißt jetzt **fastmon ask**, in der Seitenleiste, im Breadcrumb und am Lighthouse-Button.
+
+- **Eine Seite**: Die Unterhaltungen stehen links in einer Leiste, nach Tag und Monat gruppiert, mit Suche und einem Menü je Zeile. Eine neue Unterhaltung beginnt mit einer Begrüßung für ihren Scope, dem Eingabefeld und Beispielfragen. Strg oder Cmd plus Enter sendet.
+- **Jeder Scope**: Eine Unterhaltung antwortet über den Scope der Seitenleiste: eine oder mehrere Sites, die Sites eines Tags, eine Application als Ganzes oder die Organisation. Eine später ergänzte Domain der Application kommt dazu.
+- **Antworten lesen sich als ein Block**: die gelaufenen Abfragen, die Charts, dann der Text. Mehr Tool-Ergebnisse werden zu Charts, und ein Chart, das der Assistent selbst zeichnet, rendert das Dashboard.
+- **Der Datenhinweis wird einmal pro Konto beantwortet**, nicht einmal pro Anmeldung. `GET /account` liefert ihn als `ui.ask_consent_at`.
+- **API-Bruch**: `POST /ai/ask/conversations` verlangt `organization_id` und nimmt `scope` statt `site_id`, und die Unterhaltung trägt `scope`. Die MCP-Tools nehmen `application_id` je Aufruf, und `list_sites` meldet je Site `application_id` und `application_name`.
+
+Doku: [MCP-Server → Was das Modell lesen kann](/de/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="dashboard" title="Jede Ansicht ist ein Link">
+
+Was du öffnest, steht in der Adresse: Es lässt sich teilen, überlebt ein Neuladen und schließt mit Zurück.
+
+- **Ein Besucher, über jede Seite geöffnet**, aus der Event-Liste, einem Bericht oder einem Pageview. Der Kopieren-Button im Kopf des Besuchers ist weg, die Adresszeile ist der Link.
+- **Der Pageview-Drawer des Explorers behält seinen Link** über Sortierung, Filter, Spalten und Gruppenwechsel, mit seinen offenen Abschnitten.
+- **Ansichtswechsel behalten ihre Wahl**: Release-Vergleich, Segment und Basis bei Business Impact, der Tab des Kaufwegs, Seiten oder Seitentypen im Überblick, das angeheftete Land auf der Karte und die Filter der Beobachtungen. Das Regel-Detail in Benachrichtigungen, der offene Support-Thread, ein Lighthouse-Lauf mit seinem Tab und der Einstellungsabschnitt sind ebenfalls Links.
+- **Pop-ups öffnen und schließen schneller**, und sonst rendert nichts auf der Seite neu. Escape schließt zuerst das Pop-up, dann ein maximiertes Chart.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="new" area="tracker" title="Redirect-Positionen, Seitengewicht und was der Browser messen kann">
+
+Das Tracker-Bundle ändert sich mit dem Deploy. Pageviews aus gecachten älteren Bundles speichern in den neuen Feldern nichts.
+
+- **`fs`, `rqs`, `rdc`**: `fetchStart`, `requestStart` und `redirectCount` des Navigation-Eintrags. Alle drei sind bei einer Soft Navigation und einem BFCache-Restore leer, die beiden Positionen auch bei einem Prerender. Eine Position nach dem ersten Byte verwirft der Collector.
+- **`cap`**: eine Bitmaske dessen, was der Browser beobachten kann, einmal beim Start gelesen aus `PerformanceObserver.supportedEntryTypes`, den Feldern des Navigation-Eintrags, `interactionId` und `navigator.connection`. Sie steht auf jedem Beacon, damit ein leerer LCP in Safari als nicht unterstützt gilt und nicht als Seite, die nie gemalt hat.
+- **`pw`, `bcb`**: das Seitengewicht und sein Anteil aus dem Browser-Cache, beide aus `encodedBodySize` summiert, sodass ein Cache-Treffer wie ein Download zählt. Die eigenen Beacons des Trackers bleiben draußen. Ein sichtbarer Eintrag ohne Größe, wie Safari einen Cache-Treffer meldet, lässt beide leer, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` bleibt draußen.
+- **`rbs`** (Größe je Ressourcentyp) zählt jetzt `encodedBodySize` statt der übertragenen oder dekodierten Bytes. `tbw` summiert weiter `transferSize`.
+
+Jedes neue Feld folgt aus der Browser-Engine und wird in jedem Privacy-Modus erfasst. Doku: [Der Beacon → Der Wire-Payload](/de/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="new" area="dashboard" title="Seitengewicht, getrennt vom Browser-Cache">
+
+- **Seitengewicht** (`page_weight`) ist das Gewicht einer Seite beim ersten Aufruf: die komprimierten Bytes des Dokuments und jeder Ressource, egal ob ein Aufruf sie geladen oder aus dem Browser-Cache genommen hat. Bewertet wird mit den Lighthouse-Mobile-Grenzen, gut bis 2.667 KiB und schlecht über 4.000 KiB, und `GET /metric-thresholds` führt es.
+- **Browser-Cache-Bytes** (`browser_cache_bytes`) ist der Teil, den der Browser-Cache beantwortet hat. **Browser-Cache-Ersparnis** ist dieser Teil über die warmen Aufrufe, die mehr als die Hälfte ihres Gewichts aus dem Cache nahmen, und **Anteil warmer Aufrufe** ihr Anteil. Alle drei sind unbewertet.
+- **Wo**: im Explorer, im Metrik-Bereichsfilter, in Alert-Regeln, in fastmon ask und auf `POST /analytics/query`.
+- **Transfergröße** (`total_byte_weight`) behält ihre Bedeutung, die Bytes, die ein Aufruf heruntergeladen hat. Ein warmer Aufruf liest dort deutlich weniger.
+- **Grenzen**: Ein warmer Aufruf in Safari sendet kein Seitengewicht, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` verbirgt ihre Größe, sodass der Wert auf solchen Seiten eine Untergrenze ist. Die Größe je Ressourcentyp zählt jetzt die komprimierten Bytes eines ersten Aufrufs, Werte älterer Tracker sind damit nicht vergleichbar.
+
+Doku: [Web Vitals → Weitere Metrik-Seiten](/de/web-vitals#other-metric-pages).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="new" area="dashboard" title="Umsatz neben den Bestellungen">
+
+Ein Shop, dessen `purchase`- oder `order_placed`-Events `value` und `currency` tragen, sieht seinen Umsatz dort, wo er seine Bestellungen sieht. Das Shopify-Pixel sendet keinen Wert, ein Shop am Pixel sieht also keinen.
+
+- **Analytics**: Die Kachel Bestellungen zeigt den Umsatz, und das Haupt-Chart wechselt zwischen Bestellungen und Umsatz je Währung.
+- **Shopfloor**: Umsatz heute und im Zeitfenster, und ein Kauf zeigt seinen Bestellwert am Ausgang. Der Partnerfloor zeigt ihn je Kunde.
+- **API**: Der Events-Überblick meldet den Umsatz je Bucket seiner Serie, `POST /analytics/live-summary` und `POST /organizations/{org_id}/partner/live` tragen `order_revenue`, `recent_purchases` trägt `value` und `currency`, und ein Käufer auf `POST /analytics/live` trägt `purchase`. Jede Summe gilt je Währung wie gesendet, nie umgerechnet.
+- **`shop.order_revenue_observed`** an einer Application nennt die neueste Bestellung mit Wert aus den letzten 30 Tagen und ihre Währung, einmal täglich geprüft. Bei einem Shop, der keinen Wert sendet, fehlt es.
+
+Doku: [Eigene Events → Wo Events auftauchen](/de/events#where-it-shows-up).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="changed" area="dashboard" title="Support sieht aus wie fastmon ask">
+
+Die Support-Unterhaltungen stehen links in einer Leiste mit Suche, Status und dem Ungelesen-Punkt. Nachrichten lesen sich wie ein Chat, deine rechts, die des fastmon-Teams neben der fastmon-Marke, Dateien unter dem Text. Eine neue Unterhaltung beginnt mit Betreff und Nachricht in einem Feld, dazu Thema, Site und Seite als Chips. Eine geschlossene Unterhaltung ist nur lesbar und lässt sich über das Menü im Kopf wieder öffnen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="changed" area="dashboard" title="Verbrauch mit Sampling, und Abo während des Testzeitraums">
+
+- **Die Plan-Seite zeigt drei Zahlen, wenn Sampling an ist.** Traffic ist, was auf den Produktions-Sites ankam, gesampelte Besucher zurückgerechnet. Gespeichert ist, was behalten und abgerechnet wird, bisher und bis Monatsende, mit dem Kontingent-Balken. Ein Monat mit der jetzt gesetzten Rate sagt, ob die Sampling-Rate zu den enthaltenen Pageviews passt.
+- **Jede Produktions-Application bekommt eine eigene Zeile** mit ihrer Sampling-Rate, ihrem Traffic im Monat und dem, was ein Monat bei dieser Rate speichert, damit du siehst, welche Rate du ändern musst.
+- **Die Prognose** ist das bisher Gespeicherte plus der Rest des Monats im Tempo der letzten 7 Tage, mit der jetzt gesetzten Rate. Die Kontingent-Warnung liest diese Prognose.
+- **Du kannst während des Testzeitraums abonnieren.** Der bezahlte Zeitraum beginnt an dem Tag, die verbleibenden Testtage werden nicht angerechnet.
+
+Doku: [Applications → Traffic-Sampling](/de/concepts/applications#sampling).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-29" type="changed" area="api" title="Das Schema beschreibt Auth und Fehler, wie sie sind">
+
+Ein aus dem OpenAPI-Dokument erzeugter Client passt jetzt zur API.
+
+- **Jede authentifizierte Operation nennt `bearerAuth`**, das Schema, das das Dokument deklariert. Bisher stand dort ein undefiniertes `APIKeyHeader`, sodass ein erzeugter Client kein Token schickte.
+- **Jede 422 ist der `ErrorResponse`-Umschlag**, den die API sendet. FastAPIs `HTTPValidationError` ist aus dem Schema verschwunden.
+- **`ErrorBody.code` listet die Fehlercodes** unter `x-extensible-enum`. Verzweige darauf, und akzeptiere einen Code, den du nicht kennst.
+- **Eine `Requires:`-Zeile an jeder authentifizierten Operation** nennt die Berechtigung und die Rollen, die sie haben. Dieselben Werte stehen in der Erweiterung `x-fastmon-permissions`.
+- **Antworten tragen `Cache-Control: private, no-store`**, damit ein geteilter Cache zwischen Client und fastmon keine Mandantendaten mehr speichert. Das Tracking-Skript behält seinen öffentlichen Cache-Header.
+- **Eine GET-Liste, die sortiert, nimmt einen `sort`-Parameter**, ein Feld oder `-feld` für absteigend, wiederholbar. Request-Bodies behalten `order_by`.
+- **MCP-Tools sind in `tools/list` als nur lesend, idempotent und geschlossen markiert**, damit ein Client die Rückfrage vor jedem Aufruf überspringen kann.
+- **`collector_endpoint` muss eine einfache URL sein**: Schema, Host, optional Port und Pfad. Eine Query, ein Fragment oder ein Benutzername ist eine 422.
+
+Doku: [Fehler](/de/api/errors).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-26" type="new" area="dashboard" title="Beobachtungen, als Beta">
 
 fastmon hält jetzt Veränderungen fest, die es von selbst erkennt, jede mit Beginn und Ende. Beobachtungen waren eine Admin-Vorschau und stehen jetzt jeder Rolle einer Organisation mit dem Watchdog-Feature offen.

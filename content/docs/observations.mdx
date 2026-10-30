@@ -84,4 +84,10 @@ The first verdict needs 14 whole days of data. An open trend shows since when th
 
 **Acknowledge** at the top right marks an observation as seen, with a note of up to 1,000 characters for the team. Owners and members can acknowledge, viewers see it. A new occurrence of a recurring shift keeps the acknowledgement, and the note stays after the observation ended.
 
-Observations send no notification. The weekly overview mentions trends: the open degradations and the improvements of the week.
+## Mail [#mail]
+
+fastmon mails owners and members when a problem opens: a traffic drop, slower server responses or page loads, or more JavaScript errors, and again each time a shift recurs. A slow trend mails once when it opens. Improvements and notes send no mail.
+
+The mail goes to direct members and to those of a partner organization, in their language and time zone, with the observation sentence and a link to the page. Viewers get none.
+
+Switch it off under **Account → Emails**, or with the unsubscribe link in the mail's footer. In the API the setting is `observation_mail` on `GET` and `PATCH /account/notifications`, on by default.

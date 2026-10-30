@@ -74,7 +74,9 @@ curl https://api.fastmon.eu/organizations \
 - **Single resources** are returned raw; **lists** wrap with `data` + `meta`; **errors** wrap with `error`. See [Errors](/en/api/errors).
 - **Default limit** is 50; max is 100 on every list endpoint.
 - **`X-Request-ID`** is on every response. Mirror it back when reporting issues.
+- **`Cache-Control: private, no-store`** is on every response, so a shared cache between your client and fastmon stores nothing.
+- **Access** is in the schema: every authenticated operation ends with a `Requires:` line naming the permission and the roles that hold it, and `x-fastmon-permissions` carries the same values.
 
 ## Schema document
 
-The raw OpenAPI document lives at [`api.fastmon.eu/openapi.json`](https://api.fastmon.eu/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`) for a typed client.
+The raw OpenAPI document lives at [`api.fastmon.eu/openapi.json`](https://api.fastmon.eu/openapi.json). Drop it into your favorite generator (`openapi-typescript`, `oapi-codegen`) for a typed client. Authenticated operations use the `bearerAuth` scheme, and every 422 is the [error envelope](/en/api/errors).
