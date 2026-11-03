@@ -10,8 +10,9 @@ Analytics shows who is on your site, where they come from, which pages and error
 The main Analytics view for a site shows, from top to bottom:
 
 - **Live line**: the visitors on the site right now. "Watch live" opens a ticker of the newest events: the orders with their value by default, the whole purchase, or every event. Each row opens its visitor.
-- **Headline tiles**: Visitors, Pageviews, Pageviews per visitor, and on a shop Orders with their revenue and Conversion, each with a sparkline over the whole range. The change compares against the same weekdays and hours, the fewest whole weeks earlier that cover the window.
-- **Trend chart**: the selected tile over the range (`?metric=`). Orders show as a line, as revenue per currency, or as three lanes, cart, checkout reached, and ordered, each on its own scale.
+- **Headline tiles**: Visitors, Pageviews, and Pageviews per visitor, each with a sparkline over the whole range. The change compares against the same weekdays and hours, the fewest whole weeks earlier that cover the window.
+- **Sales** beside the chart on a shop: Revenue, Checkout, Orders, and Conversion, each a chart switch with its figure, change, and sparkline. Average order value and revenue per visitor sit beside the title, and "Orders and details" opens the order events, the funnel, and the buyers compared (`?sales=`).
+- **Trend chart**: the selected tile or sales row over the range (`?metric=`), revenue per currency. It maximizes alone (`?max=analytics`).
 - **Bots** beside the chart type splits the pageviews chart into humans and bots, each bot, or bot type. The tiles and cards keep the page's bot filter.
 - **Breakdown**: cards for Pages, Page types, Sources, Locations, Devices, Traffic quality, Campaigns, and Access. A menu picks a card's dimension, the card pages through its rows, and a click on a row filters the page.
 - **All values of a card** open from its title in a pop-up with a search, a second dimension, sortable columns, and a CSV download.
@@ -38,7 +39,7 @@ The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`
 
 ### Partnerfloor [#partnerfloor]
 
-A partner organization finds the Partnerfloor under **Partner** in the sidebar. Every live client is one zone.
+A partner organization finds the Partnerfloor under **Analytics** in the sidebar. Every live client is one zone.
 
 - **Size and colour**: a zone grows with the client's share of your traffic in the last hour and is coloured by its LCP p75.
 - **Each zone** shows its people, cart and checkout, today's orders and revenue, and the change against last week.
@@ -57,6 +58,8 @@ The range pill in the header sets the window for every chart on the page.
 - **Jump to now**: while the window lies in the past, a button moves it to the present at the same length.
 - **Date and time** are fields that apply at once. The expression field shows the current range, such as `now-7d`, and also takes a past window (`7d-3d`) or a clock range (`14:00-16:30`).
 - **The timeline** at the top of the picker shows the window on the days around it. Drag it, pull an edge, or scroll to zoom.
+- **Months**: the last 6 or 12 months (keys 9 and 0) for organizations with 13 months of history: fastmon One, Free, Enterprise, and partner clients whose link covers it. Every other organization keeps 90 days, and a longer period from a shared link says so.
+- **Complete** (key C) runs from the first pageview of the selected site, application, or organization to now, within that horizon.
 
 ### Resolution [#resolution]
 
@@ -109,7 +112,7 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 ## Error Analytics [#error-analytics]
 
-Errors is a group in the sidebar with four pages: JavaScript errors, [Failed resources](#failed-resources), [Network Error Logging](/en/nel), and [Content Security Policy](/en/csp). Each has its own address, headline, chart, and list. On JavaScript errors:
+Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors, [Failed resources](#failed-resources), [Network Error Logging](/en/nel), and [Content Security Policy](/en/csp). Each has its own address, headline, chart, and list. On JavaScript errors:
 
 - **Affected pageviews over time**: pageviews with at least one JavaScript error, as a share of all pageviews or, under "Absolute", as a count. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
 - **An error's own page** has the same share and count switch.
@@ -218,11 +221,13 @@ Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, m
 | `url_path`, `url_key`, `url_key_set` | Group or filter by the URL without its query, by each query key, or by the set of keys. A pageview counts once per key, and `meta.pageviews` is the denominator. |
 | `url_param` + `url_param_key` | Group by the value of one query key. A key the application does not store answers 422 naming `collection.query_values_for`. |
 | `""` as a text filter | Selects the rows without a value: `referrer_source: ""` answers direct visits. `exclude: {utm_campaign: [""]}` keeps the pageviews with a campaign. |
+| `time_range` | At most the organization's history, 90 days or 13 months with the history feature. A longer window is a 422 `time_range_beyond_history` with the horizon in `details.history_days`. `history_days` on the organization and `data_starts_at` on organizations, applications, and sites bound it. |
 
 Only a window of at most 6 hours that ends within 10 minutes of now reads live beacons. Every other window reads the finalized pageviews.
 
 ## What's next
 
+- [Weekly overview](/en/weekly-overview): one page and one mail per week with what changed.
 - [Checkout funnel](/en/checkout-funnel): how pageviews get their stage, and what the counts mean.
 - [Tracker settings](/en/tracker): what the tracker collects per setting.
 - [Visitors and sessions](/en/concepts/sessions): how pageviews become visitors and sessions.

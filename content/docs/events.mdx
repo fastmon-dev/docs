@@ -121,7 +121,7 @@ The `event_id` comes from the event list. Every count and list follows, and the 
 The page sits under **Explorer → Events** in the sidebar.
 
 - **Overview tab**: events over time by name, the names ranked, and the most frequent values of each property.
-- **Revenue**: one order per pageview with `order_placed` or `purchase`, at its largest `value`, per currency. A reloaded thank-you page counts again. The Orders tile on the Analytics page and the Shopfloor show the same revenue.
+- **Revenue**: one order per pageview with `order_placed` or `purchase`, at its largest `value`, per currency. A reloaded thank-you page counts again. The Sales column on the Analytics page and the Shopfloor show the same revenue.
 - **Value per event**: the sum of `value` per name and currency.
 - **Events tab**: one row per event with its properties as chips. A row opens to every stored field and has a share link.
 - **Name filter**: suggests the names of the period by count and accepts any valid name.
@@ -131,5 +131,5 @@ The page sits under **Explorer → Events** in the sidebar.
 ## API [#api]
 
 - `POST /organizations/{org_id}/analytics/events` lists events newest first, each with `event_id`, `name`, `source`, and `props`. `names` takes any name, and `source` is `tracker`, `collector`, or `shopify_pixel`. See the [reference](/en/api/analytics/listAnalyticsEvents).
-- `POST /organizations/{org_id}/analytics/events/overview` counts the events of a window per name, over time, and per property value, with `order_revenue` and `value_sums`. `revenue` is deprecated.
+- `POST /organizations/{org_id}/analytics/events/overview` counts the events of a window per name, over time, and per property value, with `order_revenue` (each row with `average_order_value` and `revenue_per_visitor`) and `value_sums`. `compare_to` answers the compared window as `comparison`. `revenue` is deprecated.
 - **MCP and Ask**: the `get_events` tool answers the same counts. See [MCP server](/en/mcp#tools).

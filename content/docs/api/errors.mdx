@@ -16,7 +16,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
     "message": "domain is required",
     "request_id": "01HZY…",
     "doc_url": "https://docs.fastmon.eu/errors/validation_error",
-    "details": { "field": "domain" }
+    "details": { "domain": ["Field required"] }
   }
 }
 ```
@@ -27,7 +27,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `message`     | yes      | Human-readable. May change for the same code as we improve clarity.    |
 | `request_id`  | usually  | Same value as the `X-Request-ID` response header.                      |
 | `doc_url`     | optional | Link to a docs page that explains the code in depth.                   |
-| `details`     | optional | Code-specific. Validation errors put the offending `field` here.       |
+| `details`     | optional | Code-specific. A 422 maps each field path to its messages.             |
 
 <Callout type="info">
   Switch on `code` in client code; render `message` to humans. The schema lists the codes under `x-extensible-enum`, and new ones are added without a breaking change, so accept a code you do not know. `message` may be reworded at any time.
@@ -46,7 +46,7 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | `403`  | Authenticated, but not allowed. Missing permission, wrong organization, or paused resource. |
 | `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
 | `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
-| `422`  | Validation failed, in the same envelope. `details.field` carries the offending field. |
+| `422`  | Validation failed, in the same envelope. `details` maps each field path to its messages. |
 | `429`  | Rate-limited. Wait and retry; `Retry-After` is set.                                  |
 
 </Tab>
@@ -133,7 +133,9 @@ Answered with `402`. The permission was there; what the organization is on does 
 
 | Code                    | Meaning                                                                                |
 | ----------------------- | -------------------------------------------------------------------------------------- |
-| `validation_error`      | A field failed validation. `details.field` names it.                                   |
+| `validation_error`      | A field failed validation. `details` maps its path to the messages.                    |
+| `time_range_beyond_history` | The window reaches past the organization's history. `details.history_days` is the horizon. |
+| `email_domain_not_allowed` | Sign-up with a freemail or disposable address, 400. `details.email_kind` says which.  |
 | `unsupported_operation` | The operation isn't supported in this context (e.g. wrong storage mode).               |
 | `invalid_cursor`        | The pagination cursor was malformed or has expired.                                    |
 

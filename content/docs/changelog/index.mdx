@@ -12,6 +12,117 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-11-03" type="new" area="platform" title="The weekly overview, for every account">
+
+The weekly overview leaves the admin preview. The page sits under Analytics for every member, and the first mails have gone out.
+
+- **One table per week**: a row per application with visitors, LCP, INP, CLS, TTFB, and error rate, and under each number what changed against the week before. An application opens as a pop-up with its curve, its open trends, and the last weeks side by side (`?report=` and `?metric=`).
+- **The mail is on by default** for every member of an organization, once the week is complete. It carries LCP, INP, CLS, and the first-party error rate per application, a row each with a column per week, then the findings and the open trends.
+- **Weekday and hour** are set under Account → Emails, Monday 09:00 in your time zone by default. The switch there or the unsubscribe link in the footer turns the mail off. In the API: `weekly_overview`, `weekly_overview_weekday`, `weekly_overview_hour`, and `weekly_overview_timezone` on `GET|PATCH /account/notifications`.
+- **`GET /organizations/{org_id}/weekly-overview`** answers the page for a `week`, the Monday of a completed week in UTC.
+
+Docs: [Weekly overview](/en/weekly-overview).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-03" type="changed" area="platform" title="A reply to a fastmon mail reaches support">
+
+Answer a billing mail, an observation mail, the weekly overview, or a trial mail, and the reply lands with fastmon support. When you belong to one organization it opens a thread in its support chat, and a second reply with the same subject within 24 hours joins it. Password, verification, invite, and notification rule mails keep no reply address.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-03" type="new" area="platform" title="Mails during the trial">
+
+Owners of a trial organization get a mail three and ten days after the start while no site sends data, one a week after the first data arrived, and one the day before the trial ends while no payment method is on file. Each goes out once per organization.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="new" area="dashboard" title="How heavy the LCP image was">
+
+The pageview detail names the size of the LCP image beside the element, so a heavy hero image shows next to the LCP time.
+
+- **In the Explorer** the LCP image size is a metric for charts, a column, and a filter range, and notification rules can watch it. It is unrated.
+- **In the API** it is `lcp_bytes` on `POST /analytics/query` and on every beacon row, the compressed bytes of the file like `page_weight`.
+- **No value** for a text LCP, a cross-origin image without `Timing-Allow-Origin`, an image Safari took from its cache, a video, or a soft navigation. Pageviews before 2 November carry none.
+
+Docs: [LCP → How to see LCP in fastmon](/en/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="new" area="dashboard" title="13 months of history">
+
+- **The time picker reaches back 13 months** for organizations on fastmon One, Free, or Enterprise, and for partner clients whose link covers the history feature. A third column, Months, offers the last 6 months (key 9) and the last 12 months (key 0), and typed ranges, zoom, and the timeline go up to 395 days. Every other organization keeps 90 days.
+- **Complete (key C)** shows all the data there is: from the day the first pageview of the selected site, application, or organization arrived, at most 395 or 90 days back.
+- **A period longer than the organization's history says so**, for example from a link shared by an organization with more history, instead of a technical error.
+- **In the API** a window beyond the horizon answers 422 `time_range_beyond_history` with the horizon in `details.history_days`. `history_days` on the organization says how far back the dashboard may ask, and organizations, applications, and sites carry `data_starts_at`. MCP and Ask take the same horizon.
+
+Docs: [Analytics → Time range](/en/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="changed" area="dashboard" title="Sidebar: Analysis and Monitoring">
+
+- **Analysis** holds Analytics with the weekly overview, the Shopfloor and the Partnerfloor, then Visitors and the Explorer, which also opens Pages and Events. **Monitoring** holds Errors next to Observations and Synthetic.
+- **fastmon ask and Help are round buttons** in the sidebar's header, and the footer holds only the organization. The partner client list is a plain Partner row under Configuration.
+- **Every group folds from its header**, and the sidebar remembers it. Opening a page in a folded group opens that group.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="changed" area="dashboard" title="Every pop-up is built the same way">
+
+- **One header**: title, tools, share link, and a round close button, and a bottom sheet on a phone. Short forms keep their buttons bottom right with cancel first, Enter submits, and long forms keep their buttons in view while the fields scroll.
+- **Errors stay in the dialog.** Deleting a site, leaving an organization, removing a partner client, and deleting a synthetic page say what went wrong instead of closing.
+- **The pageview pop-up has a refresh button** in place of the share button, so beacons that arrived after opening show up. The address bar names the pageview, so copying it is the link.
+- **Toggles wider than the screen fold** into a second row instead of cutting off, and an iPhone no longer zooms in when you tap a text field.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="tracker" title="Every third party, eval'd scripts, and the bytes of the LCP image">
+
+- **`tpm` and `tpc` cover every third-party resource.** They held only requests slower than 500 ms, at most three hosts. The host map now sums the duration per host and keeps the 20 largest sums, the categories sum over every request, and `tpt` is the category with the largest sum.
+- **Two new categories, `experimentation` and `consent`**, for Kameleoon, Optimizely, VWO, AB Tasty and for Usercentrics, Cookiebot, OneTrust, consentmanager, iubenda. Google Analytics 4 on `region1.analytics.google.com`, Bing UET on `bat.bing.com`, and the Google Ads collects on `www.google.com` (`/rmkt/`, `/ccm/`, `/pagead/`) are no longer `other`, and the Pinterest tag is `ads` instead of `social`.
+- **First party is the page's own host**, no longer a prefix of it. `shop.example.evil.com` no longer counts as `shop.example`.
+- **A Long Animation Frame script run through `eval` is marked.** An `lf` row carries `eval` as its fourth element when a script URL on the document's own host is neither a document URL, a resource entry, nor the `src` of a script element. A/B tools name their eval'd code after a path on the shop's host, so shop code and injected code no longer look alike.
+- **`lby` is the size of the LCP image**, the `encodedBodySize` of its resource entry, read in the loop that already classifies the LCP. Nothing for a text LCP, a video, or an image without a visible body.
+- **Chromium caps `dl` at 10 Mbit/s**, so 10 means 10 or more.
+
+Docs: [The beacon → The wire payload](/en/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="dashboard" title="Observations open as a pop-up, and a trend names its first day">
+
+- **An observation opens as a pop-up** over the list or the page it came from, in the address as `?observation=`. Older links and the links in the mails forward to it. The status, start, end, and duration stand in one strip under the title, and an ended observation says so.
+- **Open observations are one list in two groups**, what is going on and the trends. The period below is the history: the timeline keeps every observation, the table lists what ended, with the kind as its first column.
+- **A trend's title names the day it began**, as in "Server response time (TTFB) has got worse since Fri 30 Oct". The trend sentence gives the share of slow page views in the last 7 days and in the weeks before as two plain numbers.
+- **Titles no longer grade the change**: "Traffic dropped" instead of "Traffic dropped sharply", the summary gives the factor. JavaScript error observations say "own JavaScript errors", which is all they ever counted. A recurring shift names its time of day.
+- **The mail about a shift that breaks again** says it counts as recurring and further occurrences are not mailed. It quotes the peak of this return, carries a badge with the kind, and opens with whether the change is short-term or has lasted for days.
+
+Docs: [Observations → On the Observations page](/en/observations#page).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="api" title="The schema states scopes, required fields, and every error">
+
+- **Each operation lists its permissions as scopes** under the new `oauth2` security scheme, where an OAuth token is accepted. An API key needs the same permissions, which `x-fastmon-permissions` keeps listing.
+- **Fields that are always sent are required.** A field with a default was typed as optional. Regenerate client types, and fields that turned required lose their optional marker.
+- **A 422 has its own `ValidationErrorResponse`**, whose `details` maps a field path to a list of messages. Other errors keep `ErrorResponse`.
+- **429, `X-Request-ID`, and `WWW-Authenticate` are declared**, and `servers` names `https://api.fastmon.eu`.
+
+Docs: [API → Errors](/en/api/errors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="api" title="Bounded inputs and typed values">
+
+- **Request strings longer than their `maxLength` are a 422.** A stored value takes its column width, such as 255 for a site name and 30 for a tag. A URL or path filter takes 8192 characters, a collected value such as a UTM value 1024, a cursor 1024, and a metric id, page type, or event name 64.
+- **A domain longer than 253 characters is a 422**, also inside a pasted URL.
+- **`device_type`** on visitor, beacon, event, NEL, and CSP rows is the `DeviceType` enum, left out where no class could be derived. `message_kind` is the extensible enum `ErrorMessageKind`.
+- **Backtest `granularity`** is `six_hours` and `thirty_days` instead of `6h` and `30d`.
+- **`meta.total` of an ungrouped query without granularity is 1**, the one result row. Breakdowns on `POST /analytics/query` answer faster, as the count behind `meta.total` runs only when a further page may exist.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-30" type="new" area="platform" title="A mail when an observation gets worse">
 
 fastmon mails owners and members when a problem opens: a traffic drop, slower server responses or page loads, or more JavaScript errors, and again each time a shift recurs. A slow trend of LCP, INP, CLS, TTFB, or errors mails once when it opens. Improvements and notes send no mail.
@@ -75,6 +186,24 @@ What you open is in the address, so it can be shared, survives a reload, and clo
 - **The Explorer's pageview drawer keeps its link** through sorting, filtering, columns, and group changes, with its open sections.
 - **View switches keep their choice**: release comparison, segment and basis on Business impact, the purchase journey tab, pages or page types on the Overview, the pinned country on the map, and the observation filters. The rule detail in Notifications, the open support thread, a Lighthouse run with its tab, and the settings section are links too.
 - **Pop-ups open and close faster**, and nothing else on the page re-renders. Escape closes the pop-up first and a maximized chart second.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="dashboard" title="Sales beside the chart">
+
+- **Orders, conversion, and revenue moved into a Sales column beside the chart**, four rows: Revenue, Checkout, Orders, and Conversion, each a chart switch with its figure, its change, and a sparkline. The tiles keep Visitors, Pageviews, and Pageviews per visitor.
+- **No cart step in the column.** It counted cart page loads, which most buyers skip on Shopify and Shopware. Orders show their share of the checkout.
+- **Revenue and checkout reached are chart metrics** (`?metric=revenue`, `?metric=checkout_reached`), and the chart maximizes alone (`?max=analytics`).
+- **Average order value and revenue per visitor** sit beside the column's title and are chart metrics (`?metric=avg_order_value`, `?metric=revenue_per_visitor`). In the API every `order_revenue` row carries `average_order_value`, and `POST /analytics/events/overview` adds `revenue_per_visitor` and takes `compare_to`.
+- **"Orders and details" opens a pop-up** (`?sales=`) with the order events, the full funnel, and the buyers compared.
+
+Docs: [Analytics → The dashboard](/en/analytics#the-dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="platform" title="Company address for a new account">
+
+Registration refuses freemail addresses such as gmail.com or web.de, as it already refused throwaway inboxes, also through Google or GitHub. Invites and existing accounts are unaffected: an invited person may join with any address. The API answers 400 `email_domain_not_allowed`, and `details.email_kind` says `freemail` or `disposable`.
 
 </ChangelogEntry>
 

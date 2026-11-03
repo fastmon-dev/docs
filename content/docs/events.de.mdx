@@ -121,7 +121,7 @@ Die `event_id` steht in der Event-Liste. Jede Zählung und Liste zieht nach, und
 Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
 
 - **Tab Overview**: Events über die Zeit nach Name, die Namen nach Häufigkeit und die häufigsten Werte jeder Property.
-- **Umsatz**: eine Bestellung pro Seitenaufruf mit `order_placed` oder `purchase`, mit dem größten `value`, pro Währung. Eine neu geladene Danke-Seite zählt erneut. Die Kachel Bestellungen auf der Analytics-Seite und der Shopfloor zeigen denselben Umsatz.
+- **Umsatz**: eine Bestellung pro Seitenaufruf mit `order_placed` oder `purchase`, mit dem größten `value`, pro Währung. Eine neu geladene Danke-Seite zählt erneut. Die Spalte Verkäufe auf der Analytics-Seite und der Shopfloor zeigen denselben Umsatz.
 - **Wert je Event**: die Summe von `value` pro Name und Währung.
 - **Tab Events**: eine Zeile pro Event mit den Properties als Chips. Eine Zeile öffnet jedes gespeicherte Feld und hat einen Share-Link.
 - **Namensfilter**: schlägt die Namen des Zeitraums nach Häufigkeit vor und nimmt jeden gültigen Namen.
@@ -131,5 +131,5 @@ Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
 ## API [#api]
 
 - `POST /organizations/{org_id}/analytics/events` listet Events, neueste zuerst, jedes mit `event_id`, `name`, `source` und `props`. `names` nimmt jeden Namen, `source` ist `tracker`, `collector` oder `shopify_pixel`. Siehe die [Referenz](/en/api/analytics/listAnalyticsEvents) (nur auf Englisch).
-- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit und pro Property-Wert, dazu `order_revenue` und `value_sums`. `revenue` ist deprecated.
+- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit und pro Property-Wert, dazu `order_revenue` (jede Zeile mit `average_order_value` und `revenue_per_visitor`) und `value_sums`. `compare_to` liefert das Vergleichsfenster als `comparison`. `revenue` ist deprecated.
 - **MCP und Ask**: Das Tool `get_events` liefert dieselben Zahlen. Siehe [MCP-Server](/de/mcp#tools).

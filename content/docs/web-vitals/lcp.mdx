@@ -55,6 +55,7 @@ The LCP page sits under **Core Web Vitals → LCP**. Two tiles show the LCP with
 - **History**: the selected percentile against the rating zones, one line per phase, or one line per page type, beside the distribution. The maximize icon next to the share link fills the window with the chart.
 - **Where the LCP is poor**: page type and device, or another dimension, ranked by pageviews over 4 s. A row opens its own chart and breakdown.
 - **LCP elements**: each element with selector, kind, discovery path, and phases. Its detail checks HTML discovery, preload, `fetchpriority`, lazy loading, and browser cache, and **AI prompt** hands it to an assistant.
+- **LCP image size**: the pageview detail names the bytes of the LCP image beside the element, and the Explorer has it as `lcp_bytes` for charts, columns, and filter ranges. No value for a text LCP, a video, a Safari cache hit, or a cross-origin image without `Timing-Allow-Origin`.
 
 The API is [`POST /analytics/element-targets`](/en/api/analytics/queryAnalyticsElementTargets), with `fetch_priority_high_rate`, `lazy_rate`, and `cache_rate` per element.
 

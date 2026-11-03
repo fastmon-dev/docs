@@ -1,0 +1,34 @@
+---
+title: Wochenrückblick
+description: Eine Seite und eine Mail pro Woche. Was sich in jeder Application gegenüber den Wochen davor geändert hat, und was du zuerst ansehen solltest.
+---
+
+Der Wochenrückblick ist eine Seite und eine Mail pro Organisation und Woche. Er vergleicht die letzte Woche von Montag bis Sonntag jeder Application mit den Wochen davor und sagt, was du zuerst ansehen solltest.
+
+## Die Seite [#page]
+
+**Wochenrückblick** liegt in der Seitenleiste unter Analytics, unter `/org/<org>/weekly-overview`. Die Woche wählst du im Header, wo jede andere Seite ihren Zeitraum hält.
+
+- **Eine Zeile pro Application**: Besucher, Ladezeit (LCP), Reaktion auf Klicks (INP), Layout-Verschiebungen (CLS), Server-Antwortzeit (TTFB) und Fehlerrate der Woche. Unter jeder Zahl steht in Worten, was sich gegenüber der Vorwoche geändert hat, mit einem Pfeil, wo die Woche besser oder schlechter wurde.
+- **Eine Application öffnet sich als Pop-up** mit der Kurve der Woche, den Trends über mehrere Wochen und einer Tabelle der letzten Wochen. Jede Metrik hat eine Kurve, die Vorwoche dahinter, und ein Link darunter öffnet die Seite der Metrik für diese Woche.
+- **Das Pop-up steht in der Adresse** (`?report=` und `?metric=`), sodass der Link aus der Mail und ein kopierter Link auf derselben Ansicht landen.
+- **Über mehrere Wochen** listet die offenen [Trends](/de/observations#trends) der Application. Ein offener Trend ersetzt den Wochenvergleich seiner Metrik.
+
+Eine Woche bleibt ab der ersten Mail erhalten, die für die Organisation rausging. Frühere Wochen wurden nie zusammengestellt.
+
+## Die Mail [#mail]
+
+Jedes Mitglied einer Organisation bekommt die Mail, in seiner Sprache und unabhängig von der Rolle. Sie ist standardmäßig an.
+
+- **Wann**: sobald die Woche vollständig ist, am Wochentag und zur Stunde, die du unter **Konto → E-Mails** einstellst. Standard ist Montag 09:00 in deiner Zeitzone.
+- **Was**: je Application LCP, INP, CLS und die First-Party-Fehlerrate, je eine Zeile mit einer Spalte pro Woche. Danach bis zu drei Befunde pro Application, nach Schwere gewählt, und die offenen Trends. Der Link einer Application öffnet ihr Pop-up auf der Seite.
+- **Nichts zu sagen, keine Mail.** Eine Organisation, in der keine Site genug Daten für die Woche hat, bekommt keine.
+- **Aus** über den Schalter unter Konto → E-Mails oder den Abmeldelink im Fuß der Mail. In der API heißen die Einstellungen `weekly_overview`, `weekly_overview_weekday` (1 Montag bis 7 Sonntag), `weekly_overview_hour` und `weekly_overview_timezone` auf `GET` und `PATCH /account/notifications`.
+
+Eine Antwort auf die Mail erreicht den fastmon-Support.
+
+## API [#api]
+
+`GET /organizations/{org_id}/weekly-overview` liefert die Seite für eine Woche. `week` ist der Montag einer abgeschlossenen Woche in UTC, standardmäßig der letzten, und `language` ist `en` oder `de`. Es braucht `analytics:read`.
+
+Die letzte Woche wird beim ersten Lesen gebaut. Eine frühere Woche kommt aus ihrem gespeicherten Bericht oder gar nicht.

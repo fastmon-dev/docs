@@ -1,0 +1,34 @@
+---
+title: Weekly overview
+description: One page and one mail per week. What changed in each application against the weeks before, and what to look at first.
+---
+
+The weekly overview is one page and one mail per organization and week. It compares each application's last Monday-to-Sunday week with the weeks before and says what to look at first.
+
+## The page [#page]
+
+**Weekly overview** sits under Analytics in the sidebar, at `/org/<org>/weekly-overview`. The week is picked in the header, where every other page keeps its period.
+
+- **One row per application**: the week's visitors, load time (LCP), response to clicks (INP), layout shifts (CLS), server response time (TTFB), and error rate. Under each number stands what changed against the week before, in words, with an arrow where the week got better or worse.
+- **An application opens as a pop-up** with the week's curve, the trends over several weeks, and a table of the last weeks. Every metric has a curve, with the week before drawn behind it, and a link under it opens the metric's own page on that week.
+- **The pop-up is in the address** (`?report=` and `?metric=`), so the link from the mail and a copied link land on the same view.
+- **Over several weeks** lists the application's open [trends](/en/observations#trends). An open trend replaces the week-over-week finding of its metric.
+
+A week is kept from the first mail that went out for the organization. Earlier weeks were never assembled.
+
+## The mail [#mail]
+
+Every member of an organization gets the mail, in their language, whatever their role. It is on by default.
+
+- **When**: once the week is complete, at the weekday and hour set under **Account → Emails**. The default is Monday 09:00 in your time zone.
+- **What**: per application LCP, INP, CLS, and the first-party error rate, one row each with a column per week. Then up to three findings per application, picked by severity, and the open trends. An application link opens its pop-up on the page.
+- **Nothing to say, no mail.** An organization where no site has enough data for the week gets none.
+- **Off** with the switch under Account → Emails, or with the unsubscribe link in the mail's footer. In the API the settings are `weekly_overview`, `weekly_overview_weekday` (1 Monday to 7 Sunday), `weekly_overview_hour`, and `weekly_overview_timezone` on `GET` and `PATCH /account/notifications`.
+
+A reply to the mail reaches fastmon support.
+
+## API [#api]
+
+`GET /organizations/{org_id}/weekly-overview` answers the page for one week. `week` is the Monday of a completed week in UTC, by default the last one, and `language` is `en` or `de`. It needs `analytics:read`.
+
+The latest week is built on the first read. An earlier week comes from its stored report or not at all.
