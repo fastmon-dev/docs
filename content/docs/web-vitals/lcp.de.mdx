@@ -55,6 +55,7 @@ Die LCP-Seite findest du unter **Core Web Vitals → LCP**. Zwei Kacheln zeigen 
 - **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon neben dem Teilen-Link zeigt das Diagramm im ganzen Fenster.
 - **Wo der LCP schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach Seitenaufrufen über 4 s. Eine Zeile öffnet ihr eigenes Diagramm und ihren Breakdown.
 - **LCP-Elemente**: jedes Element mit Selektor, Art, Discovery-Pfad und Phasen. Das Detail prüft HTML, Preload, `fetchpriority`, Lazy Loading und Browser-Cache, und **AI Prompt** gibt es an einen Assistenten weiter.
+- **LCP-Bildgröße**: Das Pageview-Detail nennt die Bytes des LCP-Bilds neben dem Element, und der Explorer hat sie als `lcp_bytes` für Charts, Spalten und Bereichsfilter. Kein Wert bei einem Text-LCP, einem Video, einem Safari-Cache-Treffer oder einem Cross-Origin-Bild ohne `Timing-Allow-Origin`.
 
 Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `cache_rate` pro Element.
 

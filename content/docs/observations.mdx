@@ -76,17 +76,19 @@ A trend is a slow change over weeks, judged once a day at midnight UTC over whol
 - **Ends** at the first midnight whose last 7 days are under 1.1 times the frozen reference. A metric that settles at a new level keeps its trend open for months.
 - **Pauses** while one of the last 7 days is missing or the week holds fewer than 1,000 page views with the metric.
 
-The first verdict needs 14 whole days of data. An open trend shows since when the metric has been at its new level.
+The first verdict needs 14 whole days of data. A trend's title names the day it began, and its sentence gives the share of poor page views in the last 7 days and in the weeks before.
 
 ## On the Observations page [#page]
 
-**Observations** in the sidebar shows what is open now as cards, the selected time range as a timeline per area, and every observation of the range as a table. Each row opens a detail page with the title, the state, the period, and the change against the usual value. A shift adds its drivers and the releases around its start.
+**Observations** in the sidebar shows what is open now as one list in two groups, what is going on and the trends. The selected time range below is the history: a timeline per area with every observation, and a table of the ones that ended, with the kind as its first column.
+
+**An observation opens as a pop-up** over the page it came from, in the address as `?observation=`. One strip under the title holds the state, start, end, and duration, then the change against the usual value. A shift adds its drivers and the releases around its start.
 
 **Acknowledge** at the top right marks an observation as seen, with a note of up to 1,000 characters for the team. Owners and members can acknowledge, viewers see it. A new occurrence of a recurring shift keeps the acknowledgement, and the note stays after the observation ended.
 
 ## Mail [#mail]
 
-fastmon mails owners and members when a problem opens: a traffic drop, slower server responses or page loads, or more JavaScript errors, and again each time a shift recurs. A slow trend mails once when it opens. Improvements and notes send no mail.
+fastmon mails owners and members when a problem opens: a traffic drop, slower server responses or page loads, or more JavaScript errors, and once more the first time a shift recurs. A slow trend mails once when it opens. Improvements and notes send no mail.
 
 The mail goes to direct members and to those of a partner organization, in their language and time zone, with the observation sentence and a link to the page. Viewers get none.
 

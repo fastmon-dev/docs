@@ -17,6 +17,117 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-03" type="new" area="platform" title="Der Wochenrückblick, für jedes Konto">
+
+Der Wochenrückblick verlässt die Admin-Vorschau. Die Seite liegt für jedes Mitglied unter Analytics, und die ersten Mails sind raus.
+
+- **Eine Tabelle pro Woche**: eine Zeile pro Application mit Besuchern, LCP, INP, CLS, TTFB und Fehlerrate, unter jeder Zahl die Veränderung zur Vorwoche. Eine Application öffnet sich als Pop-up mit ihrer Kurve, ihren offenen Trends und den letzten Wochen nebeneinander (`?report=` und `?metric=`).
+- **Die Mail ist standardmäßig an** für jedes Mitglied einer Organisation, sobald die Woche vollständig ist. Sie trägt LCP, INP, CLS und die First-Party-Fehlerrate je Application, je eine Zeile mit einer Spalte pro Woche, danach die Befunde und die offenen Trends.
+- **Wochentag und Stunde** stellst du unter Konto → E-Mails ein, standardmäßig Montag 09:00 in deiner Zeitzone. Der Schalter dort oder der Abmeldelink im Fuß schaltet die Mail ab. In der API: `weekly_overview`, `weekly_overview_weekday`, `weekly_overview_hour` und `weekly_overview_timezone` auf `GET|PATCH /account/notifications`.
+- **`GET /organizations/{org_id}/weekly-overview`** liefert die Seite für eine `week`, den Montag einer abgeschlossenen Woche in UTC.
+
+Doku: [Wochenrückblick](/de/weekly-overview).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-03" type="changed" area="platform" title="Eine Antwort auf eine fastmon-Mail erreicht den Support">
+
+Antworte auf eine Rechnungsmail, eine Beobachtungsmail, den Wochenrückblick oder eine Trial-Mail, und die Antwort landet beim fastmon-Support. Gehörst du zu einer Organisation, öffnet sie dort einen Thread im Support-Chat, und eine zweite Antwort mit demselben Betreff binnen 24 Stunden hängt sich an. Passwort-, Verifizierungs-, Einladungs- und Benachrichtigungsregel-Mails haben weiterhin keine Antwortadresse.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-03" type="new" area="platform" title="Mails während des Trials">
+
+Owner einer Trial-Organisation bekommen drei und zehn Tage nach dem Start eine Mail, solange keine Site Daten schickt, eine Woche nach den ersten Daten eine weitere und am Tag vor dem Ende eine, solange keine Zahlungsmethode hinterlegt ist. Jede geht einmal pro Organisation raus.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="new" area="dashboard" title="Wie schwer das LCP-Bild war">
+
+Das Pageview-Detail nennt die Größe des LCP-Bilds neben dem Element, sodass ein schweres Hero-Bild neben der LCP-Zeit steht.
+
+- **Im Explorer** ist die LCP-Bildgröße eine Metrik für Charts, eine Spalte und ein Bereichsfilter, und Benachrichtigungsregeln können sie überwachen. Sie ist unbewertet.
+- **In der API** heißt sie `lcp_bytes` auf `POST /analytics/query` und auf jeder Beacon-Zeile, die komprimierten Bytes der Datei wie bei `page_weight`.
+- **Kein Wert** bei einem Text-LCP, einem Cross-Origin-Bild ohne `Timing-Allow-Origin`, einem Bild aus Safaris Cache, einem Video oder einer Soft Navigation. Pageviews vor dem 2. November tragen keinen.
+
+Doku: [LCP → LCP in fastmon ansehen](/de/web-vitals/lcp#how-to-see-lcp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="new" area="dashboard" title="13 Monate Historie">
+
+- **Der Zeitraum-Picker reicht 13 Monate zurück** für Organisationen auf fastmon One, Free oder Enterprise und für Partner-Clients, deren Verknüpfung das Feature Historie abdeckt. Eine dritte Spalte, Monate, bietet die letzten 6 Monate (Taste 9) und die letzten 12 Monate (Taste 0), und getippte Zeiträume, Zoom und Zeitleiste gehen bis 395 Tage. Jede andere Organisation behält 90 Tage.
+- **Komplett (Taste C)** zeigt alle Daten, die es gibt: ab dem Tag, an dem der erste Pageview der gewählten Site, Application oder Organisation ankam, höchstens 395 oder 90 Tage zurück.
+- **Ein Zeitraum über die Historie der Organisation hinaus sagt das**, etwa aus einem Link einer Organisation mit mehr Historie, statt einen technischen Fehler zu zeigen.
+- **In der API** antwortet ein Fenster über den Horizont hinaus mit 422 `time_range_beyond_history` und dem Horizont in `details.history_days`. `history_days` auf der Organisation sagt, wie weit das Dashboard zurückfragen darf, und Organisationen, Applications und Sites tragen `data_starts_at`. MCP und Ask haben denselben Horizont.
+
+Doku: [Analytics → Zeitraum](/de/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="changed" area="dashboard" title="Seitenleiste: Analyse und Monitoring">
+
+- **Analyse** enthält Analytics mit Wochenrückblick, Shopfloor und Partnerfloor, dann Besucher und den Explorer, der auch Seiten und Events öffnet. **Monitoring** enthält Fehler neben Beobachtungen und Synthetic.
+- **fastmon ask und Hilfe sind runde Buttons** im Kopf der Seitenleiste, der Fuß hält nur noch die Organisation. Die Partner-Client-Liste ist eine schlichte Zeile Partner unter Konfiguration.
+- **Jede Gruppe klappt über ihren Kopf zu**, und die Seitenleiste merkt es sich. Öffnest du eine Seite in einer zugeklappten Gruppe, klappt sie auf.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-02" type="changed" area="dashboard" title="Jedes Pop-up ist gleich gebaut">
+
+- **Ein Kopf**: Titel, Werkzeuge, Teilen-Link und ein runder Schließen-Button, auf dem Handy ein Sheet von unten. Kurze Formulare halten ihre Buttons unten rechts mit Abbrechen zuerst, Enter schickt ab, und lange Formulare behalten ihre Buttons im Blick, während die Felder scrollen.
+- **Fehler bleiben im Dialog.** Site löschen, Organisation verlassen, Partner-Client entfernen und Synthetic-Seite löschen sagen, was schiefging, statt sich zu schließen.
+- **Das Pageview-Pop-up hat einen Aktualisieren-Button** anstelle des Teilen-Buttons, damit Beacons auftauchen, die nach dem Öffnen ankamen. Die Adressleiste nennt den Pageview, kopieren ist der Link.
+- **Schalter breiter als der Bildschirm falten** in eine zweite Zeile, statt abgeschnitten zu werden, und ein iPhone zoomt nicht mehr hinein, wenn du ein Textfeld antippst.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="tracker" title="Jede Third Party, eval-Skripte und die Bytes des LCP-Bilds">
+
+- **`tpm` und `tpc` decken jede Third-Party-Ressource ab.** Bisher hielten sie nur Requests über 500 ms, höchstens drei Hosts. Die Host-Map summiert jetzt die Dauer je Host und behält die 20 größten Summen, die Kategorien summieren über jeden Request, und `tpt` ist die Kategorie mit der größten Summe.
+- **Zwei neue Kategorien, `experimentation` und `consent`**, für Kameleoon, Optimizely, VWO, AB Tasty und für Usercentrics, Cookiebot, OneTrust, consentmanager, iubenda. Google Analytics 4 auf `region1.analytics.google.com`, Bing UET auf `bat.bing.com` und die Google-Ads-Collects auf `www.google.com` (`/rmkt/`, `/ccm/`, `/pagead/`) sind nicht mehr `other`, und das Pinterest-Tag ist `ads` statt `social`.
+- **First Party ist der eigene Host der Seite**, kein Präfix davon mehr. `shop.example.evil.com` zählt nicht mehr als `shop.example`.
+- **Ein Long-Animation-Frame-Skript aus `eval` wird markiert.** Eine `lf`-Zeile trägt `eval` als viertes Element, wenn eine Skript-URL auf dem eigenen Host weder Dokument-URL, Resource-Eintrag noch `src` eines Script-Elements ist. A/B-Tools benennen ihren eval-Code nach einem Pfad auf dem Shop-Host, Shop-Code und eingeschleuster Code sehen also nicht mehr gleich aus.
+- **`lby` ist die Größe des LCP-Bilds**, die `encodedBodySize` seines Resource-Eintrags, gelesen in der Schleife, die den LCP ohnehin klassifiziert. Nichts bei einem Text-LCP, einem Video oder einem Bild ohne sichtbaren Body.
+- **Chromium deckelt `dl` bei 10 Mbit/s**, 10 heißt also 10 oder mehr.
+
+Doku: [Der Beacon → Die Wire-Payload](/de/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="dashboard" title="Beobachtungen öffnen als Pop-up, und ein Trend nennt seinen ersten Tag">
+
+- **Eine Beobachtung öffnet als Pop-up** über der Liste oder der Seite, von der sie kam, in der Adresse als `?observation=`. Ältere Links und die Links in den Mails leiten dorthin weiter. Zustand, Beginn, Ende und Dauer stehen in einer Leiste unter dem Titel, und eine beendete Beobachtung sagt das.
+- **Offene Beobachtungen sind eine Liste in zwei Gruppen**, was gerade läuft und die Trends. Der Zeitraum darunter ist die Historie: Der Zeitstrahl behält jede Beobachtung, die Tabelle listet, was beendet ist, mit der Art als erster Spalte.
+- **Der Titel eines Trends nennt den Tag, an dem er begann**, etwa „Server-Antwortzeit (TTFB) ist seit Fr 30. Okt schlechter". Der Trend-Satz gibt den Anteil langsamer Seitenaufrufe der letzten 7 Tage und der Wochen davor als zwei einfache Zahlen an.
+- **Titel bewerten die Veränderung nicht mehr**: „Traffic eingebrochen" statt „Traffic stark eingebrochen", den Faktor nennt die Zusammenfassung. Beobachtungen zu JavaScript-Fehlern sagen „eigene JavaScript-Fehler", mehr haben sie nie gezählt. Ein wiederkehrender Shift nennt seine Tageszeit.
+- **Die Mail zu einem Shift, der erneut aufgeht**, sagt, dass er als wiederkehrend zählt und weitere Vorkommen nicht gemailt werden. Sie nennt den Spitzenwert dieses Vorkommens, trägt ein Badge mit der Art und beginnt damit, ob die Veränderung kurzfristig ist oder schon Tage anhält.
+
+Doku: [Beobachtungen → Auf der Seite Beobachtungen](/de/observations#page).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="api" title="Das Schema nennt Scopes, Pflichtfelder und jeden Fehler">
+
+- **Jede Operation listet ihre Berechtigungen als Scopes** unter dem neuen Security-Schema `oauth2`, wo ein OAuth-Token akzeptiert wird. Ein API-Key braucht dieselben Berechtigungen, die `x-fastmon-permissions` weiter listet.
+- **Felder, die immer gesendet werden, sind Pflichtfelder.** Ein Feld mit Default war als optional typisiert. Generiere die Client-Typen neu, Felder, die Pflicht wurden, verlieren ihre optionale Markierung.
+- **Ein 422 hat sein eigenes `ValidationErrorResponse`**, dessen `details` einen Feldpfad auf eine Liste von Meldungen abbildet. Andere Fehler behalten `ErrorResponse`.
+- **429, `X-Request-ID` und `WWW-Authenticate` sind deklariert**, und `servers` nennt `https://api.fastmon.eu`.
+
+Doku: [API → Fehler](/en/api/errors) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-01" type="changed" area="api" title="Begrenzte Eingaben und typisierte Werte">
+
+- **Request-Strings über ihrer `maxLength` sind ein 422.** Ein gespeicherter Wert nimmt seine Spaltenbreite, etwa 255 für einen Site-Namen und 30 für ein Tag. Ein URL- oder Pfadfilter nimmt 8192 Zeichen, ein gesammelter Wert wie ein UTM-Wert 1024, ein Cursor 1024, und eine Metrik-ID, ein Seitentyp oder ein Event-Name 64.
+- **Eine Domain über 253 Zeichen ist ein 422**, auch innerhalb einer eingefügten URL.
+- **`device_type`** auf Besucher-, Beacon-, Event-, NEL- und CSP-Zeilen ist das Enum `DeviceType` und fehlt, wo keine Klasse ableitbar war. `message_kind` ist das erweiterbare Enum `ErrorMessageKind`.
+- **Backtest-`granularity`** heißt `six_hours` und `thirty_days` statt `6h` und `30d`.
+- **`meta.total` einer ungruppierten Query ohne Granularität ist 1**, die eine Ergebniszeile. Breakdowns auf `POST /analytics/query` antworten schneller, weil die Zählung hinter `meta.total` nur läuft, wenn eine weitere Seite möglich ist.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-10-30" type="new" area="platform" title="Eine Mail, wenn eine Beobachtung schlechter wird">
 
 fastmon mailt Owner und Member, sobald ein Problem aufgeht: ein Traffic-Einbruch, langsamere Server-Antworten oder Seitenladezeiten oder mehr JavaScript-Fehler, und noch einmal bei jedem Wiederauftreten eines Shifts. Ein langsamer Trend bei LCP, INP, CLS, TTFB oder Fehlern mailt einmal, wenn er aufgeht. Verbesserungen und Hinweise verschicken keine Mail.
@@ -80,6 +191,24 @@ Was du öffnest, steht in der Adresse: Es lässt sich teilen, überlebt ein Neul
 - **Der Pageview-Drawer des Explorers behält seinen Link** über Sortierung, Filter, Spalten und Gruppenwechsel, mit seinen offenen Abschnitten.
 - **Ansichtswechsel behalten ihre Wahl**: Release-Vergleich, Segment und Basis bei Business Impact, der Tab des Kaufwegs, Seiten oder Seitentypen im Überblick, das angeheftete Land auf der Karte und die Filter der Beobachtungen. Das Regel-Detail in Benachrichtigungen, der offene Support-Thread, ein Lighthouse-Lauf mit seinem Tab und der Einstellungsabschnitt sind ebenfalls Links.
 - **Pop-ups öffnen und schließen schneller**, und sonst rendert nichts auf der Seite neu. Escape schließt zuerst das Pop-up, dann ein maximiertes Chart.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="dashboard" title="Verkäufe neben dem Chart">
+
+- **Bestellungen, Conversion und Umsatz sind in eine Spalte Verkäufe neben dem Chart gezogen**, vier Zeilen: Umsatz, Checkout, Bestellungen und Conversion, jede ein Chart-Schalter mit Wert, Veränderung und Sparkline. Die Kacheln behalten Besucher, Pageviews und Pageviews pro Besucher.
+- **Kein Warenkorb-Schritt in der Spalte.** Er zählte Warenkorb-Seitenaufrufe, die die meisten Käufer bei Shopify und Shopware überspringen. Bestellungen zeigen ihren Anteil am Checkout.
+- **Umsatz und Checkout erreicht sind eigene Chart-Metriken** (`?metric=revenue`, `?metric=checkout_reached`), und der Chart maximiert allein (`?max=analytics`).
+- **Durchschnittlicher Bestellwert und Umsatz pro Besucher** sitzen neben dem Titel der Spalte und sind Chart-Metriken (`?metric=avg_order_value`, `?metric=revenue_per_visitor`). In der API trägt jede `order_revenue`-Zeile `average_order_value`, und `POST /analytics/events/overview` ergänzt `revenue_per_visitor` und nimmt `compare_to`.
+- **„Bestellungen und Details" öffnet ein Pop-up** (`?sales=`) mit den Bestell-Events, dem ganzen Funnel und dem Käufervergleich.
+
+Doku: [Analytics → Das Dashboard](/de/analytics#the-dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-10-30" type="changed" area="platform" title="Firmenadresse für ein neues Konto">
+
+Die Registrierung lehnt Freemail-Adressen wie gmail.com oder web.de ab, wie bisher schon Wegwerf-Postfächer, auch über Google oder GitHub. Einladungen und bestehende Konten sind nicht betroffen: Wer eingeladen ist, kann mit jeder Adresse beitreten. Die API antwortet mit 400 `email_domain_not_allowed`, und `details.email_kind` sagt `freemail` oder `disposable`.
 
 </ChangelogEntry>
 

@@ -88,7 +88,7 @@ Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/d
 
 ## Grenzen [#limits]
 
-- **90 Tage** pro Aufruf, und 50 Zeilen pro Breakdown.
+- **Höchstens die Historie der Organisation** pro Aufruf, 90 Tage oder 13 Monate mit dem Feature Historie, und 50 Zeilen pro Breakdown.
 - **120 Requests pro Minute**, gezählt pro Person statt pro Organisation, damit ein Client in der Schleife keine Kollegen aussperrt. Darüber: 429 mit der Wartezeit in Sekunden.
 - **Minuten-Buckets** gehen über maximal 6 Stunden, weil Minutenauflösung die rohe Beacon-Tabelle liest. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
 - **30 Sekunden** pro Query, danach wird abgebrochen und das Tool sagt es. Meist steckt ein Breakdown mit hoher Kardinalität (URL, Browser-Version, Origin-Host) über einen langen Zeitraum dahinter.

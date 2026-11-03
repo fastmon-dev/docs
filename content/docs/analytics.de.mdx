@@ -10,8 +10,9 @@ Analytics zeigt, wer auf deiner Site ist, woher die Besucher kommen, welche Seit
 Die Analytics-Hauptansicht einer Site zeigt von oben nach unten:
 
 - **Live-Zeile**: die Besucher, die gerade auf der Site sind. „Live ansehen" öffnet einen Ticker der neuesten Events: standardmäßig die Bestellungen mit ihrem Wert, wahlweise den ganzen Kaufweg oder jedes Event. Jede Zeile öffnet ihren Besucher.
-- **Kacheln**: Besucher, Pageviews, Pageviews pro Besucher und im Shop Bestellungen mit ihrem Umsatz und Conversion, jede mit einer Sparkline über den ganzen Zeitraum. Die Veränderung vergleicht mit denselben Wochentagen und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht.
-- **Trend-Chart**: die gewählte Kachel über den Zeitraum (`?metric=`). Bestellungen zeigt es als Linie, als Umsatz je Währung oder als drei Bahnen für Warenkorb, Checkout erreicht und bestellt, jede mit eigener Skala.
+- **Kacheln**: Besucher, Pageviews und Pageviews pro Besucher, jede mit einer Sparkline über den ganzen Zeitraum. Die Veränderung vergleicht mit denselben Wochentagen und Uhrzeiten, so wenige ganze Wochen früher, wie das Fenster braucht.
+- **Verkäufe** neben dem Chart im Shop: Umsatz, Checkout, Bestellungen und Conversion, jede Zeile ein Chart-Schalter mit Wert, Veränderung und Sparkline. Durchschnittlicher Bestellwert und Umsatz pro Besucher sitzen neben dem Titel, und „Bestellungen und Details" öffnet die Bestell-Events, den Funnel und den Käufervergleich (`?sales=`).
+- **Trend-Chart**: die gewählte Kachel oder Verkaufszeile über den Zeitraum (`?metric=`), Umsatz je Währung. Es maximiert allein (`?max=analytics`).
 - **Bots** neben dem Chart-Typ teilt das Pageview-Chart in Menschen und Bots, einzelne Bots oder Bot-Typen. Kacheln und Karten behalten den Bot-Filter der Seite.
 - **Aufschlüsselung**: Karten für Seiten, Seitentypen, Quellen, Standorte, Geräte, Traffic-Qualität, Kampagnen und Zugriff. Ein Menü wählt die Dimension einer Karte, die Karte blättert durch ihre Zeilen, und ein Klick auf eine Zeile filtert die Seite.
 - **Alle Werte einer Karte** öffnest du über ihren Titel, in einem Pop-up mit Suche, zweiter Dimension, sortierbaren Spalten und CSV-Download.
@@ -38,7 +39,7 @@ Die API dazu: [`POST /analytics/live`](/de/api/analytics/queryAnalyticsLive) und
 
 ### Partnerfloor [#partnerfloor]
 
-Partner-Organisationen finden den Partnerfloor in der Seitenleiste unter **Partner**. Jeder Live-Client ist dort eine Zone.
+Partner-Organisationen finden den Partnerfloor in der Seitenleiste unter **Analytics**. Jeder Live-Client ist dort eine Zone.
 
 - **Größe und Farbe**: Eine Zone wächst mit dem Anteil des Clients an deinem Traffic der letzten Stunde. Ihre Farbe zeigt seinen LCP p75.
 - **Jede Zone** zeigt die Leute darin, Warenkorb und Checkout, Bestellungen und Umsatz von heute und die Veränderung zur Vorwoche.
@@ -57,6 +58,8 @@ Die Zeitraum-Pille im Header legt das Fenster für alle Charts der Seite fest.
 - **Zu jetzt springen**: Liegt das Fenster in der Vergangenheit, schiebt ein Button es bei gleicher Länge in die Gegenwart.
 - **Datum und Uhrzeit** sind eigene Felder und greifen sofort. Das Ausdrucksfeld zeigt den aktuellen Zeitraum, etwa `now-7d`, und nimmt auch ein Fenster in der Vergangenheit (`7d-3d`) oder eine Uhrzeitspanne (`14:00-16:30`).
 - **Die Zeitleiste** oben im Picker zeigt das Fenster auf den Tagen drumherum. Zieh es, zieh an einer Kante oder scroll zum Zoomen.
+- **Monate**: die letzten 6 oder 12 Monate (Tasten 9 und 0) für Organisationen mit 13 Monaten Historie: fastmon One, Free, Enterprise und Partner-Clients, deren Verknüpfung sie abdeckt. Jede andere Organisation behält 90 Tage, und ein längerer Zeitraum aus einem geteilten Link sagt das.
+- **Komplett** (Taste C) läuft vom ersten Pageview der gewählten Site, Application oder Organisation bis jetzt, innerhalb dieses Horizonts.
 
 ### Auflösung [#resolution]
 
@@ -109,7 +112,7 @@ Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
 
 ## Fehler-Analytics [#error-analytics]
 
-Fehler ist eine Gruppe in der Sidebar mit vier Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources), [Network Error Logging](/de/nel) und [Content Security Policy](/de/csp). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
+Fehler liegt in der Seitenleiste unter Monitoring, mit vier Seiten: JavaScript-Fehler, [Fehlgeschlagene Ressourcen](#failed-resources), [Network Error Logging](/de/nel) und [Content Security Policy](/de/csp). Jede hat eine eigene Adresse, Überschrift, Chart und Liste. Bei JavaScript-Fehlern:
 
 - **Betroffene Seitenaufrufe über Zeit**: Pageviews mit mindestens einem JavaScript-Fehler, als Anteil aller Pageviews oder unter „Absolut“ als Anzahl. **Top 5** legt die fünf Fehler mit den meisten betroffenen Pageviews als Linien dazu, die Legende verlinkt auf jeden. Ziehen über das Chart zoomt hinein.
 - **Die eigene Seite eines Fehlers** hat denselben Umschalter zwischen Anteil und Anzahl.
@@ -218,11 +221,13 @@ Jedes Panel hat einen Endpunkt unter `/organizations/{org_id}/analytics/…`, di
 | `url_path`, `url_key`, `url_key_set` | Gruppieren oder filtern nach der URL ohne Query, nach jedem Query-Key oder nach der Menge der Keys. Ein Pageview zählt einmal pro Key, `meta.pageviews` ist der Nenner. |
 | `url_param` + `url_param_key` | Gruppiert nach dem Wert eines Query-Keys. Speichert die Application den Wert nicht, kommt ein 422 mit Verweis auf `collection.query_values_for`. |
 | `""` als Textfilter | Wählt die Zeilen ohne Wert: `referrer_source: ""` liefert die Direktbesuche. `exclude: {utm_campaign: [""]}` behält die Pageviews mit Kampagne. |
+| `time_range` | Höchstens die Historie der Organisation, 90 Tage oder 13 Monate mit dem Feature Historie. Ein längeres Fenster ist ein 422 `time_range_beyond_history` mit dem Horizont in `details.history_days`. `history_days` auf der Organisation und `data_starts_at` auf Organisationen, Applications und Sites begrenzen es. |
 
 Nur ein Fenster von höchstens 6 Stunden, das höchstens 10 Minuten vor jetzt endet, liest Live-Beacons. Jedes andere liest die finalisierten Pageviews.
 
 ## Weiterlesen
 
+- [Wochenrückblick](/de/weekly-overview): eine Seite und eine Mail pro Woche mit dem, was sich geändert hat.
 - [Checkout-Funnel](/de/checkout-funnel): wie Pageviews ihre Stufe bekommen, und was die Zahlen bedeuten.
 - [Tracker-Einstellungen](/de/tracker): was der Tracker pro Einstellung sammelt.
 - [Besucher und Sessions](/de/concepts/sessions): wie aus Pageviews Besucher und Sessions werden.

@@ -88,7 +88,7 @@ The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/
 
 ## Limits [#limits]
 
-- **90 days** per call at most, and 50 rows per breakdown.
+- **The organization's history** per call at most, 90 days or 13 months with the history feature, and 50 rows per breakdown.
 - **120 requests per minute**, counted per person rather than per organization, so one client in a loop cannot lock out a colleague. Over the limit: 429 with the number of seconds to wait.
 - **Minute buckets** span at most 6 hours, because minute resolution reads the raw beacon table. Longer periods use hourly buckets or coarser.
 - **30 seconds** per query, then it is cancelled and the tool says so. Usually a high-cardinality breakdown (URL, browser version, origin host) over a long period.
