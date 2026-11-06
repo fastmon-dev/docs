@@ -58,10 +58,10 @@ Partner access can issue organization keys and connect org-owned apps in a clien
 
 - Delete it, remove its last member, transfer it, or manage its billing.
 - Demote or remove its owners, or grant the owner role while it has an owner.
-- Add members without an invite, or manage its partner links.
+- Add or invite members, or manage its partner links.
 - Issue keys for the client's own clients.
 
-**Partner-minted credentials** outlive the partnership. The client's key and connection lists mark them with `via_partner_org_id`, and detaching a partner lists them.
+**Partner-minted credentials** outlive the partnership but not the agency: deleting the agency revokes them. The client's key and connection lists mark them with `via_partner_org_id`, and detaching a partner lists them.
 
 The client rotates the keys and disconnects the apps. A rotation by a client member clears the mark.
 

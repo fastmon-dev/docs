@@ -72,7 +72,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 
 Answers are aggregates and ranked lists, the same ones behind the dashboard. Nothing returns raw beacon rows, and no tool takes an organization: it comes off the connection.
 
-Every tool over a set of sites takes `site_id`, `application_id` (every domain of that application), or `tags`, in that precedence. A call with none covers the whole organization, since an MCP connection has no "current site" the way a dashboard tab does. `list_sites` reports each site's `application_id` and `application_name`, so a model should call it first.
+Every tool over a set of sites takes `site_id`, `application_id` (every domain of that application), or `tags`, in that precedence. A call with none covers the whole organization. `list_sites` reports each site's `application_id` and `application_name`, so a model should call it first.
 
 `list_sites` also reports what each site **collects**: whether fetch/XHR collection, page-type detection, checkout tracking, session collection, error messages and stack frames, [events](/en/events) (`event_tracking`) and the dataLayer bridge (`collect_data_layer`) are on, plus which visitor identifier its counts use. Visitor counts follow each site's own settings, exactly as the dashboard does, and a count spanning sites with different identifiers says so rather than quietly mixing them.
 
@@ -84,13 +84,15 @@ The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/
 
 **Empty values.** An empty string counts as no filter. `empty: ["referrer_source"]` asks for direct traffic, `not_empty: ["utm_campaign"]` for campaign traffic.
 
+**Event names.** `names` on `get_events` narrows only `events_by_name`, `series`, and `prop_keys`. Orders and value sums cover the whole window, and a call with `names` adds `names_in_window` and a `note`.
+
 **Bucket widths.** `get_timeseries` takes every width from `minute` to `month`. The error, failed-resource, NEL, CSP, and events tools take an optional `interval`, and without it the series is hourly up to 48 hours and daily above. Widths under an hour cover at most 1500 buckets.
 
 ## Limits [#limits]
 
 - **The organization's history** per call at most, 90 days or 13 months with the history feature, and 50 rows per breakdown.
-- **120 requests per minute**, counted per person rather than per organization, so one client in a loop cannot lock out a colleague. Over the limit: 429 with the number of seconds to wait.
-- **Minute buckets** span at most 6 hours, because minute resolution reads the raw beacon table. Longer periods use hourly buckets or coarser.
+- **120 requests per minute**, counted per person. Over the limit: 429 with the number of seconds to wait.
+- **Minute buckets** span at most 6 hours. Longer periods use hourly buckets or coarser.
 - **30 seconds** per query, then it is cancelled and the tool says so. Usually a high-cardinality breakdown (URL, browser version, origin host) over a long period.
 
 ## What leaves fastmon [#privacy]

@@ -21,7 +21,7 @@ Every endpoint requires authentication. The public API uses a single scheme: an 
 | Authority per request    | its scopes ∩ your current role            | its scopes, fixed when issued                                        |
 | When its creator leaves  | narrows or dies with your memberships     | keeps working                                                        |
 
-A personal key acts as you: demoting or removing you narrows or cuts off your keys immediately. An organization key belongs to nobody, so there is no role to intersect with; **its scopes are its whole authority**, bounded once at issue time by what the person issuing held in that organization.
+A personal key acts as you. An organization key belongs to nobody, so there is no role to intersect with; **its scopes are its whole authority**, bounded once at issue time by what the person issuing held in that organization.
 
 Rule of thumb: a personal key for things that should act as you (local scripts, exploration), an organization key for anything a team depends on (CI pipelines, cron jobs, long-running automation).
 
@@ -34,9 +34,11 @@ Every key names three things:
 
 - **Scopes**: the permissions the key holds, in `resource:action` form (`release:write`, `analytics:read`). At least one. The picker only offers what you hold yourself; "everything I hold" expands into the explicit list at creation time. No key can carry `org_key:manage`.
 - **Where it acts**: a personal key lists at least one organization and never reaches one that was not on its list, even if you join more later. An organization key is bound to the organization it was created in. On a `partner`-plan organization, a key can instead be issued with `audience: "clients"`: it acts in whatever organizations are your clients right now, resolved on every request. It is capped at what you hold in the partner organization, minus what partner access cannot do.
-- **Expiry**: a date, or never. An expired key answers `401 credential_expired` (distinct from a wrong key, so a pipeline log says what to do).
+- **Expiry**: a date, or never. An expired key answers `401 credential_expired`.
 
-Creating a key asks for your password again and sends a security notification mail. The secret (`fm_…` or `fmo_…`) is shown **once**. Store it in your secret manager immediately; there is no recovery flow.
+Creating a key asks for your password or second factor again and sends a security notification mail. The secret (`fm_…` or `fmo_…`) is shown **once**, and there is no recovery flow.
+
+**Re-authentication holds for 10 minutes** in the session that passed it, so a second sensitive action in that time asks for nothing. Another session, an API key, and an app token are asked every time. An account without password and second factor needs a sign-in within the last 10 minutes instead, else `401 session_expired`.
 
 An application's **CI/CD** snippet in the dashboard creates a `release:write` key in place and writes it into the curl command; it asks whether the key should belong to you or to the organization. `GET /permissions` lists every permission with a description and the roles that hold it.
 
@@ -57,6 +59,7 @@ curl https://api.fastmon.eu/sites \
 - **An organization key: exactly its scopes.** There is no owner to follow, so nothing changes it after issue except an explicit edit. A `clients` key follows the partner relationship instead: an organization taken on later is included, one handed back drops out on the next request.
 - **Only where it was issued for.** Resources in any other organization are hidden from it (`404`); the organization routes themselves answer `403 permission_denied`. The two lists that key on the user rather than an organization (`GET /organizations` and the Ask conversations) are filtered to the key's organizations.
 - **Not for credential or account management.** Creating, editing, rotating, or revoking keys, passkeys, 2FA, password, e-mail, account deletion, creating an organization, and accepting an invite need a dashboard session. So do the platform `/admin` routes.
+- **Leaving an organization as its last member deletes it**, so the key needs `org:delete` for that.
 - **Missing scope**: `403 permission_denied`, with the missing permission in `details.permission`. See [Errors](/en/api/errors#authorization).
 
 `GET /permissions/self` reports what the calling key can actually do per organization next to the reach it was issued for. For a personal key, an organization you have since left shows up as the difference between the two.
@@ -65,7 +68,7 @@ curl https://api.fastmon.eu/sites \
 
 A key's name, scopes, and expiry change in place with `PATCH`; the secret stays. Re-authentication is asked only when the edit hands the key more than it had: a scope it did not carry, or a later expiry. Narrowing and renaming pass without a factor.
 
-**Rotating** (`POST …/rotate`) issues a successor with the same name, scopes, and reach and a fresh secret, then retires the old one: immediately by default, or after a grace window of up to 24 hours for the ordinary case where a deploy has to reach every consumer of the secret first. Rotating never extends the expiry. A rotation by a client member clears `via_partner_org_id`.
+**Rotating** (`POST …/rotate`) issues a successor with the same name, scopes, and reach and a fresh secret, then retires the old one: immediately by default, or after a grace window of up to 24 hours. Rotating never extends the expiry. A rotation by a client member clears `via_partner_org_id`.
 
 For organization keys, both are gated on standing: only someone who holds everything the key holds may edit, rotate, or rename it. The list reports this per key as `editable`. Revoking is not gated this way.
 
@@ -83,7 +86,8 @@ Keys are hashed server-side; only the prefix is queryable.
 
 - **You can't manage another user's personal key.** Even an `owner` can only see and revoke their own. A shared job that must survive people is what organization keys are for. Every organization a key names records its creation, changes, and revocation in its audit log.
 - **Registration hands out no key.** A key needs an organization to be bound to; create it once your organization exists.
-- **Connected apps don't hold keys anymore.** A first-party integration authorized via OAuth holds a connection with short-lived tokens of its own; see [OAuth apps](/en/api/oauth). The key kind those connections used to end in is gone, so there are exactly two kinds left, `personal` and `org`, and a key entry no longer carries an `oauth_client_id`. Read connections at `/account/connections` and under the organization's connections instead.
+- **Connected apps don't hold keys anymore.** A first-party integration authorized via OAuth holds a connection with short-lived tokens of its own; see [OAuth apps](/en/api/oauth). Read them at `/account/connections` and under the organization's connections.
+- **A password reset disconnects every app connected to your account personally.** API keys and connections owned by an organization keep working.
 
 ## Related
 

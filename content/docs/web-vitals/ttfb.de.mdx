@@ -37,7 +37,7 @@ TTFB ist `responseStart` des Navigation-Timing-Eintrags, gezählt ab dem Start d
 
 ## Redirects vor dem ersten Byte [#redirects]
 
-Der Tracker hält außerdem fest, wo der Browser das endgültige Dokument zu laden begann. Ein Login-POST, der mit einem Redirect antwortet, sieht damit nicht mehr wie ein langsamer Server aus.
+Der Tracker hält außerdem fest, wo der Browser das endgültige Dokument zu laden begann.
 
 | Feld | Was es enthält |
 | ---- | -------------- |
@@ -68,13 +68,14 @@ Im Dashboard laufen die Balken von [Wohin die Zeit geht](#how-to-see-ttfb-in-fas
 
 ## TTFB in fastmon ansehen [#how-to-see-ttfb-in-fastmon]
 
-Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert mit Bewertung und Trend, die Seitenaufrufe nach Bewertung und ein paar Sätze dazu, wohin die Zeit geht.
+Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert mit Bewertung und Trend, die Seitenaufrufe nach Bewertung und eine kurze Zusammenfassung.
 
 - **Wohin die Zeit geht**: Redirects, Verbindung, Server, der Weg dazwischen und bei Seitenaufrufen ohne Server-Timing die ungemessene Wartezeit. Je ein Balken für alle Seitenaufrufe und für die, die CDN, Origin-Cache oder keins von beiden beantwortet hat.
 - **Server-Aufteilung**: was [Server-Timing](/de/guides/server-timing) meldet, also Edge, Origin, Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates. Ohne den Header siehst du einen Block und einen Link zur Einrichtung.
 - **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
 - **Wo der TTFB langsam ist**: Seitentypen, Seiten, CDN-Status, Login-Status, Origin-Hosts und mehr, nach langsamen Seitenaufrufen sortiert, jede Zeile mit Aufteilung.
 - **Cache und Origin**: jede Cache-Ebene mit und ohne Hit, ihre Hit-Rate und die Backend-Zeit pro Origin-Host. Ein Host, der aus der Reihe fällt, wird hervorgehoben.
+- **Ein Seitenaufruf**: Das Pageview-Detail zeigt den TLS-Handshake innerhalb des Verbindungsaufbaus und den Start des Service Workers.
 - **Vergleichen**: funktioniert wie auf der LCP-Seite, siehe [Mit einem früheren Zeitraum vergleichen](/de/web-vitals/lcp#compare).
 
 ## Schlechten TTFB verbessern

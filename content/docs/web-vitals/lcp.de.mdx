@@ -3,9 +3,9 @@ title: Largest Contentful Paint (LCP)
 description: "Was LCP ist, was ein guter LCP ist und wie du einen schlechten debuggst, mit fastmon-Daten."
 ---
 
-**LCP** misst, wie lange es dauert, bis das größte sichtbare Element einer Seite da ist. Das ist der Moment, in dem endlich was Sinnvolles auf dem Schirm steht.
+**LCP** misst, wie lange es dauert, bis das größte sichtbare Element einer Seite da ist.
 
-LCP gehört zu den [Core Web Vitals](/de/web-vitals), Googles Standard-Set für Besuchererlebnis, und zählt fürs Suchranking.
+LCP gehört zu den [Core Web Vitals](/de/web-vitals) und zählt fürs Suchranking.
 
 ## Was ist ein guter LCP?
 
@@ -55,7 +55,8 @@ Die LCP-Seite findest du unter **Core Web Vitals → LCP**. Zwei Kacheln zeigen 
 - **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon neben dem Teilen-Link zeigt das Diagramm im ganzen Fenster.
 - **Wo der LCP schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach Seitenaufrufen über 4 s. Eine Zeile öffnet ihr eigenes Diagramm und ihren Breakdown.
 - **LCP-Elemente**: jedes Element mit Selektor, Art, Discovery-Pfad und Phasen. Das Detail prüft HTML, Preload, `fetchpriority`, Lazy Loading und Browser-Cache, und **AI Prompt** gibt es an einen Assistenten weiter.
-- **LCP-Bildgröße**: Das Pageview-Detail nennt die Bytes des LCP-Bilds neben dem Element, und der Explorer hat sie als `lcp_bytes` für Charts, Spalten und Bereichsfilter. Kein Wert bei einem Text-LCP, einem Video, einem Safari-Cache-Treffer oder einem Cross-Origin-Bild ohne `Timing-Allow-Origin`.
+- **LCP-Bildgröße**: Der Explorer hat die Bytes des LCP-Bilds als `lcp_bytes` für Charts, Spalten und Bereichsfilter. Kein Wert bei einem Text-LCP, einem Video, einem Safari-Cache-Treffer oder einem Cross-Origin-Bild ohne `Timing-Allow-Origin`.
+- **Ein Seitenaufruf**: Das Pageview-Detail zeigt das LCP-Element mit seinen Bytes, seiner gemalten Fläche und einen Cache-Treffer getrennt nach Speicher oder Platte.
 
 Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `cache_rate` pro Element.
 

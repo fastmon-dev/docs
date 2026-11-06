@@ -34,8 +34,6 @@ Jede Beobachtung hat eine **Richtung**. Eine Verschlechterung ist ein Problem, e
 
 Ein Shift ist eine Viertelstunde, die weit von dem abweicht, was für diese Viertelstunde üblich ist. **Üblich** ist der Median derselben Viertelstunde an den 7 Tagen davor, je Metrik. Dafür müssen 4 dieser Tage Daten haben, eine neue Application öffnet in den ersten 4 Tagen also nichts.
 
-Die Grafik zeigt die zwei Wege, auf denen ein Shift öffnet, und wie er endet.
-
 <ShiftDiagram lang="de" />
 
 **Öffnet** auf einem von zwei Wegen. Der Shift beginnt mit der ersten dieser Viertelstunden.
@@ -67,20 +65,22 @@ Eine Verschlechterung und jeder Traffic- oder Bot-Shift zeigen auch, was die Ver
 
 ## Trends [#trends]
 
-Ein Trend ist eine schleichende Veränderung über Wochen, einmal täglich um Mitternacht UTC über ganze Tage beurteilt. Gemessen wird der Anteil der Seitenaufrufe über dem Poor-Schwellenwert von LCP, INP, CLS oder TTFB, oder der Anteil mit einem First-Party-Fehler. Die Grafik zeigt die Referenz, die Linie, an der ein Trend öffnet, und die, an der er endet.
+Ein Trend ist eine schleichende Veränderung über Wochen, einmal täglich um Mitternacht UTC über ganze Tage beurteilt. Gemessen wird der Anteil der Seitenaufrufe über dem Poor-Schwellenwert von LCP, INP, CLS oder TTFB, oder der Anteil mit einem First-Party-Fehler. Als Wert der Woche gilt der Median ihrer 7 Tagesanteile.
 
 <TrendDiagram lang="de" />
 
 - **Referenz** ist der gemeinsame Anteil der 14 Tage vor den letzten 7. Sie wird beim Öffnen eingefroren.
-- **Öffnet**, wenn die letzten 7 Tage das 1,3-Fache der Referenz erreichen und mindestens 2 Prozentpunkte darüber liegen. Eine Verbesserung öffnet bei 1/1,3 der Referenz und 2 Punkten darunter.
+- **Öffnet**, wenn der Wert der Woche das 1,3-Fache der Referenz erreicht und mindestens 2 Prozentpunkte darüber liegt, was mindestens 4 der 7 Tage verlangt. Eine Verbesserung öffnet bei 1/1,3 der Referenz und 2 Punkten darunter.
 - **Endet** an der ersten Mitternacht, deren letzte 7 Tage unter dem 1,1-Fachen der eingefrorenen Referenz liegen. Eine Metrik, die sich auf einem neuen Niveau einpendelt, hält ihren Trend monatelang offen.
 - **Pausiert**, solange einer der letzten 7 Tage fehlt oder die Woche weniger als 1.000 Seitenaufrufe mit der Metrik hat.
 
-Das erste Urteil braucht 14 ganze Tage mit Daten. Der Titel eines Trends nennt den Tag, an dem er begann, und sein Satz gibt den Anteil schlechter Seitenaufrufe der letzten 7 Tage und der Wochen davor an.
+Das erste Urteil braucht 14 ganze Tage mit Daten. Ein einzelner schlechter Tag öffnet keinen Trend. Ihn meldet höchstens ein [Shift](#shifts).
+
+Der Titel eines Trends nennt den Tag, an dem er begann. Ohne gefundenen Beginn heißt es „in den letzten 7 Tagen“, nach dem Ende „in der Woche bis“ zum letzten Tag, und das Pop-up zeigt die gemessene Woche. Ein beendeter Trend steht in der Vergangenheit.
 
 ## Auf der Seite Beobachtungen [#page]
 
-**Beobachtungen** in der Seitenleiste zeigt, was gerade offen ist, als eine Liste in zwei Gruppen: was gerade läuft und die Trends. Der gewählte Zeitraum darunter ist die Historie: ein Zeitstrahl je Bereich mit jeder Beobachtung und eine Tabelle der beendeten, mit der Art als erster Spalte.
+**Beobachtungen** in der Seitenleiste zeigt, was gerade offen ist, als eine Liste in zwei Gruppen: was gerade läuft und die Trends. Der gewählte Zeitraum darunter ist die Historie: ein Zeitstrahl je Bereich mit jeder Beobachtung und eine Tabelle der beendeten.
 
 **Eine Beobachtung öffnet als Pop-up** über der Seite, von der sie kam, in der Adresse als `?observation=`. Unter dem Titel stehen Zustand, Beginn, Ende und Dauer in einer Leiste, dann die Veränderung gegenüber dem üblichen Wert. Ein Shift zeigt zusätzlich seine Treiber und die Releases rund um den Beginn.
 
@@ -88,8 +88,10 @@ Das erste Urteil braucht 14 ganze Tage mit Daten. Der Titel eines Trends nennt d
 
 ## Mail [#mail]
 
-fastmon mailt Owner und Member, sobald ein Problem aufgeht: ein Traffic-Einbruch, langsamere Server-Antworten oder Seitenladezeiten oder mehr JavaScript-Fehler, und noch einmal, wenn ein Shift zum ersten Mal wiederkehrt. Ein langsamer Trend mailt einmal, wenn er aufgeht. Verbesserungen und Hinweise verschicken keine Mail.
+fastmon mailt Owner und Member, sobald eine Verschlechterung aufgeht, und noch einmal, wenn ein Shift zum ersten Mal wiederkehrt. Ein Trend mailt einmal, wenn er aufgeht. Verbesserungen und Hinweise verschicken keine Mail.
 
-Die Mail geht an direkte Mitglieder und an die einer Partner-Organisation, in ihrer Sprache und Zeitzone, mit dem Satz der Beobachtung und einem Link zur Seite. Viewer bekommen keine.
+Die Mail geht an direkte Mitglieder und an die einer Partner-Organisation, in ihrer Sprache und Zeitzone. Viewer bekommen keine.
+
+Wie du Beobachtungen an einen Slack-, Discord- oder Webhook-Kanal schickst, steht unter [Beobachtungen weiterleiten](/de/guides/notification-rules#observations).
 
 Abschalten kannst du sie unter **Konto → E-Mails** oder über den Abmeldelink im Fuß der Mail. In der API heißt die Einstellung `observation_mail` auf `GET` und `PATCH /account/notifications`, standardmäßig an.

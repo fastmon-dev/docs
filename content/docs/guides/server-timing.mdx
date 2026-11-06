@@ -7,10 +7,6 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 [TTFB](/en/web-vitals/ttfb) tells you the server was slow. It doesn't tell you *which part* was slow: the database, a third-party call, template rendering, or just a cache miss at the edge. The [`Server-Timing`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Server-Timing) response header is the standard way for your backend to attach that breakdown to the response itself, and the browser exposes it to JavaScript. Fastmon reads it off every pageview.
 
-<Callout type="info" title="New: already collecting">
-  Server-Timing ingestion is live: the beacon already reads the header and every beacon carries it, fully normalized server-side. The Analytics dashboards on top of it are still being tuned, so the panels and groupings may shift while we settle the layout. Nothing you set up now is wasted; the data is being captured today.
-</Callout>
-
 ## What fastmon reads
 
 The header rides on your document response, like any other backend header:
@@ -56,7 +52,7 @@ When the same phase could be filled by more than one metric, fastmon resolves it
 
 > **`fm-*` first-party alias  ›  your site's mapping  ›  built-in vendor alias (`cf…`)  ›  built-in generic alias**
 
-Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-pagetype`). When an `fm-` metric is present it wins, because it's measured at fastmon's own edge rather than reported by the page; it can't be forged from the client and is consistent across every site. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
+Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-pagetype`). When an `fm-` metric is present it wins. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
 
 ## Backend phases
 
@@ -78,7 +74,7 @@ Phases you don't emit are simply absent (NULLs are skipped, never counted as zer
 
 **On a CDN hit the origin phases are not stored.** A CDN replays the origin's header from the request that filled the cache. On a pageview whose CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`, fastmon drops the origin, backend, db, http, render, search, kv, and code durations and the custom timed keys. `edge_dur`, the cache statuses, ages, TTLs, and label keys stay.
 
-**What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top, because a document store is the primary store wherever it appears (Tideways reports `rdbms` and `mongodb` as separate layers of one request). Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well: synchronous broker time in a request is almost always a cheap publish. `code_dur` is the time spent in your own code outside every other layer, shown as "Code". The Shopware plugin passes the Tideways layer `unknown` through, which lands here.
+**What counts where.** `db_dur` is the primary datastore. The relational aliases are different names for the same measurement, so the first one wins; `mongodb` and `sqlite` are added on top. Search engines never count as database time. `kv_dur` is the whole key-value and cache tier, whichever engine backs it: a Redis object cache and the same cache on memcache land in the same column, and the per-key drill-down still says which engine took the time. `apcu` (in-process shared memory) and Shopify's `edge_cart` are in no sum and stay in the maps. Queue brokers (`amqp`, `kafka`, `beanstalk`, `queue`) stay drill-down only as well. `code_dur` is the time spent in your own code outside every other layer, shown as "Code". The Shopware plugin passes the Tideways layer `unknown` through, which lands here.
 
 All nine phases appear on the Server-Timing page, in the response breakdown waterfall, and as metrics and columns in the Explorer (the KV phase is labeled "KV / Cache"; the full page cache is the origin [cache status](#cache-status), a different layer). The pageview drawer lists the phases nested: DB, Search, KV / Cache, HTTP, Render, and Code under Backend, Backend under Origin, each with its share of the row that contains it, and the time not attributed to any layer as an "Unattributed" row.
 
@@ -94,7 +90,7 @@ A cache verdict is carried as a description, not a duration (e.g. `Server-Timing
 CloudFront's bare flags are recognized as a fallback for the CDN layer: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (an explicit CDN key still overrides them).
 
 <Callout type="warn" title="fm-fpc is gone">
-  The origin-status key is `fm-origin-cache`. `fm-fpc` was the old spelling and is no longer recognized: it was the only first-party key calling the origin tier something other than `origin`, which next to `fm-origin-age` would have put two words for one tier in a single header. A header still sending `fm-fpc` shows it in the panel's top-keys list instead of silently filling nothing, so the mistake is visible. `fm-cdn` keeps working; `fm-cdn-cache` is the documented spelling.
+  The origin-status key is `fm-origin-cache`. `fm-fpc` was the old spelling and is no longer recognized. A header still sending it shows `fm-fpc` among the custom keys. `fm-cdn` keeps working; `fm-cdn-cache` is the documented spelling.
 </Callout>
 
 The value is uppercased and normalized to one of the statuses fastmon stores. Fastly's compound forms collapse first (`MISS-CLUSTER` → `MISS`, `HITPASS` → `PASS`, `HIT-STALE` → `STALE`); anything outside the list below passes through as-is, capped to 12 characters, so a vendor-specific status is never silently dropped.
@@ -161,18 +157,18 @@ Fastmon accepts `pageType` / `page_type` and the first-party `fm-pagetype`, lowe
 
 ## Origin host and logged-in
 
-Two more reserved metrics carry a label instead of a duration, and both become dimensions you can filter and group by. Unlike every other promoted column they have **no vendor aliases**: `host`, `node`, `server`, or `user` from an unknown framework could mean anything, so your site opts in by emitting the unambiguous first-party name.
+Two more reserved metrics carry a label instead of a duration, and both become dimensions you can filter and group by. Unlike every other promoted column they have **no vendor aliases**, so your site opts in by emitting the first-party name.
 
 ```http
 Server-Timing: fm-host;desc="web-03", fm-loggedin;desc="no"
 ```
 
-**`fm-host` → `origin_host`** names the machine of your origin tier that rendered exactly this pageview. The value of the split shows in a cluster: when one node of five runs hot (a bad deploy, a full disk, a noisy neighbor), the aggregate `backend_dur` only shows a p95 that drifted, while the per-node split names the box to look at. Rules for the value:
+**`fm-host` → `origin_host`** names the machine of your origin tier that rendered exactly this pageview. Rules for the value:
 
 - Send the **short, stable hostname**, not the FQDN and not a URL. On Kubernetes, use a stable name (StatefulSet ordinal, node name, deployment slot), never the pod name with its random suffix: that changes on every deploy and fills the dimension with values that are dead by the time you read them.
-- A value over **32 characters is dropped, not truncated**: `gethostname()` returns the full internal FQDN on AWS and k8s, and a truncated hostname is a *wrong* node name (two machines differing only after character 32 would merge into one bucket). If the column stays empty, your value is too long.
+- A value over **32 characters is dropped, not truncated**. `gethostname()` returns the full internal FQDN on AWS and k8s. If the column stays empty, your value is too long.
 
-**`fm-loggedin` → `logged_in`** says whether the page was rendered for a signed-in visitor. That's the line that explains cache behavior: a personalized request bypasses the full-page cache by design, so it reports `MISS`/`PASS` and a multiple of the anonymous backend time. Without the flag both populations sit in one average and every cache-hit-rate number is quietly wrong; with it, "our TTFB got worse" resolves into "the logged-in share grew".
+**`fm-loggedin` → `logged_in`** says whether the page was rendered for a signed-in visitor. A personalized request bypasses the full-page cache, so it reports `MISS`/`PASS` and a multiple of the anonymous backend time. The flag keeps both groups apart in every cache number.
 
 `yes` / `no` is enough; `true`/`false`, `1`/`0`, `y`/`n`, `in`/`out`, and `anonymous` are normalized onto them. A third state of your own (say `b2b`) passes through if it is slug-shaped (`^[a-z][a-z0-9_-]{0,15}$`); anything else is dropped rather than guessed at.
 
@@ -181,6 +177,18 @@ Server-Timing: fm-host;desc="web-03", fm-loggedin;desc="no"
 </Callout>
 
 Pageviews that report neither key show as **Not reported**; the empty string is a real filter value for exactly that slice, and `logged_in ≠ yes` is the "anonymous, cacheable traffic only" query.
+
+## In the dashboard [#dashboard]
+
+The Server-Timing page sits under **Performance** and is laid out like the TTFB page.
+
+- **Backend time** stands beside where the answers came from: CDN, full-page cache, or backend.
+- **The request path** is one grid for all pageviews, per CDN status, per origin cache status, and per login. Each arrow fills with the share that reached the next station, and a cache hit ends at its layer.
+- **What the backend spends the time on**: database, cache, search, HTTP calls, own code, and templates at the selected percentile.
+- **History** opens on the backend parts over time, with views per host and per page type.
+- **The table** ranks by total backend time, pageviews times duration, over the pageviews the backend rendered.
+- **The cache card** shows hit rate, age, and remaining lifetime per layer, and the logged-in visitors. The hosts card draws a trend per host.
+- **A custom key** opens a pop-up with its figures, its trend or values, the page types where it takes longest, and a link into the Explorer.
 
 ## Emitting the header
 
@@ -229,7 +237,7 @@ Most CDNs (Cloudflare, Fastly, CloudFront) can append their own cache/edge metri
 
 1. Open your site, then DevTools → **Network** → click the document request → **Headers**. You should see your `Server-Timing` header on the response.
 2. In the same request's **Timing** tab, Chrome renders the `Server-Timing` entries inline: a quick sanity check that the syntax parsed.
-3. In fastmon, open **Analytics → Server-Timing**. New data shows up on the next beacons; give it a few pageviews to accumulate before reading percentiles.
+3. In fastmon, open **Performance → Server-Timing**. New data shows up on the next beacons; give it a few pageviews to accumulate before reading percentiles.
 
 ## Common surprises
 
@@ -244,5 +252,4 @@ Most CDNs (Cloudflare, Fastly, CloudFront) can append their own cache/edge metri
 
 - [TTFB](/en/web-vitals/ttfb): the metric Server-Timing explains.
 - [The RUM beacon](/en/concepts/beacon): every field the beacon reads, including `Server-Timing`.
-- [Analytics](/en/analytics#fetchxhr-and-server-timing): where the Server-Timing view lives.
 - [Query Server Timing](/en/api/analytics/queryAnalyticsServerTiming): the API behind the panel.

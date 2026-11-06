@@ -1,114 +1,109 @@
 ---
 title: Notification rules
-description: Alert when a metric crosses a threshold or changes against the previous window.
+description: Alert channels and members when a metric crosses a threshold or changes, and forward observations.
 ---
 
-A **notification rule** evaluates a condition on a schedule and fires a notification when the condition is met. Two patterns cover what most teams want:
+A notification rule checks a metric of one production application on a schedule and alerts when its condition holds. This page also covers the channels it posts to and forwarding observations.
 
-- **Threshold breach**: "alert when LCP at p75 goes above 3,000 ms."
-- **Relative change**: "alert when a metric is meaningfully worse than in the previous window."
+**Notifications** in the sidebar has three tabs: **Rules**, **Channels**, and **Observations**. The tab is part of the address, so a link opens it. Creating and changing rules and channels needs `notification:write`, which only owners hold. Members and viewers see the rules and their history.
 
-This guide walks through both. The engine's the same; only the condition looks different.
+## Channels [#channels]
 
-**Time to set up:** about ten minutes per rule. **You'll need:** an owner account in the organization. Creating and editing rules needs `notification:write`, which only owners hold; members and viewers see the rules and their history.
+A channel is a Slack, Discord, or webhook endpoint. You set it up once under **Channels → New channel** and pick it in any rule or observation forwarding.
 
-## Where rules live
+| Field        | Meaning                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| **Type**     | Slack, Discord, or Webhook.                                                                                    |
+| **Name**     | How rules and lists show it, for example `#ops-alerts`.                                                        |
+| **URL**      | An https URL that resolves to a public address: a Slack app's incoming webhook, a Discord channel webhook, or your endpoint. |
+| **Language** | English or German, for every message the channel gets.                                                         |
+| **Enabled**  | Off stops all posts to the channel.                                                                            |
 
-Rules are organization-level resources. Every rule is owned by the user who created it, but other org members can see them too. Notifications go to whatever delivery target the rule specifies (by default, the creator's email).
+After saving, the URL is never shown in full again. **Send test message** posts a test and shows whether the endpoint accepted it.
 
-## 1. Pick a preset (or start blank)
+### Webhooks [#webhooks]
 
-Open **Notifications → Rules → New rule** in the fastmon dashboard. The first step shows a list of **presets**: common rule shapes pre-filled with sensible defaults:
+Webhook channels follow [Standard Webhooks](https://www.standardwebhooks.com). Any Standard Webhooks library verifies them.
 
-- *LCP regression*: LCP p75 above the "Good" threshold (2,500 ms) over the last 24 h
-- *CLS regression*: CLS p75 above 0.1
-- *INP regression*: INP p75 above 200 ms
-- *Traffic drop*: pageview count down 50% vs. the previous 24 h
-- *Error rate too high*: more than 1 % of pageviews with a first-party JS error
-- *Page weight bloat*: transferred bytes p75 above 3 MB over 7 days
+- **Signing secret**: fastmon generates a `whsec_` secret when you create the channel and shows it once. **Rotate signing secret** replaces it, shows the new one once, and ends the old one at once.
+- **Headers**: every request carries `webhook-id`, `webhook-timestamp`, and `webhook-signature`. `webhook-id` stays the same on every retry, so you can drop duplicates.
+- **Body**: `{"type", "timestamp", "data"}`. `data` holds the organization, application, site, and channel references, the subject with its `id`, and a `message` with title, summary, language, and link.
 
-Pick the one closest to what you want. You can edit any field afterward. If nothing matches, choose **Blank rule** and skip to step 3.
+To get the whole rule or observation, read it by its `id`. The published OpenAPI document lists the body schemas under `webhooks`.
 
-## 2. Pick a delivery target
+| `type`                   | Sent when                                    |
+| ------------------------ | -------------------------------------------- |
+| `rule.firing`            | a rule's condition starts holding            |
+| `rule.resolved`          | the condition stops holding                  |
+| `rule.test`              | you send a test from a rule                  |
+| `observation.opened`     | a forwarded observation opens                |
+| `observation.occurrence` | a forwarded recurring shift occurs again     |
+| `channel.test`           | you send a test message from the channel     |
 
-Four target types are supported:
+## Create a rule [#create]
 
-- **Email**: to one or more addresses.
-- **Slack**: native incoming-webhook integration.
-- **Discord**: native incoming-webhook integration.
-- **Webhook**: POST to a URL with a JSON payload. Use this for Teams, Mattermost, PagerDuty, Opsgenie, or any other tool with an incoming-webhook URL.
+Open **Rules → New rule**. Pick a preset or **Start from scratch (custom)**, then edit any field.
 
-You can add multiple targets to one rule. Each fires on the same event.
+| Preset                  | Condition                                                            |
+| ----------------------- | -------------------------------------------------------------------- |
+| **LCP regression**      | LCP p75 above 2,500 ms over 24 hours                                 |
+| **CLS regression**      | CLS p75 above 0.1 over 24 hours                                      |
+| **INP regression**      | INP p75 above 200 ms over 24 hours                                   |
+| **Traffic drop**        | requests down by half or more against the 24 hours before            |
+| **Error rate too high** | more than 1 % of pageviews with a first-party JavaScript error       |
+| **Page weight bloat**   | transferred bytes p75 above 3 MB over 7 days                         |
 
-## 3. Define the condition
+### Scope and metric [#scope]
 
-The part that takes a bit of thought. A rule has three pieces:
+- **Application**: one production application. The rule pools all its active sites into one value, or watches one site of it. It sends one message however many sites it pools.
+- **Metric and aggregation**: LCP, INP, CLS, TTFB, the error rates, pageviews, visitors, and the other analytics metrics, with p50, p75, p95, count, or avg. `visitors` and `requests` take `count` only.
+- **Identity**: for `visitors` only, `stitch` (default, works in every mode) or `session` (consent-gated).
+- **Filter**: optional, for example device type mobile, a URL pattern, or `country = DE`.
 
-### What you're measuring
+### Condition [#condition]
 
-- A **scope**: a single site, or a site **tag** to cover a group of sites with one rule (the rule evaluates each site in the tag separately).
-- A **metric** (LCP, INP, CLS, FCP, TTFB, the first-party and third-party error rates, DNS lookup, TCP connection, failed resource rate, pageviews, visitors, and the rest of the analytics metrics).
-- An **aggregation** (p50, p75, p95, count, avg, …). The `visitors` and `requests` metrics are counts, so they only take `count`.
-- For the **visitors** metric, an optional **identity** picks which identifier backs the count: `stitch` (the default, edge-derived, works in every mode) or `session` (consent-gated). It applies only to `visitors`.
-- An optional **filter**, such as mobile only, a URL pattern, a country list, or `status_code = 500`.
+- **Window**: 1 hour, 6 hours, 24 hours, 7 days, or 30 days. fastmon checks the rule every fifth of the window, between 1 and 15 minutes.
+- **Absolute**: the value is above or below a threshold, for example LCP p75 above 3,000 ms.
+- **Relative change**: the value rises or drops by a percentage against the baseline window right before. In the API the threshold is a ratio: `-0.5` is a drop by half.
 
-### When you're measuring it
+On a low-traffic site, a relative change over 24 hours is noisy. Widen the window to 7 days before you loosen the threshold.
 
-- A **time window**: 1 hour, 6 hours, 24 hours, 7 days, or 30 days. Shorter windows catch things faster but are noisier.
-- There's no cadence to configure. Fastmon derives the evaluation interval from the window (a fifth of the window, clamped between 1 and 15 minutes), so a 1-hour rule is checked every ~12 minutes and a 24-hour rule every 15.
+### Targets [#targets]
 
-### What's a breach
+**Send to** picks channels and **Members by mail**. Members get the mail in their own language, English or German. A rule needs at least one target.
 
-Pick one of:
+## Firing and resolving [#firing]
 
-- **Above / below threshold** (absolute): fixed number. "LCP p75 > 3,000 ms."
-- **Changes against the previous window** (relative): compared to the baseline window directly before the current one. "LCP p75 +20%." The baseline defaults to the same length as the measurement window.
+- **A rule fires on the transition.** It sends when the condition starts holding, then stays silent while it holds.
+- **Re-notify**: by default once per episode. Set 1 hour to 7 days to resend while the condition still holds.
+- **Resolved**: when the condition stops holding, the rule sends a resolved message. An evaluation without data changes nothing.
+- **Switching a rule on** starts it from a clear state.
+- **Retries**: a 4xx answer other than 429 fails at once. Any other failure is retried for about 50 minutes.
 
-Each shape has its own gotcha:
+## Test and history [#test]
 
-- **Absolute thresholds are stable**, but they punish you on the day a big new segment hits your site (more slow-network visitors → metrics dip → alert you can't do anything about).
-- **Relative thresholds are sensitive** but noisy on low-volume sites. One bad day-over-day comparison fires the alert. On a low-traffic site, prefer a longer window (7 or 30 days).
+**Evaluate now (dry-run)** runs the rule against the current window without sending anything. If it fires on every try, the threshold is too tight.
 
-## 4. Dry-run the rule
+**Send a test to every target** sends a sample message through the saved rule. It is limited to 5 tests per organization in 10 minutes, and the pop-up then says how long to wait.
 
-Before you save, click **Evaluate now**. That runs the rule against the **current** window and tells you whether it would fire. Good sanity check for the threshold: if it fires on every test, the threshold is too tight.
+The test result and the **History** list every target with **Delivered** or **Failed** and the reason.
 
-There's a corresponding API endpoint: `POST /notification-rules/{id}/evaluate`.
+## Forward observations [#observations]
 
-## 5. Send a synthetic test
+The **Observations** tab posts [observations](/en/observations) to a channel. **New subscription** creates one forwarding.
 
-Once the rule is saved, click **Send test notification**. This sends a sample message to all delivery targets so you can confirm they receive it.
+| Field                | Meaning                                                                  |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Channel**          | Where the observations go. Fixed after creation.                         |
+| **Observations of**  | One application, or **All applications**. Fixed after creation.          |
+| **Directions**       | Degradation, Improvement, Neutral. Default: Degradation only, as in the mail. |
+| **Metrics**          | Default: all metrics.                                                    |
 
-API equivalent: `POST /notification-rules/{id}/test`.
+A channel gets the same events as the observation mail, in its language, with a link to the observation. A failed post is retried for about an hour.
 
-## 6. Watch the history
-
-Each rule has a **History** tab that lists every evaluation, whether it fired, and (if it fired) where the notification went. If you ever get an alert that doesn't match what you see in the dashboard, the history is the audit trail to start from.
-
-## A worked example: LCP regression on production
-
-Goal: alert when LCP at p75 on the production site is more than 20% worse than the previous 24 hours.
-
-| Field            | Value                                       |
-| ---------------- | ------------------------------------------- |
-| Scope            | site `acme-marketing` (production)          |
-| Metric           | `lcp`                                       |
-| Aggregation      | `p75`                                       |
-| Time window      | last 24 hours                               |
-| Condition        | changes against previous window (+20%)      |
-| Re-notify after  | 24 hours                                    |
-| Delivery         | `team-perf@example.com`                     |
-
-On a low-volume site, the day-over-day comparison is the piece that bites: one slow overnight period can swing a 24-hour p75 by 20% on its own. If your traffic is thin, widen the window to 7 days before you loosen the threshold.
-
-## Common surprises
-
-- **Rules fire on the transition, not on every evaluation.** A rule notifies when its condition flips from not met to met; while the regression persists, it stays silent. If you want periodic reminders during a long incident, set **Re-notify after** on the rule; it re-sends after that much time if the condition is still met.
-- **A regression alert during a known maintenance window is still noise.** Pause the rule, or filter by URL to skip the affected paths.
-- **There are no per-release alert conditions.** Rules compare against thresholds or the previous window, not against a release. To judge a specific deploy, use [Compare releases](/en/guides/compare-releases) after the alert.
+**Partner organizations** can forward their clients' observations: of one client, one of its applications, or **All clients**, including clients linked later. Only direct members of the partner see and set these up.
 
 ## Related
 
-- [Notification rules API](/en/api): programmatic creation.
-- [Releases concept](/en/concepts/releases): tagging deploys.
-- [Compare releases](/en/guides/compare-releases): wire CI/CD to tag deploys.
+- [Notifications API](/en/api): the `/notifications/rules` and `/notifications/channels` routes.
+- [Compare releases](/en/guides/compare-releases): judge a deploy after an alert.

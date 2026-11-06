@@ -3,7 +3,7 @@ title: Cumulative Layout Shift (CLS)
 description: What CLS measures, what's a good CLS, and how to track down the element that's jumping.
 ---
 
-**CLS** measures how often visible elements move around unexpectedly. It's the metric for the classic "the page jumped while I was reading it": the bug that makes someone mistap a button or lose the line they were reading.
+**CLS** measures how often visible elements move around unexpectedly.
 
 CLS is part of [Core Web Vitals](/en/web-vitals) and counts toward search ranking.
 
@@ -54,7 +54,8 @@ The CLS page sits under **Core Web Vitals → CLS** and is built like the [LCP p
 
 - **Where the CLS is poor**: page type and device, or another dimension, ranked by poor pageviews. Pages with ads, late widgets, or consent banners usually lead.
 - **What shifts**: the elements behind the largest shift, or the same by HTML element type.
-- **By release**: [compare](/en/web-vitals/lcp#compare) a release against the one before. A swapped font or changed layout shows up at once.
+- **By release**: [compare](/en/web-vitals/lcp#compare) a release against the one before.
+- **One pageview**: the pageview detail shows when the largest shift happened and how far down the page the visitor had scrolled.
 
 ## How to improve a high CLS
 
