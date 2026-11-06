@@ -18,13 +18,13 @@ There's a single beacon (`standard.js`). The server compiles it per site into on
 
 fastmon sets **no cookies at all**, in either build. By default nothing is written to the device: only the `Full` preset (or turning on [`collect_sessions`](/en/tracker#collect-sessions)) writes the `sessionStorage._fms` session id. Whether that write lands on page load or waits for consent is the [`session_consent`](/en/tracker#session-consent) setting.
 
-You don't pick the build in the `<script>` tag; the server resolves it from the site's settings and ships the right one. A change to a setting that affects the served bundle rolls the script cache automatically.
+You don't pick the build in the `<script>` tag; the server resolves it from the site's settings and ships the right one.
 
 ## Why it matters
 
-The beacon is the boundary between fastmon and the visitor: what it measures, when it flushes, and which identifiers it mints all happen in the browser. We keep that surface small and document it in full on this page, and the wire shape is enforced server-side, so what the beacon can and can't do stays auditable and easy to defend in a privacy review, independent of the script itself.
+The beacon is the boundary between fastmon and the visitor, and this page documents it in full. The collector enforces the wire shape server-side, independent of the script itself.
 
-The shipped script is minified and obfuscated on purpose, not to hide what it does (that's all on this page) but so content and ad blockers can't pattern-match it by name and silently block it, which would leave holes in your monitoring.
+The shipped script is minified and obfuscated so content and ad blockers can't match it by name.
 
 ## What the beacon observes
 
@@ -112,15 +112,18 @@ Key abbreviations:
 - `b`, `v`, `d`, `o`, `vc`, `c`: browser family, browser major, device class, OS family, viewport class, connection type. The first four come from `FM-*` edge headers; `vc` and `c` come from the browser. `rtt` / `dl` join the connection group as real-time RTT and downlink estimates.
 - `pre`, `ad`, `vd`: prerender flag (Speculation Rules API), activation delta (ms, prerendered pages only), and visibility-dirty (was the tab backgrounded during the pageview).
 - Metric keys are short mnemonics: `ttfb`, `fcp`, `lcp`, `inp`, `cls`, page load (`plt`), the per-type resource and third-party rollups, and the per-script Long Animation Frame aggregates. `frs` is `finalResponseHeadersStart` (stored as `ttfb_final`, `null` outside Chromium), the first byte of the final response where 103 Early Hints make `ttfb` point at the interim one.
-- `fs`, `rqs`, `rdc`: `fetchStart`, `requestStart`, and `redirectCount` of the navigation entry, the positions before the first byte. All three are `null` on a soft navigation and a BFCache restore, the two positions on a prerender too. See [Redirects before the first byte](/en/web-vitals/ttfb#redirects).
-- `cap`: a bitmask of what the browser can observe, read once at start from `PerformanceObserver.supportedEntryTypes`, the fields of the navigation entry, `interactionId`, and `navigator.connection`. On every beacon, so an empty LCP on Safari reads as unsupported and not as a page that never painted.
+- `fs`, `rqs`, `rdc`, `ws`, `tls`: `fetchStart`, `requestStart`, `redirectCount`, and `workerStart` of the navigation entry, plus the TLS handshake inside the connection. All are `null` on a soft navigation and a BFCache restore, the two positions on a prerender too. See [Redirects before the first byte](/en/web-vitals/ttfb#redirects).
+- `cap`: a bitmask of what the browser can observe, read once at start from `PerformanceObserver.supportedEntryTypes`, the fields of the navigation entry, `interactionId`, and `navigator.connection`. On every beacon.
+- `ca`: a bitmask of what the browser gives away about itself, read once at start, stored as the names in `client_anomalies`. See [Bot and datacenter labels](/en/privacy#bot-and-datacenter-labels).
 - `tbw`, `pw`, `bcb`: the bytes a view downloaded (`transferSize`), the page weight and its part from the browser cache (`encodedBodySize`, so a cache hit counts like a download). `pw` and `bcb` are `null` where a visible entry hides its size, as Safari does on a cache hit, and leave out the tracker's own beacons and cross-origin files without `Timing-Allow-Origin`.
-- `lby`: the size of the LCP image, the `encodedBodySize` of the LCP URL's resource entry. Absent for a text LCP, a video, a soft navigation, and an image whose entry hides its body.
+- `ldv`, `lsz`, `lby`: where the LCP resource came from (`memory`, `disk`, `cache`, `network`), the painted area of the LCP element, and the `encodedBodySize` of the LCP image. `lby` is absent for a text LCP, a video, a soft navigation, and an image whose entry hides its body.
 - `tpm`, `tpc`, `tpt`: third-party duration per host (the 20 largest sums), per category, and the dominant category, over every resource off the page's host. The categories are `analytics`, `ads`, `tag-manager`, `experimentation`, `consent`, `widget`, `chat`, `payment`, `video`, `social`, `maps`, `cdn`, and `other`.
 - `lf`: the 10 scripts with the most time in long animation frames, as `[url, total_ms, frames, kind]`. `kind` is `eval` for a URL on the page's own host that names no document, resource entry, or script `src`, as the eval'd code of A/B tools does.
+- `ild`, `ils`, `ili`, `ilf`, `ilx`: the longest Long Animation Frame overlapping the INP interaction, as duration, longest script, invoker type, function name, and forced layout. Chromium only.
+- `sd`, `csd`, `isd`, `csh`: scroll depth in percent, at its furthest, at the largest shift, and at the INP interaction, plus the start time of the largest shift.
 - `chr`: browser cache hit rate over the resources whose cache state is known, Safari's cache hits included. A cross-origin resource without `Timing-Allow-Origin` stays out, and a pageview without any known resource sends `null`.
 - `evts`: your [custom events](/en/events), on the next beacon of their pageview or, after about a second without one, on an `event_update` sent by `fetch`, at most 20 per pageview. Events still queued at page hide also go by keepalive `fetch`, which EasyPrivacy does not block.
-- `errc`, `frc`: the two error counters, kept apart. `errc` counts JavaScript errors (exceptions and unhandled rejections), `frc` counts failed `<img>`/`<script>`/`<link>` loads. Both count every occurrence, not just the entries that fit below, and both are absent rather than zero when the beacon reported nothing for their channel. See [what counts as an error](/en/tracker#what-counts).
+- `errc`, `frc`: the two error counters, kept apart. `errc` counts JavaScript errors (exceptions and unhandled rejections), `frc` counts failed `<img>`/`<script>`/`<link>` loads. Both count every occurrence, also beyond the entries below, and both are absent rather than zero when the beacon reported nothing for their channel. See [what counts as an error](/en/tracker#what-counts).
 - `errs`: error entries (`t` type, `n` count, `m` message, `fr` frames), up to eight: the top five JavaScript errors and the top three failed resources. `t`, `n`, and each frame's host ship in every configuration, plus path and line/column for frames in your own first-party scripts. The message `m` needs [`collect_error_messages`](/en/tracker#collect-error-messages) and is scrubbed of URLs, emails, IDs, and quoted strings; the detail of inline and third-party frames needs [`collect_error_frames`](/en/tracker#collect-error-frames). The collector derives the pageview's **error origin** from the frames: `first` for a frame on the page's own registrable domain, `third` for a foreign host only, empty without an error.
 - `snl`: **Route Load** for soft navigations (`soft_nav_load`): the max end-offset of the route's own same-site requests. A network proxy for SPA route-load, never merged into LCP/FCP; `null` on hard loads and when the route fired no qualifying request.
 - `tv`: tracker version, format `YYMMDD-<git-sha>[-dirty]`.
@@ -180,7 +183,7 @@ Payloads larger than 8 KiB return `413`. If `cst` is more than 5 minutes off the
 ## Pageviews and flushes [#things-worth-knowing]
 
 - **SPA route changes start a new pageview.** The script stays loaded, but soft-navs (patched `history.pushState` + `popstate`) mint a new `pvid`, reset the Web Vitals observers, and flush a `softnav` beacon for the previous pageview. So one tab can emit many pageviews.
-- **Multiple flushes per pageview.** The buffer flushes on lifecycle triggers (`init`, `loaded`, `error_update`, `event_update`, `softnav`, `hidden`, `frozen`, `terminated`), not just on tab switch. Expect more than one `POST /c/` per visit.
+- **Multiple flushes per pageview.** The buffer flushes on lifecycle triggers (`init`, `loaded`, `error_update`, `event_update`, `softnav`, `hidden`, `frozen`, `terminated`). Expect more than one `POST /c/` per visit.
 
 ## Related
 

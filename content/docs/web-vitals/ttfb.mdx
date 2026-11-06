@@ -37,7 +37,7 @@ TTFB is `responseStart` of the Navigation Timing entry, counted from the navigat
 
 ## Redirects before the first byte [#redirects]
 
-The tracker also records where the browser started fetching the final document, so a login POST answered by a redirect no longer reads as a slow server.
+The tracker also records where the browser started fetching the final document.
 
 | Field | What it holds |
 | ----- | ------------- |
@@ -68,13 +68,14 @@ In the dashboard, the bars of [Where the time goes](#how-to-see-ttfb-in-fastmon)
 
 ## How to see TTFB in fastmon [#how-to-see-ttfb-in-fastmon]
 
-The TTFB page sits under **Performance → TTFB**. On top are the value with its rating and trend, the pageviews by rating, and a few sentences on where the time goes.
+The TTFB page sits under **Performance → TTFB**. On top are the value with its rating and trend, the pageviews by rating, and a short summary.
 
 - **Where the time goes**: redirects, connection, server, the way in between, and the unmeasured wait of pageviews without Server-Timing. One bar each for all pageviews and for those answered by the CDN, the origin cache, or neither.
 - **Server split**: what [Server-Timing](/en/guides/server-timing) reports, as edge, origin, database, cache, search, HTTP calls, own code, and templates. Without the header you see one block and a link to the setup guide.
 - **History**: the selected percentile against the rating zones, one line per phase, or one line per page type, beside the distribution. The maximize icon fills the window with the chart.
 - **Where the TTFB is slow**: page types, pages, CDN status, login state, origin hosts, and more, ranked by slow pageviews with the split in every row.
 - **Cache and origin**: each cache layer with and without a hit, its hit rate, and the backend time per origin host. A host unlike its peers is called out.
+- **One pageview**: the pageview detail shows the TLS handshake inside the connection and the service worker start.
 - **Compare**: works as on the LCP page, see [Compare with an earlier window](/en/web-vitals/lcp#compare).
 
 ## How to improve a slow TTFB

@@ -17,6 +17,168 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-06" type="new" area="platform" title="Benachrichtigungskanäle für Slack, Discord und Webhooks">
+
+Benachrichtigungen hat jetzt drei Tabs: Regeln, Kanäle und Beobachtungen. Einen Kanal richtest du einmal ein, danach können alle Regeln und Beobachtungen dorthin posten.
+
+- **Kanäle** sind Slack, Discord oder ein Webhook, jeweils mit Name, https-URL, Sprache (Deutsch oder Englisch) und Schalter. Eine Testnachricht prüft den Kanal, und die gespeicherte URL siehst du danach nie wieder vollständig.
+- **Beobachtungen landen auch in Kanälen.** Du abonnierst einen Kanal für eine Application oder alle, gefiltert nach Richtung und Metrik. Standardmäßig kommen nur Verschlechterungen, wie bei der Mail.
+- **Agenturen** posten die Beobachtungen eines Kunden, einer seiner Applications oder aller Kunden in ihre eigenen Kanäle. Das richten nur direkte Mitglieder der Partner-Organisation ein.
+- **Webhooks folgen Standard Webhooks**: ein Body `{type, timestamp, data}`, signiert mit `webhook-signature`. fastmon erzeugt das `whsec_`-Secret, zeigt es einmal und ersetzt es beim Rotieren.
+
+Doku: [Benachrichtigungsregeln → Kanäle](/de/guides/notification-rules#channels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Benachrichtigungsregeln senden an Kanäle und Mitglieder">
+
+Eine Regel beobachtet jetzt eine Production-Application, alle ihre Sites zusammen oder eine einzelne, und sendet an Kanäle und per Mail an Mitglieder.
+
+- **Entfallen** sind freie Adressen, URLs und Secrets pro Regel, Nachrichtenvorlagen und der Tag-Scope.
+- **Eine Entwarnung** kommt, sobald die Bedingung nicht mehr zutrifft. Eine relative Änderung ist ein Verhältnis, `-0.5` heißt also Halbierung.
+- **Test und Verlauf** zeigen jedes Ziel, ob es zugestellt wurde und falls nicht, warum. Pro Organisation sind 5 Tests in 10 Minuten möglich.
+- **In der API** liegen die Regeln jetzt unter `/notifications/rules/{rule_id}`, die Vorschau unter `POST /organizations/{org_id}/notifications/rules/preview`. Die alten Pfade `/notification-rules/…` gibt es nicht mehr, und Antworten nennen Kanäle, Mitglieder und Application als `{id, name}`.
+
+Doku: [Benachrichtigungsregeln](/de/guides/notification-rules).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="dashboard" title="Dünne Stunden ausblenden">
+
+Das Filter-Pop-up hat einen neuen Abschnitt Darstellung mit Spärliche Daten (Taste `s`). Damit setzt du Stunden mit wenig Traffic ab, auf jeder Karte einer Seite dieselben.
+
+- **Automatisch** wählt die dünnsten Stunden in drei Stufen und zeigt vor dem Anwenden den Schwellenwert und die Zahl der Stunden.
+- **Tageszeit** behält einen Stundenbereich deiner Wahl, etwa 6 bis 24, und zeigt im Seitenkopf einen Chip „Stunden“.
+- **Ausblenden** nimmt diese Stunden aus jeder Zahl der Seite und schneidet sie aus der Achse stündlicher Charts. **Abblenden** zeichnet ihre Werte blass und ändert keine Zahl.
+- **In der API** funktioniert `filters.hour_of_day` mit `timezone` auf jeder Analytics-Route hinter diesen Seiten. `POST /analytics/sparse-hours` liefert die dünnen Stunden, `sparse_buckets: {"min_pageviews": n, "exclude": true}` lässt sie weg.
+
+Doku: [Analytics → Spärliche Daten und Tageszeit](/de/analytics#sparse-data).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="TLS-Handshake, Worker-Start, LCP-Fläche und Scrolltiefe">
+
+Jeder Pageview bringt mehr Attribution mit, und das Pageview-Pop-up zeigt sie an.
+
+- **`tls`** (`tls_handshake`): der Teil der Verbindung, den der TLS-Handshake gedauert hat.
+- **`ws`** (`worker_start`): wann ein Service Worker gestartet ist. So lässt sich die Zeit vor `fetch_start` von einem Redirect unterscheiden.
+- **`lsz`** (`lcp_area`): die gemalte Fläche des LCP-Elements, auf zwei signifikante Stellen gerundet. `ldv` (`lcp_delivery`) sagt jetzt `memory` oder `disk`, wo es bisher `cache` hieß.
+- **`csh`** (`cls_shift_time`): wann der größte Layout Shift passiert ist.
+- **`sd`, `csd`, `isd`** (`scroll_depth_max`, `cls_scroll_depth`, `inp_scroll_depth`): wie weit der Besucher nach unten gescrollt hat und wo der größte Shift und die INP-Interaktion lagen, von 0 bis 1.
+
+Alle Felder sind Klasse A und werden in jedem Privacy-Modus erfasst. Pageviews aus gecachten älteren Bundles lassen sie leer.
+
+Doku: [Der Beacon → Der Wire-Payload](/de/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="Das Skript hinter einer langsamen Interaktion">
+
+Ein Pageview nennt jetzt in Chromium den Long Animation Frame, auf den seine INP-Interaktion gewartet hat. Dazu gehören die Dauer des Frames, sein längstes Skript, wie es aufgerufen wurde, der Funktionsname und die erzwungene Style- und Layout-Zeit.
+
+Die Wire-Keys sind `ild`, `ilx`, `ils`, `ili` und `ilf`, gespeichert als `inp_loaf_duration`, `inp_loaf_forced_layout`, `inp_loaf_script`, `inp_loaf_invoker_type` und `inp_loaf_function`. Ask kann die beiden Dauern wie die INP-Subparts als Chart zeigen.
+
+Doku: [INP → INP in fastmon ansehen](/de/web-vitals/inp#how-to-see-inp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="Anzeichen von Automatisierung">
+
+Der Tracker prüft beim Start einmal, ob ein Automatisierungs-Framework auf `window` liegt, die Sprachliste leer ist oder der Browser sich auf andere Weise widerspricht. Der Beacon schickt sie als Bitmaske in `ca`, gespeichert wird nur die Liste ihrer Namen in `client_anomalies`, ohne Werte.
+
+Ein Automatisierungs-Framework setzt `ua_anomaly` auf `automation` und stuft den Pageview in `bot_class` auf `suspect`. Die übrigen Anzeichen ändern kein Urteil.
+
+Doku: [Datenschutz → Bot- und Rechenzentrums-Labels](/de/privacy#bot-and-datacenter-labels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Seitengewicht ersetzt Übertragungsgröße und Ressourcen">
+
+Netzwerk → Seitengewicht bewertet, was eine Seite beim ersten Aufruf wiegt. Ein warmer Browser-Cache lässt eine Seite also nicht mehr leichter aussehen. Daneben zeigt die Seite, was ein warmer Aufruf spart, wie viele Aufrufe warm sind und was ein Aufruf übertragen hat. Alte Links auf Übertragungsgröße und Ressourcen führen mit ihren Filtern hierher.
+
+Doku: [Web Vitals → Weitere Metrik-Seiten](/de/web-vitals#other-metric-pages).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Die Server-Timing-Seite, neu aufgebaut">
+
+Die Server-Timing-Seite ist jetzt aufgebaut wie die TTFB-Seite. Oben steht die Backend-Zeit neben der Herkunft der Antworten (CDN, Full-Page-Cache oder Backend), darunter Request-Pfad, Verlauf, Cache, Hosts und deine eigenen Keys.
+
+- **Der Request-Pfad** ist ein Raster für alle Pageviews und je CDN-Status, Origin-Cache-Status und Login.
+- **Die Backend-Anteile** (Datenbank, Cache, Suche, HTTP-Calls, eigener Code, Templates) stehen beim gewählten Perzentil.
+- **Die Tabelle** sortiert Seiten nach gesamter Backend-Zeit, also Pageviews mal Dauer.
+
+Doku: [Server-Timing → Im Dashboard](/de/guides/server-timing#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Ein Trend braucht mehr als einen schlechten Tag">
+
+Die Trend-Spur misst eine Woche jetzt als Median ihrer 7 Tage. Ein Trend öffnet erst, wenn mindestens 4 der 7 Tage über dem Schwellenwert liegen, ein einzelner schlechter Tag bleibt ein Shift.
+
+Findet fastmon keinen Beginn, nennt der Trend auch keinen. Er heißt dann „in den letzten 7 Tagen“ und nach seinem Ende „in der Woche bis“ zu seinem letzten Tag.
+
+Doku: [Beobachtungen → Trends](/de/observations#trends).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Anmeldung und zweiter Faktor">
+
+- **Änderst du dein Passwort**, bleibst du auf diesem Gerät angemeldet, alle anderen Sitzungen enden. Dasselbe gilt, wenn du 2FA ein- oder ausschaltest oder einen Passkey hinzufügst oder entfernst.
+- **Eine Bestätigungsmail** kommt nach jeder Passwortänderung und jedem Reset. Ein Reset trennt außerdem die Apps, die du persönlich verbunden hast. Organisations-Keys funktionieren weiter.
+- **Fehlversuche sind begrenzt.** Nach 5 falschen Codes, Passkeys oder Passwörtern in einer Bestätigung binnen 15 Minuten musst du warten. Die Passwort-Anmeldung hat eigene Limits, Passkey, Google und GitHub bleiben offen.
+- **Ein TOTP-Code gilt nur einmal.** Meldest du dich an und bestätigst binnen derselben 30 Sekunden eine Aktion, brauchst du den nächsten Code.
+- **Eine bestandene Bestätigung hält 10 Minuten** in dieser Sitzung, eine zweite sensible Aktion fragt also nicht erneut.
+- **Die Registrierung** verrät nicht mehr, ob es zu einer Adresse schon ein Konto gibt.
+
+Doku: [API → Authentifizierung](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Strengerer Partner-Zugriff">
+
+Partner-Zugriff kann keine Mitglieder mehr einladen. Eine Agentur übergibt einen Kunden mit `owner_email`, wenn sie ihn anlegt. Ein Key oder eine Verbindung, die eine Agentur in einem Kunden erstellt hat, zählt nicht mehr als dessen eigene, und das Löschen der Agentur widerruft sie.
+
+Doku: [Organisationen → Partner-Zugriff](/de/concepts/organizations#partner-access).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Zeitraum und Filter auf dem Handy">
+
+Auf dem Handy ersetzt eine Reihe Chips über der Seite die Filter-Pille und das Seitenpanel. Jeder Chip öffnet den Editor nur für seinen Zeitraum, sein Perzentil, Gerät, Traffic oder Filter. Der Zeitraum öffnet sich als Sheet mit großen Kacheln, die mit einem Tipp greifen.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="fastmon ask behält Scope und Zeitzone">
+
+Öffnest du fastmon ask, bleiben Application, Zeitraum und Filter erhalten, und der Scope-Chip öffnet die Application-Auswahl. Ask liest und nennt Zeiten in deiner Zeitzone, ein Tag beginnt also um deine Mitternacht. In der API schickst du dafür `timezone` mit der Nachricht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="new" area="platform" title="Eine öffentliche Demo">
+
+`/demo` öffnet ohne Konto ein schreibgeschütztes Dashboard eines Demo-Shops, „Demo ansehen“ auf der Login-Seite führt dorthin. Ein Balken oben sagt, dass der Traffic simuliert ist, und verlinkt den Demo-Shop, dessen Besuche sofort erscheinen. Mit `?to=` öffnest du direkt eine Seite, etwa `/demo?to=/vitals/lcp`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="changed" area="dashboard" title="Ein Datumsformat überall">
+
+Jedes Datum im Dashboard sieht jetzt gleich aus: „02.11.2026, 22:50“ auf Deutsch, „2 Nov 2026, 22:50“ auf Englisch. Auch Seiten, die bisher das Format des Browsers nutzten, etwa Passkeys, Besucher und die CSP- und NEL-Reports, folgen ihm.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="fixed" area="api" title="Third-Party-Zeit heißt total_ms">
+
+`POST /analytics/third-party` liefert `total_ms` je Host und gesamt. Die Werte `count` und `resource_count` waren schon immer summierte Ladezeit in Millisekunden, keine Requests. Beide alten Namen funktionieren weiter und sind deprecated, das MCP-Tool `get_third_party_impact` liefert nur noch `total_ms`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="fixed" area="platform" title="Finalisierte Pageviews verlieren einen weggefallenen Wert">
+
+Fehlt ein Wert im letzten Beacon eines Pageviews, fehlt er jetzt auch im finalisierten Pageview. Ein LCP-Bild, das zu Text wurde, behält nicht mehr sein Bild-Flag und seine LCP-Subparts. Vor dem 4. November finalisierte Pageviews behalten ihre alten Werte.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-03" type="new" area="platform" title="Der Wochenrückblick, für jedes Konto">
 
 Der Wochenrückblick verlässt die Admin-Vorschau. Die Seite liegt für jedes Mitglied unter Analytics, und die ersten Mails sind raus.

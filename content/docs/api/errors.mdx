@@ -74,18 +74,20 @@ The full list, grouped by category.
 | `invalid_credentials`     | Email/password combination didn't match.                                             |
 | `two_factor_required`     | Login passed step one; a TOTP code is needed to complete the session.                |
 | `invalid_two_factor_code` | The TOTP code was wrong or expired.                                                  |
-| `session_expired`         | The session cookie is no longer valid. Log in again.                                 |
-| `invalid_token`           | Short-lived opaque token (email verification, password reset, OAuth state, 2FA temp) was invalid or expired. Distinct from `session_expired` on purpose: don't bounce the user to /login on a stale reset link. |
+| `session_expired`         | The session cookie is no longer valid, or a step-up on an account without password and second factor needs a sign-in within the last 10 minutes. Sign in again. |
+| `invalid_token`           | Short-lived opaque token (email verification, password reset, OAuth state, 2FA temp) was invalid or expired. Not a reason to send the user to /login. |
 | `credential_expired`      | The API key is genuine but past its `expires_at`. Create a new key.                  |
 
 ### Authorization
 
 | Code                          | Meaning                                                                          |
 | ----------------------------- | -------------------------------------------------------------------------------- |
-| `forbidden`                   | Authenticated, but not allowed for this action.                                  |
+| `forbidden`                   | Authenticated, but not allowed for this action. Also a session sign-in from an `Origin` the API does not allow. |
 | `organization_access_denied`  | The token/user can't access this organization.                                   |
 | `site_access_denied`          | The token/user can't access this site.                                           |
 | `admin_required`              | The action requires platform-admin privileges.                                   |
+| `admin_two_factor_required`   | An admin route, but the admin has neither TOTP nor a passkey. Enroll one on the account page. |
+| `demo_session`                | The read-only demo session may not call this route.                              |
 | `permission_denied`           | In the organization, but without the permission the route needs. `details.permission` names it; for relationship rules (handing out the owner role) `details.required_role` does. Also answered when an API key was not issued for this organization. |
 
 ### Not found
@@ -101,12 +103,13 @@ The full list, grouped by category.
 | `partner_not_found`        | Partner relationship doesn't exist.                                                 |
 | `user_not_found`           | User doesn't exist or isn't visible to you.                                         |
 | `resource_not_found`       | Catch-all for resources without a more specific code.                               |
+| `demo_unavailable`         | `POST /auth/demo-session`: no demo is set up, or it is switched off.                |
 
 ### Conflict / state
 
 | Code                          | Meaning                                                                          |
 | ----------------------------- | -------------------------------------------------------------------------------- |
-| `email_already_registered`    | Sign-up attempted with an email that already has an account.                     |
+| `email_already_registered`    | An email change names an address that already has an account. Sign-up answers 201 either way. |
 | `site_already_exists`         | Domain is already registered in this organization.                               |
 | `release_already_exists`      | A release with this version already exists on the site.                          |
 | `organization_inactive`       | The organization is suspended.                                                   |
@@ -116,6 +119,7 @@ The full list, grouped by category.
 | `circular_partner_forbidden`  | Partner relationship would create a cycle.                                       |
 | `self_transfer_forbidden`     | Can't transfer ownership to yourself.                                            |
 | `last_owner`                  | Demoting or removing the organization's last owner would leave nobody who can administer it. |
+| `demo_user_forbidden`         | The demo account cannot be added to or invited into an organization.            |
 | `conflict`                    | Catch-all conflict without a more specific code.                                 |
 
 ### Entitlement [#entitlement]
@@ -143,7 +147,7 @@ Answered with `402`. The permission was there; what the organization is on does 
 
 | Code           | Meaning                                                                |
 | -------------- | ---------------------------------------------------------------------- |
-| `rate_limited` | Too many requests. `Retry-After` is set on the response.               |
+| `rate_limited` | Too many requests. `Retry-After` is set on the response. Also 5 wrong passwords, TOTP codes, or passkeys in a step-up or password change within 15 minutes, with `details.retry_after_seconds`. |
 
 ### Plan / entitlement
 
@@ -187,7 +191,7 @@ Answered with `402`. The permission was there; what the organization is on does 
 ## Reporting an error
 
 <Callout type="warn">
-  Always include the `request_id` when you contact support. It lets us pull the matching server log in seconds. Without it, debugging starts from "describe what time it happened roughly," which is much slower.
+  Always include the `request_id` when you contact support.
 </Callout>
 
 The request ID is on:
@@ -198,7 +202,7 @@ The request ID is on:
 
 ## Common surprises
 
-- **`404` is intentionally ambiguous.** "I can't see this resource" and "this resource doesn't exist" both return `404`. We don't want to leak existence to unauthorized clients.
+- **`404` is intentionally ambiguous.** "I can't see this resource" and "this resource doesn't exist" both return `404`.
 - **Validation errors stop at the first failure.** A payload with two bad fields reports one. Fix and resend to see the next.
 
 ## Related

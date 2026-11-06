@@ -7,8 +7,6 @@ Fastmon is built so you can monitor real-user performance without walking into a
 
 ## What we never collect, whatever the settings
 
-These rules hold regardless of how the site is configured:
-
 | We do **not** collect…                | What that means in practice                                                                |
 | ------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **IP addresses**                      | The edge strips the IP at the network boundary before any application code sees the request. The backend reads only a pre-derived country code (`FM-Country`, 2-letter ISO), never the IP itself. No IP is written to disk, ever. |
@@ -16,13 +14,13 @@ These rules hold regardless of how the site is configured:
 | **Device or browser fingerprints**    | No canvas fingerprinting, no font enumeration, no `userAgentData` high-entropy hints, no battery / sensor / audio-context probing. |
 | **Cross-site identifiers**            | We mint nothing that reaches another operator's site. A visitor id is scoped to one [application](/en/concepts/applications) and shared only by the domains that application itself serves. |
 | **Third-party data**                  | We don't enrich with data brokers, ad networks, or social platforms. There is no "audience" data. |
-| **Page content**                      | We don't read DOM content, form values, scroll positions, or session-replay frames. There is no recording. The one carve-out is the opt-in page-type read ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset), or the class names you list yourself in [`pagetype_rules`](/en/tracker#pagetype-rules)), which takes a single body-class token to classify the page type; off by default. |
+| **Page content**                      | We don't read DOM content, form values, or session-replay frames. There is no recording. The one carve-out is the opt-in page-type read ([`pagetype_ruleset`](/en/tracker#pagetype-ruleset), or the class names you list yourself in [`pagetype_rules`](/en/tracker#pagetype-rules)), which takes a single body-class token to classify the page type; off by default. |
 | **Query-parameter values and URL fragments** | The URL is cut to origin + path at the tracker. The `#…` fragment is always dropped, and query *values* are dropped. `/orders/checkout?email=jane@x.com` arrives as `/orders/checkout?email` under the default Standard preset (the name `email` kept via [`collect_query_keys`](/en/tracker#collect-query-keys), the value stripped), or as `/orders/checkout` on Minimal. A value is stored only for keys you explicitly allow-list in [`collect_query_values_for`](/en/tracker#collect-query-values-for), and for a [site search term](#search-terms). |
 | **Personally identifiable information** | Nothing the visitor types, clicks on, or has in their browser is captured, except a [site search term](#search-terms). |
 
 ### A note on cookies and storage
 
-fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`collect_sessions`](/en/tracker#collect-sessions) is on. By default it writes nothing: the Standard preset new sites start on stores no session id, so no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
+fastmon sets **no cookies at all**, in any configuration. The only thing the tracker can write to the visitor's device is a single `sessionStorage` entry (`_fms`), the session id, and only when [`collect_sessions`](/en/tracker#collect-sessions) is on. By default it writes nothing: no cookies, no `localStorage`, no `sessionStorage`, no IndexedDB, no Cache API.
 
 Storage-free is about what the beacon keeps on the device. Whether reading the performance APIs counts as access under the TDDDG is covered in [Consent and the TDDDG](#consent-and-the-tdddg).
 
@@ -34,14 +32,14 @@ Just enough to compute Web Vitals and per-page performance breakdowns. The exact
 
 - **Page URL**: origin + pathname, plus query-parameter names when [`collect_query_keys`](/en/tracker#collect-query-keys) is on (the default Standard preset). The hash fragment and query values are dropped at the tracker; a value is kept only for keys you allow-list ([`collect_query_values_for`](/en/tracker#collect-query-values-for)).
 - **Referrer**: sanitized at the tracker to origin + pathname (query and hash dropped), then classified server-side into a bucketed source and medium. The raw value is discarded before any logging path and never persists, in any mode.
-- **Web Vitals**: LCP, INP, CLS, FCP, TTFB, and related timings.
+- **Web Vitals**: LCP, INP, CLS, FCP, TTFB, related timings, and their attribution, such as the LCP area, the script behind a slow interaction, and the scroll depth. Collected in every configuration.
 - **Navigation timing**: nav type, TTFB, page-load timing.
 - **Resource timing**: per-category byte sizes and counts (script, css, img, font, other).
 - **Server-Timing**: the metrics your own backend attaches to its response (phase durations, cache statuses, page type, origin host). Server self-measurement, not visitor data; names and values are form-checked, denylisted, and stripped of anything ID-shaped at ingest. The one visitor-adjacent field is the optional logged-in flag (`fm-loggedin`): a single `yes`/`no` about the render mode, present only if your server chooses to send it, and never an identifier. See [Server-Timing headers](/en/guides/server-timing).
 - **Errors**: type and count always. Keeping the error **message** is opt-in ([`collect_error_messages`](/en/tracker#collect-error-messages)) and even then runs through an always-on scrubber that masks URLs, emails, numeric IDs, and quoted strings with `*` before transmission. Stack-frame detail is opt-in ([`collect_error_frames`](/en/tracker#collect-error-frames)); with it off, frames collapse toward host-only, except your own first-party external scripts, which always keep the path and line/column so an own-code bug stays locatable. That location is identical for every visitor who hits the bug, so it identifies the error, not the person.
 - **Environment**: allowlisted browser family, OS family, device class (`mobile`/`tablet`/`desktop`), viewport class, effective connection type, network round-trip and downlink estimates. We don't read `navigator.deviceMemory`, `navigator.hardwareConcurrency`, the `saveData` flag, `prefers-color-scheme`, or `prefers-reduced-motion` at all.
 - **Geo and network**: the country (2-letter ISO) and the visitor's network, as `asn` (for example `3320`) and `isp` (`Deutsche Telekom AG`). The edge derives both from the IP and forwards them as request headers; the IP itself never reaches the application.
-- **Bot & datacenter labels**: three edge-derived labels describing the *client's* network and software, not the visitor: a cloud/hosting provider (for example `aws` or `hetzner`), a named crawler (for example `googlebot` or `gptbot`), and that crawler's category (for example `search-engine` or `ai-crawler`). All three are derived at the edge from the IP and User-Agent before both are discarded, drawn from a fixed closed list, and sanitized to a short slug; no raw IP or User-Agent is kept. See [Bot and datacenter labels](#bot-and-datacenter-labels).
+- **Bot & datacenter labels**: labels for the *client's* network and software, not the visitor, from a fixed closed list. No raw IP or User-Agent is kept. See [Bot and datacenter labels](#bot-and-datacenter-labels).
 - **Campaign attribution**: `utm_source` / `utm_medium` / `utm_campaign` / `utm_term` / `utm_content` and the label `click_id_param` of the ad platform or affiliate network that sent the click (`gclid`, `fbclid`, `awc`), extracted from the page URL. Each capped at 64 chars. The click-ID *value* is discarded.
 - **LCP image URL, LoAF script paths, third-party domain map**: collected in every configuration, sanitized to origin + pathname at collection. These describe the customer's own page composition (see [Site metadata vs. visitor data](#site-metadata-vs-visitor-data)), not the visitor.
 - **Page type tag**: the `content` of your `<meta name="fm-page-type">` tag, up to 32 characters, always.
@@ -53,15 +51,27 @@ That's the whole payload, apart from the [events](#events) your shop sends itsel
 
 ### Bot and datacenter labels [#bot-and-datacenter-labels]
 
-Every beacon is tagged at the edge as bot, crawler, or datacenter traffic, so it can be told apart from real-user data. Three independent checks run at the edge, the first two against a fixed, curated list, not an open-ended lookup:
+Every beacon is tagged at the edge as bot, crawler, or datacenter traffic. Three checks run at the edge, the first two against a fixed, curated list:
 
 - **Cloud/hosting provider**, set when the client IP falls in a known datacenter range: one of `aws`, `azure`, `googlecloud`, `oracle`, `digitalocean`, `hetzner`, `ovhcloud`, `linode`, `vultr`, `alibaba`, `tencent`.
 - **Crawler**, set when the User-Agent matches a known bot: a name (`googlebot`, `bingbot`, `gptbot`, `applebot`, `duckduckbot`, `amazonbot`, `perplexitybot`, `yandex`, `baidu`, `meta`, or `unknown` for a generic-bot heuristic) plus a category such as `search-engine`, `ai-crawler`, `seo`, or `monitoring`.
 - **User-agent anomaly**, set when the User-Agent contradicts the browser's own low-entropy client hints (`sec-ch-ua`, `sec-ch-ua-platform`): `headless`, `spoofed`, or `non-browser`. The hints are evaluated at the edge and discarded with the rest of the raw request; only the verdict is stored.
 
+The tracker also checks once for an automation framework's global on `window`. If it finds one, the anomaly reads `automation` and the pageview moves from `none` to `suspect` in `bot_class`.
+
+Other self-reports of the browser land in `client_anomalies`. They hold names only, no values, and change no verdict.
+
+| Name | Set when |
+| --- | --- |
+| `no_languages` | the language list is empty |
+| `no_window_chrome`, `no_plugins` | a desktop Chromium has no `window.chrome` or no plugins |
+| `vendor_mismatch` | the vendor string contradicts the engine |
+| `viewport_mismatch` | the viewport class contradicts the device type |
+| `version_mismatch` | the version claims an API the browser cannot observe |
+
 ### The edge-derived `stitch` identifier
 
-For unique-visitor counts and per-visitor performance debugging without storing anything on the device, the edge can compute a salted, short-lived join key before the IP and User-Agent are destroyed:
+The edge can compute a salted, short-lived join key before the IP and User-Agent are destroyed:
 
 ```
 stitch = HMAC-SHA256(rotating_salt, IP | User-Agent | collector_hash)
@@ -71,11 +81,11 @@ truncated to 128 bits (32 hex chars on the wire). It is stored whenever [`store_
 
 - **Forward secrecy by construction.** The salt is a 32-byte `crypto/rand` value held only in the active edge's RAM and rotated once a day at 02:00 UTC. It is never persisted, never distributed, never logged. An attacker who later gains row access cannot reverse `stitch` back to (IP, UA): the salt that produced it is gone.
 - **Bounded joinability, at most ~24h.** Across a salt rotation the same visitor gets a new `stitch` value. Cross-pageview linking cannot accumulate beyond a single salt window.
-- **Scoped to one application.** The `collector_hash` is in the HMAC input, so the same (IP, UA) yields a different `stitch` for every application, and nothing links a visitor to another operator's site. Inside one application the value is the same on every domain it serves, which is what lets an organization-wide tracker count a returning visitor once rather than once per domain.
+- **Scoped to one application.** The `collector_hash` is in the HMAC input, so the same (IP, UA) yields a different `stitch` for every application, and nothing links a visitor to another operator's site. Inside one application the value is the same on every domain it serves.
 - **Nothing the page says goes into the input.** The host in the beacon body is left out.
 - **The salt is the only secret.** The other HMAC inputs are public or sit on the stored row itself, and the input space is small enough to enumerate, so whoever held the live salt could confirm a suspected (IP, UA) pair by recomputing. Nobody holds it: it exists only inside the running edge process and is gone after rotation. The guarantee is operational (RAM-only salt, daily rotation), not mathematical.
 
-Classify it honestly: while the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Because it is on under the default Standard preset, name it in your privacy notice. If you'd rather store no visitor identifier at all, turning `store_stitch` off (the Minimal preset) keeps the row genuinely anonymous.
+While the salt lives, `stitch` is a **pseudonymous** visitor identifier and therefore personal data, processed under Art. 6 (1)(f) GDPR with a documented legitimate-interest assessment. Name it in your privacy notice. Turning `store_stitch` off (the Minimal preset) keeps the row anonymous.
 
 ### Turning identifiers off, or leaving them off
 

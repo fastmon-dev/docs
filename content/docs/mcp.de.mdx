@@ -72,7 +72,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Rohe Beacon-Zeilen gibt kein Tool zurück, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung.
 
-Jedes Tool über mehrere Sites nimmt `site_id`, `application_id` (jede Domain dieser Application) oder `tags`, in dieser Rangfolge. Ein Aufruf ohne alles drei umfasst die ganze Organisation, denn eine MCP-Verbindung hat keine „aktuelle Site“ wie ein Dashboard-Tab. `list_sites` meldet je Site `application_id` und `application_name`, ein Modell sollte es also zuerst aufrufen.
+Jedes Tool über mehrere Sites nimmt `site_id`, `application_id` (jede Domain dieser Application) oder `tags`, in dieser Rangfolge. Ein Aufruf ohne alles drei umfasst die ganze Organisation. `list_sites` meldet je Site `application_id` und `application_name`, ein Modell sollte es also zuerst aufrufen.
 
 `list_sites` meldet außerdem, was jede Site **sammelt**: ob Fetch/XHR-Erfassung, Seitentyp-Erkennung, Checkout-Tracking, Session-Erfassung, Fehlermeldungen und Stack-Frames, [Events](/de/events) (`event_tracking`) und die dataLayer-Brücke (`collect_data_layer`) an sind, und welche Besucher-Kennung ihre Zahlen benutzen. Besucherzahlen folgen den Einstellungen jeder Site, genau wie im Dashboard, und eine Zahl über Sites mit verschiedenen Kennungen sagt das dazu, statt beides still zu vermischen.
 
@@ -84,13 +84,15 @@ Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/d
 
 **Leere Werte.** Ein leerer String gilt als kein Filter. `empty: ["referrer_source"]` fragt nach Direkt-Traffic, `not_empty: ["utm_campaign"]` nach Kampagnen-Traffic.
 
+**Event-Namen.** `names` in `get_events` grenzt nur `events_by_name`, `series` und `prop_keys` ein. Bestellungen und Wertsummen gelten für das ganze Fenster, und ein Aufruf mit `names` liefert zusätzlich `names_in_window` und eine `note`.
+
 **Bucket-Breiten.** `get_timeseries` nimmt jede Breite von `minute` bis `month`. Die Tools für Fehler, fehlgeschlagene Ressourcen, NEL, CSP und Events nehmen ein optionales `interval`, ohne das die Reihe bis 48 Stunden stündlich und darüber täglich ist. Breiten unter einer Stunde decken höchstens 1500 Buckets ab.
 
 ## Grenzen [#limits]
 
 - **Höchstens die Historie der Organisation** pro Aufruf, 90 Tage oder 13 Monate mit dem Feature Historie, und 50 Zeilen pro Breakdown.
-- **120 Requests pro Minute**, gezählt pro Person statt pro Organisation, damit ein Client in der Schleife keine Kollegen aussperrt. Darüber: 429 mit der Wartezeit in Sekunden.
-- **Minuten-Buckets** gehen über maximal 6 Stunden, weil Minutenauflösung die rohe Beacon-Tabelle liest. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
+- **120 Requests pro Minute**, gezählt pro Person. Darüber: 429 mit der Wartezeit in Sekunden.
+- **Minuten-Buckets** gehen über maximal 6 Stunden. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
 - **30 Sekunden** pro Query, danach wird abgebrochen und das Tool sagt es. Meist steckt ein Breakdown mit hoher Kardinalität (URL, Browser-Version, Origin-Host) über einen langen Zeitraum dahinter.
 
 ## Was fastmon verlässt [#privacy]

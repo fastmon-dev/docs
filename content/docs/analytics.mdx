@@ -82,15 +82,29 @@ A filter bar sits next to the time picker on every analytics page. Type a dimens
 
 The dimension picker lists Page, Country, and Device first, then browser, OS, connection, viewport, referrer, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel). Empty values such as "Direct / none" cannot be filtered yet.
 
-Filters live in the URL, so they survive a reload, are shareable, and carry across navigation between views. Multiple chips combine with AND; a comma inside one value means "any of". Click a chip to edit it; its X removes it. The "Filter" button carries a badge with the active count.
+Filters live in the URL and carry across views and shared links. Chips combine with AND, and a comma inside one value means "any of". Click a chip to edit it, its X removes it, and the "Filter" button counts the active ones.
 
-**Every page starts without bot traffic**, so the numbers describe real visitors unless you say otherwise. The filter menu's Traffic control switches between No bots, Bots only, and All, and the page header says which is in force next to the period. The scope is not counted as a filter and survives "Clear all".
+**Every page starts without bot traffic.** The filter menu's Traffic control switches between No bots, Bots only, and All, and the header names the choice next to the period. The scope is not counted as a filter and survives "Clear all".
 
-Every chip also has an on/off switch. Switched off, the chip keeps its values and stays in place, drawn struck through, and the query runs without it. A switched-off filter narrows nothing and is not counted in the badge, and clicking the same country on the map switches it back on instead of adding a second one. The state travels in the URL, so a shared link opens with the same filters on and off.
+**Every chip has an on/off switch.** A switched-off chip stays in place, struck through, and neither the query nor the count includes it. Clicking the same country on the map switches it back on, and a shared link keeps the state.
+
+On a phone, a row of chips above the page replaces the filter pill and the side panel, and the time range opens as a bottom sheet.
+
+### Sparse data and time of day [#sparse-data]
+
+**Sparse data** in the **Display** section of the filter pop-up sets apart hours with little traffic. The key `s` switches between Full and Automatic.
+
+| Option | Sets apart |
+| ------ | ---------- |
+| Full | Nothing. |
+| Automatic | The thinnest hours, the same on every card. Strength Low, Medium, or High, and the pop-up shows the threshold and the hour count before you apply. |
+| Time of day | The hours outside a range you pick, such as 6 to 23. A range can wrap midnight. |
+
+**Hide** drops these hours from every number on the page and cuts them from the axis of hourly charts, marked by a dotted line labelled "23:00 // 06:00". **Fade** only draws their values pale. Time of day with Hide adds an "Hours" chip to the header, and the live view ignores it.
 
 ## The Explorer [#explorer]
 
-The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included. "Show all" and the per-row links from the dashboard panels carry the page's filters into it, including exclusions, metric ranges, and the bot switches, and it opens with the numbers the page is about (pageviews and visitors, plus LCP p75 on pages). Clicking a group opens its pageviews in place, and the bar above steps to the next group or back to all.
+The Explorer groups pageviews by any dimension and charts the metrics, or shows the raw rows. Maximize gives it the whole window, sidebar included. "Show all" and the row links of the dashboard panels carry the page's filters into it, and it opens with the page's numbers. Clicking a group opens its pageviews in place, and the bar above steps to the next group or back to all.
 
 The beacon rows show the page's **HTTP status**, and `HTTP status >= 400` in the filter lists the pageviews of error pages. Firefox, Safari, and soft navigations report no status, so their rows show a dash and never match. Grouped by HTTP status, they form the "Not reported" group. The group-by picker has a search field.
 
@@ -104,7 +118,7 @@ Results copy as Markdown or download as CSV, with raw values and the unit in the
 
 `Cmd`/`Ctrl`+`K` opens a command menu for the whole app: pages, organizations, sites, time range, resolution, and filters. `Enter` or `→` opens a category, `←` or `Backspace` steps back, and `Esc` closes.
 
-Typing searches **across every organization you can reach**: your own memberships, the client organizations of any agency you belong to, and the applications and domains inside them. Each hit says which organization it lives in. Applications lead the results, prod before dev among equally good matches, and picking one sets the application filter on the page you are on. Inactive sites and applications are listed and flagged.
+Typing searches **every organization you can reach**, your agency's clients included, and their applications and domains. Each hit says which organization it lives in. Applications lead the results, prod before dev among equally good matches, and picking one sets the application filter on the page you are on. Inactive sites and applications are listed and flagged.
 
 Typing a group ("network") lists every page under it, and "API" finds Fetch/XHR.
 
@@ -114,12 +128,12 @@ The same search is available from a script as [`GET /search`](/en/api/search/sea
 
 Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors, [Failed resources](#failed-resources), [Network Error Logging](/en/nel), and [Content Security Policy](/en/csp). Each has its own address, headline, chart, and list. On JavaScript errors:
 
-- **Affected pageviews over time**: pageviews with at least one JavaScript error, as a share of all pageviews or, under "Absolute", as a count. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each. Dragging across the chart zooms in.
+- **Affected pageviews over time**: pageviews with at least one JavaScript error, as a share of all pageviews or, under "Absolute", as a count. **Top 5** adds the five errors that reached the most pageviews as lines, and the legend links to each.
 - **An error's own page** has the same share and count switch.
 - **The list filters by origin**: All, First-party (your own hosts), or Third-party. The choice stays in the link, and the chart and error rate still count every error.
 - **The list is one row per fault.** A row counts every variant of a throw site and says how many signatures it stands for. On the API this is `group_variants` on `POST /analytics/error-types`.
-- **A row leads with what broke, in a sentence**: what happened, whose code it is, the file it was thrown from, how often it occurred and when it last did, to the minute. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
-- **Ranked by the pageviews an error reached**, not by how often it fired. A single visit stuck in a loop is marked as a loop instead of topping the list, and "Most frequent" is still an ordering you can pick.
+- **A row leads with what broke, in a sentence**: what happened, whose code it is, the file, how often, and when it last occurred. Each row carries a spark line and a "New" or "Rising" badge, and the list sorts by most frequent, new, rising, or last seen.
+- **Ranked by the pageviews an error reached.** A visit stuck in a loop is marked as a loop, and "Most frequent" stays an ordering you can pick.
 - **Every error has its own page** at `/org/<org>/errors/<fingerprint>`, which is also its share link. Existing `?error=` links redirect there.
 - **Pages with the most errors**: ranked by how many errors a page threw, not by its error rate.
 - **Error origin**: how pageviews with an error split between your own hosts and foreign ones. The third bar holds pageviews without an error plus errors with no host to attribute them to.
@@ -128,20 +142,20 @@ Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors,
 
 **An error says what broke in a sentence**, even where the site keeps no error messages. The tracker recognizes the browser's wording and sends its [shape](/en/tracker#message-shape) rather than the text, so a row reads "`uc.setServiceAlias` was called, but `uc` does not exist at this point" instead of showing a stack alone.
 
-**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with the method it is in, the enclosing module, and the code at that column, syntax-colored and scrolled to the failing call. No source map and no setup on your side. The throwing line is marked.
+**"Resolve this stack" reads the minified file your visitors actually ran.** Each frame comes back with its method, its module, and the code at that column, the throwing line marked. It needs no source map.
 
 - A run of frames in the same vendor bundle folds into one row naming the library. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames.
 - A frame that only passes the error on is marked as a rethrow, and the cause sits further down.
 - A frame that cannot be read says why: no path was stored, the file sits on somebody else's host, the file is the fastmon tracker, or you deployed again under the same name and the position is gone.
 - The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/analytics/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
 
-**"Where it happens" is the breakdown grid the metric pages carry**: page, page type, domain, country, device, browser, OS, connection, navigation, caches, bots, and network. Bots and network are among them, so you can see whether an error reaches real visitors or only crawlers.
+**"Where it happens" is the breakdown grid the metric pages carry**: page, page type, domain, country, device, browser, OS, connection, navigation, caches, bots, and network.
 
 **An error without message or stack says why**: messages or frames switched off, a third-party script without the CORS opt-in, or nothing sent. The chart and the breakdown work either way.
 
 **"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect.
 
-**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error. It says endpoints occur together, never that one caused the other.
+**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error.
 
 **An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`).
 
@@ -166,9 +180,9 @@ Ownership is the registrable-domain rule above. **The list groups by host**, eac
 
 `Failed resources` is a filter and a metric of its own, so `>= 1` scopes any view to pageviews where something did not load. In the pageview drill-down the failed loads have their own block, separate from the JavaScript errors.
 
-The path is often empty, because it needs [`collect_error_frames`](/en/tracker#collect-error-frames).
+The path needs [`collect_error_frames`](/en/tracker#collect-error-frames).
 
-Ad-blocked requests to known tracker hosts stay visible as a subset of the foreign bucket, reported as `blocked_count`: read it as "N excluded as ad-blocked", not as a failure.
+Ad-blocked requests to known tracker hosts count as `blocked_count`, a subset of the foreign bucket and not failures.
 
 The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
 
@@ -182,7 +196,7 @@ The Visitors page lists distinct visitors with start time, duration, page count,
 
 The summary above the list covers the whole period: visitors, pageviews per visitor, and the share with a JavaScript error, slow visitors (average LCP over 4 s), and buyers. **Segment chips** (with errors, slow, ordered, reached checkout, cart activity, one page only) set the behavior filters, and each shows how many visitors it lists. "Adjust behavior" opens every filter: pages, errors, duration, LCP, page type, and funnel stage. Orders, checkout, and cart show only on a shop.
 
-**A visitor opens in a dialog** wherever it is linked: in this list, on NEL and CSP reports, in the Explorer, and on checkout events. On a phone it is a sheet from the bottom, and `?visitor=` links to it.
+**A visitor opens in a dialog** wherever it is linked, and `?visitor=` links to it.
 
 - **The journey** shows every pageview in order with Web Vitals, errors, page type, and on shops the [checkout stage](/en/checkout-funnel) and cart actions. Checkout events and [NEL](/en/nel#dashboard) and [CSP reports](/en/csp#dashboard) sit between them, abandoned loads only once you switch them on.
 - **The entry and every return from outside** show on the timeline and before that page, with any campaign. See [`arrival`](/en/concepts/sessions#arrival).
@@ -194,7 +208,7 @@ A visitor is counted by [`stitch`](/en/tracker#store-stitch) or `session`, as `c
 
 ## Fetch/XHR and Server-Timing
 
-The Fetch/XHR view has an aggregate waterfall (per-endpoint start offsets, duration histograms and percentiles, a status-error distribution) plus a per-beacon detail. The Server-Timing view breaks out the metrics your backend reports. Both read fields the tracker adds to each beacon (see [the beacon](/en/concepts/beacon)).
+The Fetch/XHR view has an aggregate waterfall per endpoint and a per-beacon detail. The Server-Timing page is described under [Server-Timing → In the dashboard](/en/guides/server-timing#dashboard).
 
 The response breakdown of one pageview groups its rows by who can act on them: network and visitor, server, browser. The [redirects](/en/web-vitals/ttfb#redirects) before the fetch are their own row, and a missing value says why it is missing.
 
@@ -202,15 +216,13 @@ An expanded endpoint shows its own p75 or p95 over time with its calls and relea
 
 The Fetch/XHR error rate counts failures on your own hosts, by the same registrable-domain rule as the [error rate](#failed-resources). Failures on foreign hosts are reported beside it as their own number, mostly the visitor's ad blocker. The panel's 1P/3P filter follows the same rule.
 
-To emit the header and see how fastmon splits it, read [Server-Timing headers](/en/guides/server-timing).
-
 ## Experience Score
 
 The [Experience Score](/en/web-vitals/experience-score) panel breaks the score down by segment (all visitors, desktop, mobile, and slow connections), each with its grade, numeric score, and the per-metric values behind it.
 
 ## API [#api]
 
-Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, most of them to the [query endpoint](/en/api/analytics/queryAnalytics). Others serve histograms, errors, visitors, Fetch/XHR, Server-Timing, LoAF, the [checkout funnel](/en/api/analytics/queryAnalyticsCheckoutFunnel), and the Experience Score.
+Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, most of them to the [query endpoint](/en/api/analytics/queryAnalytics).
 
 | Field | What it does |
 | ----- | ------------ |
@@ -221,6 +233,9 @@ Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, m
 | `url_path`, `url_key`, `url_key_set` | Group or filter by the URL without its query, by each query key, or by the set of keys. A pageview counts once per key, and `meta.pageviews` is the denominator. |
 | `url_param` + `url_param_key` | Group by the value of one query key. A key the application does not store answers 422 naming `collection.query_values_for`. |
 | `""` as a text filter | Selects the rows without a value: `referrer_source: ""` answers direct visits. `exclude: {utm_campaign: [""]}` keeps the pageviews with a campaign. |
+| `filters.hour_of_day` | `{from, to}` keeps those local hours, both included, and `{from: 22, to: 6}` wraps midnight. It needs `timezone`, else 422. The query, metric summary, panels, visitor, event, checkout, NEL, and CSP routes take it, every other route answers 422. |
+| `sparse_buckets` | `{min_pageviews, exclude}` with the threshold from `POST /analytics/sparse-hours`. `exclude: true` drops those hours, and `meta.sparse_buckets.excluded_hour_count` counts them. Rows below the threshold carry `is_sparse`. The `{mode, min_pageviews}` form is deprecated. |
+| `POST /analytics/sparse-hours` | The thin complete hours of a window and their threshold. `share` sets the thinnest part, 0.2 by default, with at least 30 measurements per hour. |
 | `time_range` | At most the organization's history, 90 days or 13 months with the history feature. A longer window is a 422 `time_range_beyond_history` with the horizon in `details.history_days`. `history_days` on the organization and `data_starts_at` on organizations, applications, and sites bound it. |
 
 Only a window of at most 6 hours that ends within 10 minutes of now reads live beacons. Every other window reads the finalized pageviews.

@@ -3,7 +3,7 @@ title: Interaction to Next Paint (INP)
 description: "Was INP misst, was ein guter INP ist und wie du eine träge Seite debuggst, mit fastmon-Daten."
 ---
 
-**INP** misst, wie lange die schlechteste Besucherinteraktion auf der Seite gebraucht hat, bis sie sich visuell auswirkt. Das ist die Metrik für „die Seite fühlt sich beim Klicken träge an". Während LCP die Lade-Responsiveness misst, geht es bei INP um die *Runtime-Responsiveness* über die ganze Zeit, in der jemand auf der Seite ist.
+**INP** misst, wie lange die schlechteste Besucherinteraktion auf der Seite gebraucht hat, bis sie sich visuell auswirkt.
 
 INP hat im März 2024 FID als Core Web Vital abgelöst und zählt fürs Suchranking.
 
@@ -53,6 +53,7 @@ Die INP-Seite findest du unter **Core Web Vitals → INP**, aufgebaut wie die [L
 - **Wo der INP schlecht ist**: Seitentyp und Gerät oder eine andere Dimension, sortiert nach schlechten Pageviews.
 - **Wo interagiert wird**: die Elemente der langsamsten Interaktion.
 - **Was den Main Thread beschäftigt**: die Skripte in Long Animation Frames über 50 ms.
+- **Ein Seitenaufruf**: Das Pageview-Detail zeigt den Long Animation Frame hinter der Interaktion mit Skript, Auslöser, Funktion, Dauer und erzwungenem Layout, dazu die Scrolltiefe. Ask kann `inp_loaf_duration` und `inp_loaf_forced_layout` als Chart zeigen.
 
 ## Schlechten INP verbessern
 
@@ -67,7 +68,7 @@ Tieferer Walkthrough: [Optimize INP](https://web.dev/articles/optimize-inp) auf 
 
 ## Häufige Überraschungen
 
-- **Eine Seite kann tollen LCP und schlechten INP haben.** Beides misst was anderes. Versprich nicht „schnell ladend", wenn du Responsiveness nicht auch gemessen hast.
+- **Eine Seite kann tollen LCP und schlechten INP haben.** Beides misst was anderes.
 - **INP kann sich verschlechtern, wenn LCP besser wird.** Lazy-Loading und Hydration schieben Arbeit *nach* dem ersten Paint: gut für LCP, doof für INP. Immer beides zusammen anschauen.
 - **INP schwankt stark je nach Interaktion.** Der erste Klick auf einer frischen Seite ist meistens der schlimmste (kalter Cache, Code noch nicht warm). Lass dir die Daten pro Interaktion zeigen, nicht nur den Durchschnitt.
 - **Server-gerenderte Seiten sind nicht immun.** SSR hilft LCP, bringt für INP aber nichts; Hydration ist JavaScript im Main-Thread.

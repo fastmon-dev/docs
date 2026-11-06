@@ -12,6 +12,168 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-11-06" type="new" area="platform" title="Notification channels for Slack, Discord, and webhooks">
+
+Notifications now has three tabs: Rules, Channels, and Observations. You set up a channel once and every rule and observation can post to it.
+
+- **Channels** are Slack, Discord, or a webhook, each with a name, an https URL, a language (English or German), and an on/off switch. A test message checks the channel, and the saved URL is never shown in full again.
+- **Observations go to channels too.** Subscribe a channel to one application or to all, filtered by direction and metric. Worse observations alone are the default, as in the mail.
+- **Agencies** can post the observations of one client, one of its applications, or all clients to their own channels. Only direct members of the partner organization set this up.
+- **Webhooks follow Standard Webhooks**: a `{type, timestamp, data}` body signed with `webhook-signature`. fastmon generates the `whsec_` secret, shows it once, and replaces it on rotation.
+
+Docs: [Notification rules → Channels](/en/guides/notification-rules#channels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Notification rules send to channels and members">
+
+A rule now watches one production application, all its sites pooled or one site, and sends to channels and to members by mail.
+
+- **Gone**: free addresses, per-rule URLs, secrets, message templates, and the tag scope.
+- **A resolved message** follows when the condition stops holding. A relative change is a ratio, so `-0.5` is a drop by half.
+- **Test and history** list every target with whether it was delivered and why not. A test is limited to 5 per organization in 10 minutes.
+- **In the API** the rules moved to `/notifications/rules/{rule_id}`, with the preview at `POST /organizations/{org_id}/notifications/rules/preview`. The old `/notification-rules/…` paths are gone, and responses name channels, members, and the application as `{id, name}`.
+
+Docs: [Notification rules](/en/guides/notification-rules).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="dashboard" title="Hide the thin hours">
+
+The filter pop-up has a new Display section with Sparse data (key `s`). It sets apart hours with little traffic, the same hours on every card of a page.
+
+- **Automatic** picks the thinnest hours in three strengths and shows the threshold and the number of hours before you apply.
+- **Time of day** keeps an hour range you pick, for example 6 to 24, and shows an "Hours" chip in the header.
+- **Hide** drops those hours from every number on the page and cuts them from the axis of hourly charts. **Fade** draws their values pale and changes no number.
+- **In the API** `filters.hour_of_day` with `timezone` works on every analytics route that serves these pages. `POST /analytics/sparse-hours` returns the thin hours, and `sparse_buckets: {"min_pageviews": n, "exclude": true}` drops them.
+
+Docs: [Analytics → Sparse data and time of day](/en/analytics#sparse-data).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="TLS handshake, worker start, LCP area, and scroll depth">
+
+Every pageview carries more attribution, and the pageview pop-up shows it.
+
+- **`tls`** (`tls_handshake`): the part of the connection the TLS handshake took.
+- **`ws`** (`worker_start`): when a service worker started, so the time before `fetch_start` can be told from a redirect.
+- **`lsz`** (`lcp_area`): the painted area of the LCP element, rounded to two significant digits. `ldv` (`lcp_delivery`) now reads `memory` or `disk` where it read `cache`.
+- **`csh`** (`cls_shift_time`): when the largest layout shift happened.
+- **`sd`, `csd`, `isd`** (`scroll_depth_max`, `cls_scroll_depth`, `inp_scroll_depth`): how far down the visitor scrolled, and where the largest shift and the INP interaction were, from 0 to 1.
+
+All are class A and collected in every privacy mode. Pageviews from cached older bundles leave them empty.
+
+Docs: [The beacon → The wire payload](/en/concepts/beacon#the-wire-payload).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="The script behind a slow interaction">
+
+A pageview now names the long animation frame its INP interaction waited for, in Chromium. It carries the frame's duration, its longest script, how that script was invoked, its function name, and the forced style and layout time.
+
+The wire keys are `ild`, `ilx`, `ils`, `ili`, and `ilf`, stored as `inp_loaf_duration`, `inp_loaf_forced_layout`, `inp_loaf_script`, `inp_loaf_invoker_type`, and `inp_loaf_function`. Ask can chart the two durations like the INP subparts.
+
+Docs: [INP → How to see INP in fastmon](/en/web-vitals/inp#how-to-see-inp-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="new" area="tracker" title="Signs of automation">
+
+The tracker checks once at start for an automation framework on `window`, an empty language list, and a few other contradictions a real browser does not show. The beacon sends them as a bitmask in `ca`, stored as the list of names `client_anomalies`, without any value.
+
+An automation framework sets `ua_anomaly` to `automation` and moves the pageview to `suspect` in `bot_class`. The other signs change no verdict.
+
+Docs: [Privacy → Bot and datacenter labels](/en/privacy#bot-and-datacenter-labels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Page weight replaces Transfer size and Resources">
+
+Network → Page weight rates what a page weighs on a first view, so a warm browser cache no longer makes a page look lighter. Beside it the page shows what a warm view saves, how many views are warm, and what a view transferred. Old links to Transfer size and Resources forward here with their filters.
+
+Docs: [Web Vitals → Other metric pages](/en/web-vitals#other-metric-pages).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="The Server-Timing page, rebuilt">
+
+The Server-Timing page now reads like the TTFB page. It shows the backend time beside where the answers came from (CDN, full-page cache, or backend), then the request path, its history, the cache, the hosts, and your custom keys.
+
+- **The request path** is one grid for all pageviews and per CDN status, origin cache status, and login.
+- **The backend parts** (database, cache, search, HTTP calls, own code, templates) show at the selected percentile.
+- **The table** ranks pages by total backend time, pageviews times duration.
+
+Docs: [Server-Timing → In the dashboard](/en/guides/server-timing#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="A trend needs more than one bad day">
+
+The trend lane now measures a week as the median of its 7 days. A trend opens only when at least 4 of the 7 days are past the threshold, and a single bad day stays a shift.
+
+A trend without a found start no longer names one. It reads "over the last 7 days", or "in the week to" its last day once it ended.
+
+Docs: [Observations → Trends](/en/observations#trends).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Sign-in and second factors">
+
+- **Changing your password** keeps you signed in on that device and ends every other session. Turning 2FA on or off and adding or removing a passkey do the same.
+- **A confirmation mail** goes out after every password change and reset. A reset also disconnects the apps you connected personally, while organization keys keep working.
+- **Wrong attempts are limited.** After 5 wrong codes, passkeys, or passwords in a confirmation within 15 minutes, you wait. Password sign-in has its own limits, and passkeys, Google, and GitHub stay open.
+- **A TOTP code passes once.** Signing in and confirming an action within the same 30 seconds needs the next code.
+- **A passed confirmation holds for 10 minutes** in that session, so a second sensitive action asks no code again.
+- **Registration** no longer tells whether an address already has an account.
+
+Docs: [API → Authentication](/en/api/authentication).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="platform" title="Tighter partner access">
+
+Partner access can no longer invite members, and an agency hands a client over with `owner_email` when it creates it. A key or connection an agency minted in a client no longer counts as the client's own, and deleting the agency revokes it.
+
+Docs: [Organizations → Partner access](/en/concepts/organizations#partner-access).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Time range and filters on a phone">
+
+On a phone a row of chips above the page replaces the filter pill and the side panel. Each chip opens the editor for just its time range, percentile, device, traffic, or filter. The time range opens as a sheet with large preset tiles that apply in one tap.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="fastmon ask keeps your scope and time zone">
+
+Opening fastmon ask keeps the application, time range, and filters you are on, and the scope chip opens the application picker. Ask reads and names times in your time zone, so a day you ask about starts at your midnight. In the API, pass `timezone` with a message.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="new" area="platform" title="A public demo">
+
+`/demo` opens a read-only dashboard of a demo shop without an account, and "Explore the demo" on the login page leads there. A bar on top says the traffic is simulated and links the demo shop, whose visits show up right away. `?to=` opens a page directly, for example `/demo?to=/vitals/lcp`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="changed" area="dashboard" title="One date format everywhere">
+
+Every date in the dashboard now names the month as a word: "2 Nov 2026, 22:50" in English, "02.11.2026, 22:50" in German. Pages that used the browser's own format, such as passkeys, visitors, and the CSP and NEL reports, follow it too.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="fixed" area="api" title="Third-party time is called total_ms">
+
+`POST /analytics/third-party` answers `total_ms` per host and in total. The values called `count` and `resource_count` were always summed load time in milliseconds, not requests. Both old names keep working and are deprecated, and the MCP tool `get_third_party_impact` answers `total_ms` only.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-04" type="fixed" area="platform" title="Finalized pageviews drop a value that went away">
+
+When the last beacon of a pageview no longer carries a value, the finalized pageview drops it too. An LCP image that turned into text no longer keeps its image flag and LCP subparts. Pageviews finalized before 4 November keep their old values.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-03" type="new" area="platform" title="The weekly overview, for every account">
 
 The weekly overview leaves the admin preview. The page sits under Analytics for every member, and the first mails have gone out.
