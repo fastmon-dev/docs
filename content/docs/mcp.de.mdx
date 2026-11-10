@@ -57,7 +57,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 
 ## Was das Modell lesen kann [#tools]
 
-28 Tools, alle nur lesend, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde:
+29 Tools, alle auf die Organisation beschränkt, für die die Verbindung genehmigt wurde. Bis auf `send_feedback` lesen alle nur:
 
 | Bereich | Tools |
 | ------- | ----- |
@@ -69,6 +69,7 @@ Deine Verbindungen verwaltest du unter **Account → Zugriff**. Trennen wirkt so
 | Events | `get_events` |
 | Browser-Reports | `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, `list_csp_reports` |
 | Synthetic (Labor) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
+| Feedback | `send_feedback` |
 
 Geantwortet wird mit Aggregaten und Ranglisten, denselben, die hinter dem Dashboard stehen. Rohe Beacon-Zeilen gibt kein Tool zurück, und kein Tool nimmt eine Organisation entgegen: Sie kommt von der Verbindung.
 
@@ -78,9 +79,11 @@ Jedes Tool über mehrere Sites nimmt `site_id`, `application_id` (jede Domain di
 
 Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/de/synthetic) für die Organisation. Fehlt eins davon, kommt eine Ablehnung mit Begründung zurück, nie ein leerer Report.
 
-**Wie Antworten qualifiziert werden.** Jedes p75 trägt die Zahl der Messungen mit, auf denen es steht (`samples`), und das ist nicht die Zahl der Pageviews. `inp_p75_ms: null` neben `samples.inp: 0` heißt, dass nichts gemessen wurde. Wendet ein Tool eine Mindestzahl an Messungen an, nennt es diese Schwelle.
+`send_feedback` braucht `feedback:create` und meldet ein Problem mit den Tools an das fastmon-Team, höchstens 10 pro Person und Stunde. Vor jeder Meldung fragt der Client dich.
 
-**Wie Filter matchen.** Eine `url` als Pfad geschrieben (`/checkout*`) matcht den Pfad, und Textfilter matchen ohne Rücksicht auf Groß- und Kleinschreibung: `browser: ["chrome"]` und `device_type: ["Desktop"]` finden also das gespeicherte `Chrome` und `desktop`. `country` nimmt Codes, keine Namen, und repariert die, die ISO nicht vergibt (`UK` und `EN` zu `GB`, `EL` zu `GR`). Ein Tag, das keine Site trägt, wird abgewiesen, statt als Scope über null Sites beantwortet zu werden. Es gibt keine Zeitzone pro Site: ein Zeitraum ohne Offset wird als UTC gelesen.
+**Wie Antworten qualifiziert werden.** Jedes p75 trägt die Zahl der Messungen mit, auf denen es steht (`samples`), und das ist nicht die Zahl der Pageviews. `inp_p75_ms: null` neben `samples.inp: 0` heißt, dass nichts gemessen wurde. Wendet ein Tool eine Mindestzahl an Messungen an, nennt es diese Schwelle. Anteile und Veränderungen sind Verhältnisse von 0 bis 1, und `period.complete_until` sagt, bis wann der Zeitraum vollständig ist.
+
+**Wie Filter matchen.** Eine `url` als Pfad geschrieben (`/checkout*`) matcht den Pfad, und Textfilter matchen ohne Rücksicht auf Groß- und Kleinschreibung: `browser: ["chrome"]` und `device_type: ["Desktop"]` finden also das gespeicherte `Chrome` und `desktop`. `country` nimmt Codes, keine Namen, und repariert die, die ISO nicht vergibt (`UK` und `EN` zu `GB`, `EL` zu `GR`). Ein Tag, das keine Site trägt, wird abgewiesen, statt als Scope über null Sites beantwortet zu werden. Ein Zeitraum ohne Offset gilt als UTC. Ein Argument, das das Tool nicht kennt, wird mit der Liste der gültigen abgelehnt.
 
 **Leere Werte.** Ein leerer String gilt als kein Filter. `empty: ["referrer_source"]` fragt nach Direkt-Traffic, `not_empty: ["utm_campaign"]` nach Kampagnen-Traffic.
 
@@ -90,16 +93,16 @@ Die drei Synthetic-Tools brauchen `synthetic:read` und [Synthetic Monitoring](/d
 
 ## Grenzen [#limits]
 
-- **Höchstens die Historie der Organisation** pro Aufruf, 90 Tage oder 13 Monate mit dem Feature Historie, und 50 Zeilen pro Breakdown.
+- **Höchstens die Historie der Organisation** pro Aufruf, 90 Tage oder 13 Monate mit dem Feature Historie, und 50 Zeilen pro Breakdown. Bei `get_errors` und `get_failed_resources` blätterst du mit `cursor` weiter.
 - **120 Requests pro Minute**, gezählt pro Person. Darüber: 429 mit der Wartezeit in Sekunden.
 - **Minuten-Buckets** gehen über maximal 6 Stunden. Längere Zeiträume laufen über Stunden-Buckets oder gröber.
-- **30 Sekunden** pro Query, danach wird abgebrochen und das Tool sagt es. Meist steckt ein Breakdown mit hoher Kardinalität (URL, Browser-Version, Origin-Host) über einen langen Zeitraum dahinter.
+- **30 Sekunden** pro Query, danach wird abgebrochen und das Tool sagt es.
 
 ## Was fastmon verlässt [#privacy]
 
 Die Antworten: Seiten-URLs, Referrer und UTM-Parameter, Geografie auf Länderebene, Gerät und Browser, Zeiten, Fehlersignaturen. Es sind dieselben Felddaten, die dein Dashboard zeigt, und kein Tool erreicht Daten, die ein Mitglied nicht ohnehin dort sehen könnte.
 
-Zu prüfen ist, wohin diese Antworten gehen. Empfänger ist, wer das Modell hinter deinem Client betreibt, und das ist deine Beziehung, nicht unsere: Fastmon wählt diesen Anbieter nicht aus, hat keinen Vertrag mit ihm und führt ihn nicht als Unterauftragsverarbeiter. Ob deine Organisation diese Übermittlung vornehmen darf und auf welcher Grundlage, ist deine Bewertung. Daher der Schalter auf Owner-Ebene mit Audit-Eintrag.
+Empfänger ist, wer das Modell hinter deinem Client betreibt, und das ist deine Beziehung, nicht unsere: Fastmon wählt diesen Anbieter nicht aus, hat keinen Vertrag mit ihm und führt ihn nicht als Unterauftragsverarbeiter. Ob deine Organisation diese Übermittlung vornehmen darf und auf welcher Grundlage, ist deine Bewertung.
 
 Der eingebaute **fastmon ask**-Assistent ist eine eigene Entscheidung: Er gibt Daten an unseren eigenen Unterauftragsverarbeiter unter unserer DPA. Zwei Empfänger, zwei Schalter, keiner impliziert den anderen.
 
@@ -115,19 +118,19 @@ Zum Einschalten von `mcp_enabled` brauchst du `org:update`. Ein Owner der Agentu
 
 Streamable HTTP (JSON-RPC 2.0), zustandslos, reine JSON-Antworten. Kein SSE, keine Session-ID, die gehalten werden muss.
 
-**OAuth ist der einzige Weg hinein.** Der Endpunkt nimmt ein `fmt_`-Access-Token und sonst nichts: keinen persönlichen `fm_`-Key, keinen Organisations-Key `fmo_`, kein Session-Cookie. Ein Key trägt keine Audience und kann deshalb nicht sagen, ob er für diesen Endpunkt ausgestellt wurde.
+**OAuth ist der einzige Weg hinein.** Der Endpunkt nimmt ein `fmt_`-Access-Token und sonst nichts: keinen persönlichen `fm_`-Key, keinen Organisations-Key `fmo_`, kein Session-Cookie.
 
 Richte deinen Client auf `https://api.fastmon.eu/mcp`, den Rest findet er selbst:
 
-1. Der unauthentifizierte Aufruf antwortet mit `401` und `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read", resource_metadata="…"`.
+1. Der unauthentifizierte Aufruf antwortet mit `401` und `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read feedback:create", resource_metadata="…"`.
 2. Dieses Dokument (`/.well-known/oauth-protected-resource/mcp`, RFC 9728) nennt den Authorization Server und die Scopes, die diese Ressource benutzt.
 3. Registrieren (RFC 7591), Authorization Code mit PKCE ausführen und den Endpunkt im Parameter `resource` (RFC 8707) nennen, **im Authorization-Request und im Token-Request**. Ein String, für jeden Kunden derselbe. Die Audience entscheidet der Authorization-Request, der Consent bindet sie an die Verbindung, und der Token-Request darf denselben Wert nur wiederholen.
 
-Der Mandant wird beim Consent festgelegt und sonst nirgends. Ein Client kann an keiner Stelle des Flows eine Organisation benennen, deshalb gibt es auch in den Tool-Argumenten nichts, was nach Mandant aussieht.
+Der Mandant wird beim Consent festgelegt und sonst nirgends. Ein Client kann an keiner Stelle des Flows eine Organisation benennen.
 
-Zwei Defaults solltest du kennen. Eine Registrierung ohne `scope` bekommt allein `analytics:read`, nachzulesen in der Antwort. Wer die Lighthouse-Tools braucht, muss `synthetic:read` also ausdrücklich anfordern. Eine Registrierung ohne Angabe zu `credential_owner` bekommt eine persönliche Verbindung, und genau die verlangt dieser Endpunkt. `organization` plus MCP-Ressource wird beim Consent mit einer entsprechenden Meldung abgelehnt.
+Eine Registrierung ohne `scope` bekommt allein `analytics:read`. Für die Lighthouse-Tools musst du `synthetic:read` anfordern, für `send_feedback` `feedback:create`. Eine Registrierung ohne Angabe zu `credential_owner` bekommt eine persönliche Verbindung, und genau die verlangt dieser Endpunkt. `organization` plus MCP-Ressource wird beim Consent mit einer entsprechenden Meldung abgelehnt.
 
-`403 mcp_disabled` heißt, die Organisation hat den Server ausgeschaltet. Die Antwort trägt keinen `WWW-Authenticate`-Header, weil eine neue Autorisierung daran nichts ändert. Zeig die Meldung, statt einen neuen Flow zu starten.
+`403 mcp_disabled` heißt, die Organisation hat den Server ausgeschaltet. Die Antwort trägt keinen `WWW-Authenticate`-Header. Zeig die Meldung, statt einen neuen Flow zu starten.
 
 Der vollständige OAuth-Vertrag, inklusive Refresh-Rotation und der Fehler, auf die du verzweigen musst, steht unter [OAuth apps](/en/api/oauth) (nur auf Englisch).
 

@@ -27,11 +27,11 @@ Fünf weitere Seiten sind aufgebaut wie die LCP-Seite: der Wert mit Trend, die P
 | Seitenladezeit       | Performance → Page load | nicht bewertet | nicht bewertet |
 | DNS-Lookup           | Netzwerk → DNS          | ≤ 60 ms       | > 100 ms       |
 | TCP-Verbindung       | Netzwerk → Connect      | ≤ 200 ms      | > 600 ms       |
-| Seitengewicht        | Netzwerk → Seitengewicht | ≤ 2.667 KiB   | > 4.000 KiB    |
+| Seitengröße          | Netzwerk → Seitengröße   | ≤ 2.667 KiB   | > 4.000 KiB    |
 
 - **DNS und Connect** zählen nur Pageviews, die wirklich einen Lookup gemacht (`performed_dns_lookup`) oder eine neue Verbindung geöffnet haben (`new_tcp_connection`). Die Zusammenfassung nennt ohne Bewertung, wie viele Pageviews den Lookup übersprungen oder eine Verbindung wiederverwendet haben.
 - **TBT** listet die Skripte in Long Animation Frames über 50 ms, wie die INP-Seite.
-- **Seitengewicht** (`page_weight`) bewertet das Gewicht eines ersten Aufrufs, Browser-Cache-Treffer eingeschlossen. Daneben zeigt die Seite, was ein warmer Aufruf spart, wie viele Aufrufe warm sind und was ein Aufruf übertragen hat. Safari sendet für gecachte Dateien keine Größen, seine warmen Aufrufe zählen deshalb nicht mit.
+- **Seitengröße** (`page_weight`) bewertet die Größe eines ersten Aufrufs, Browser-Cache-Treffer eingeschlossen. Daneben zeigt die Seite, was ein warmer Aufruf spart, wie viele Aufrufe warm sind und was ein Aufruf übertragen hat. Safari sendet für gecachte Dateien keine Größen, seine warmen Aufrufe zählen deshalb nicht mit.
 
 Jede Bewertung kommt aus [`GET /metric-thresholds`](/de/web-vitals/experience-score#thresholds).
 

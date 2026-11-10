@@ -12,6 +12,50 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-11-10" type="changed" area="api" title="MCP tools page through errors and report shares as ratios">
+
+The MCP and Ask tools answer more completely and refuse what they cannot use.
+
+- **Unknown arguments** are refused with the list of valid ones. Before, `offset` on `get_errors` was dropped and answered the first page again.
+- **Paging**: `get_errors` and `get_failed_resources` answer `has_more` and `next_cursor` and take it back as `cursor`. Every page keeps the first page's period and totals.
+- **Shares and changes run 0..1** under new names: `share` on `get_errors` and `get_cwv_distribution`, `failed_load_share`, and `relative_change` on `compare_periods` and `detect_changes`. A client that divided by 100 has to stop.
+- **Gaps are visible**: `period.complete_until` says up to when the period is complete, series fill empty buckets, and top-N tools answer `total` and `limit`.
+- **Removed**: `blocked_errors` on `get_errors`. Read `failed_resources` instead.
+
+Docs: [MCP server → What the model can read](/en/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="new" area="api" title="MCP clients can send feedback">
+
+An MCP client can report a problem with the fastmon tools through `send_feedback`, after asking you. The report reaches the fastmon team like feedback from the dashboard, at most 10 per person per hour. It needs the new scope `feedback:create`, so an existing connection has to be removed and added again to use it.
+
+Docs: [MCP server → What the model can read](/en/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="changed" area="platform" title="Every mail names its organization and application">
+
+Mail subjects now end with the tenant, as in `Traffic dropped, since 08:50 · Musterhaus GmbH · Onlineshop`. A strip under the logo names organization, application, domain, and environment.
+
+- **Billing and trial subjects** end with the organization. A mail filter that matches a billing subject exactly needs an update.
+- **Support replies** name the organization before the `[#id]`, so an older thread may split once in your mail client.
+- **Watchdog mails** use the page's words for the kind: Recent, Recurring, and Trend. Slack and Discord posts do the same.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="changed" area="dashboard" title="fastmon ask on a phone">
+
+On a phone, fastmon ask opens with a short question, three examples, and your last five conversations, with the input at the bottom. In a chat the back arrow returns to this overview.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-09" type="fixed" area="dashboard" title="Tracking status counts today from your midnight">
+
+"Today" on the tracking status counts pageviews and checkout events from midnight in your time zone. It started at midnight UTC before.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-06" type="new" area="platform" title="Notification channels for Slack, Discord, and webhooks">
 
 Notifications now has three tabs: Rules, Channels, and Observations. You set up a channel once and every rule and observation can post to it.

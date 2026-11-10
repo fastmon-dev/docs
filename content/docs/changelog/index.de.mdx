@@ -17,6 +17,50 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-10" type="changed" area="api" title="MCP-Tools blättern durch Fehler und melden Anteile als Verhältnis">
+
+Die MCP- und Ask-Tools antworten vollständiger und lehnen ab, was sie nicht verwenden können.
+
+- **Unbekannte Argumente** lehnen sie ab und nennen die gültigen. Bisher fiel zum Beispiel `offset` bei `get_errors` still weg, und du bekamst wieder die erste Seite.
+- **Blättern**: `get_errors` und `get_failed_resources` liefern `has_more` und `next_cursor`, den du als `cursor` zurückgibst. Jede Seite behält Zeitraum und Summen der ersten.
+- **Anteile und Veränderungen laufen von 0 bis 1** und heißen neu: `share` bei `get_errors` und `get_cwv_distribution`, `failed_load_share` und `relative_change` bei `compare_periods` und `detect_changes`. Wer bisher durch 100 geteilt hat, muss das weglassen.
+- **Lücken sind sichtbar**: `period.complete_until` sagt, bis wann der Zeitraum vollständig ist. Reihen füllen leere Buckets, und Top-N-Tools liefern `total` und `limit`.
+- **Entfernt**: `blocked_errors` bei `get_errors`. Lies stattdessen `failed_resources`.
+
+Doku: [MCP-Server → Was das Modell lesen kann](/de/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="new" area="api" title="MCP-Clients können Feedback senden">
+
+Über `send_feedback` meldet ein MCP-Client ein Problem mit den fastmon-Tools, nachdem er dich gefragt hat. Die Meldung erreicht das fastmon-Team wie Feedback aus dem Dashboard, höchstens 10 pro Person und Stunde. Dafür braucht es den neuen Scope `feedback:create`: Eine bestehende Verbindung musst du entfernen und neu hinzufügen.
+
+Doku: [MCP-Server → Was das Modell lesen kann](/de/mcp#tools).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="changed" area="platform" title="Jede Mail nennt Organisation und Application">
+
+Der Betreff endet jetzt mit dem Mandanten, etwa `Traffic dropped, since 08:50 · Musterhaus GmbH · Onlineshop`. Unter dem Logo stehen Organisation, Application, Domain und Umgebung.
+
+- **Rechnungs- und Trial-Mails** enden mit der Organisation. Ein Mailfilter, der auf den genauen Betreff prüft, muss angepasst werden.
+- **Support-Antworten** nennen die Organisation vor der `[#id]`. Ein älterer Thread kann sich im Mailprogramm deshalb einmal aufteilen.
+- **Watchdog-Mails** benennen die Art wie die Seite: Seit kurzem, Wiederkehrend und Trend. Slack- und Discord-Posts ebenso.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-10" type="changed" area="dashboard" title="fastmon ask auf dem Handy">
+
+Auf dem Handy startet fastmon ask mit einer kurzen Frage, drei Beispielen und deinen letzten fünf Unterhaltungen, das Eingabefeld sitzt unten. Im Chat bringt dich der Zurück-Pfeil zu dieser Übersicht.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-09" type="fixed" area="dashboard" title="Tracking-Status zählt „Heute“ ab deiner Mitternacht">
+
+„Heute“ im Tracking-Status zählt Pageviews und Checkout-Events ab Mitternacht in deiner Zeitzone. Bisher begann der Tag um Mitternacht UTC.
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-06" type="new" area="platform" title="Benachrichtigungskanäle für Slack, Discord und Webhooks">
 
 Benachrichtigungen hat jetzt drei Tabs: Regeln, Kanäle und Beobachtungen. Einen Kanal richtest du einmal ein, danach können alle Regeln und Beobachtungen dorthin posten.
@@ -92,9 +136,9 @@ Doku: [Datenschutz → Bot- und Rechenzentrums-Labels](/de/privacy#bot-and-datac
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Seitengewicht ersetzt Übertragungsgröße und Ressourcen">
+<ChangelogEntry date="2026-11-06" type="changed" area="dashboard" title="Seitengröße ersetzt Übertragungsgröße und Ressourcen">
 
-Netzwerk → Seitengewicht bewertet, was eine Seite beim ersten Aufruf wiegt. Ein warmer Browser-Cache lässt eine Seite also nicht mehr leichter aussehen. Daneben zeigt die Seite, was ein warmer Aufruf spart, wie viele Aufrufe warm sind und was ein Aufruf übertragen hat. Alte Links auf Übertragungsgröße und Ressourcen führen mit ihren Filtern hierher.
+Netzwerk → Seitengröße bewertet, wie groß eine Seite beim ersten Aufruf ist. Ein warmer Browser-Cache lässt eine Seite also nicht mehr kleiner aussehen. Daneben zeigt die Seite, was ein warmer Aufruf spart, wie viele Aufrufe warm sind und was ein Aufruf übertragen hat. Alte Links auf Übertragungsgröße und Ressourcen führen mit ihren Filtern hierher.
 
 Doku: [Web Vitals → Weitere Metrik-Seiten](/de/web-vitals#other-metric-pages).
 
@@ -374,26 +418,26 @@ Die Registrierung lehnt Freemail-Adressen wie gmail.com oder web.de ab, wie bish
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-10-29" type="new" area="tracker" title="Redirect-Positionen, Seitengewicht und was der Browser messen kann">
+<ChangelogEntry date="2026-10-29" type="new" area="tracker" title="Redirect-Positionen, Seitengröße und was der Browser messen kann">
 
 Das Tracker-Bundle ändert sich mit dem Deploy. Pageviews aus gecachten älteren Bundles speichern in den neuen Feldern nichts.
 
 - **`fs`, `rqs`, `rdc`**: `fetchStart`, `requestStart` und `redirectCount` des Navigation-Eintrags. Alle drei sind bei einer Soft Navigation und einem BFCache-Restore leer, die beiden Positionen auch bei einem Prerender. Eine Position nach dem ersten Byte verwirft der Collector.
 - **`cap`**: eine Bitmaske dessen, was der Browser beobachten kann, einmal beim Start gelesen aus `PerformanceObserver.supportedEntryTypes`, den Feldern des Navigation-Eintrags, `interactionId` und `navigator.connection`. Sie steht auf jedem Beacon, damit ein leerer LCP in Safari als nicht unterstützt gilt und nicht als Seite, die nie gemalt hat.
-- **`pw`, `bcb`**: das Seitengewicht und sein Anteil aus dem Browser-Cache, beide aus `encodedBodySize` summiert, sodass ein Cache-Treffer wie ein Download zählt. Die eigenen Beacons des Trackers bleiben draußen. Ein sichtbarer Eintrag ohne Größe, wie Safari einen Cache-Treffer meldet, lässt beide leer, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` bleibt draußen.
+- **`pw`, `bcb`**: die Seitengröße und ihr Anteil aus dem Browser-Cache, beide aus `encodedBodySize` summiert, sodass ein Cache-Treffer wie ein Download zählt. Die eigenen Beacons des Trackers bleiben draußen. Ein sichtbarer Eintrag ohne Größe, wie Safari einen Cache-Treffer meldet, lässt beide leer, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` bleibt draußen.
 - **`rbs`** (Größe je Ressourcentyp) zählt jetzt `encodedBodySize` statt der übertragenen oder dekodierten Bytes. `tbw` summiert weiter `transferSize`.
 
 Jedes neue Feld folgt aus der Browser-Engine und wird in jedem Privacy-Modus erfasst. Doku: [Der Beacon → Der Wire-Payload](/de/concepts/beacon#the-wire-payload).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-10-29" type="new" area="dashboard" title="Seitengewicht, getrennt vom Browser-Cache">
+<ChangelogEntry date="2026-10-29" type="new" area="dashboard" title="Seitengröße, getrennt vom Browser-Cache">
 
-- **Seitengewicht** (`page_weight`) ist das Gewicht einer Seite beim ersten Aufruf: die komprimierten Bytes des Dokuments und jeder Ressource, egal ob ein Aufruf sie geladen oder aus dem Browser-Cache genommen hat. Bewertet wird mit den Lighthouse-Mobile-Grenzen, gut bis 2.667 KiB und schlecht über 4.000 KiB, und `GET /metric-thresholds` führt es.
+- **Seitengröße** (`page_weight`) ist die Größe einer Seite beim ersten Aufruf: die komprimierten Bytes des Dokuments und jeder Ressource, egal ob ein Aufruf sie geladen oder aus dem Browser-Cache genommen hat. Bewertet wird mit den Lighthouse-Mobile-Grenzen, gut bis 2.667 KiB und schlecht über 4.000 KiB, und `GET /metric-thresholds` führt es.
 - **Browser-Cache-Bytes** (`browser_cache_bytes`) ist der Teil, den der Browser-Cache beantwortet hat. **Browser-Cache-Ersparnis** ist dieser Teil über die warmen Aufrufe, die mehr als die Hälfte ihres Gewichts aus dem Cache nahmen, und **Anteil warmer Aufrufe** ihr Anteil. Alle drei sind unbewertet.
 - **Wo**: im Explorer, im Metrik-Bereichsfilter, in Alert-Regeln, in fastmon ask und auf `POST /analytics/query`.
 - **Transfergröße** (`total_byte_weight`) behält ihre Bedeutung, die Bytes, die ein Aufruf heruntergeladen hat. Ein warmer Aufruf liest dort deutlich weniger.
-- **Grenzen**: Ein warmer Aufruf in Safari sendet kein Seitengewicht, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` verbirgt ihre Größe, sodass der Wert auf solchen Seiten eine Untergrenze ist. Die Größe je Ressourcentyp zählt jetzt die komprimierten Bytes eines ersten Aufrufs, Werte älterer Tracker sind damit nicht vergleichbar.
+- **Grenzen**: Ein warmer Aufruf in Safari sendet keine Seitengröße, und eine Cross-Origin-Datei ohne `Timing-Allow-Origin` verbirgt ihre Größe, sodass der Wert auf solchen Seiten eine Untergrenze ist. Die Größe je Ressourcentyp zählt jetzt die komprimierten Bytes eines ersten Aufrufs, Werte älterer Tracker sind damit nicht vergleichbar.
 
 Doku: [Web Vitals → Weitere Metrik-Seiten](/de/web-vitals#other-metric-pages).
 
@@ -3212,7 +3256,7 @@ Release-Marker funktionieren jetzt auf jedem Chart gleich. Die Charts der **Anal
 
 <ChangelogEntry date="2026-06-30" type="new" area="dashboard" title="Teilbare Metrik-Panel-Ansicht">
 
-Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengewicht) wird jetzt in der URL abgebildet, und das Panel hat einen **Teilen-Button**. Ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen jetzt die Navigation) und scrollen vollständig zum Ziel-Panel.
+Der Umschalter **Über die Zeit / Verteilung / Beides** auf den Metrik-Detailseiten (LCP, FCP, CLS, INP, TTFB, Seitengröße) wird jetzt in der URL abgebildet, und das Panel hat einen **Teilen-Button**. Ein kopierter Link öffnet exakt diese Ansicht wieder, mit fixiertem Zeitraum. Geteilte Links auf eine Panel-Ansicht oder ein Breakdown-Unter-Panel behalten ihre Ansicht (die Parameter `view`, `pview` und `panel` überstehen jetzt die Navigation) und scrollen vollständig zum Ziel-Panel.
 
 </ChangelogEntry>
 
@@ -3265,7 +3309,7 @@ Als ad-geblockt verworfene Tracker-Aufrufe waren bereits aus deiner Fehlerrate a
 
 <ChangelogEntry date="2026-06-26" type="changed" area="dashboard" title="Metrik-Detailseiten neu gestaltet rund um ein „Über die Zeit“-Panel">
 
-Jede Metrik-Detailseite (LCP, INP, CLS, TBT, Seitengewicht und die Ladezeit-Seiten) beginnt jetzt mit einem einzigen **„Über die Zeit“-Panel**, das du zwischen dem Perzentil-Verlauf, der Werteverteilung oder beidem nebeneinander umschaltest. Die Verteilungs-Buckets und die Gut/Schlecht-Zonen sind klickbar: Sie öffnen den Explorer eingegrenzt auf diesen Wertebereich und übernehmen deinen aktuellen Zeitraum. Kurze Zeitfenster (2 Stunden oder weniger) werden jetzt minutengenau statt stündlich dargestellt, sodass eine Ein-Stunden-Ansicht nicht mehr fast leer ist.
+Jede Metrik-Detailseite (LCP, INP, CLS, TBT, Seitengröße und die Ladezeit-Seiten) beginnt jetzt mit einem einzigen **„Über die Zeit“-Panel**, das du zwischen dem Perzentil-Verlauf, der Werteverteilung oder beidem nebeneinander umschaltest. Die Verteilungs-Buckets und die Gut/Schlecht-Zonen sind klickbar: Sie öffnen den Explorer eingegrenzt auf diesen Wertebereich und übernehmen deinen aktuellen Zeitraum. Kurze Zeitfenster (2 Stunden oder weniger) werden jetzt minutengenau statt stündlich dargestellt, sodass eine Ein-Stunden-Ansicht nicht mehr fast leer ist.
 
 </ChangelogEntry>
 
@@ -3295,7 +3339,7 @@ Eine Runde Explorer-Arbeit.
 
 <ChangelogEntry date="2026-06-26" type="fixed" area="dashboard" title="Große Datenmengen und Mobil-Layout">
 
-Übertragungsgrößen und Seitengewicht skalieren jetzt bis **GB und TB**, statt bei MB zu deckeln (ein Gesamtwert von ~1 TB liest sich nicht mehr als „1069213.0 MB“), und große Aufrufzahlen von Drittanbietern werden kompakt angezeigt (zum Beispiel „1,1 Mio.“) mit der vollen Zahl beim Überfahren. Auf kleinen Bildschirmen läuft das aufgeklappte Aufschlüsselungs-Raster nicht mehr aus dem Bild, seine Zeilenaktionen sind auf Touch-Geräten immer sichtbar, und die Zeitauswahl ragt nicht mehr über den linken Rand hinaus.
+Übertragungsgrößen und Seitengröße skalieren jetzt bis **GB und TB**, statt bei MB zu deckeln (ein Gesamtwert von ~1 TB liest sich nicht mehr als „1069213.0 MB“), und große Aufrufzahlen von Drittanbietern werden kompakt angezeigt (zum Beispiel „1,1 Mio.“) mit der vollen Zahl beim Überfahren. Auf kleinen Bildschirmen läuft das aufgeklappte Aufschlüsselungs-Raster nicht mehr aus dem Bild, seine Zeilenaktionen sind auf Touch-Geräten immer sichtbar, und die Zeitauswahl ragt nicht mehr über den linken Rand hinaus.
 
 </ChangelogEntry>
 

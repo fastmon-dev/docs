@@ -57,7 +57,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 
 ## What the model can read [#tools]
 
-28 tools, all read-only, all scoped to the organization the connection was approved for:
+29 tools, scoped to the organization the connection was approved for. All but `send_feedback` are read-only:
 
 | Area | Tools |
 | ---- | ----- |
@@ -69,6 +69,7 @@ Manage your connections under **Account → Access**. Disconnecting is immediate
 | Events | `get_events` |
 | Browser reports | `get_nel`, `get_nel_breakdown`, `list_nel_reports`, `get_csp`, `get_csp_breakdown`, `list_csp_reports` |
 | Synthetic (lab) | `list_synthetic_pages`, `get_synthetic_lighthouse`, `get_synthetic_lighthouse_audits` |
+| Feedback | `send_feedback` |
 
 Answers are aggregates and ranked lists, the same ones behind the dashboard. Nothing returns raw beacon rows, and no tool takes an organization: it comes off the connection.
 
@@ -78,9 +79,11 @@ Every tool over a set of sites takes `site_id`, `application_id` (every domain o
 
 The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/synthetic) enabled for the organization. Missing either one is a refusal with a reason, never an empty report.
 
-**How answers are qualified.** Every p75 carries the number of measurements behind it (`samples`), which is not the pageview count. `inp_p75_ms: null` beside `samples.inp: 0` means nothing was measured. A tool that applies a sample floor reports the floor it used.
+`send_feedback` needs `feedback:create` and reports a problem with the tools to the fastmon team, at most 10 per person per hour. The client asks you before each report.
 
-**How filters match.** A `url` written as a path (`/checkout*`) matches the path, and text filter values match case-insensitively, so `browser: ["chrome"]` and `device_type: ["Desktop"]` find the stored `Chrome` and `desktop`. `country` takes codes, not names, and repairs the ones ISO does not assign (`UK` and `EN` to `GB`, `EL` to `GR`). A tag no site carries is refused rather than answered as a scope of zero sites. There is no per-site timezone: a period without an offset is read as UTC.
+**How answers are qualified.** Every p75 carries the number of measurements behind it (`samples`), which is not the pageview count. `inp_p75_ms: null` beside `samples.inp: 0` means nothing was measured. A tool that applies a sample floor reports the floor it used. Shares and changes are ratios from 0 to 1, and `period.complete_until` says up to when the period is complete.
+
+**How filters match.** A `url` written as a path (`/checkout*`) matches the path, and text filter values match case-insensitively, so `browser: ["chrome"]` and `device_type: ["Desktop"]` find the stored `Chrome` and `desktop`. `country` takes codes, not names, and repairs the ones ISO does not assign (`UK` and `EN` to `GB`, `EL` to `GR`). A tag no site carries is refused rather than answered as a scope of zero sites. A period without an offset is read as UTC. An argument the tool does not declare is refused with the list of valid ones.
 
 **Empty values.** An empty string counts as no filter. `empty: ["referrer_source"]` asks for direct traffic, `not_empty: ["utm_campaign"]` for campaign traffic.
 
@@ -90,16 +93,16 @@ The three synthetic tools need `synthetic:read` plus [Synthetic Monitoring](/en/
 
 ## Limits [#limits]
 
-- **The organization's history** per call at most, 90 days or 13 months with the history feature, and 50 rows per breakdown.
+- **The organization's history** per call at most, 90 days or 13 months with the history feature, and 50 rows per breakdown. `get_errors` and `get_failed_resources` page on with `cursor`.
 - **120 requests per minute**, counted per person. Over the limit: 429 with the number of seconds to wait.
 - **Minute buckets** span at most 6 hours. Longer periods use hourly buckets or coarser.
-- **30 seconds** per query, then it is cancelled and the tool says so. Usually a high-cardinality breakdown (URL, browser version, origin host) over a long period.
+- **30 seconds** per query, then it is cancelled and the tool says so.
 
 ## What leaves fastmon [#privacy]
 
-The answers do: page URLs, referrers and UTM parameters, country-level geography, device and browser, timings, error signatures. It is the same field-level data your dashboard shows, and no tool reaches data a member could not already see there.
+The answers do: page URLs, referrers and UTM parameters, country-level geography, device and browser, timings, error signatures. It is the same field-level data your dashboard shows, and no tool reaches data a member could not see there.
 
-Where those answers go is the part to assess. The recipient is whoever runs the model behind your client, which is your relationship rather than ours: fastmon does not choose that provider, has no contract with it, and does not list it as a sub-processor. Whether your organization may make that transfer, and on what basis, is your assessment. Hence the owner-level switch with an audit entry.
+The recipient is whoever runs the model behind your client, which is your relationship rather than ours: fastmon does not choose that provider, has no contract with it, and does not list it as a sub-processor. Whether your organization may make that transfer, and on what basis, is your assessment.
 
 The built-in **fastmon ask** assistant is a separate decision: it sends data to our own sub-processor under our DPA. Two recipients, two switches, neither implies the other.
 
@@ -115,19 +118,19 @@ Turning on `mcp_enabled` needs `org:update`. An owner of the agency holds it in 
 
 Streamable HTTP (JSON-RPC 2.0), stateless, plain JSON responses. No SSE, no session id to hold.
 
-**OAuth is the only way in.** The endpoint takes an `fmt_` access token and nothing else: no personal `fm_` key, no organization `fmo_` key, no session cookie. A key carries no audience, so it cannot say whether it was issued for this endpoint.
+**OAuth is the only way in.** The endpoint takes an `fmt_` access token and nothing else: no personal `fm_` key, no organization `fmo_` key, no session cookie.
 
 Point your client at `https://api.fastmon.eu/mcp` and it discovers the rest:
 
-1. The unauthenticated call answers `401` with `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read", resource_metadata="…"`.
+1. The unauthenticated call answers `401` with `WWW-Authenticate: Bearer …, scope="analytics:read synthetic:read feedback:create", resource_metadata="…"`.
 2. That document (`/.well-known/oauth-protected-resource/mcp`, RFC 9728) names the authorization server and the scopes this resource uses.
 3. Register (RFC 7591), run authorization code with PKCE, and name the endpoint in the `resource` parameter (RFC 8707) **on the authorization request and on the token request**. One string, the same for every customer. The authorization request decides the audience, consent binds it to the connection, and the token request may only repeat the same value.
 
-The tenant is settled at consent and nowhere else. A client cannot name an organization anywhere in the flow, which is why nothing tenant-shaped appears in the tool arguments either.
+The tenant is settled at consent and nowhere else. A client cannot name an organization anywhere in the flow.
 
-Two defaults are worth knowing. A registration with no `scope` gets `analytics:read` alone, read back from the response, so the Lighthouse tools need an explicit `synthetic:read`. A registration silent on `credential_owner` gets a personal connection, which is what this endpoint requires; `organization` plus an MCP resource is refused at consent with a message saying so.
+A registration with no `scope` gets `analytics:read` alone, so the Lighthouse tools need `synthetic:read` and `send_feedback` needs `feedback:create`. A registration silent on `credential_owner` gets a personal connection, which is what this endpoint requires; `organization` plus an MCP resource is refused at consent with a message saying so.
 
-`403 mcp_disabled` means the organization switched the server off. It carries no `WWW-Authenticate` header, because re-authorizing cannot fix it. Show the message instead of starting a new authorization flow.
+`403 mcp_disabled` means the organization switched the server off. It carries no `WWW-Authenticate` header. Show the message instead of starting a new authorization flow.
 
 The full OAuth contract, including refresh rotation and the errors to branch on, is on [OAuth apps](/en/api/oauth).
 
