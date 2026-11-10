@@ -89,7 +89,8 @@ for (const name of Object.keys(schemas)) {
   }
 }
 // Drop an excluded schema only once nothing kept still references it: shared
-// enums like ObservationDirection also back documented schemas.
+// enums like ObservationDirection also back documented schemas, and the
+// observation webhook payloads back the documented `webhooks`.
 const reachable = new Set();
 const walk = (node) => {
   if (!node || typeof node !== "object") return;
@@ -103,6 +104,7 @@ const walk = (node) => {
   for (const v of Object.values(node)) walk(v);
 };
 walk(spec.paths);
+walk(spec.webhooks);
 for (const name of Object.keys(schemas)) {
   if (EXCLUDE_SCHEMA.test(name) && !reachable.has(name)) delete schemas[name];
 }
