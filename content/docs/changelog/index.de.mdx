@@ -17,6 +17,175 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Die API ist stabil">
+
+Die veröffentlichte API hat jetzt einen Stabilitätsvertrag. Jede Operation sagt in `x-stability-level`, was sie zusagt.
+
+- **`stable`** ändert sich inkompatibel nur nach einer Deprecation, der alte Name antwortet weiter. Das gilt für 143 Operationen.
+- **`beta`** bekommt noch genau eine angekündigte inkompatible Änderung: die Routen der Synthetic-Seiten, die Page-Type-Erkennung und die unbekannten Hostnamen.
+- **`alpha`** kann sich in jedem Release ändern: `POST /analytics/goals/factors`.
+- **Erweiterbare Enums** stehen unter `x-extensible-enum` und können ohne Ankündigung wachsen. Behandle einen unbekannten Wert wie einen freien String.
+- **Site-Tags** sind veraltet, ohne Ersatz. Vorerst funktionieren sie weiter.
+
+Die Änderungen unten sind die letzten Breaking Changes vor diesem Vertrag. Das Dashboard kommt im selben Deploy.
+
+Doku: [API-Referenz → Stability](/en/api#stability) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Antworten liefern verknüpfte Objekte mit">
+
+Antworten nennen verknüpfte Einträge und zusammengehörige Einstellungen als Objekt. Die flachen Felder, die sie ersetzen, fallen ohne Übergangsfrist weg.
+
+- **Verweise** sind Objekte, etwa `"site": {"id", "domain", "name"}` statt `site_id`, oder `organization` und `application` statt ihrer IDs.
+- **Zusammengehörige Felder** sind ein Objekt, in Antworten und Requests: `collection.sampling.rate`, `collector.hash`, `uptime.enabled`, `card.last4`.
+- **Booleans, die der Server meldet,** beginnen mit `is_` oder `has_`, etwa `is_editable` am API-Key oder `is_journey_truncated` am Besucher.
+- **Umbenannt**: `meta.sampling.rate` statt `sampling_rate`, `id` statt `event_id` an Events, `checkout_stage` statt `stage` an Event-Zeilen, `reference_unit` `ms` statt `milliseconds`.
+- **Audit-Log**: Aktionen heißen `organization.*`, `application.*` und `connection.*`, und ein Organisations-Key hat den `kind` `organization`.
+
+Requests nehmen weiter `site_id` und die anderen flachen IDs. Die Felder des Shopware-Plugins bleiben. Doku: [Applications → Was eine Application hat](/de/concepts/applications#application-fields).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="removed" area="api" title="Veraltete Namen entfernt">
+
+Alles, was die API als veraltet markiert hatte, ist weg. Ausnahmen sind die Felder des Shopware-Plugins und die Site-Tags.
+
+- **`POST /analytics/beacons`** antwortet mit 404. Nimm `POST /analytics/pageviews`, gleicher Body, gleiche Antwort.
+- **`POST /analytics/query`**: Lies `sample_count` statt `beacons`. `compare_to_release_id` gibt 422, schick das Release als `compare_to`.
+- **`POST /analytics/events/overview`**: Lies `names` statt `events_by_name` und `value_sums` statt `revenue`.
+- **`POST /analytics/third-party`** liefert kein `count` und `resource_count` mehr. Seitengröße sortiert Drittanbieter-Domains nach Ladezeit.
+- **Ebenfalls weg**: `storage` und `clickhouse_table` an der Organisation, `events_read` an den Checkout-Stufen und `mode` in `sparse_buckets`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Strengere Requests, genauere Fehler">
+
+Requests werden strenger geprüft, und die Fehlercodes sagen genauer, was schiefging.
+
+- **Unbekannte Felder** in einem Request-Body geben 422 `validation_error`, das Feld steht in `details`.
+- **`validation_error` ist immer 422.** 400 bleibt für einen ungültigen Cursor, ein Token, das nicht passt, oder eine Geschäftsregel.
+- **Die Filter** `device_type`, `checkout_stage` und `cache_layer` nehmen nur noch feste Werte. `ownership` an der Fehlerliste nimmt eine Liste.
+- **Not-found-Antworten** nennen die Ressource, etwa `application_not_found` oder `api_key_not_found`, statt `resource_not_found`.
+- **Ausfälle eines Upstream-Dienstes** geben 503 statt 502. Werte den `code` aus, er nennt den Dienst.
+- **Rohe Beacons** bleiben 3 Tage. Weiter zurück liest `POST /analytics/beacon-breakdowns` nicht.
+
+Doku: [API → Fehler](/en/api/errors) (nur auf Englisch).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Generierte Clients bekommen neue Namen">
+
+Einen aus dem OpenAPI-Schema generierten Client musst du einmal neu erzeugen. Pfade, Bodys und Werte auf der Leitung bleiben gleich.
+
+- **operationIds**: `Org` wird ausgeschrieben (`listOrganizationApiKeys`), und ein lesender POST beginnt mit `query` (`queryAnalyticsVisitors`). Aus `queryAnalytics` wird `queryAnalyticsMetrics`.
+- **Schema-Namen** ziehen nach, etwa `OrganizationKeyCreate` und `PageviewRow`.
+- **Millisekunden** sind überall `number`. Ein Feld, das `812` geliefert hat, liefert weiter `812`.
+- **Leere Werte** fehlen, wo ein Feld bisher `""` oder `0` lieferte, etwa `session_id`, `country` oder `checkout_stage`.
+- **Tags**: Jede Operation trägt genau einen, ihren Funktionsbereich. Einladungen und Mitglieder haben eigene.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Releases gehören zur Application">
+
+Releases legst du mit `POST /applications/{app_id}/releases` an, `GET` auf demselben Pfad listet sie. Ein Release gilt für alle Sites der Application und nennt sie in `application`. Die Site-Routen sind veraltet, antworten aber ohne Enddatum weiter.
+
+Doku: [Releases vergleichen](/de/guides/compare-releases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Ein Server-Cache pro Seitenaufruf">
+
+Jeder Seitenaufruf zählt jetzt genau den Server-Cache, der ihn ausgeliefert hat: das CDN oder den Cache vor deiner App.
+
+- **Neue Felder**: `cache_layer`, `cache_status`, `cache_age` und `cache_ttl`, dazu die Metrik `cache_served_rate` über die cachebaren Seitenaufrufe.
+- **`fm-cache`**, `fm-cache-age` und `fm-cache-ttl` stehen für einen Cache, den du selbst betreibst, etwa Varnish.
+- **Entfernt**: die Cache-Metriken, Filter und Felder mit `cdn_*` und `origin_*`. Benachrichtigungsregeln darauf sind umgezogen, prüf ihre Schwellenwerte.
+- **Browser-Cache** heißt jetzt auch so: `browser_cache_hit_rate`, `browser_cached_resources`, `browser_page_cached`, `browser_cache_rate` und der `lcp_delivery`-Wert `browser_cache`.
+
+Doku: [Server-Timing → Ein Server-Cache pro Seitenaufruf](/de/guides/server-timing#served-cache).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="dashboard" title="Seiten für Server-Cache und Browser-Cache">
+
+Unter Netzwerk gibt es jetzt zwei Cache-Seiten statt einer.
+
+- **Server-Cache** zeigt die Auslieferungsrate, das Alter der ausgelieferten Kopie und ihre Restlaufzeit. „Wer hat geantwortet“ teilt jeden Seitenaufruf auf: CDN, Origin-Cache, nicht ausgeliefert, nicht cachebar, ohne Status.
+- **Eine Tabelle** nach Seitentyp, Seite, Gerät, Land oder Login öffnet pro Zeile ihren Verlauf und einen Link in den Explorer.
+- **Browser-Cache** zeigt Ressourcen aus dem Browser-Cache, warme Aufrufe, gesparte Bytes und bfcache-Wiederherstellungen. Dazu kommt, woher das LCP-Element stammt.
+
+Alte Links auf die CDN-, Origin- oder Browser-Ansicht öffnen die passende Seite.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="platform" title="Sicherheitskorrekturen für Keys, Apps und Mitglieder">
+
+Ein Audit hat eingeschränkt, was Keys und verbundene Apps dürfen.
+
+- **Mitglieder direkt hinzufügen** dürfen nur noch Plattform-Admins. Lade stattdessen mit `POST /organizations/{org_id}/invites` ein.
+- **MCP-Tokens** gelten nicht mehr für die REST-API, und eine getrennte App-Verbindung verliert ihre Tokens sofort.
+- **Selbst registrierte Apps** bekommen `org:delete`, `org:transfer`, `billing:manage` und `member:manage` nicht mehr.
+- **Limits**: On-Demand-Synthetic-Läufe teilen sich 60 pro Organisation und Stunde, KI-Wochenzusammenfassungen 5 pro Nutzer und Minute. Darüber gibt es 429 `rate_limited`.
+- **Die Anmeldung mit GitHub oder Google** ist an den Browser gebunden, in dem sie begann.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="tracker" title="Zwei weitere Hinweise auf einen ferngesteuerten Browser">
+
+`client_anomalies` kennt jetzt `scroll_without_input`, eine Seite, die vor jeder Eingabe gescrollt hat, und `click_without_move`, einen ersten Klick nach weniger als 3 Mausbewegungen. Beides sind Labels, `bot_class` ändert sich nicht. Ein Client, der unbekannte Werte ablehnt, muss sie ergänzen.
+
+Doku: [Datenschutz → Bot- und Rechenzentrums-Labels](/de/privacy#bot-and-datacenter-labels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="dashboard" title="Neu in fastmon">
+
+Ein Button **Neu** oben in der Sidebar listet neue Funktionen, mit einem Punkt, solange etwas ungelesen ist. Jeder Eintrag hat ein Bild, zwei Sätze und einen Link in die Ansicht. Die neueste ungelesene Funktion erscheint außerdem als Karte unten rechts, bis du sie bestätigst.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="NEL- und CSP-Reports im Pop-up">
+
+Bei Network Error Logging und Content Security Policy öffnet sich ein Report in einem Pop-up wie das Pageview-Detail. Mit den Pfeiltasten gehst du durch die Reports. Die eigenen Filter der Seite sind jetzt normale Filter, und der Statusfilter nimmt einen einzelnen Code wie `500`.
+
+Doku: [Network Error Logging → Die Seite](/de/nel#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Shopfloor auf dem Handy und am Wandbildschirm">
+
+Der Shopfloor läuft auf dem Handy und hält sich am Wandbildschirm zurück.
+
+- **Auf dem Handy** zeigt er hochkant seine Zahlen und bittet ums Drehen. Quer füllt die Fläche den ganzen Bildschirm.
+- **Auf dem iPhone** kannst du fastmon zum Home-Bildschirm hinzufügen. Es öffnet sich dann als App ohne Browserleisten.
+- **Im Kiosk-Modus** verschwinden Mauszeiger und Buttons nach drei Sekunden ohne Bewegung.
+- **Der Kopf** ist eine Zeile kürzer, und die letzten Bestellungen am Ausgang zeigen Flagge, Betrag, Uhrzeit und Gerät.
+
+Doku: [Analytics → Shopfloor](/de/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Umsatz rechnet den laufenden Tag hoch">
+
+Die Umsatzkurve fällt am Ende nicht mehr ab. Der laufende Tag oder die laufende Stunde wird wie bei Seitenaufrufen und Bestellungen hochgerechnet und gestrichelt gezeichnet. Der Tooltip zeigt den bisherigen und den hochgerechneten Umsatz.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Fehler kommen mit den fertigen Seitenaufrufen">
+
+Fehlerliste, Fehlerdetail und das Fetch/XHR-Panel lesen die abgeschlossenen Seitenaufrufe. Ein Fehler der laufenden Stunde erscheint rund 5 Minuten später. Ein Seitenaufruf mit mehreren Beacons zählt seine Fehler einmal.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-11" type="new" area="api" title="Events-Übersicht pro Name">
+
+`POST /analytics/events/overview` liefert in `names` eine Zeile pro Event-Name, mit Besuchern, Besucheranteil und Events pro Seitenaufruf. Stage-Events aus Checkout-Seiten stehen in `derived_names` und zählen nicht in die Summen. `POST /analytics/events/breakdown` schlüsselt einen Namen nach Page-Type, URL, Gerät oder nächstem Event auf.
+
+Doku: [Custom Events → API](/de/events#api).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-10" type="changed" area="api" title="MCP-Tools blättern durch Fehler und melden Anteile als Verhältnis">
 
 Die MCP- und Ask-Tools antworten vollständiger und lehnen ab, was sie nicht verwenden können.
@@ -1776,7 +1945,7 @@ Ein Name, ein Typ und eine Skala pro Begriff, in Responses, Request-Bodies und Q
 - **Kein Response-Feld ist mehr nullable.** 444 deklarierten `T | null` für einen Wert, den die API nie schickt: Ein Feld ohne Wert fehlt einfach. Auf dem Draht ändert sich nichts, ein generierter Client sieht jetzt ein optionales Feld.
 - **Jeder deprecated Name nennt seinen Nachfolger** über `x-replaced-by` im OpenAPI-Dokument, eine Migration lässt sich also aus der Spec fahren.
 
-Doku: [API → Analytics](/en/api/analytics/queryAnalytics) (nur auf Englisch).
+Doku: [API → Analytics](/en/api/analytics/queryAnalyticsMetrics) (nur auf Englisch).
 
 </ChangelogEntry>
 
@@ -2207,7 +2376,7 @@ Eine Query, die nach Zeit und nach einer Dimension gruppiert, verlor bisher das 
 - **Gruppieren von `/analytics/query` nach einer `errors.*`-Dimension funktioniert wieder.** Die Zeilenzahl, die das Ergebnis paginiert, fragte ClickHouse nach einer Spalte, die die Query nicht selektiert hatte, jede solche Query schlug also fehl, statt Daten zu liefern.
 - **Eine gruppierte Query meldet den Wert, nach dem sie gruppiert hat.** Beide strukturierten Dimensionen wurden unter dem falschen Namen gelesen: `errors.*` kam leer zurück, und eine Map-Dimension wie `third_parties` ließ den Request scheitern.
 
-Doku: [API → Analytics](/en/api/analytics/queryAnalytics) (nur auf Englisch).
+Doku: [API → Analytics](/en/api/analytics/queryAnalyticsMetrics) (nur auf Englisch).
 
 </ChangelogEntry>
 
@@ -2309,7 +2478,7 @@ Die Befehlspalette (`Cmd`/`Ctrl`+`K`) konnte nur die Sites der gerade gewählten
 - **Inaktive Sites und Applikationen werden gelistet und gekennzeichnet.** Eine wieder zu aktivieren fängt damit an, sie zu finden. Inaktive Organisationen erscheinen nie.
 - **Dieselbe Suche für Skripte**: `GET /search`, mit `q` (Teilstring, ohne Rücksicht auf Groß- und Kleinschreibung), `kinds` zum Einschränken und `limit` (maximal 50 pro Art). Ergebnisse kommen nach Art gruppiert, bester Treffer zuerst: exakter Name, dann Präfix, dann Teilstring, dann alphabetisch. Ein Key ist auf die Organisationen beschnitten, für die er ausgestellt wurde, und auf seine Scopes: ein Key ohne `site:read` bekommt keine Sites, welche Rolle sein Besitzer auch hat.
 
-Doku: [API → Search](/en/api/search/search), [Analytics → Navigieren mit dem Befehlsmenü](/de/analytics#command-palette).
+Doku: [API → Search](/en/api/search/searchResources), [Analytics → Navigieren mit dem Befehlsmenü](/de/analytics#command-palette).
 
 </ChangelogEntry>
 

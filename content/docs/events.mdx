@@ -114,7 +114,7 @@ Names and properties must not hold personal data. The tracker masks keys and ema
 
 Owners and members fix a wrong name, a wrong value, or a test purchase on one event. Open its row on the Events tab, or call `PATCH /sites/{site_id}/events/{event_id}` with the new name or properties. `DELETE` on the same path removes it.
 
-The `event_id` comes from the event list. Every count and list follows, and the audit log records `event.updated` or `event.deleted`. Stage events derived from [checkout pages](/en/checkout-funnel#stage-events) cannot be changed and answer `409`.
+The `event_id` is the `id` of a row in the event list. Every count and list follows, and the audit log records `event.updated` or `event.deleted`. Stage events derived from [checkout pages](/en/checkout-funnel#stage-events) cannot be changed and answer `409`.
 
 ## Where events show up [#where-it-shows-up]
 
@@ -130,6 +130,7 @@ The page sits under **Explorer → Events** in the sidebar.
 
 ## API [#api]
 
-- `POST /organizations/{org_id}/analytics/events` lists events newest first, each with `event_id`, `name`, `source`, and `props`. `names` takes any name, and `source` is `tracker`, `collector`, or `shopify_pixel`. See the [reference](/en/api/analytics/listAnalyticsEvents).
-- `POST /organizations/{org_id}/analytics/events/overview` counts the events of a window per name, over time, and per property value, with `order_revenue` (each row with `average_order_value` and `revenue_per_visitor`) and `value_sums`. `compare_to` answers the compared window as `comparison`. `revenue` is deprecated.
+- `POST /organizations/{org_id}/analytics/events` lists events newest first, each with `id`, `name`, `source`, and `props`. `names` takes any name, and `source` is `tracker`, `collector`, or `shopify_pixel`. See the [reference](/en/api/analytics/queryAnalyticsEvents).
+- `POST /organizations/{org_id}/analytics/events/overview` answers one row per name in `names`, with events, visitors, visitor share, and events per pageview, also per bucket of `series`. Stage events derived from checkout pages are in `derived_names`, outside the totals. `order_revenue` and `value_sums` carry the money, and `compare_to` answers the compared window.
+- `POST /organizations/{org_id}/analytics/events/breakdown` groups one event name by page type, URL, device, or the next event of the visit.
 - **MCP and Ask**: the `get_events` tool answers the same counts. See [MCP server](/en/mcp#tools).

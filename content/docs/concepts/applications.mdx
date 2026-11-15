@@ -106,7 +106,7 @@ per stage need `store_stitch`. See [Checkout funnel](/en/checkout-funnel).
 
 ## Traffic sampling [#sampling]
 
-`collection.sampling_rate` stores a share of your visitors instead of all
+`collection.sampling.rate` stores a share of your visitors instead of all
 of them. The default is `1.0`, and the API refuses a rate below `0.01`.
 The edge keeps or drops a visitor's pageviews together, and a new
 rate applies within about a minute.
@@ -123,7 +123,7 @@ that are estimates, and the dashboard marks them with `~`.
 
 ```json
 PATCH /applications/{app_id}
-{ "collection": { "sampling_rate": 0.5 } }
+{ "collection": { "sampling": { "rate": 0.5 } } }
 ```
 
 In the dashboard the rate is **Share of visitors kept** under Visitors &
@@ -133,22 +133,22 @@ the rate set now, with one row per production application.
 
 ### Automatic sampling [#sampling-mode]
 
-`collection.sampling_mode` decides who sets the rate: you (`manual`, the
+`collection.sampling.mode` decides who sets the rate: you (`manual`, the
 default) or fastmon from the pageviews you booked (`automatic`). In the
 dashboard it is **Set the share automatically** under Visitors & sampling.
 
 - **Steps**: a fixed ladder from 100 % down to 1 %, at most one step a day.
 - **Scope**: production applications of an organization with a fixed pageview quota. Free, Enterprise, partner plans, fully covered clients and trials are left alone.
 - **Quota**: manual applications take their share first, and the automatic ones split the rest by traffic.
-- **Writing the rate**: in `automatic` mode a changed `sampling_rate` gets a 422, unless the same body sets `sampling_mode` to `manual`.
-- **Changes**: `sampling_rate_changed_at` and the audit log entry `application.sampling_rate_changed` record each move. Back in `manual`, the last step stays.
+- **Writing the rate**: in `automatic` mode a changed `rate` gets a 422, unless the same body sets `mode` to `manual`.
+- **Changes**: `rate_changed_at` and the audit log entry `application.sampling_rate_changed` record each move. Back in `manual`, the last step stays.
 
 ### Fetch and XHR sampling [#fetch-xhr-sampling]
 
-`collection.fetch_xhr_sampling_rate` keeps the fetch and XHR calls of a share
+`collection.fetch_xhr.sampling_rate` keeps the fetch and XHR calls of a share
 of the stored visitors. The rest of each pageview is stored in full. A new
 application starts at `0.25`, and the rate never applies above
-`sampling_rate`.
+`sampling.rate`.
 
 Call and error counts are scaled back up. Percentiles and the listed calls
 rest on the kept calls only. [Cart interactions](/en/checkout-funnel#cart-interactions)
@@ -168,10 +168,10 @@ shows it under the field, and **Use** fills it in.
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------ |
 | `event_tracking`        | on      | Takes a shop's own [events](/en/events). fastmon turns it off on request. Shopify pixel checkout steps stay. |
 | `collection.ga4_ecommerce` | off | Reads the seven GA4 ecommerce pushes with value, currency, and items. Dashboard: **Read GA4 ecommerce events**. |
-| `collection.data_layer` | off     | Reads every dataLayer push with an event name, without props. Dashboard: **Read every dataLayer event**. |
-| `collection.data_layer_prop_keys` | empty | Up to 30 top-level keys kept as props of `data_layer` events. Dashboard: **Keys kept as properties**. |
-| `collection.data_layer_mode` | `block` | `block` drops the listed names, `allow` keeps only them. Dashboard: **Filter by name**. |
-| `collection.data_layer_names` | empty | Up to 50 names for the mode, `prefix*` allowed. Applies at the collector within five minutes. |
+| `collection.data_layer.enabled` | off     | Reads every dataLayer push with an event name, without props. Dashboard: **Read every dataLayer event**. |
+| `collection.data_layer.prop_keys` | empty | Up to 30 top-level keys kept as props of `data_layer` events. Dashboard: **Keys kept as properties**. |
+| `collection.data_layer.mode` | `block` | `block` drops the listed names, `allow` keeps only them. Dashboard: **Filter by name**. |
+| `collection.data_layer.names` | empty | Up to 50 names for the mode, `prefix*` allowed. Applies at the collector within five minutes. |
 
 The dataLayer settings sit under **Events from the dataLayer** on the Shop tab. See [Custom events → dataLayer](/en/events#data-layer).
 
@@ -191,18 +191,18 @@ groups as partial objects, and reject any key they do not know.
 | Field                        | Type              | Notes                                                                 |
 | ---------------------------- | ----------------- | --------------------------------------------------------------------- |
 | `id`                         | UUID v7           | Stable identifier.                                                    |
-| `organization_id`            | UUID v7           | The owning organization.                                              |
+| `organization`               | object            | The owning organization.                                              |
 | `name`                       | string            | Display name.                                                         |
 | `environment`                | enum              | `prod` or `dev`. Default `prod`.                                       |
 | `platform`                   | object · nullable | Shop system or CMS: `key`, `source`, `detected_via`, `detected_at`.   |
 | `shop.active`                | bool · nullable   | Whether this is a shop. `null` follows the platform.                  |
 | `spa`                        | bool              | Single-page app. Set by hand, default `false`.                        |
 | `collection.*`               | bool · enum       | The preset flags: sessions, fetch/XHR, error messages and frames, query keys and values, `session_consent`, `template_url_ids`. See [Presets](/en/tracker). |
-| `collection.sampling_rate`   | number            | Share of visitors stored, `0.01` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
-| `collection.sampling_mode`   | enum              | `manual` (default) or `automatic`. See [Automatic sampling](#sampling-mode). |
-| `collection.sampling_rate_changed_at` | timestamp · nullable | When fastmon last moved the rate.                             |
+| `collection.sampling.rate`   | number            | Share of visitors stored, `0.01` to `1.0`, default `1.0`. See [Traffic sampling](#sampling). |
+| `collection.sampling.mode`   | enum              | `manual` (default) or `automatic`. See [Automatic sampling](#sampling-mode). |
+| `collection.sampling.rate_changed_at` | timestamp · nullable | When fastmon last moved the rate.                             |
 | `collection.ga4_ecommerce`, `collection.data_layer*` | bool · list · enum | The dataLayer bridge. See [Events](#events). |
-| `collection.fetch_xhr_sampling_rate` | number | Share of visitors with fetch/XHR calls stored. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
+| `collection.fetch_xhr.sampling_rate` | number | Share of visitors with fetch/XHR calls stored. See [Fetch and XHR sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Read the page type from the `<body>` class. Off by default.           |
 | `page_type.rules`            | list · nullable   | Your own body classes mapped to page types. Read before the ruleset.  |
 | `page_type.url_rules`        | list · nullable   | Your own URL patterns mapped to page types. Read after your body classes. |
@@ -211,9 +211,9 @@ groups as partial objects, and reject any key they do not know.
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |
 | `collector.endpoint`         | string · nullable | Custom collector host (only for `custom`).                            |
 | `collector.proxy_secret`     | object            | The shared secret for a [first-party proxy](/en/guides/first-party-proxy). |
-| `script.source_hash`         | string            | Globally unique, in the script URL.                                   |
-| `script.collector_hash`      | string            | Globally unique, in the ingest URL.                                   |
-| `script.source_version`      | string            | Pinned beacon template version (`v1`).                                |
+| `script.hash`         | string            | Globally unique, in the script URL.                                   |
+| `collector.hash`      | string            | Globally unique, in the ingest URL.                                   |
+| `script.version`      | string            | Pinned beacon template version (`v1`).                                |
 | `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. They apply to every site. |
 | `site_policy`                | enum              | `open` / `auto` / `strict`. Unknown-hostname handling.                |
 | `is_active`                  | bool              | When false, beacons are accepted but not written.                     |

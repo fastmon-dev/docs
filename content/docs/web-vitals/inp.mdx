@@ -62,7 +62,7 @@ INP regressions almost always trace to one of these:
 1. **Long task on the main thread.** A click handler, an effect, or a re-render that takes >50 ms blocks paint. Use the Performance tab in DevTools to find the long task; break it up with `await new Promise(r => setTimeout(r, 0))` or `scheduler.yield()`.
 2. **Synchronous DOM work in the handler.** Reading layout properties (`offsetHeight`, `getBoundingClientRect`) right after writing to the DOM forces a synchronous reflow. Batch reads before writes.
 3. **Heavy framework work on every change.** Re-rendering thousands of nodes on a single keystroke. Memoize, virtualize, or move to uncontrolled inputs.
-4. **Third-party scripts.** Tag managers, A/B test frameworks, chat widgets: many run on every event. Audit your [third-party impact](/en/api/analytics/queryAnalytics) and remove or defer what you don't need.
+4. **Third-party scripts.** Tag managers, A/B test frameworks, chat widgets: many run on every event. Audit your [third-party impact](/en/api/analytics/queryAnalyticsMetrics) and remove or defer what you don't need.
 
 For a deeper walkthrough, see web.dev's [Optimize INP](https://web.dev/articles/optimize-inp).
 

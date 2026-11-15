@@ -19,7 +19,7 @@ Die Analytics-Hauptansicht einer Site zeigt von oben nach unten:
 - **Wege der Besucher**: der [Checkout-Funnel](/de/checkout-funnel) und der Käufervergleich in einer Karte, die Besuchstiefe und Besucherlisten, die die Besucher-Seite öffnen.
 - **Aktive Stunden**: Pageviews nach Tageszeit und nach Wochentag als Balken. Die Heatmap ist einen Schalter entfernt.
 
-Linien-Charts zeichnen jeden Bucket an seinem Ende. Der laufende Bucket einer Zählung ab einer Stunde läuft gestrichelt auf eine Hochrechnung zu, sobald ein Drittel davon vorbei ist. Release-Marker sind eine dünne lila Linie, Tracker-Releases blau.
+Linien-Charts zeichnen jeden Bucket an seinem Ende. Der laufende Bucket einer Zählung oder des Umsatzes ab einer Stunde läuft gestrichelt auf eine Hochrechnung zu, sobald ein Drittel davon vorbei ist. Release-Marker sind eine dünne lila Linie, Tracker-Releases blau.
 
 Was ein „Besucher" hier bedeutet, steht unter [Privacy](/de/privacy).
 
@@ -30,8 +30,10 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 - **Die Zonen** sind die Seitentyp-Gruppen deiner Plattform: Home, Kategorie (PLP), Suche, Produkt (PDP), Checkout, Konto, Content und Sonstiges. Ihre Färbung zeigt, wie schnell ihre Seiten sind.
 - **Jeder Besucher ist ein Punkt** in der Zone der Seite, auf der er gerade ist. Ein Tab im Hintergrund wird blass gezeichnet. Ein Käufer läuft zum Ausgang, und dort zählt die Bestellung sofort.
 - **Das Zeitfenster** ist 5, 15, 30 oder 60 Minuten. Unter der Hauptzahl stehen Besucher, Bestellungen, Umsatz und Conversion Rate von heute ab deiner Mitternacht, jeweils neben dem gleichen Wochentag der Vorwoche. Bestellungen zählen bis zur Sekunde und sagen das („Stand 14:32“), die Vorwoche läuft bis zur gleichen Uhrzeit.
-- **Ein Klick auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
-- **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus.
+- **Ein Klick oder Tipp auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
+- **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus, und im Kiosk-Modus verschwinden Mauszeiger und Buttons nach drei Sekunden ohne Bewegung.
+- **Auf dem Handy** zeigt der Shopfloor hochkant seine Zahlen und bittet ums Drehen. Quer füllt die Fläche den ganzen Bildschirm.
+- **Auf dem iPhone** bekommst du Vollbild, indem du fastmon zum Home-Bildschirm hinzufügst. Es öffnet sich dann als App ohne Browserleisten, im Shopfloor, wenn du es von dort hinzugefügt hast.
 - **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
 - **Er braucht [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zeigt niemanden und sagt das auch.
 
@@ -122,7 +124,7 @@ Die Suche läuft **über alle Organisationen, die du erreichst**, samt den Kunde
 
 Tippst du eine Gruppe („Netzwerk"), erscheint jede Seite darunter, und „API" findet Fetch/XHR.
 
-Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/search).
+Dieselbe Suche gibt es für Skripte als [`GET /search`](/de/api/search/searchResources).
 
 ## Fehler-Analytics [#error-analytics]
 
@@ -222,7 +224,7 @@ Das [Experience-Score](/de/web-vitals/experience-score)-Panel schlüsselt den Sc
 
 ## API [#api]
 
-Jedes Panel hat einen Endpunkt unter `/organizations/{org_id}/analytics/…`, die meisten den [Query-Endpunkt](/en/api/analytics/queryAnalytics). Die Referenz gibt es nur auf Englisch.
+Jedes Panel hat einen Endpunkt unter `/organizations/{org_id}/analytics/…`, die meisten den [Query-Endpunkt](/en/api/analytics/queryAnalyticsMetrics). Die Referenz gibt es nur auf Englisch.
 
 | Feld | Was es tut |
 | ---- | ---------- |

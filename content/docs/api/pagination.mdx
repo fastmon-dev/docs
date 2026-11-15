@@ -95,7 +95,7 @@ Don't infer from the path. The same endpoint family can mix: for example `/analy
 Cursor pagination is used where the dataset is too large to count cheaply or to walk by offset:
 
 - `POST /analytics/sessions`
-- `POST /analytics/beacons`
+- `POST /analytics/pageviews`
 - A handful of error-feed endpoints under `/analytics/error-types/detail`
 
 Everything else is offset-paginated.
@@ -110,4 +110,4 @@ Everything else is offset-paginated.
 ## Related
 
 - [API overview](/en/api).
-- [Analytics API](/en/api/analytics/queryAnalytics): the cursor-paginated feeds.
+- [Analytics API](/en/api/analytics/queryAnalyticsMetrics): the cursor-paginated feeds.

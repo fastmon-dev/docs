@@ -52,7 +52,7 @@ Wenn dieselbe Phase von mehr als einer Metrik gefüllt werden könnte, löst fas
 
 > **`fm-*` First-Party-Alias  ›  Site-Mapping  ›  eingebauter Vendor-Alias (`cf…`)  ›  eingebauter generischer Alias**
 
-Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts**. Ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
+Fastmons Edge injiziert eigene, mit `fm-` präfixierte Metriken (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-cache`, `fm-pagetype`). Ist eine `fm-`-Metrik vorhanden, gewinnt sie. Darunter kommt ein Name, den du in deinen Site-Einstellungen gemappt hast, dann die eingebauten Aliase. Die Tabellen unten listen jeden erkannten Namen **in genau dieser Vorrang-Reihenfolge, von links nach rechts**. Ein Vendor-Name wie `cfedge` wird also dem generischen `edge` vorgezogen, und der erste, der eine Dauer trägt, gewinnt. Deine eigenen Metriken füllen die Phasen, die fastmons eigene nicht abdecken.
 
 ## Backend-Phasen
 
@@ -85,9 +85,11 @@ Ein Cache-Urteil wird als Description übertragen, nicht als Dauer: z. B. `Serve
 | Schicht  | Erkannte Namen (in Vorrang-Reihenfolge)                             |
 | -------- | ------------------------------------------------------------------- |
 | `cdn`    | `fm-cdn-cache`, `fm-cdn`, `cfcachestatus`, `cdn-cache`, `hit-state` |
-| `origin` | `fm-origin-cache`, `fpc`, `x-cache`, `cache`                        |
+| `origin` | `fm-cache`, `fm-origin-cache`, `fpc`, `x-cache`, `cache`            |
 
 Die bloßen Flags von CloudFront werden als Fallback für die CDN-Schicht erkannt: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (ein explizites CDN-Key überschreibt sie weiterhin).
+
+`fm-cache` ist der Cache, den du selbst vor deiner App betreibst, etwa Varnish. Ein Treffer von `fm-cache` gewinnt gegen das `fm-origin-cache` der App, das ein Varnish-Treffer aus der gespeicherten Kopie mitliefert. Spiegelst du den Status von Cloudflare in einen eigenen Header, nimm `fm-cdn-cache`, sonst zählt ein CDN-Treffer als `origin`.
 
 <Callout type="warn" title="fm-fpc ist weg">
   Der Key für den Origin-Status heißt `fm-origin-cache`. `fm-fpc` war die alte Schreibweise und wird nicht mehr erkannt. Sendet ein Header es weiterhin, steht `fm-fpc` unter den Custom-Keys. `fm-cdn` funktioniert weiterhin, `fm-cdn-cache` ist die dokumentierte Schreibweise.
@@ -108,7 +110,20 @@ Der Wert wird großgeschrieben und auf einen der Status normalisiert, die fastmo
 | `PASS`        | Ungecacht durchgereicht (Fastly `pass`; `HITPASS` kollabiert hierher).              |
 | `NONE`        | Kein Caching angewandt oder konfiguriert.                                           |
 
-Beide Schichten nutzen dasselbe Vokabular. Ein Pageview, der keinen Cache-Status meldet, wird leer gespeichert und erscheint im Dashboard als **Unknown** (in den Share-Metriken pro Status zählt er als `unreported`). Zusammen sind sie der schnellste Blick darauf, ob dein Edge-Cache wirklich greift, direkt neben [TTFB](/de/web-vitals/ttfb).
+Beide Schichten nutzen dasselbe Vokabular. Ein Pageview, der keinen Cache-Status meldet, wird leer gespeichert und erscheint im Dashboard als **Unknown**.
+
+### Ein Server-Cache pro Seitenaufruf [#served-cache]
+
+Ein Besucher bekommt die Seite von genau einem Cache. fastmon speichert ihn als `cache_layer` (`cdn` oder `origin`), `cache_status`, `cache_age` und `cache_ttl`, von außen nach innen:
+
+| Bedingung, äußere Schicht zuerst                                | `cache_layer`        | `cache_status` |
+| --------------------------------------------------------------- | -------------------- | -------------- |
+| CDN-Status ist `HIT`, `STALE`, `UPDATING` oder `REVALIDATED`    | `cdn`                | dieser Status  |
+| sonst ist der Origin-Status einer davon                         | `origin`             | dieser Status  |
+| sonst die innerste Schicht, die gemeldet hat                    | diese Schicht        | ihr Status     |
+| keine Schicht hat gemeldet                                      | leer                 | leer           |
+
+Cloudflare `DYNAMIC` vor einem `HIT` des Full-Page-Cache zählt also als Origin-Treffer. `cache_served_rate` ist der Anteil der cachebaren Seitenaufrufe, die aus einer Kopie kamen: die vier Status oben, geteilt durch alle Status außer `BYPASS`, `DYNAMIC`, `NONE` und `PASS`. Eine Site ohne Cache-Status liefert `null`.
 
 ## Cache-Alter [#cache-age]
 
@@ -118,10 +133,10 @@ Das Alter sagt, wie alt das ausgelieferte Objekt war, in Sekunden. Ein Shop mit 
 Server-Timing: fm-cdn-cache;desc="HIT", fm-cdn-age;desc=42, fm-origin-age;desc=312
 ```
 
-| Keys (in Rangfolge)                 | Spalte       | Bedeutung                                            |
-| ----------------------------------- | ------------ | ---------------------------------------------------- |
-| `fm-cdn-age`, `cdn-cache-age`       | `cdn_age`    | Alter des ausgelieferten CDN-Objekts, in Sekunden    |
-| `fm-origin-age`, `origin-cache-age` | `origin_age` | Alter des ausgelieferten Origin-Objekts, in Sekunden |
+| Schicht  | Keys (in Rangfolge)                                 |
+| -------- | --------------------------------------------------- |
+| `cdn`    | `fm-cdn-age`, `cdn-cache-age`                       |
+| `origin` | `fm-cache-age`, `fm-origin-age`, `origin-cache-age` |
 
 Regeln für den Wert:
 
@@ -130,20 +145,20 @@ Regeln für den Wert:
 - **Sende den Key nur bei einem Cache-Treffer.** Bei einem Miss ist das Alter 0 und zieht jedes Perzentil nach unten.
 - **Werte über einem Jahr werden verworfen.** `desc=0` ist gültig: ein Objekt, das gerade erst gespeichert wurde.
 
-**Bei einem CDN-Treffer ist erst die Summe das Alter, das der Besucher gesehen hat.** Der Header des Origins friert im CDN-Objekt ein. Das Server-Timing-Panel zeigt `cdn`, `origin` und `content` (die Summe bei einem CDN-Treffer), alle in Sekunden.
+`cache_age` ist das Alter der ausgelieferten Kopie. Bei einem CDN-Treffer ist das CDN-Alter plus ein gemeldetes Origin-Alter, weil der Header des Origins im CDN-Objekt einfriert. Bei einem Treffer von `fm-cache` zählt das `fm-origin-age` der App nicht.
 
 ## Cache-TTL [#cache-ttl]
 
 Die TTL ist die Frische, die dem Objekt bei der Auslieferung noch blieb, in Sekunden. Alter plus TTL ergibt die konfigurierte Lebensdauer.
 
-| Keys (in Rangfolge)                 | Spalte       |
-| ----------------------------------- | ------------ |
-| `fm-cdn-ttl`, `cdn-cache-ttl`       | `cdn_ttl`    |
-| `fm-origin-ttl`, `origin-cache-ttl` | `origin_ttl` |
+| Schicht  | Keys (in Rangfolge)                                 |
+| -------- | --------------------------------------------------- |
+| `cdn`    | `fm-cdn-ttl`, `cdn-cache-ttl`                       |
+| `origin` | `fm-cache-ttl`, `fm-origin-ttl`, `origin-cache-ttl` |
 
-Für den Wert gelten die Regeln des Alters. Das Panel zeigt p50, p75 und p95 pro Ebene, ohne `content`-Zeile. Die Cache-Seite zeigt Alter und TTL als Balken pro Ebene und pro Seitentyp, außerdem im Zeitverlauf: Ein Purge fällt dort als Alter auf, das auf null springt.
+Für den Wert gelten die Regeln des Alters. `cache_ttl` ist die TTL der Schicht, die ausgeliefert hat, ohne Treffer leer. Die Server-Cache-Seite zeigt Alter und TTL pro Seitentyp und im Zeitverlauf: Ein Purge fällt dort als Alter auf, das auf null springt.
 
-Alle vier sind Metriken mit den üblichen avg und p50 bis p99 und [Metrik-Filter](/de/analytics#filtern) in Sekunden. Ein Pageview ohne den Key trifft einen solchen Filter nie. Du findest sie außerdem auf den Beacon-Zeilen, im Pageview-Detail, in Benachrichtigungsregeln, in der Besucher-Journey und in `get_server_timing` des MCP-Servers.
+Beide sind Metriken mit den üblichen avg und p50 bis p99 und [Metrik-Filter](/de/analytics#filtern) in Sekunden. Ein Pageview ohne den Key trifft einen solchen Filter nie. Du findest sie außerdem auf den Beacon-Zeilen, im Pageview-Detail, in Benachrichtigungsregeln, in der Besucher-Journey und in `get_server_timing` des MCP-Servers.
 
 ## Seitentyp [#page-type]
 
@@ -182,12 +197,12 @@ Pageviews, die keinen der beiden Keys melden, erscheinen als **Not reported**; d
 
 Die Server-Timing-Seite liegt unter **Performance** und ist aufgebaut wie die TTFB-Seite.
 
-- **Backend-Zeit** steht neben der Herkunft der Antworten: CDN, Full-Page-Cache oder Backend.
-- **Der Request-Pfad** ist ein Raster für alle Pageviews, nach CDN-Status, nach Origin-Cache-Status und nach Login. Jeder Pfeil füllt sich mit dem Anteil, der die nächste Station erreicht hat, und ein Cache-Hit endet an seiner Schicht.
+- **Backend-Zeit** steht neben dem Server-Cache, zwei Anteile an verschiedenen Seitenaufrufen.
+- **Der Request-Pfad** ist ein Raster für alle Pageviews, aufgeteilt nach der Schicht, die geantwortet hat, und nach Login. Jeder Pfeil füllt sich mit dem Anteil, der die nächste Station erreicht hat, und ein Cache-Hit endet an seiner Schicht.
 - **Wofür das Backend die Zeit braucht**: Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates im gewählten Perzentil.
 - **Verlauf** öffnet mit den Backend-Anteilen über die Zeit, daneben Ansichten pro Host und pro Seitentyp.
 - **Die Tabelle** sortiert nach gesamter Backend-Zeit, also Pageviews mal Dauer, über die Pageviews, die das Backend gerendert hat.
-- **Die Cache-Karte** zeigt Hit-Rate, Alter und Restlaufzeit pro Schicht sowie die eingeloggten Besucher. Die Host-Karte zeichnet pro Host einen Trend.
+- **Die Cache-Karte** zeigt Auslieferungsrate, Alter und Restlaufzeit der ausgelieferten Kopie sowie die eingeloggten Besucher. Die Host-Karte zeichnet pro Host einen Trend.
 - **Ein Custom-Key** öffnet ein Pop-up mit seinen Zahlen, seinem Trend oder seinen Werten, den Seitentypen, in denen er am längsten dauert, und einem Link in den Explorer.
 
 ## Den Header senden
@@ -231,7 +246,23 @@ final class ServerTimingListener
 }
 ```
 
-Die meisten CDNs (Cloudflare, Fastly, CloudFront) können ihre eigene Cache-/Edge-Metrik an der Edge an denselben Header anhängen, sodass der Browser sowohl die Phasen deines Origins als auch das Cache-Urteil der Edge an einer Stelle sieht. Und fastmon kennt deren native Namen bereits (`cfcachestatus`, `cfedge`, die CloudFront-Flags, …).
+```vcl title="Varnish (vcl_deliver)"
+sub vcl_deliver {
+    if (obj.uncacheable) { set req.http.X-Fm-Cache = "bypass"; }
+    elsif (obj.hits > 0) { set req.http.X-Fm-Cache = "hit"; }
+    else { set req.http.X-Fm-Cache = "miss"; }
+    if (resp.http.Server-Timing) {
+        set resp.http.Server-Timing = resp.http.Server-Timing + ", fm-cache;desc=" + req.http.X-Fm-Cache;
+    } else {
+        set resp.http.Server-Timing = "fm-cache;desc=" + req.http.X-Fm-Cache;
+    }
+    if (obj.hits > 0) {
+        set resp.http.Server-Timing = resp.http.Server-Timing + ", fm-cache-age;desc=" + obj.age;
+    }
+}
+```
+
+Setz das in `vcl_deliver`, nicht in `vcl_backend_response`, sonst friert die gespeicherte Kopie es auf `miss` ein. Die meisten CDNs (Cloudflare, Fastly, CloudFront) können ihre eigene Cache-/Edge-Metrik an der Edge an denselben Header anhängen, sodass der Browser sowohl die Phasen deines Origins als auch das Cache-Urteil der Edge an einer Stelle sieht. Und fastmon kennt deren native Namen bereits (`cfcachestatus`, `cfedge`, die CloudFront-Flags, …).
 
 ## Verifizieren
 

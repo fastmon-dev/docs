@@ -28,11 +28,11 @@ A site is deliberately slim. The embed, the collection config and the privacy se
 | Field                 | Type                                  | Notes                                                                            |
 | --------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
 | `id`                  | UUID v7                               | Stable identifier (the analytics store's `site_id`).                             |
-| `organization_id`     | UUID v7                               | The owning organization.                                                         |
-| `application_id`      | UUID v7                               | The application this domain belongs to.                                          |
+| `organization`        | object                                | The owning organization, `{id, name}`.                                           |
+| `application`         | object                                | The application this domain belongs to, `{id, name}`.                            |
 | `name`                | string                                | How the site appears in the UI.                                                  |
 | `domain`              | string                                | Bare hostname, no protocol (e.g. `acme.com`).                                    |
-| `tags`                | list of strings (max 10)              | Free-form labels for organizing sites. Cross-site analytics-by-tag is planned, not yet live. |
+| `tags`                | list of strings (max 10)              | Deprecated with no replacement. Still served, but stop using it. |
 | `is_active`           | bool                                  | When false, beacons are accepted but not written to analytics tables.            |
 | `activated_at`        | timestamp · nullable                  | When the site first crossed the activation threshold and went live.              |
 

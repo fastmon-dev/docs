@@ -40,7 +40,7 @@ The beacon ships the raw entries; the wire is forgeable, so the tracker's filter
 
 **Three tiers.** What survives is sorted into:
 
-1. **Promoted scalars** (always kept): the nine [backend phases](#backend-phases), the two [cache statuses](#cache-status), the [page type](#page-type), and the two [labeled dimensions](#origin-host-and-logged-in) (`origin_host`, `logged_in`). These become dedicated columns.
+1. **Promoted scalars** (always kept): the nine [backend phases](#backend-phases), the two [cache statuses](#cache-status) and the [served cache](#served-cache), the [page type](#page-type), and the two [labeled dimensions](#origin-host-and-logged-in) (`origin_host`, `logged_in`). These become dedicated columns.
 2. **Tier-2 catalog** (uncapped): a known set of names (`kafka`, `queue`, `dns`, `cpu`, `auth`, `gc`, `parse`, `session`, `theme`, `twig`, `apcu`, `compressiontime`, and the members of the summed phases below) kept in the per-pageview duration/description maps.
 3. **Tier-3 custom** (≤ 8 per pageview): any other valid name you invent.
 
@@ -52,7 +52,7 @@ When the same phase could be filled by more than one metric, fastmon resolves it
 
 > **`fm-*` first-party alias  ›  your site's mapping  ›  built-in vendor alias (`cf…`)  ›  built-in generic alias**
 
-Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-pagetype`). When an `fm-` metric is present it wins. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
+Fastmon's edge injects an `fm-`-prefixed set (`fm-edge`, `fm-origin`, `fm-backend`, `fm-db`, `fm-render`, `fm-http`, `fm-search`, `fm-kv`, `fm-cdn-cache`, `fm-origin-cache`, `fm-cache`, `fm-pagetype`). When an `fm-` metric is present it wins. Below that comes a name you've mapped in your site settings, then the built-in aliases. The tables below list every recognized name **in this precedence order, left to right**: a vendor name like `cfedge` is preferred over the generic `edge`, and the first one that carries a duration wins. Your own metrics fill the phases the `fm-` set doesn't cover.
 
 ## Backend phases
 
@@ -85,9 +85,11 @@ A cache verdict is carried as a description, not a duration (e.g. `Server-Timing
 | Layer    | Recognized names (in precedence order)                            |
 | -------- | ----------------------------------------------------------------- |
 | `cdn`    | `fm-cdn-cache`, `fm-cdn`, `cfcachestatus`, `cdn-cache`, `hit-state` |
-| `origin` | `fm-origin-cache`, `fpc`, `x-cache`, `cache`                      |
+| `origin` | `fm-cache`, `fm-origin-cache`, `fpc`, `x-cache`, `cache`          |
 
 CloudFront's bare flags are recognized as a fallback for the CDN layer: `cdn-cache-hit` → `HIT`, `cdn-cache-miss` → `MISS`, `cdn-cache-refresh` → `REVALIDATED` (an explicit CDN key still overrides them).
+
+`fm-cache` is the cache you run in front of your app, such as Varnish. A hit on `fm-cache` wins over the app's own `fm-origin-cache`, which a Varnish hit replays from the stored copy. Mirroring Cloudflare's status into your own header needs `fm-cdn-cache`, or a CDN hit counts as `origin`.
 
 <Callout type="warn" title="fm-fpc is gone">
   The origin-status key is `fm-origin-cache`. `fm-fpc` was the old spelling and is no longer recognized. A header still sending it shows `fm-fpc` among the custom keys. `fm-cdn` keeps working; `fm-cdn-cache` is the documented spelling.
@@ -108,7 +110,20 @@ The value is uppercased and normalized to one of the statuses fastmon stores. Fa
 | `PASS`        | Passed through uncached (Fastly `pass`; `HITPASS` collapses here).        |
 | `NONE`        | No caching applied or configured for the response.                        |
 
-Both layers use the same vocabulary. A pageview that reports no cache status is stored empty and shows as **Unknown** in the dashboard (it counts as `unreported` in the per-status share metrics). Together they give the fastest read on whether your edge cache is doing its job, right next to [TTFB](/en/web-vitals/ttfb).
+Both layers use the same vocabulary. A pageview that reports no cache status is stored empty and shows as **Unknown** in the dashboard.
+
+### One server cache per pageview [#served-cache]
+
+A visitor gets the page from one cache. fastmon stores that one as `cache_layer` (`cdn` or `origin`), `cache_status`, `cache_age`, and `cache_ttl`, from the outside in:
+
+| Condition, outer layer first                                   | `cache_layer`        | `cache_status` |
+| -------------------------------------------------------------- | -------------------- | -------------- |
+| CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`     | `cdn`                | that status    |
+| otherwise the origin status is one of those                    | `origin`             | that status    |
+| otherwise the innermost layer that reported                    | that layer           | its status     |
+| no layer reported                                              | empty                | empty          |
+
+So Cloudflare `DYNAMIC` in front of a full-page cache `HIT` counts as an origin hit. `cache_served_rate` is the share of cacheable pageviews served from a copy: the four statuses above, out of every status but `BYPASS`, `DYNAMIC`, `NONE`, and `PASS`. A site without a cache status reads `null`.
 
 ## Cache age [#cache-age]
 
@@ -118,10 +133,10 @@ The age says how old the delivered object was, in seconds. A shop with a 95 % hi
 Server-Timing: fm-cdn-cache;desc="HIT", fm-cdn-age;desc=42, fm-origin-age;desc=312
 ```
 
-| Keys (precedence order)             | Column       | Meaning                                        |
-| ----------------------------------- | ------------ | ---------------------------------------------- |
-| `fm-cdn-age`, `cdn-cache-age`       | `cdn_age`    | Age of the delivered CDN object, in seconds    |
-| `fm-origin-age`, `origin-cache-age` | `origin_age` | Age of the delivered origin object, in seconds |
+| Layer    | Keys (precedence order)                             |
+| -------- | --------------------------------------------------- |
+| `cdn`    | `fm-cdn-age`, `cdn-cache-age`                       |
+| `origin` | `fm-cache-age`, `fm-origin-age`, `origin-cache-age` |
 
 Rules for the value:
 
@@ -130,20 +145,20 @@ Rules for the value:
 - **Emit it on a cache hit only.** On a miss the age is 0 and drags every percentile down.
 - **Values above a year are dropped.** `desc=0` is valid: an object stored a moment ago.
 
-**Under a CDN hit only the sum is the age the visitor saw.** The origin's header freezes inside the CDN object. The Server-Timing panel reports `cdn`, `origin`, and `content` (the sum under a CDN hit), all in seconds.
+`cache_age` is the age of the served copy. On a CDN hit it is the CDN age plus a reported origin age, since the origin's header freezes inside the CDN object. A hit on `fm-cache` ignores the app's `fm-origin-age`.
 
 ## Cache TTL [#cache-ttl]
 
 The TTL is the freshness the object had left when it was delivered, in seconds. Age plus TTL is the configured lifetime.
 
-| Keys (precedence order)             | Column       |
-| ----------------------------------- | ------------ |
-| `fm-cdn-ttl`, `cdn-cache-ttl`       | `cdn_ttl`    |
-| `fm-origin-ttl`, `origin-cache-ttl` | `origin_ttl` |
+| Layer    | Keys (precedence order)                             |
+| -------- | --------------------------------------------------- |
+| `cdn`    | `fm-cdn-ttl`, `cdn-cache-ttl`                       |
+| `origin` | `fm-cache-ttl`, `fm-origin-ttl`, `origin-cache-ttl` |
 
-The value rules are those of the age. The panel shows p50, p75, and p95 per tier, without a `content` row. The Cache page draws age and TTL as one bar per tier and per page type, and over time, where a purge shows as the age dropping to zero.
+The value rules are those of the age. `cache_ttl` is the TTL of the layer that served, empty without a hit. The Server cache page shows age and TTL per page type and over time, where a purge shows as the age dropping to zero.
 
-All four are metrics with the usual avg and p50 to p99, and [metric range filters](/en/analytics#filtering) in seconds. A pageview without the key never matches such a filter. They also appear on beacon rows, in the pageview detail, in notification rules, on the visitor journey, and in the MCP server's `get_server_timing`.
+Both are metrics with the usual avg and p50 to p99, and [metric range filters](/en/analytics#filtering) in seconds. A pageview without the key never matches such a filter. They also appear on beacon rows, in the pageview detail, in notification rules, on the visitor journey, and in the MCP server's `get_server_timing`.
 
 ## Page type
 
@@ -182,12 +197,12 @@ Pageviews that report neither key show as **Not reported**; the empty string is 
 
 The Server-Timing page sits under **Performance** and is laid out like the TTFB page.
 
-- **Backend time** stands beside where the answers came from: CDN, full-page cache, or backend.
-- **The request path** is one grid for all pageviews, per CDN status, per origin cache status, and per login. Each arrow fills with the share that reached the next station, and a cache hit ends at its layer.
+- **Backend time** stands beside the server cache, two shares of different pageviews.
+- **The request path** is one grid for all pageviews, split by the layer that answered and by login. Each arrow fills with the share that reached the next station, and a cache hit ends at its layer.
 - **What the backend spends the time on**: database, cache, search, HTTP calls, own code, and templates at the selected percentile.
 - **History** opens on the backend parts over time, with views per host and per page type.
 - **The table** ranks by total backend time, pageviews times duration, over the pageviews the backend rendered.
-- **The cache card** shows hit rate, age, and remaining lifetime per layer, and the logged-in visitors. The hosts card draws a trend per host.
+- **The cache card** shows the served rate, age, and remaining lifetime of the served copy, and the logged-in visitors. The hosts card draws a trend per host.
 - **A custom key** opens a pop-up with its figures, its trend or values, the page types where it takes longest, and a link into the Explorer.
 
 ## Emitting the header
@@ -231,7 +246,23 @@ final class ServerTimingListener
 }
 ```
 
-Most CDNs (Cloudflare, Fastly, CloudFront) can append their own cache/edge metric to the same header at the edge, so the browser sees both your origin's phases and the edge's cache verdict in one place, and fastmon already knows their native names (`cfcachestatus`, `cfedge`, the CloudFront flags).
+```vcl title="Varnish (vcl_deliver)"
+sub vcl_deliver {
+    if (obj.uncacheable) { set req.http.X-Fm-Cache = "bypass"; }
+    elsif (obj.hits > 0) { set req.http.X-Fm-Cache = "hit"; }
+    else { set req.http.X-Fm-Cache = "miss"; }
+    if (resp.http.Server-Timing) {
+        set resp.http.Server-Timing = resp.http.Server-Timing + ", fm-cache;desc=" + req.http.X-Fm-Cache;
+    } else {
+        set resp.http.Server-Timing = "fm-cache;desc=" + req.http.X-Fm-Cache;
+    }
+    if (obj.hits > 0) {
+        set resp.http.Server-Timing = resp.http.Server-Timing + ", fm-cache-age;desc=" + obj.age;
+    }
+}
+```
+
+Set it in `vcl_deliver`, not `vcl_backend_response`, or the stored copy freezes it on `miss`. Most CDNs (Cloudflare, Fastly, CloudFront) can append their own cache/edge metric to the same header at the edge, so the browser sees both your origin's phases and the edge's cache verdict in one place, and fastmon already knows their native names (`cfcachestatus`, `cfedge`, the CloudFront flags).
 
 ## Verifying it
 

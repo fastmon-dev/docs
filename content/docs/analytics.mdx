@@ -19,7 +19,7 @@ The main Analytics view for a site shows, from top to bottom:
 - **Visitor paths**: the [checkout funnel](/en/checkout-funnel) and the buyer comparison in one card, visit depth, and visitor lists that open the Visitors page.
 - **Active hours**: pageviews by time of day and by weekday as bars. The heatmap is one toggle away.
 
-Line charts draw each bucket at its end. The running bucket of a count, an hour or longer, is dashed towards a projection of the full bucket once a third of it has passed. Release markers are a thin purple line, tracker releases blue.
+Line charts draw each bucket at its end. The running bucket of a count or of revenue, an hour or longer, is dashed towards a projection of the full bucket once a third of it has passed. Release markers are a thin purple line, tracker releases blue.
 
 See [Privacy](/en/privacy) for what a "visitor" means here.
 
@@ -30,8 +30,10 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 - **Zones** are your platform's page type groups: Home, Category (PLP), Search, Product (PDP), Checkout, Account, Content, and Other. Each is tinted by how fast its pages are.
 - **Every visitor is a dot** in the zone of the page they are on. A tab in the background is drawn faint, and a buyer runs to the exit, where the order counts at once.
 - **The window** is 5, 15, 30, or 60 minutes. Under the headline stand today's visitors, orders, revenue, and Conversion Rate from your midnight, each beside the same weekday last week. Orders count up to the second and say so ("as of 14:32"), and last week runs to the same clock time.
-- **A click on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
-- **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default.
+- **A click or tap on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
+- **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default, and in kiosk mode the pointer and buttons hide after three seconds without a move.
+- **On a phone** held upright the Shopfloor shows its figures and asks to be turned. Turned sideways, the floor fills the whole screen.
+- **On an iPhone**, add fastmon to the Home Screen for a full screen. It then opens as an app without the browser's bars, on the Shopfloor if added from there.
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
 - **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
 
@@ -122,7 +124,7 @@ Typing searches **every organization you can reach**, your agency's clients incl
 
 Typing a group ("network") lists every page under it, and "API" finds Fetch/XHR.
 
-The same search is available from a script as [`GET /search`](/en/api/search/search).
+The same search is available from a script as [`GET /search`](/en/api/search/searchResources).
 
 ## Error Analytics [#error-analytics]
 
@@ -222,7 +224,7 @@ The [Experience Score](/en/web-vitals/experience-score) panel breaks the score d
 
 ## API [#api]
 
-Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, most of them to the [query endpoint](/en/api/analytics/queryAnalytics).
+Every panel maps to an endpoint under `/organizations/{org_id}/analytics/…`, most of them to the [query endpoint](/en/api/analytics/queryAnalyticsMetrics).
 
 | Field | What it does |
 | ----- | ------------ |

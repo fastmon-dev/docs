@@ -114,7 +114,7 @@ Namen und Properties dürfen keine personenbezogenen Daten wie Namen, E-Mail-Adr
 
 Owner und Member können einen falschen Namen, einen falschen Wert oder eine Testbestellung an einem einzelnen Event korrigieren. Öffne dazu die Zeile im Tab Events, oder rufe `PATCH /sites/{site_id}/events/{event_id}` mit neuem Namen oder neuen Properties auf. `DELETE` auf demselben Pfad entfernt es.
 
-Die `event_id` steht in der Event-Liste. Jede Zählung und Liste zieht nach, und das Audit-Log hält `event.updated` oder `event.deleted` fest. Stage-Events aus [Checkout-Seiten](/de/checkout-funnel#stage-events) lassen sich nicht ändern und antworten mit `409`.
+Die `event_id` ist die `id` einer Zeile der Event-Liste. Jede Zählung und Liste zieht nach, und das Audit-Log hält `event.updated` oder `event.deleted` fest. Stage-Events aus [Checkout-Seiten](/de/checkout-funnel#stage-events) lassen sich nicht ändern und antworten mit `409`.
 
 ## Wo Events auftauchen [#where-it-shows-up]
 
@@ -130,6 +130,7 @@ Die Seite liegt in der Seitenleiste unter **Explorer → Events**.
 
 ## API [#api]
 
-- `POST /organizations/{org_id}/analytics/events` listet Events, neueste zuerst, jedes mit `event_id`, `name`, `source` und `props`. `names` nimmt jeden Namen, `source` ist `tracker`, `collector` oder `shopify_pixel`. Siehe die [Referenz](/en/api/analytics/listAnalyticsEvents) (nur auf Englisch).
-- `POST /organizations/{org_id}/analytics/events/overview` zählt die Events eines Zeitraums pro Name, über die Zeit und pro Property-Wert, dazu `order_revenue` (jede Zeile mit `average_order_value` und `revenue_per_visitor`) und `value_sums`. `compare_to` liefert das Vergleichsfenster als `comparison`. `revenue` ist deprecated.
+- `POST /organizations/{org_id}/analytics/events` listet Events, neueste zuerst, jedes mit `id`, `name`, `source` und `props`. `names` nimmt jeden Namen, `source` ist `tracker`, `collector` oder `shopify_pixel`. Siehe die [Referenz](/en/api/analytics/queryAnalyticsEvents) (nur auf Englisch).
+- `POST /organizations/{org_id}/analytics/events/overview` liefert in `names` eine Zeile pro Event-Name mit Events, Besuchern, Besucheranteil und Events pro Seitenaufruf, auch pro Bucket von `series`. Stage-Events aus Checkout-Seiten stehen in `derived_names` und zählen nicht in die Summen. Das Geld steht in `order_revenue` und `value_sums`, `compare_to` liefert das Vergleichsfenster.
+- `POST /organizations/{org_id}/analytics/events/breakdown` schlüsselt einen Event-Namen nach Page-Type, URL, Gerät oder dem nächsten Event des Besuchs auf.
 - **MCP und Ask**: Das Tool `get_events` liefert dieselben Zahlen. Siehe [MCP-Server](/de/mcp#tools).

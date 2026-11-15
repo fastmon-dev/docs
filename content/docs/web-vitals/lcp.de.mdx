@@ -58,7 +58,7 @@ Die LCP-Seite findest du unter **Core Web Vitals → LCP**. Zwei Kacheln zeigen 
 - **LCP-Bildgröße**: Der Explorer hat die Bytes des LCP-Bilds als `lcp_bytes` für Charts, Spalten und Bereichsfilter. Kein Wert bei einem Text-LCP, einem Video, einem Safari-Cache-Treffer oder einem Cross-Origin-Bild ohne `Timing-Allow-Origin`.
 - **Ein Seitenaufruf**: Das Pageview-Detail zeigt das LCP-Element mit seinen Bytes, seiner gemalten Fläche und einen Cache-Treffer getrennt nach Speicher oder Platte.
 
-Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `cache_rate` pro Element.
+Per API bekommst du dasselbe über [`POST /analytics/element-targets`](/de/api/analytics/queryAnalyticsElementTargets), mit `fetch_priority_high_rate`, `lazy_rate` und `browser_cache_rate` pro Element.
 
 ### Mit einem früheren Zeitraum vergleichen [#compare]
 

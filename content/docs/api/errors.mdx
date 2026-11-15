@@ -40,13 +40,13 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 
 | Status | What it means                                                                       |
 | ------ | ----------------------------------------------------------------------------------- |
-| `400`  | The body or query was malformed. See `code` for specifics.                          |
+| `400`  | The request cannot be processed as sent: an invalid cursor, a token that does not verify, or a business rule such as `last_owner`. |
 | `401`  | Authentication failed or wasn't provided. See [Authentication](/en/api/authentication). |
 | `402`  | Allowed, but the organization is not entitled to it. See [Entitlement](#entitlement). |
 | `403`  | Authenticated, but not allowed. Missing permission, wrong organization, or paused resource. |
 | `404`  | Resource doesn't exist, *or* you can't see it. We don't leak existence.             |
 | `409`  | Conflict: usually a uniqueness violation or a state-machine clash.                   |
-| `422`  | Validation failed, in the same envelope. `details` maps each field path to its messages. |
+| `422`  | Validation failed, always with `validation_error`. `details` maps each field path to its messages. |
 | `429`  | Rate-limited. Wait and retry; `Retry-After` is set.                                  |
 
 </Tab>
@@ -55,9 +55,9 @@ Every error from the fastmon API uses the same envelope. The HTTP status code te
 | Status | What it means                                                          |
 | ------ | ---------------------------------------------------------------------- |
 | `500`  | Server error. Include `request_id` when reporting.                     |
-| `502`  | Bad gateway. Usually a deploy-window blip; retry with backoff.         |
-| `503`  | Service unavailable. Same as `502`: transient.                          |
-| `504`  | Gateway timeout. Retry once with longer client timeout.                |
+| `503`  | Service or an upstream unavailable. `code` names which. Retry with backoff. |
+
+The API never answers `501`, `502`, or `504`. A proxy in between may.
 
 </Tab>
 </Tabs>
@@ -96,13 +96,15 @@ The full list, grouped by category.
 | -------------------------- | ----------------------------------------------------------------------------------- |
 | `organization_not_found`   | Organization doesn't exist or isn't visible to you.                                 |
 | `site_not_found`           | Site doesn't exist or isn't visible to you.                                         |
-| `release_not_found`        | Release marker doesn't exist on this site.                                          |
+| `application_not_found`    | Application doesn't exist or isn't visible to you.                                  |
+| `release_not_found`        | Release marker doesn't exist.                                                       |
 | `rule_not_found`           | Notification rule doesn't exist.                                                    |
 | `member_not_found`         | Organization member doesn't exist.                                                  |
 | `invite_not_found`         | Invite doesn't exist or has been consumed.                                          |
 | `partner_not_found`        | Partner relationship doesn't exist.                                                 |
 | `user_not_found`           | User doesn't exist or isn't visible to you.                                         |
-| `resource_not_found`       | Catch-all for resources without a more specific code.                               |
+| `<resource>_not_found`     | Any resource with its own id in the path, such as `api_key_not_found`, `connection_not_found`, or `synthetic_page_not_found`. |
+| `resource_not_found`       | An unknown path, or something without an id of its own, such as a report not generated yet. |
 | `demo_unavailable`         | `POST /auth/demo-session`: no demo is set up, or it is switched off.                |
 
 ### Conflict / state
@@ -137,7 +139,7 @@ Answered with `402`. The permission was there; what the organization is on does 
 
 | Code                    | Meaning                                                                                |
 | ----------------------- | -------------------------------------------------------------------------------------- |
-| `validation_error`      | A field failed validation. `details` maps its path to the messages.                    |
+| `validation_error`      | A field failed validation or is not declared, always `422`. `details` maps its path to the messages. |
 | `time_range_beyond_history` | The window reaches past the organization's history. `details.history_days` is the horizon. |
 | `email_domain_not_allowed` | Sign-up with a freemail or disposable address, 400. `details.email_kind` says which.  |
 | `unsupported_operation` | The operation isn't supported in this context (e.g. wrong storage mode).               |
@@ -184,7 +186,7 @@ Answered with `402`. The permission was there; what the organization is on does 
 | Status                | Retry?                                                                  |
 | --------------------- | ----------------------------------------------------------------------- |
 | `429`                 | Yes: wait `Retry-After` seconds.                                        |
-| `502` / `503` / `504` | Yes: exponential backoff. Usually deploy-window blips.                  |
+| `503`                 | Yes: exponential backoff.                                               |
 | Other `5xx`           | Once. If it persists, report with `request_id`.                         |
 | `4xx`                 | **No.** The request is wrong; fix and resend.                            |
 
