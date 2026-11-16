@@ -28,11 +28,11 @@ Eine Site ist bewusst schlank. Embed, Erfassungs-Config und Datenschutz-Einstell
 | Feld                  | Typ                                   | Hinweise                                                                          |
 | --------------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
 | `id`                  | UUID v7                               | Stabiler Identifier (die `site_id` im Analytics-Store).                          |
-| `organization_id`     | UUID v7                               | Die besitzende Organisation.                                                      |
-| `application_id`      | UUID v7                               | Die Application, zu der diese Domain gehört.                                      |
+| `organization`        | object                                | Die besitzende Organisation, `{id, name}`.                                        |
+| `application`         | object                                | Die Application, zu der diese Domain gehört, `{id, name}`.                        |
 | `name`                | string                                | Wie die Site im UI erscheint.                                                     |
 | `domain`              | string                                | Reiner Hostname, kein Protokoll (z. B. `acme.com`).                               |
-| `tags`                | Liste von Strings (max 10)            | Freie Labels zum Organisieren von Sites. Cross-Site-Analytics per Tag ist geplant, noch nicht live. |
+| `tags`                | Liste von Strings (max 10)            | Veraltet, ohne Ersatz. Wird noch geliefert, nutz es aber nicht mehr. |
 | `is_active`           | bool                                  | Bei `false` nimmt der Collector Beacons noch an, schreibt sie aber nicht in Analytics-Tabellen. |
 | `activated_at`        | timestamp · nullable                  | Wann die Site erstmals die Aktivierungsschwelle überschritt und live ging.        |
 

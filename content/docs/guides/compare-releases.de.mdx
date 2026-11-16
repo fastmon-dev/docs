@@ -17,16 +17,16 @@ Eine Pipeline, die nur Releases meldet, kommt ohne die Einstellungen aus: Der **
 
 Ist der Key geleakt, widerrufe ihn. Für ein frisches Secret rotierst du ihn, siehe [Authentication](/en/api/authentication).
 
-## 2. Site-ID finden
+## 2. Application-ID finden
 
-Öffne in fastmon die Site und geh auf **Einstellungen**. Kopier die Site-`id` (UUID v7, sieht aus wie `01HZX...`). Leg sie im CI als `FASTMON_SITE_ID` ab.
+Öffne in fastmon die Einstellungen der Application. Kopier ihre `id` (UUID v7, sieht aus wie `01HZX...`). Leg sie im CI als `FASTMON_APP_ID` ab.
 
 ## 3. Release-Call zum Deploy-Job hinzufügen
 
 Der Release-Call kommt **ans Ende** des Deploy-Jobs, nach erfolgreichem Deploy. Minimum-Payload ist nur `version`:
 
 ```bash
-curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
@@ -44,9 +44,9 @@ Mit `-fsS` scheitert curl bei Non-2xx-Responses und spart sich den Progress-Outp
   if: success()
   env:
     FASTMON_API_KEY: ${{ secrets.FASTMON_API_KEY }}
-    FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
+    FASTMON_APP_ID: ${{ vars.FASTMON_APP_ID }}
   run: |
-    curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+    curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
       -H "Authorization: Bearer $FASTMON_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{ \"version\": \"${{ github.sha }}\" }"
@@ -60,7 +60,7 @@ fastmon-release:
   needs: ["deploy"]
   script:
     - |
-      curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+      curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
         -H "Authorization: Bearer $FASTMON_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
@@ -75,10 +75,10 @@ Vercel führt keine beliebigen Post-Deploy-Commands im Build aus. Zwei Optionen:
 
 ## 4. Release-Eingang prüfen
 
-Release-Liste der Site abfragen:
+Release-Liste der Application abfragen:
 
 ```bash
-curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+curl https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
@@ -105,7 +105,7 @@ curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
 
 Jede Zeile hat dann ein `comparison` mit denselben Metriken, und `request.comparison_time_range` nennt den verwendeten Zeitraum. Der Zeitraum des vorherigen Release beginnt bei seinem `released_at`, ist so lang wie `time_range` und endet früher, wenn das nächste Release oder jetzt davor liegt.
 
-`compare_to` nimmt auch einen beliebigen Zeitraum `{ "from": …, "to": … }` oder einen der Modi `previous_period`, `previous_day`, `previous_week`, `previous_month`. Das ältere `compare_to_release_id` ist veraltet, wird aber weiter bedient.
+`compare_to` nimmt auch einen beliebigen Zeitraum `{ "from": …, "to": … }` oder einen der Modi `previous_period`, `previous_day`, `previous_week`, `previous_month`. Das ältere `compare_to_release_id` gibt es nicht mehr, es antwortet mit 422.
 
 ## Was gut aussieht
 
@@ -116,11 +116,11 @@ Jede Zeile hat dann ein `comparison` mit denselben Metriken, und `request.compar
 ## Häufige Stolperfallen
 
 - **Ein Release ohne `released_at` setzt „jetzt".** Geht dein Deploy erst Minuten nach dem Job live, etwa bei Blue/Green, datier ihn zurück.
-- **Releases hängen an einer Site.** Wer in einem Monorepo drei Sites ausliefert, braucht drei Release-Calls.
+- **Releases hängen an einer Application.** Wer in einem Monorepo drei Applications ausliefert, braucht drei Release-Calls.
 - **Der Vergleich richtet sich nach der Query-Länge.** Eine `time_range` von 7 Tagen vergleicht mit den ersten 7 Tagen des vorherigen Release. Für scharfe Regressionen halt sie kurz (1–24 h).
 
 ## Verwandt
 
 - [Releases-Konzept](/de/concepts/releases): was ein Release ist.
-- [Analytics-API](/en/api/analytics/queryAnalytics): `compare_to`-Details.
+- [Analytics-API](/en/api/analytics/queryAnalyticsMetrics): `compare_to`-Details.
 - [Notification Rules](/de/guides/notification-rules): automatisch alarmieren bei Per-Release-Regressionen.

@@ -3,15 +3,21 @@ title: API Reference
 description: Base URL, authentication, response envelopes, and the auto-generated endpoint reference.
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
 The fastmon REST API is the same surface the dashboard uses. The endpoint reference is **auto-generated from the backend's OpenAPI document** on every docs build, so it never drifts from the running service.
 
-<Callout type="warn" title="The API is not production-ready">
-  Endpoints, request shapes, response shapes, field names, and error formats can change at any time without notice. There is no deprecation window and no compatibility guarantee yet.
+## Stability [#stability]
 
-  Use the API for prototypes, internal tooling, and exploration. Don't build production systems against it. We'll cut a stable contract and announce a deprecation policy before recommending it for production use.
-</Callout>
+Every operation carries `x-stability-level` in the schema.
+
+| Level    | Promise                                                                                              |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| `stable` | Changes incompatibly only after a deprecation, with the old name or path still answering beside the new one. |
+| `beta`   | Checked like `stable`, but due one incompatible change before it becomes `stable`. The [changelog](/en/changelog) announces it. |
+| `alpha`  | May change in any release.                                                                           |
+
+- **Extensible enums**: a response enum under `x-extensible-enum` can gain values without notice. Treat an unknown value as an open string and never fail on it.
+- **Closed requests**: a request enum takes the closed copy `<Enum>Request`, and a body refuses any field it does not declare with `422`.
+- **Deprecated** operations and fields carry `deprecated: true` and keep answering until the changelog announces their removal.
 
 ## Cross-cutting topics
 
@@ -30,14 +36,14 @@ Pages are auto-generated per OpenAPI tag. Each operation has its own page with s
 <Cards>
   <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container: members, plans, billing." />
   <Card title="Members" href="/en/api/members/listOrganizationMembers" description="Organization membership: list, remove, transfer ownership." />
-  <Card title="Organization keys" href="/en/api/org-keys/listOrgApiKeys" description="API keys the organization owns: mint, edit, rotate, revoke." />
-  <Card title="Connections" href="/en/api/connections/listOrgConnections" description="The apps connected to an organization, and how to disconnect one." />
+  <Card title="Organization keys" href="/en/api/api-keys/listOrganizationApiKeys" description="API keys the organization owns: mint, edit, rotate, revoke." />
+  <Card title="Connections" href="/en/api/connections/listOrganizationConnections" description="The apps connected to an organization, and how to disconnect one." />
   <Card title="Applications" href="/en/api/applications/listApplications" description="The tracking embed: source and collector hashes, collection config, hash rotation." />
   <Card title="Sites" href="/en/api/sites/listSites" description="The domains an application runs on. Each has its own dashboard and traffic." />
-  <Card title="Releases" href="/en/api/releases/listReleases" description="Versioned markers on a site, used for before/after comparisons." />
-  <Card title="Analytics" href="/en/api/analytics/queryAnalytics" description="Web Vitals, sessions, errors, third-party impact queries." />
-  <Card title="Synthetic" href="/en/api/synthetic/listSyntheticPages" description="Lighthouse lab tests: pages, runs, results, lab-vs-field." />
-  <Card title="Notifications" href="/en/api/notifications/getNotificationMetadata" description="Notification rules: create, evaluate, test, history." />
+  <Card title="Releases" href="/en/api/releases/listApplicationReleases" description="Versioned markers on an application, used for before/after comparisons." />
+  <Card title="Analytics" href="/en/api/analytics/queryAnalyticsMetrics" description="Web Vitals, sessions, errors, third-party impact queries." />
+  <Card title="Synthetic" href="/en/api/synthetic/listSiteSyntheticPages" description="Lighthouse lab tests: pages, runs, results, lab-vs-field." />
+  <Card title="Notifications" href="/en/api/notifications/listNotificationRules" description="Notification rules: create, evaluate, test, history." />
   <Card title="Partners" href="/en/api/partners/listPartnerClients" description="Partner accounts: client sites and usage." />
 </Cards>
 
@@ -47,7 +53,7 @@ Pages are auto-generated per OpenAPI tag. Each operation has its own page with s
 https://api.fastmon.eu
 ```
 
-Endpoints sit directly under it: `GET /organizations`, `POST /sites/{site_id}/releases`.
+Endpoints sit directly under it: `GET /organizations`, `POST /applications/{app_id}/releases`.
 
 Every path also answers under a leading `/v1`. That is a permanent alias for the URLs minted before the prefix was dropped, kept so nothing built against it has to move; leave it off in new code. Public ingest (`POST /c/{collector_hash}` and `GET /s/{source_hash}.js`) has never carried a prefix and has its own contract, and so does the [MCP server](/en/mcp) at `POST /mcp`.
 

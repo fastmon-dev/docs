@@ -297,6 +297,7 @@ const apiMeta = {
     "search",
     "organizations",
     "members",
+    "invites",
     "api-keys",
     "connections",
     "applications",

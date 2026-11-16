@@ -12,6 +12,175 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="The API is stable">
+
+The published API now has a stability contract. Every operation says in `x-stability-level` what it promises.
+
+- **`stable`** changes incompatibly only after a deprecation, with the old name still answering. 143 operations are stable.
+- **`beta`** is due one announced incompatible change: synthetic page routes, page type detection, and unknown hostnames.
+- **`alpha`** may change in any release: `POST /analytics/goals/factors`.
+- **Extensible enums** list their values under `x-extensible-enum` and can grow without notice. Treat an unknown value as an open string.
+- **Site tags** are deprecated with no replacement. They keep working for now.
+
+The changes below are the last breaking ones before this contract. The dashboard ships with them.
+
+Docs: [API Reference → Stability](/en/api#stability).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Responses nest what they point at">
+
+Responses name related rows and grouped settings as objects. The flat fields they replace are gone without a deprecated twin.
+
+- **References** are objects, such as `"site": {"id", "domain", "name"}` for `site_id`, or `organization` and `application` for their flat ids.
+- **Grouped fields** are one object in responses and requests: `collection.sampling.rate`, `collector.hash`, `uptime.enabled`, `card.last4`.
+- **Booleans the server reports** start with `is_` or `has_`, such as `is_editable` on an API key or `is_journey_truncated` on a visitor.
+- **Renamed**: `meta.sampling.rate` for `sampling_rate`, `id` for `event_id` on events, `checkout_stage` for `stage` on event rows, `reference_unit` `ms` for `milliseconds`.
+- **Audit log**: actions read `organization.*`, `application.*`, and `connection.*`, and an organization key has the `kind` `organization`.
+
+Requests still take `site_id` and the other flat ids. The Shopware plugin fields stay. Docs: [Applications → What's on an application](/en/concepts/applications#application-fields).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="removed" area="api" title="Deprecated names removed">
+
+Every name the API had marked deprecated is gone, except the Shopware plugin fields and site tags.
+
+- **`POST /analytics/beacons`** answers 404. Use `POST /analytics/pageviews`, same body and response.
+- **`POST /analytics/query`**: read `sample_count` for `beacons`. `compare_to_release_id` answers 422, send the release as `compare_to`.
+- **`POST /analytics/events/overview`**: read `names` for `events_by_name` and `value_sums` for `revenue`.
+- **`POST /analytics/third-party`** drops `count` and `resource_count`. Page weight ranks third-party domains by load time.
+- **Also gone**: `storage` and `clickhouse_table` on an organization, `events_read` on the checkout stages, and `mode` in `sparse_buckets`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Stricter requests and clearer errors">
+
+Requests are checked more strictly, and error codes say more precisely what failed.
+
+- **Unknown fields** in any request body answer 422 `validation_error`, with the field in `details`.
+- **`validation_error` is always 422.** 400 is left for an invalid cursor, a token that does not verify, or a business rule.
+- **Filters** `device_type`, `checkout_stage`, and `cache_layer` take a closed set. `ownership` on the error list takes a list.
+- **Not found** answers name the resource, such as `application_not_found` or `api_key_not_found`, in place of `resource_not_found`.
+- **Upstream outages** answer 503 instead of 502. Branch on `code`, which names the failed service.
+- **Raw beacons** are kept 3 days. `POST /analytics/beacon-breakdowns` reads no further back.
+
+Docs: [Errors](/en/api/errors).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Generated clients get new names">
+
+A client generated from the OpenAPI schema needs one regeneration. Paths, bodies, and values on the wire stay as they are.
+
+- **operationIds**: `Org` is written out (`listOrganizationApiKeys`), and a POST that reads starts with `query` (`queryAnalyticsVisitors`). `queryAnalytics` is `queryAnalyticsMetrics`.
+- **Schema names** follow, such as `OrganizationKeyCreate` and `PageviewRow`.
+- **Milliseconds** are a `number` everywhere. A field that answered `812` still does.
+- **Empty values** are left out where a field read `""` or `0`, such as `session_id`, `country`, or `checkout_stage`.
+- **Tags**: every operation carries one, its feature area. Invites and members have their own.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="Releases belong to the application">
+
+Post releases to `POST /applications/{app_id}/releases`, and list them with `GET` on the same path. A release covers every site of the application and names it in `application`. The site routes are deprecated with no removal date and keep answering.
+
+Docs: [Compare releases](/en/guides/compare-releases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="api" title="One server cache per pageview">
+
+Every pageview now counts the one server cache that answered it, the CDN or the cache in front of your app.
+
+- **New fields**: `cache_layer`, `cache_status`, `cache_age`, and `cache_ttl`, and the metric `cache_served_rate` over cacheable pageviews.
+- **`fm-cache`**, `fm-cache-age`, and `fm-cache-ttl` name a cache you run yourself, such as Varnish.
+- **Removed**: the `cdn_*` and `origin_*` cache metrics, filters, and fields. Notification rules on them moved to the new names, so check their thresholds.
+- **Browser cache** names say so: `browser_cache_hit_rate`, `browser_cached_resources`, `browser_page_cached`, `browser_cache_rate`, and the `lcp_delivery` value `browser_cache`.
+
+Docs: [Server-Timing → One server cache per pageview](/en/guides/server-timing#served-cache).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="dashboard" title="Server cache and Browser cache pages">
+
+Network has two cache pages in place of one.
+
+- **Server cache** shows the served rate, the age of the served copy, and its remaining lifetime. "Who answered" splits every pageview into CDN, origin cache, not served, not cacheable, and no status.
+- **A table** by page type, page, device, country, or login opens a row with its trend and a link to the Explorer.
+- **Browser cache** shows the resources from the browser cache, warm views, bytes saved, and bfcache restores. It also shows where the LCP element came from.
+
+Old links to the CDN, origin, or browser view open the matching page.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="platform" title="Security fixes for keys, apps, and members">
+
+An audit tightened what keys and connected apps may do.
+
+- **Adding a member** directly is for platform admins only. Invite with `POST /organizations/{org_id}/invites` instead.
+- **MCP tokens** no longer work on the REST API, and a revoked app connection loses its tokens at once.
+- **Self-registered apps** can no longer be granted `org:delete`, `org:transfer`, `billing:manage`, or `member:manage`.
+- **Limits**: on-demand synthetic runs share 60 per organization and hour, and AI weekly summaries 5 per user and minute. Past either, 429 `rate_limited`.
+- **Sign-in with GitHub or Google** is bound to the browser that started it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="tracker" title="Two more signs of a driven browser">
+
+`client_anomalies` gains `scroll_without_input`, a page that scrolled before any input, and `click_without_move`, a first click after fewer than 3 mouse moves. Both are labels and change no `bot_class`. A client that rejects unknown values has to add them.
+
+Docs: [Privacy → Bot and datacenter labels](/en/privacy#bot-and-datacenter-labels).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="new" area="dashboard" title="New in fastmon">
+
+A **New** button in the sidebar header lists new features, with a dot while something is unread. Each entry has a picture, two sentences, and a link into the view. The newest unread feature also shows as a card bottom right until you acknowledge it.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="NEL and CSP reports in a pop-up">
+
+On Network Error Logging and Content Security Policy, a report opens in a pop-up like the pageview detail. The arrow keys step through the reports. The page's own filters are normal filters now, and the status filter takes a single code such as `500`.
+
+Docs: [Network Error Logging → The page](/en/nel#dashboard).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Shopfloor on a phone and on a wall screen">
+
+The Shopfloor works on a phone and stays out of the way on a wall screen.
+
+- **On a phone** held upright it shows its figures and asks to be turned. Sideways, the floor fills the screen.
+- **On an iPhone**, fastmon can be added to the Home Screen and opens as an app without browser bars.
+- **In kiosk mode** the pointer and buttons hide after three seconds without a move.
+- **The header** is a line shorter, and the latest orders at the exit show flag, value, time, and device.
+
+Docs: [Analytics → Shopfloor](/en/analytics#shopfloor).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Revenue projects the running day">
+
+The revenue curve no longer drops at its end. The running day or hour is projected and dashed, as for pageviews and orders, and the tooltip shows both the revenue so far and the projection.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-15" type="changed" area="dashboard" title="Errors arrive with the finalized pageviews">
+
+The error list, its detail, and the fetch/XHR panel read the finalized pageviews. An error of the running hour shows up about 5 minutes later. A pageview with several beacons counts its errors once.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-11" type="new" area="api" title="Events overview per name">
+
+`POST /analytics/events/overview` answers one row per event name in `names`, with visitors, visitor share, and events per pageview. Stage events derived from checkout pages show in `derived_names`, outside the totals. `POST /analytics/events/breakdown` groups one name by page type, URL, device, or next event.
+
+Docs: [Custom events → API](/en/events#api).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-10" type="changed" area="api" title="MCP tools page through errors and report shares as ratios">
 
 The MCP and Ask tools answer more completely and refuse what they cannot use.
@@ -1769,7 +1938,7 @@ One name, one type and one scale per concept, across responses, request bodies a
 - **No response field is nullable.** 444 declared `T | null` for a value the API never sends, because a field with no value is left out. Nothing on the wire changes, and a generated client now sees an optional field.
 - **Each deprecated name points at its successor** through `x-replaced-by` in the OpenAPI document, so a migration can be driven from the spec.
 
-Docs: [API → Analytics](/en/api/analytics/queryAnalytics).
+Docs: [API → Analytics](/en/api/analytics/queryAnalyticsMetrics).
 
 </ChangelogEntry>
 
@@ -2200,7 +2369,7 @@ A query that groups by time and by a dimension used to lose the end of its axis,
 - **Grouping `/analytics/query` by an `errors.*` dimension works again.** The row count that paginates the result asked ClickHouse for a column the query had not selected, so every such query failed instead of returning data.
 - **A grouped query reports the dimension value it grouped by.** Both structured dimensions were read under the wrong name: `errors.*` came back empty, and a map dimension such as `third_parties` failed the request.
 
-Docs: [API → Analytics](/en/api/analytics/queryAnalytics).
+Docs: [API → Analytics](/en/api/analytics/queryAnalyticsMetrics).
 
 </ChangelogEntry>
 
@@ -2302,7 +2471,7 @@ The command palette (`Cmd`/`Ctrl`+`K`) could only offer the sites of the organiz
 - **Inactive sites and applications are listed and flagged.** Reactivating one starts with finding it. Inactive organizations never appear.
 - **The same search from a script**: `GET /search`, with `q` (substring, case-insensitive), `kinds` to narrow, and `limit` (max 50 per kind). Results come grouped per kind, best match first: exact name, then prefix, then substring, then alphabetical. A key is cut to the organizations it was issued for and to its scopes, so a key without `site:read` gets no sites whatever its owner's role is.
 
-Docs: [API → Search](/en/api/search/search), [Analytics → Navigating with the command palette](/en/analytics#command-palette).
+Docs: [API → Search](/en/api/search/searchResources), [Analytics → Navigating with the command palette](/en/analytics#command-palette).
 
 </ChangelogEntry>
 

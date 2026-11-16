@@ -111,7 +111,7 @@ wirkt nur vorwärts, und Besucher pro Stufe brauchen `store_stitch`. Siehe
 
 ## Traffic-Sampling [#sampling]
 
-`collection.sampling_rate` speichert nur einen Teil deiner Besucher statt
+`collection.sampling.rate` speichert nur einen Teil deiner Besucher statt
 aller. Der Default ist `1.0`, eine Rate unter `0.01` lehnt die API ab. Die Edge
 behält oder verwirft die Pageviews eines Besuchers gemeinsam, und eine
 neue Rate greift nach etwa einer Minute.
@@ -129,7 +129,7 @@ Antwort, die hochgerechnet sind, und das Dashboard markiert sie mit `~`.
 
 ```json
 PATCH /applications/{app_id}
-{ "collection": { "sampling_rate": 0.5 } }
+{ "collection": { "sampling": { "rate": 0.5 } } }
 ```
 
 Im Dashboard heißt die Rate **Erfasster Besucheranteil** unter Besucher &
@@ -139,22 +139,22 @@ jetzt gesetzten Rate speichert, mit einer Zeile je Produktions-Application.
 
 ### Automatisches Sampling [#sampling-mode]
 
-`collection.sampling_mode` legt fest, wer die Rate setzt: du (`manual`, der
+`collection.sampling.mode` legt fest, wer die Rate setzt: du (`manual`, der
 Default) oder fastmon anhand deiner gebuchten Pageviews (`automatic`). Im
 Dashboard ist das **Anteil automatisch festlegen** unter Besucher & Sampling.
 
 - **Stufen**: eine feste Leiter von 100 % bis 1 %, höchstens eine Stufe pro Tag.
 - **Geltung**: Produktions-Applications einer Organisation mit festem Pageview-Kontingent. Free, Enterprise, Partner-Tarife, voll abgedeckte Kunden und Trials bleiben unberührt.
 - **Kontingent**: Manuelle Applications bekommen ihren Teil zuerst, die automatischen teilen sich den Rest nach Traffic.
-- **Rate schreiben**: Im Modus `automatic` gibt eine geänderte `sampling_rate` 422 zurück, außer derselbe Body setzt `sampling_mode` auf `manual`.
-- **Änderungen**: `sampling_rate_changed_at` und der Audit-Log-Eintrag `application.sampling_rate_changed` halten jeden Schritt fest. Zurück auf `manual` bleibt die letzte Stufe.
+- **Rate schreiben**: Im Modus `automatic` gibt ein geändertes `rate` 422 zurück, außer derselbe Body setzt `mode` auf `manual`.
+- **Änderungen**: `rate_changed_at` und der Audit-Log-Eintrag `application.sampling_rate_changed` halten jeden Schritt fest. Zurück auf `manual` bleibt die letzte Stufe.
 
 ### Fetch- und XHR-Sampling [#fetch-xhr-sampling]
 
-`collection.fetch_xhr_sampling_rate` behält die Fetch- und XHR-Aufrufe nur für
+`collection.fetch_xhr.sampling_rate` behält die Fetch- und XHR-Aufrufe nur für
 einen Teil der gespeicherten Besucher. Der Rest des Pageviews wird vollständig
 gespeichert. Eine neue Application startet mit `0.25`, und die Rate greift nie
-über `sampling_rate` hinaus.
+über `sampling.rate` hinaus.
 
 Aufrufe und Fehler werden hochgerechnet. Perzentile und die gelisteten Aufrufe
 beruhen nur auf den behaltenen Aufrufen.
@@ -175,10 +175,10 @@ Das Dashboard zeigt sie unter dem Feld, **Übernehmen** trägt sie ein.
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------- |
 | `event_tracking`        | an      | Nimmt die eigenen [Events](/de/events) eines Shops an. fastmon schaltet es auf Anfrage ab. Die Checkout-Schritte des Shopify-Pixels bleiben. |
 | `collection.ga4_ecommerce` | aus | Liest die sieben GA4-E-Commerce-Pushes mit Wert, Währung und Artikeln. Dashboard: **GA4-E-Commerce-Events lesen**. |
-| `collection.data_layer` | aus     | Liest jeden dataLayer-Push mit Event-Namen, ohne Properties. Dashboard: **Alle dataLayer-Events lesen**. |
-| `collection.data_layer_prop_keys` | leer | Bis zu 30 Top-Level-Keys, die `data_layer`-Events als Properties behalten. Dashboard: **Keys als Properties übernehmen**. |
-| `collection.data_layer_mode` | `block` | `block` verwirft die gelisteten Namen, `allow` behält nur sie. Dashboard: **Nach Namen filtern**. |
-| `collection.data_layer_names` | leer | Bis zu 50 Namen für den Modus, `prefix*` erlaubt. Greift im Collector binnen fünf Minuten. |
+| `collection.data_layer.enabled` | aus     | Liest jeden dataLayer-Push mit Event-Namen, ohne Properties. Dashboard: **Alle dataLayer-Events lesen**. |
+| `collection.data_layer.prop_keys` | leer | Bis zu 30 Top-Level-Keys, die `data_layer`-Events als Properties behalten. Dashboard: **Keys als Properties übernehmen**. |
+| `collection.data_layer.mode` | `block` | `block` verwirft die gelisteten Namen, `allow` behält nur sie. Dashboard: **Nach Namen filtern**. |
+| `collection.data_layer.names` | leer | Bis zu 50 Namen für den Modus, `prefix*` erlaubt. Greift im Collector binnen fünf Minuten. |
 
 Die dataLayer-Einstellungen findest du unter **Events aus dem dataLayer** im Tab Shop. Siehe [Eigene Events → dataLayer](/de/events#data-layer).
 
@@ -198,18 +198,18 @@ Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab.
 | Feld                         | Typ               | Hinweise                                                              |
 | ---------------------------- | ----------------- | --------------------------------------------------------------------- |
 | `id`                         | UUID v7           | Stabiler Identifier.                                                  |
-| `organization_id`            | UUID v7           | Die besitzende Organisation.                                          |
+| `organization`               | object            | Die besitzende Organisation.                                          |
 | `name`                       | string            | Anzeigename.                                                          |
 | `environment`                | enum              | `prod` oder `dev`. Default `prod`.                                     |
 | `platform`                   | object · nullable | Shopsystem oder CMS: `key`, `source`, `detected_via`, `detected_at`.  |
 | `shop.active`                | bool · nullable   | Ob das ein Shop ist. `null` folgt der Plattform.                      |
 | `spa`                        | bool              | Single-Page-App. Von Hand gesetzt, Default `false`.                   |
 | `collection.*`               | bool · enum       | Die Preset-Flags: Sessions, Fetch/XHR, Fehlermessages und -Frames, Query-Keys und -Werte, `session_consent`, `template_url_ids`. Siehe [Presets](/de/tracker). |
-| `collection.sampling_rate`   | number            | Anteil der gespeicherten Besucher, `0.01` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
-| `collection.sampling_mode`   | enum              | `manual` (Default) oder `automatic`. Siehe [Automatisches Sampling](#sampling-mode). |
-| `collection.sampling_rate_changed_at` | timestamp · nullable | Wann fastmon die Rate zuletzt verschoben hat.                 |
+| `collection.sampling.rate`   | number            | Anteil der gespeicherten Besucher, `0.01` bis `1.0`, Default `1.0`. Siehe [Traffic-Sampling](#sampling). |
+| `collection.sampling.mode`   | enum              | `manual` (Default) oder `automatic`. Siehe [Automatisches Sampling](#sampling-mode). |
+| `collection.sampling.rate_changed_at` | timestamp · nullable | Wann fastmon die Rate zuletzt verschoben hat.                 |
 | `collection.ga4_ecommerce`, `collection.data_layer*` | bool · list · enum | Die dataLayer-Brücke. Siehe [Events](#events). |
-| `collection.fetch_xhr_sampling_rate` | number | Anteil der Besucher mit gespeicherten Fetch/XHR-Aufrufen. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
+| `collection.fetch_xhr.sampling_rate` | number | Anteil der Besucher mit gespeicherten Fetch/XHR-Aufrufen. Siehe [Fetch- und XHR-Sampling](#fetch-xhr-sampling). |
 | `page_type.body_class`       | bool              | Page-Type aus der `<body>`-Klasse lesen. Default aus.                 |
 | `page_type.rules`            | list · nullable   | Deine eigenen Body-Klassen, auf Page-Types abgebildet. Wird vor der Ruleset gelesen. |
 | `page_type.url_rules`        | list · nullable   | Deine eigenen URL-Muster, auf Page-Types abgebildet. Wird nach deinen Body-Klassen gelesen. |
@@ -218,9 +218,9 @@ Gruppen als Teilobjekte und lehnen jeden unbekannten Key ab.
 | `collector.mode`             | enum              | `default` / `relative` / `custom`.                                    |
 | `collector.endpoint`         | string · nullable | Eigener Collector-Host (nur bei `custom`).                            |
 | `collector.proxy_secret`     | object            | Das gemeinsame Secret für einen [First-Party-Proxy](/de/guides/first-party-proxy). |
-| `script.source_hash`         | string            | Global eindeutig, steht in der Script-URL.                            |
-| `script.collector_hash`      | string            | Global eindeutig, steht in der Ingest-URL.                            |
-| `script.source_version`      | string            | Gepinnte Beacon-Template-Version (`v1`).                              |
+| `script.hash`         | string            | Global eindeutig, steht in der Script-URL.                            |
+| `collector.hash`      | string            | Global eindeutig, steht in der Ingest-URL.                            |
+| `script.version`      | string            | Gepinnte Beacon-Template-Version (`v1`).                              |
 | `site_defaults.*`            | int · bool · enum | `data_retention_days`, `store_stitch`, `count_visitors_by`. Gilt für alle Sites. |
 | `site_policy`                | enum              | `open` / `auto` / `strict`. Umgang mit unbekannten Hostnamen.         |
 | `is_active`                  | bool              | Bei `false` werden Beacons angenommen, aber nicht geschrieben.        |

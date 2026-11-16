@@ -62,7 +62,7 @@ Um sie auseinanderzuhalten, speichert fastmon zusätzlich **`ttfb_final`**: das 
 | gleich `ttfb`     | Keine vorläufige Response; das erste Byte war das echte.                        |
 | größer als `ttfb` | Early Hints aktiv. Die Differenz ist der Vorsprung der Edge, und `ttfb_final` ist der Wert, in den `edge_dur + backend_dur` des Servers passen muss. |
 
-TTFB selbst bleibt `responseStart` und damit vergleichbar mit CrUX und den Web-Vitals-Felddaten. `ttfb_final` ist ein Zeilenfeld auf `POST /analytics/beacons`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik (avg, p50 bis p99).
+TTFB selbst bleibt `responseStart` und damit vergleichbar mit CrUX und den Web-Vitals-Felddaten. `ttfb_final` ist ein Zeilenfeld auf `POST /analytics/pageviews`, Teil des Besucher-Pageview-Details und eine aggregierbare Metrik (avg, p50 bis p99).
 
 Im Dashboard laufen die Balken von [Wohin die Zeit geht](#how-to-see-ttfb-in-fastmon) bis zum finalen ersten Byte, und eine Marke zeigt, wo der Browser das erste Byte gezählt hat. Die [Response-Aufschlüsselung](/de/analytics#fetchxhr-und-server-timing) zeichnet den Vorsprung als eigene Zeile „Early Hints" in der Wartezeit und lässt den Übertragungsbalken bei den finalen Response-Headern beginnen. Im Explorer ist `ttfb_final` Metrik, Spalte und Drawer-Feld; der Pageview-Drawer zeigt es nur, wenn es von TTFB abweicht.
 
@@ -74,7 +74,7 @@ Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert m
 - **Server-Aufteilung**: was [Server-Timing](/de/guides/server-timing) meldet, also Edge, Origin, Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates. Ohne den Header siehst du einen Block und einen Link zur Einrichtung.
 - **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
 - **Wo der TTFB langsam ist**: Seitentypen, Seiten, CDN-Status, Login-Status, Origin-Hosts und mehr, nach langsamen Seitenaufrufen sortiert, jede Zeile mit Aufteilung.
-- **Cache und Origin**: jede Cache-Ebene mit und ohne Hit, ihre Hit-Rate und die Backend-Zeit pro Origin-Host. Ein Host, der aus der Reihe fällt, wird hervorgehoben.
+- **Cache und Origin**: der [Server-Cache](/de/guides/server-timing#served-cache) mit und ohne Treffer, seine Auslieferungsrate und die Backend-Zeit pro Origin-Host. Ein Host, der aus der Reihe fällt, wird hervorgehoben.
 - **Ein Seitenaufruf**: Das Pageview-Detail zeigt den TLS-Handshake innerhalb des Verbindungsaufbaus und den Start des Service Workers.
 - **Vergleichen**: funktioniert wie auf der LCP-Seite, siehe [Mit einem früheren Zeitraum vergleichen](/de/web-vitals/lcp#compare).
 
@@ -88,7 +88,7 @@ Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert m
 
 ## Häufige Überraschungen
 
-- **Ein schneller TTFB auf Vercel/Netlify kann einen langsamen Origin verbergen.** Der Edge cacht die Response, und ein Cache-Miss kann 10× langsamer sein. Prüf die Cache-Hit-Rate neben dem TTFB.
+- **Ein schneller TTFB auf Vercel/Netlify kann einen langsamen Origin verbergen.** Der Edge cacht die Response, und ein Cache-Miss kann 10× langsamer sein. Prüf die Server-Cache-Rate neben dem TTFB.
 - **TTFB enthält keine Client-Render-Zeit.** Schneller TTFB mit langsamem LCP heißt: Der Browser macht die Arbeit, nicht der Server.
 - **Ein Service Worker, der die Navigation bedient**, drückt den TTFB bei Wiederbesuchen auf fast null.
 

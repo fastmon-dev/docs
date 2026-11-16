@@ -1,17 +1,17 @@
 ---
 title: Releases
-description: A versioned marker on a site. The mechanism for "did this deploy regress performance?"
+description: A versioned marker on an application. The mechanism for "did this deploy regress performance?"
 ---
 
-A **release** is a named point in time on a site, usually a deploy. With releases you can ask "did LCP go up after we shipped `v2.4.1`?" with one API call, instead of squinting at a chart.
+A **release** is a named point in time on an application, usually a deploy. With releases you can ask "did LCP go up after we shipped `v2.4.1`?" with one API call, instead of squinting at a chart.
 
 ## Why it matters
 
-Performance regressions almost always line up with a deploy. Without release markers, you've got to remember when each deploy happened and compare by hand. With markers, the [Analytics API](/en/api/analytics/queryAnalytics) does the before/after comparison for you in a single request.
+Performance regressions almost always line up with a deploy. Without release markers, you've got to remember when each deploy happened and compare by hand. With markers, the [Analytics API](/en/api/analytics/queryAnalyticsMetrics) does the before/after comparison for you in a single request.
 
 ## When you'd touch it
 
-- **Every deploy.** Cleanest setup: a `POST /sites/{id}/releases` from CI/CD after a successful deploy.
+- **Every deploy.** Cleanest setup: a `POST /applications/{app_id}/releases` from CI/CD after a successful deploy.
 - **Investigating a regression.** On the LCP or TTFB page, **Compare → Release, against the one before** shows a release next to the previous one.
 - **Rolling back.** Tag the rollback as a release too; you want both transitions visible.
 
@@ -22,7 +22,7 @@ If you don't tag releases, nothing breaks. The dashboard still works without the
 | Field         | Type        | Notes                                                                  |
 | ------------- | ----------- | ---------------------------------------------------------------------- |
 | `id`          | UUID v7     | Used as `compare_to: { "release_id": … }` in analytics queries.     |
-| `site_id`     | UUID v7     | The site this release belongs to.                                      |
+| `application` | object      | The application this release belongs to, `{id, name}`.                 |
 | `version`     | string      | Required. Free-form (`v2.4.1`, `2026-05-07`, `git:abcdef0`).          |
 | `released_at` | timestamp   | Optional. When the deploy went live. Defaults to "now" if omitted.    |
 | `window`      | time range  | Read-only. From `released_at` to the next release, at most 14 days.   |
@@ -34,7 +34,7 @@ That's the whole resource. Releases are minimal on purpose; the goal is correlat
 The reliable way is a step at the end of your deploy job:
 
 ```bash
-curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+curl https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
   -H "Authorization: Bearer fm_$FASTMON_TOKEN" \
   -H "Content-Type: application/json" \
   -d "{ \"version\": \"$DEPLOY_VERSION\", \"released_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" }"
@@ -75,11 +75,11 @@ Tag the rollback as a separate release with a version like `rollback-v2.4.0`. Th
 ## Common surprises
 
 - **`released_at` matters more than `id`.** Sorting is by `released_at`. Back-date a release and the order will look wrong.
-- **Releases are per site.** A monorepo shipping several sites needs one release call per site, even if the version string is identical.
+- **Releases are per application.** One release covers every site of it. `POST /sites/{site_id}/releases` is deprecated but still answers.
 - **Deleting a release breaks comparisons that reference it.** The endpoint returns `404`. Metrics already rendered aren't affected.
 
 ## Related
 
-- [Sites](/en/concepts/sites): releases live under a site.
-- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to`.
+- [Applications](/en/concepts/applications): releases live under an application.
+- [Analytics API](/en/api/analytics/queryAnalyticsMetrics): `compare_to`.
 - [Compare releases](/en/guides/compare-releases): step-by-step guide for hooking up CI/CD.

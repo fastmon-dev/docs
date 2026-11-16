@@ -17,16 +17,16 @@ A pipeline that only posts releases can skip the settings page: the **CI/CD** sn
 
 If the key leaks, revoke it. For a fresh secret, rotate it, see [Authentication](/en/api/authentication).
 
-## 2. Find the site ID
+## 2. Find the application ID
 
-In fastmon, open the site, then **Settings**. Copy the site's `id` (UUID v7, looks like `01HZX...`). Store it in your CI as `FASTMON_SITE_ID`.
+In fastmon, open the application's settings. Copy its `id` (UUID v7, looks like `01HZX...`). Store it in your CI as `FASTMON_APP_ID`.
 
 ## 3. Add a release call to your deploy job
 
 The release call goes at the **end** of your deploy job, after the deploy has finished. The minimum payload is just `version`:
 
 ```bash
-curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
@@ -44,9 +44,9 @@ curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
   if: success()
   env:
     FASTMON_API_KEY: ${{ secrets.FASTMON_API_KEY }}
-    FASTMON_SITE_ID: ${{ vars.FASTMON_SITE_ID }}
+    FASTMON_APP_ID: ${{ vars.FASTMON_APP_ID }}
   run: |
-    curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+    curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
       -H "Authorization: Bearer $FASTMON_API_KEY" \
       -H "Content-Type: application/json" \
       -d "{ \"version\": \"${{ github.sha }}\" }"
@@ -60,7 +60,7 @@ fastmon-release:
   needs: ["deploy"]
   script:
     - |
-      curl -fsS https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+      curl -fsS https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
         -H "Authorization: Bearer $FASTMON_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{ \"version\": \"$CI_COMMIT_SHORT_SHA\" }"
@@ -75,10 +75,10 @@ Vercel doesn't run arbitrary post-deploy commands inside the build itself. Two o
 
 ## 4. Verify the release was recorded
 
-Reload your site's release list:
+Reload the application's release list:
 
 ```bash
-curl https://api.fastmon.eu/sites/$FASTMON_SITE_ID/releases \
+curl https://api.fastmon.eu/applications/$FASTMON_APP_ID/releases \
   -H "Authorization: Bearer $FASTMON_API_KEY"
 ```
 
@@ -105,7 +105,7 @@ curl https://api.fastmon.eu/organizations/$ORG_ID/analytics/query \
 
 Every row then carries a `comparison` with the same metrics, and `request.comparison_time_range` shows the window used. The previous release's window starts at its `released_at`, runs as long as `time_range`, and ends early at the next release or now.
 
-`compare_to` also takes any window `{ "from": …, "to": … }` or one of `previous_period`, `previous_day`, `previous_week`, `previous_month`. The older `compare_to_release_id` is deprecated but still served.
+`compare_to` also takes any window `{ "from": …, "to": … }` or one of `previous_period`, `previous_day`, `previous_week`, `previous_month`. The older `compare_to_release_id` is gone and answers 422.
 
 ## What "good" looks like
 
@@ -116,11 +116,11 @@ Every row then carries a `comparison` with the same metrics, and `request.compar
 ## Common surprises
 
 - **Omitting `released_at` defaults to "now."** That fits most of the time. Watch out when your deploy job runs minutes before the artifact is actually live (blue/green flips later, etc.). Then back-date it.
-- **Releases are per site.** A monorepo deploy that ships three sites needs three release calls.
+- **Releases are per application.** A monorepo deploy that ships three applications needs three release calls.
 - **The comparison follows the query length.** A 7-day `time_range` compares with the first 7 days of the previous release. Keep it short (1–24 h) to catch regressions sharply.
 
 ## Related
 
 - [Releases concept](/en/concepts/releases): what a release is.
-- [Analytics API](/en/api/analytics/queryAnalytics): `compare_to` details.
+- [Analytics API](/en/api/analytics/queryAnalyticsMetrics): `compare_to` details.
 - [Notification rules](/en/guides/notification-rules): alert automatically on per-release regressions.
