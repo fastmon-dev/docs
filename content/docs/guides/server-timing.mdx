@@ -246,7 +246,7 @@ final class ServerTimingListener
 }
 ```
 
-```vcl title="Varnish (vcl_deliver)"
+```c title="Varnish (vcl_deliver)"
 sub vcl_deliver {
     if (obj.uncacheable) { set req.http.X-Fm-Cache = "bypass"; }
     elsif (obj.hits > 0) { set req.http.X-Fm-Cache = "hit"; }
