@@ -24,7 +24,7 @@ You don't pick the build in the `<script>` tag; the server resolves it from the 
 
 The beacon is the boundary between fastmon and the visitor, and this page documents it in full. The collector enforces the wire shape server-side, independent of the script itself.
 
-The shipped script is minified and obfuscated so content and ad blockers can't match it by name.
+The shipped script is minified, not obfuscated, so your security team can read what it does.
 
 ## What the beacon observes
 
@@ -137,7 +137,7 @@ Soft navigations (SPA route changes) produce no native paint or navigation-timin
 The script is served with strong caching and an `ETag`. Two things invalidate the cache automatically:
 
 - **Setting change.** Changing a setting that affects the served bundle (for example [`collect_sessions`](/en/tracker#collect-sessions)) ships a new template version.
-- **Beacon upgrade.** Fastmon ships beacon versions (`source_version`); changing a site's pinned version rolls the cache.
+- **Beacon upgrade.** A new fastmon release or a change of the pinned `source_version` ships a new bundle and rolls the cache.
 
 You don't need to redeploy your site to take a beacon upgrade. The browser picks up the new version on its next cache check.
 

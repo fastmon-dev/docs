@@ -44,7 +44,7 @@ Three spots in the pipeline matter if you want to understand the behavior:
 
 | Component         | What it does                                                                |
 | ----------------- | --------------------------------------------------------------------------- |
-| Beacon script     | Vanilla JS, ~10 KB compressed. Observes Web Vitals, batches, posts.         |
+| Beacon script     | Vanilla JS, ~20 KB compressed. Observes Web Vitals, batches, posts.         |
 | EU edge           | Strips IP and User-Agent at the network boundary, derives country from the IP, computes the bounded `stitch`. Raw IP and UA never reach the application. |
 | Collector         | Public ingest at `/c/{collector_hash}`. Validation, rate-limit, server-side sanitization. |
 | API               | Authenticated REST at the root (`/organizations/…`). Powers the dashboard. |
