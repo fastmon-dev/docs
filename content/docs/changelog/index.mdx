@@ -12,11 +12,53 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
-<ChangelogEntry date="2026-11-25" type="changed" area="tracker" title="The tracker is readable">
+<ChangelogEntry date="2026-11-25" type="changed" area="tracker" title="The tracker is half the size and readable">
 
-The tracker script is no longer obfuscated, only minified. You can read in DevTools what it measures and sends.
+The tracker script is minified but no longer obfuscated. Your snippet stays the same.
+
+- **Size**: about 20 KB gzipped instead of up to 60 KB, with less main-thread work on every page.
+- **Readable**: the served script is ordinary minified JavaScript you can check in DevTools.
+- **Updates arrive**: a new tracker release now reaches browsers that already cached the script. The first load after five minutes fetches it, and the next one runs it.
 
 Docs: [Beacon](/en/concepts/beacon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="fixed" area="tracker" title="GA4 events from Shopware carry the page currency">
+
+On a Shopware storefront, a GA4 ecommerce event takes the currency the page shows. An order paid in CZK no longer lands in `EUR` because the tag sends its account currency, and the sent one stays as `currency_sent`. Needs Shopware 6.7.7 or later.
+
+Docs: [Custom events → From the dataLayer](/en/events#data-layer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="new" area="api" title="One comparison per release">
+
+`GET /releases/{release_id}/comparison` (alpha) compares up to 7 days after a release with as many days before it. It covers order rate, Web Vitals, error rate, cache served rate, and new errors, each with the threshold that counts. One `outcome` sums it up: `pending`, `sparse`, `better`, `worse`, `mixed`, or `flat`.
+
+Docs: [Releases → Comparing releases](/en/concepts/releases#comparing-releases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Analytics in five groups">
+
+The analytics operations sit in five groups of the API reference: Analytics, Performance, Visitors, Sales, and Error tracking. Paths, operationIds, and schemas stay as they are.
+
+- **Generated clients**: a generator that names files or classes after the tag puts most of them into new ones.
+- **Provisional fields**: a stable operation can mark one optional field `x-stability-level: alpha`. Such a field may change or go in any release.
+- **`visitors`** is an integer in every schema.
+
+Docs: [API Reference → Stability](/en/api#stability).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Partners can take over a client's bill">
+
+`PATCH /organizations/{org_id}/partner/clients/{client_org_id}` takes `billing: true` for a client the partner does not pay for yet. The client moves to the `partner` plan with the contract's coverage, and a running trial ends.
+
+- **Coverage**: a `covered_features` or `included_pageviews` value that starts a payment does the same, where it answered 409 before.
+- **Refused** with 409 `billing_client_pays_itself` while the client has a live subscription, an open checkout, or the `enterprise` plan.
+- **Stopping** a payment stays a support case and answers 409 `billing_stop_requires_support`.
 
 </ChangelogEntry>
 

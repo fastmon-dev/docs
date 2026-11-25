@@ -86,7 +86,7 @@ The Analytics API exposes three endpoints:
 - `POST /analytics/visitors/segments`: how many visitors the list holds with errors, slow (average LCP at or above `slow_lcp_threshold_ms`), ordered, in the checkout, with a cart interaction, and with one page only. It takes the same scope and filters as the list.
 - `POST /analytics/visitors/detail`: the full page-view path for one visitor (the "replay"). It accepts `identity=session` or `stitch` (whichever the visitor list used; default `session`); an unknown identity is rejected with `422`. On the `Minimal` preset the site collects neither identifier, so there are no visitors to drill into.
 
-Pass `identity` explicitly to override the application default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/analytics/queryAnalyticsVisitors) for the request shapes.
+Pass `identity` explicitly to override the application default, or leave it null to use `count_visitors_by`. See [Analytics API](/en/api/visitors/queryAnalyticsVisitors) for the request shapes.
 
 The list filters on what a visitor's journey contains: `contains_page_type` for a page type, and on shops `contains_checkout_stage` (`cart`, `checkout`, or `success`) and `contains_cart_interaction` for the [checkout funnel](/en/checkout-funnel). Each pageview in the detail carries its `checkout_stage` and cart interaction fields, and its own client context (`country`, `browser`, `browser_version`, `device_type`, `os`): per pageview rather than per visitor, because a `stitch` visitor can span devices, countries, and browsers, and a mixture should show as one. The funnel itself has its own endpoints under `/analytics/funnels/checkout`, grouped on the same identity.
 
@@ -102,4 +102,4 @@ The list filters on what a visitor's journey contains: `contains_page_type` for 
 
 - [Tracker settings](/en/tracker): what the beacon collects per page-view, and which identities each setting produces.
 - [Privacy](/en/privacy): how the `stitch` identifier is derived and where its privacy guarantee actually comes from.
-- [Analytics API](/en/api/analytics/queryAnalyticsVisitors): querying visitors programmatically.
+- [Analytics API](/en/api/visitors/queryAnalyticsVisitors): querying visitors programmatically.

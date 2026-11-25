@@ -37,7 +37,7 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
 - **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
 
-The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/analytics/queryAnalyticsLiveSummary).
+The API is [`POST /analytics/live`](/en/api/visitors/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/visitors/queryAnalyticsLiveSummary).
 
 ### Partnerfloor [#partnerfloor]
 
@@ -151,7 +151,7 @@ Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors,
 - A run of frames in the same vendor bundle folds into one row naming the library. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames.
 - A frame that only passes the error on is marked as a rethrow, and the cause sits further down.
 - A frame that cannot be read says why: no path was stored, the file sits on somebody else's host, the file is the fastmon tracker, or you deployed again under the same name and the position is gone.
-- The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/analytics/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
+- The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/error-tracking/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
 
 **"Where it happens" is the breakdown grid the metric pages carry**: page, page type, domain, country, device, browser, OS, connection, navigation, caches, bots, and network.
 
@@ -159,7 +159,7 @@ Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors,
 
 **"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect.
 
-**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error.
+**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/error-tracking/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error.
 
 **An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`).
 
@@ -180,7 +180,7 @@ Ownership is the registrable-domain rule above. **The list groups by host**, eac
 
 **Hiding a host** narrows the totals too: `host` and `exclude_hosts` do, `ownership` does not.
 
-**Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS, and country, the visitors affected, and sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/analytics/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key.
+**Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS, and country, the visitors affected, and sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/error-tracking/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key.
 
 `Failed resources` is a filter and a metric of its own, so `>= 1` scopes any view to pageviews where something did not load. In the pageview drill-down the failed loads have their own block, separate from the JavaScript errors.
 
@@ -188,7 +188,7 @@ The path needs [`collect_error_frames`](/en/tracker#collect-error-frames).
 
 Ad-blocked requests to known tracker hosts count as `blocked_count`, a subset of the foreign bucket and not failures.
 
-The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
+The list endpoint is [`POST /analytics/failed-resources`](/en/api/error-tracking/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
 
 ## Visitors [#visitors]
 

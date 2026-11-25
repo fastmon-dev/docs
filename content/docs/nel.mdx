@@ -157,8 +157,8 @@ All three routes take the same `filters`, including `error_type`, `nel_class`, `
 
 | Route | Returns |
 | --- | --- |
-| [`POST /analytics/nel`](/en/api/analytics/queryAnalyticsNel) | Counts, series, error types, status codes, time to failure, and the top paths per host |
-| [`POST /analytics/nel/breakdown`](/en/api/analytics/queryAnalyticsNelBreakdown) | Reports grouped by one `dimension`, with share, visitors, `first_seen_at`, and `last_seen_at`. A key goes back into its filter, and `order_by` sorts by reports or `last_seen_at`. |
-| [`POST /analytics/nel/reports`](/en/api/analytics/queryAnalyticsNelReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
+| [`POST /analytics/nel`](/en/api/error-tracking/queryAnalyticsNel) | Counts, series, error types, status codes, time to failure, and the top paths per host |
+| [`POST /analytics/nel/breakdown`](/en/api/error-tracking/queryAnalyticsNelBreakdown) | Reports grouped by one `dimension`, with share, visitors, `first_seen_at`, and `last_seen_at`. A key goes back into its filter, and `order_by` sorts by reports or `last_seen_at`. |
+| [`POST /analytics/nel/reports`](/en/api/error-tracking/queryAnalyticsNelReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
 
-Counts are weighted by `1 / failure_fraction`, single reports are not. Without an `error_type` filter every type counts, `abandoned` included. The [visitor detail](/en/api/analytics/queryAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `nel_reports` beside `pages` and `events`: absent when not consulted, `[]` when there are none.
+Counts are weighted by `1 / failure_fraction`, single reports are not. Without an `error_type` filter every type counts, `abandoned` included. The [visitor detail](/en/api/visitors/queryAnalyticsVisitorDetail) and the [checkout journeys](/en/api/sales/queryAnalyticsCheckoutJourneys) carry `nel_reports` beside `pages` and `events`: absent when not consulted, `[]` when there are none.

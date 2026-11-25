@@ -51,8 +51,8 @@ Alle drei Routen nehmen dieselben `filters`, darunter `disposition`, `effective_
 
 | Route | Liefert |
 | --- | --- |
-| [`POST /analytics/csp`](/de/api/analytics/queryAnalyticsCsp) | Reports und betroffene Besucher, je Direktive und Disposition, im Zeitverlauf |
-| [`POST /analytics/csp/breakdown`](/de/api/analytics/queryAnalyticsCspBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil, Besuchern, `first_seen_at` und `last_seen_at`. Ein Schlüssel passt zurück in seinen Filter. |
-| [`POST /analytics/csp/reports`](/de/api/analytics/queryAnalyticsCspReports) | Einzelne Reports, neueste zuerst, seitenweise über `cursor`. `filters.report_id` wählt einen aus. |
+| [`POST /analytics/csp`](/de/api/error-tracking/queryAnalyticsCsp) | Reports und betroffene Besucher, je Direktive und Disposition, im Zeitverlauf |
+| [`POST /analytics/csp/breakdown`](/de/api/error-tracking/queryAnalyticsCspBreakdown) | Reports nach einer `dimension` gruppiert, mit Anteil, Besuchern, `first_seen_at` und `last_seen_at`. Ein Schlüssel passt zurück in seinen Filter. |
+| [`POST /analytics/csp/reports`](/de/api/error-tracking/queryAnalyticsCspReports) | Einzelne Reports, neueste zuerst, seitenweise über `cursor`. `filters.report_id` wählt einen aus. |
 
-Die [Besucher-Details](/de/api/analytics/queryAnalyticsVisitorDetail) und die [Checkout-Journeys](/de/api/analytics/queryAnalyticsCheckoutJourneys) tragen `csp_reports` neben `nel_reports`, ohne die Policy.
+Die [Besucher-Details](/de/api/visitors/queryAnalyticsVisitorDetail) und die [Checkout-Journeys](/de/api/sales/queryAnalyticsCheckoutJourneys) tragen `csp_reports` neben `nel_reports`, ohne die Policy.
