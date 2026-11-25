@@ -120,10 +120,10 @@ Ein Besucher bekommt die Seite von genau einem Cache. fastmon speichert ihn als 
 | --------------------------------------------------------------- | -------------------- | -------------- |
 | CDN-Status ist `HIT`, `STALE`, `UPDATING` oder `REVALIDATED`    | `cdn`                | dieser Status  |
 | sonst ist der Origin-Status einer davon                         | `origin`             | dieser Status  |
-| sonst die innerste Schicht, die gemeldet hat                    | diese Schicht        | ihr Status     |
+| sonst die innerste Schicht, die cachen wollte                   | diese Schicht        | ihr Status     |
 | keine Schicht hat gemeldet                                      | leer                 | leer           |
 
-Cloudflare `DYNAMIC` vor einem `HIT` des Full-Page-Cache zählt also als Origin-Treffer. `cache_served_rate` ist der Anteil der cachebaren Seitenaufrufe, die aus einer Kopie kamen: die vier Status oben, geteilt durch alle Status außer `BYPASS`, `DYNAMIC`, `NONE` und `PASS`. Eine Site ohne Cache-Status liefert `null`.
+Cloudflare `DYNAMIC` vor einem `HIT` des Full-Page-Cache zählt also als Origin-Treffer, ein CDN-`MISS` vor einem Origin-`BYPASS` als CDN-Miss. `cache_served_rate` ist der Anteil der cachebaren Seitenaufrufe, die aus einer Kopie kamen: die vier Status oben, geteilt durch alle Status außer `BYPASS`, `DYNAMIC`, `NONE` und `PASS`. Eine Site ohne Cache-Status liefert `null`.
 
 ## Cache-Alter [#cache-age]
 
@@ -158,7 +158,7 @@ Die TTL ist die Frische, die dem Objekt bei der Auslieferung noch blieb, in Seku
 
 Für den Wert gelten die Regeln des Alters. `cache_ttl` ist die TTL der Schicht, die ausgeliefert hat, ohne Treffer leer. Die Server-Cache-Seite zeigt Alter und TTL pro Seitentyp und im Zeitverlauf: Ein Purge fällt dort als Alter auf, das auf null springt.
 
-Beide sind Metriken mit den üblichen avg und p50 bis p99 und [Metrik-Filter](/de/analytics#filtern) in Sekunden. Ein Pageview ohne den Key trifft einen solchen Filter nie. Du findest sie außerdem auf den Beacon-Zeilen, im Pageview-Detail, in Benachrichtigungsregeln, in der Besucher-Journey und in `get_server_timing` des MCP-Servers.
+Beide sind Metriken mit den üblichen avg und p50 bis p99 und [Metrik-Filter](/de/analytics#filtering) in Sekunden. Ein Pageview ohne den Key trifft einen solchen Filter nie. Du findest sie außerdem auf den Beacon-Zeilen, im Pageview-Detail, in Benachrichtigungsregeln, in der Besucher-Journey und in `get_server_timing` des MCP-Servers.
 
 ## Seitentyp [#page-type]
 

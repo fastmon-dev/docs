@@ -17,6 +17,50 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="Filter in weniger Schritten">
+
+Das Filter-Pop-up startet kürzer, und auf dem Handy gibt es nur noch eine ruhige Leiste.
+
+- **„Filter hinzufügen“** zeigt zuerst deine zuletzt genutzten Felder, die gängigen und die, die zur Seite passen. Alle anderen liegen in Gruppen, die du aufklappst.
+- **Die Suche findet Werte.** Tippst du „Chrome“ oder ein Land, bietet sie den Wert direkt an und legt den Filter in einem Schritt an.
+- **UTM** ist ein Eintrag, „Campaign (UTM)“. Ein Umschalter wählt Quelle, Medium, Kampagne, Begriff oder Inhalt.
+- **Auf dem Handy** zeigt die Leiste den Zeitraum, „Filter“ mit der Anzahl und die Darstellungseinstellungen. Darunter steht ein Chip pro Änderung, sein x setzt sie zurück.
+- **Perzentil und Traffic** stellst du in den Darstellungseinstellungen ein.
+
+Doku: [Analytics → Filtern](/de/analytics#filtering).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="TTFB-Phasen wieder in einem Diagramm">
+
+Die Ansicht „Phases“ im TTFB-Verlauf zeichnet jede Phase als Linie auf einer gemeinsamen Achse. Ein Klick auf die Legende blendet eine Linie aus, mit Cmd- oder Strg-Klick siehst du eine Phase allein. Die Ansicht mit einer Zeile pro Phase heißt jetzt „Parts“.
+
+Doku: [TTFB → TTFB in fastmon](/de/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Cache-Seiten mit dem Standarddiagramm">
+
+Der Verlauf auf den Seiten Server cache und Browser cache ist jetzt das übliche Trenddiagramm, mit Zoom per Ziehen, Release-Markern und ausblendbaren Legendeneinträgen. Statt „Kopie“ heißt es Cache-Treffer und Cache-Eintrag. Eine Schicht, die nie aus ihrem Cache ausliefert, taucht nicht mehr auf.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Zeitraum bleibt beim Wechseln">
+
+Wechselst du Organisation, Applikation oder Site im Header oder per Cmd+K, bleiben Zeitraum, Vergleich, Perzentil und Darstellung erhalten. Beim Wechsel in eine andere Organisation fallen die Filter der alten weg.
+
+Doku: [Analytics → Zeitraum](/de/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="fixed" area="platform" title="Server-Cache-Rate hinter einem Origin ohne Cache">
+
+Die Trefferquote steht hinter einem Origin ohne Cache nicht mehr bei 100 %. Ein CDN-`MISS` vor einem Origin-`BYPASS` zählt jetzt als CDN-Miss. Seitenaufrufe vom 15.11.2026 ab 20:49 UTC bis zum Fix am selben Abend behalten ihre alten Werte.
+
+Doku: [Server-Timing → Ein Server-Cache pro Seitenaufruf](/de/guides/server-timing#served-cache).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-15" type="changed" area="api" title="Die API ist stabil">
 
 Die veröffentlichte API hat jetzt einen Stabilitätsvertrag. Jede Operation sagt in `x-stability-level`, was sie zusagt.

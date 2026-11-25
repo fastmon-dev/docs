@@ -72,7 +72,7 @@ Die TTFB-Seite findest du unter **Performance → TTFB**. Oben stehen der Wert m
 
 - **Wohin die Zeit geht**: Redirects, Verbindung, Server, der Weg dazwischen und bei Seitenaufrufen ohne Server-Timing die ungemessene Wartezeit. Je ein Balken für alle Seitenaufrufe und für die, die CDN, Origin-Cache oder keins von beiden beantwortet hat.
 - **Server-Aufteilung**: was [Server-Timing](/de/guides/server-timing) meldet, also Edge, Origin, Datenbank, Cache, Suche, HTTP-Calls, eigener Code und Templates. Ohne den Header siehst du einen Block und einen Link zur Einrichtung.
-- **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, eine Linie pro Phase oder eine Linie pro Seitentyp, daneben die Verteilung. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
+- **Verlauf**: das gewählte Perzentil vor den Bewertungszonen, pro Seitentyp oder pro Phase, daneben die Verteilung. „Phases“ zeichnet jede Phase als Linie auf einer gemeinsamen Achse, „Parts“ jede in eigener Zeile. Das Maximieren-Icon zeigt das Diagramm im ganzen Fenster.
 - **Wo der TTFB langsam ist**: Seitentypen, Seiten, CDN-Status, Login-Status, Origin-Hosts und mehr, nach langsamen Seitenaufrufen sortiert, jede Zeile mit Aufteilung.
 - **Cache und Origin**: der [Server-Cache](/de/guides/server-timing#served-cache) mit und ohne Treffer, seine Auslieferungsrate und die Backend-Zeit pro Origin-Host. Ein Host, der aus der Reihe fällt, wird hervorgehoben.
 - **Ein Seitenaufruf**: Das Pageview-Detail zeigt den TLS-Handshake innerhalb des Verbindungsaufbaus und den Start des Service Workers.

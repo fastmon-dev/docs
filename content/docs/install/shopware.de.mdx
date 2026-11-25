@@ -1,0 +1,164 @@
+---
+title: Shopware-Plugin installieren
+description: So verbindest du einen Shopware-6-Shop mit dem Plugin mit fastmon, von der Installation über den ersten Seitenaufruf bis zu Server-Timing und First-Party-Collector.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Das fastmon-Plugin für Shopware 6 bindet den Tracker ein, sendet einen `Server-Timing`-Header und legt die Applikation für dich an. Hier findest du Installation, Verbindung und jede Einstellung, die das Plugin mitbringt.
+
+## Voraussetzungen [#requirements]
+
+| | |
+| --- | --- |
+| **Shopware** | 6.6 oder 6.7 |
+| **PHP** | 8.2 oder neuer |
+| **fastmon** | Eine [freigegebene](/de/concepts/organizations#plans) Organisation und die Rolle Owner oder Member |
+| **Mehrere App-Server** | Ein gemeinsamer Lock-Store in `LOCK_DSN`, siehe [Verbindung am Leben halten](#renewal) |
+| **Backend-Zeiten pro Schicht** | Optional: die PHP-Extension von Tideways ab 5.23 |
+
+Das Plugin steht unter MIT-Lizenz. Fehler im Plugin meldest du als Issue auf [GitHub](https://github.com/fastmon-dev/shopware6).
+
+## Installieren [#install]
+
+### Mit Composer [#composer]
+
+```bash
+composer require fastmon/shopware-collector
+bin/console plugin:refresh
+bin/console plugin:install --activate FastmonCollector
+
+shopware-cli project admin-build . --only-extensions FastmonCollector
+
+bin/console cache:clear
+```
+
+Den Admin-Build darfst du nicht weglassen. Das Paket enthält keine gebauten Administration-Assets, ohne sie bleibt die Konfigurationsseite leer.
+
+Ohne [shopware-cli](https://developer.shopware.com/docs/products/tools/cli/) führst du `bin/console bundle:dump` aus, dann `bin/build-administration.sh` (unter 6.7 `composer run build:js`) und zuletzt `bin/console assets:install`.
+
+### Als ZIP [#zip]
+
+1. Lade `FastmonCollector-X.Y.Z.zip` unter [Releases](https://github.com/fastmon-dev/shopware6/releases) herunter.
+2. Lade es unter **Erweiterungen → Meine Erweiterungen → Erweiterung hochladen** hoch.
+3. Führe wie oben `plugin:refresh`, `plugin:install --activate FastmonCollector` und `cache:clear` aus.
+
+Die ZIP enthält die fertig gebaute Administration, ein Build ist nicht nötig.
+
+## Mit fastmon verbinden [#connect]
+
+1. Öffne **Erweiterungen → Meine Erweiterungen → fastmon.eu → Konfigurieren**.
+2. Klick auf **Mit fastmon verbinden**.
+3. Wähl auf der Zustimmungsseite von fastmon die Organisation und bestätige.
+
+Danach landest du wieder in der Administration, und der Shop hat seine eigenen Zugangsdaten. Du tippst nichts ab, und im Plugin steckt kein Secret.
+
+Das Plugin fragt `org:read`, `app:read`, `app:write` und `site:read` an. Auf der Zustimmungsseite kannst du die Liste einschränken. Das Panel zeigt dann an, welche Berechtigung fehlt, bevor ein Schreibzugriff daran scheitert.
+
+<Callout type="info" title="Warten auf die Freigabe">
+  Verbinden klappt sofort, aber fastmon prüft neue Organisationen, bevor sie Daten erfassen. Bis dahin zeigt das Panel einen Wartezustand. Du musst nichts wiederholen: Es geht weiter, sobald die Organisation [freigegeben](/de/concepts/organizations#plans) ist.
+</Callout>
+
+Läuft die Administration über reines `http`, funktioniert die Verbindung nicht. Das Panel bietet dann **Stattdessen mit einem API-Key verbinden** an, mit einem Key aus dem Dashboard. Ein Key läuft nicht ab und erneuert sich nicht selbst.
+
+### Verbindung am Leben halten [#renewal]
+
+- **Ein Worker oder der Cron für Scheduled Tasks muss laufen.** Der wöchentliche Task `fastmon_collector.renew_connection` erneuert die Verbindung. Läuft keins von beiden, endet sie nach 60 Tagen.
+- **Ab zwei Nodes brauchst du `LOCK_DSN`.** Zeig damit auf Redis oder die Datenbank, einen Store, den jeder Node erreicht. Sonst erneuern zwei Nodes gleichzeitig, und fastmon beendet die Verbindung.
+
+Die Verbindung gehört der Organisation. Sie funktioniert also weiter, wenn die Person geht, die sie bestätigt hat.
+
+## Applikation wählen [#application]
+
+Nach dem Verbinden kannst du im Panel eine bestehende Applikation verknüpfen oder eine neue anlegen. Eine Applikation deckt den ganzen Shop ab. Jede Domain eines Verkaufskanals wird beim ersten Seitenaufruf zur Site.
+
+Eine neue Applikation bekommt diese Einstellungen:
+
+| Einstellung | Wert |
+| --- | --- |
+| [`site_policy`](/de/tracker#site-policy) | `auto`: eine neue Domain wird beim ersten Beacon zur Site |
+| [`pagetype_ruleset`](/de/tracker#pagetype-ruleset) | `shopware6` |
+| [`environment`](/de/tracker#environment) | Wählst du selbst. `dev` wird nicht abgerechnet |
+| Datenumfang ([Preset](/de/tracker#presets)) | `minimal`, `standard` (Default) oder `full` |
+
+Jedes Mal, wenn du das Panel öffnest, prüft es die Verbindung und die verknüpfte Applikation. Wurde die Applikation gelöscht oder wurden ihre Hashes rotiert, sagt das Panel das und bietet eine andere an.
+
+## Storefront-Einstellungen [#storefront-settings]
+
+Alle Einstellungen gelten pro Verkaufskanal.
+
+| Einstellung | Default | Wirkung |
+| --- | --- | --- |
+| `active` | an | Bindet fastmon in diesem Verkaufskanal ein |
+| `enableErrorBootstrap` | an | Fängt JavaScript-Fehler ab, die vor dem Tracker auftreten |
+| `enablePixel` | an | Ergänzt das No-JS-Pixel für Clients ohne JavaScript |
+| `sourceHash` / `collectorHash` | leer | Wird gesetzt, wenn du eine Applikation verknüpfst |
+
+Ohne verknüpfte Applikation rendert die Storefront kein Snippet.
+
+## Server-Timing-Header [#server-timing]
+
+Das Plugin hängt an jede Storefront-Antwort einen `Server-Timing`-Header. Dafür braucht es keine Verbindung zu fastmon, und es sendet nichts nach außen.
+
+```http
+Server-Timing: fm-origin-cache;desc=hit, fm-origin-age;desc=312, fm-backend;dur=3.1
+Server-Timing: fm-origin-cache;desc=miss, fm-backend;dur=128.4, rdbms;dur=42.5, redis;dur=6.0
+```
+
+| Eintrag | Was er meldet |
+| --- | --- |
+| `fm-origin-cache` | Das Urteil des HTTP-Cache: `hit`, `miss` oder `bypass` |
+| `fm-origin-age` | Alter des ausgelieferten Cache-Eintrags in Sekunden, bei einem Treffer |
+| `fm-backend` | Gesamte PHP-Zeit |
+| `fm-render` | Renderzeit der Templates |
+| `fm-pagetype` | Seitentyp aus der Route |
+| `fm-host` | Der Server, der geantwortet hat, wenn `serverTimingHost` an ist |
+| `fm-loggedin` | Ob ein Kunde eingeloggt war, wenn `serverTimingLoggedIn` an ist |
+
+`bypass` steht für eine Antwort, die der Cache nie ausliefert, etwa bei eingeloggtem Kunden, gefülltem Warenkorb oder einem POST. Mit der Tideways-Extension kommen Datenbank, Cache, Suche und ausgehende HTTP-Calls dazu. Die Konfigurationsseite zeigt, ob Tideways misst, zu alt ist oder fehlt.
+
+| Einstellung | Default | Wirkung |
+| --- | --- | --- |
+| `serverTiming` | an | Sendet den Header |
+| `serverTimingHost` | aus | Ergänzt `fm-host`: das erste Label des Hostnamens oder `FASTMON_SERVER_NAME` |
+| `serverTimingLoggedIn` | aus | Ergänzt `fm-loggedin` |
+
+Was fastmon aus den Einträgen macht, steht unter [Server-Timing](/de/guides/server-timing).
+
+## First-Party-Collector [#collector]
+
+Eine Karte in der Konfiguration legt fest, von wo Tracker und Beacons laden.
+
+| Modus | Lädt von | Voraussetzung |
+| --- | --- | --- |
+| **fastmons Collector** | `fastmon.site` | Keine |
+| **Eigene Domain** | Ein Host, etwa `metrics.example.com` | Der Host leitet `/s/` und `/c/` an fastmon weiter |
+| **Gleiche Domain wie die Storefront** | Die eigene Domain jeder Storefront | Jede Storefront-Domain leitet `/s/` und `/c/` an fastmon weiter |
+
+Das Plugin leitet diese Pfade nicht selbst weiter. Richte den Proxy in deinem Webserver oder CDN nach dem [First-Party-Proxy-Guide](/de/guides/first-party-proxy) ein und stell dann um:
+
+1. Wähl den Modus und klick auf **Einrichtung prüfen**. Das Plugin fragt jede Domain ab, die der Modus nutzt.
+2. Klick auf **Übernehmen**, sobald jede Prüfung eine Antwort bekommt. Vorher bleibt der Button gesperrt.
+3. Klick auf **Proxy-Secret erzeugen** und lass deinen Proxy das Secret in `FM-Proxy-Key` mitschicken. Leite außerdem den `User-Agent` des Besuchers weiter.
+4. Schau ein paar Minuten später im Dashboard auf die Länder. Mit falschem Secret stehen alle Besucher im Land deines Servers.
+
+Ein neu erzeugtes Secret lässt das vorherige gültig, du kannst den Proxy also ohne Lücke umstellen. Zurück zu fastmons Collector geht jederzeit.
+
+## Trennen und deinstallieren [#disconnect]
+
+- **Verbindung trennen** entzieht dem Shop den Zugriff bei fastmon, und der Eintrag verschwindet unter **Organisationseinstellungen → Zugriff**. Einen eingefügten API-Key vergisst nur der Shop. Widerrufen musst du ihn im Dashboard.
+- **Deinstallieren** meldet sich nicht bei fastmon. Ohne *Benutzerdaten behalten* löscht es die gespeicherten Zugangsdaten.
+
+## Umgebungsvariablen [#environment]
+
+| Variable | Wofür |
+| --- | --- |
+| `LOCK_DSN` | Der Lock-Store von Shopware. Ab zwei Nodes Pflicht |
+| `FASTMON_SERVER_NAME` | Der Name, den `fm-host` meldet, wenn sich der Hostname bei jedem Deploy ändert |
+| `FASTMON_OAUTH_REDIRECT_URI` | Wohin fastmon nach der Zustimmungsseite zurückleitet, wenn die Administration nicht unter `APP_URL` liegt |
+
+## Wie geht es weiter [#next]
+
+- [Prüfen, ob alles läuft](/de/install/verify).
+- [Den Checkout-Funnel verfolgen](/de/checkout-funnel).
+- [Releases vergleichen](/de/guides/compare-releases).

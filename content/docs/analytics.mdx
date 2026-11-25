@@ -33,7 +33,7 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 - **A click or tap on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
 - **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default, and in kiosk mode the pointer and buttons hide after three seconds without a move.
 - **On a phone** held upright the Shopfloor shows its figures and asks to be turned. Turned sideways, the floor fills the whole screen.
-- **On an iPhone**, add fastmon to the Home Screen for a full screen. It then opens as an app without the browser's bars, on the Shopfloor if added from there.
+- **On an iPhone** held sideways, a swipe up folds Safari's bar and the floor fills the screen.
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
 - **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
 
@@ -53,7 +53,7 @@ The API is `POST /organizations/{org_id}/partner/live`, polled at `meta.next_pol
 
 ## Time range [#time-range]
 
-The range pill in the header sets the window for every chart on the page.
+The range pill in the header sets the window for every chart on the page. It stays when you switch organization, application, or site.
 
 - **Zoom**: minus doubles the window, plus halves it, also on the `-` and `+` keys. A live window keeps its end at now.
 - **Drag across a trend chart** to zoom into that stretch. The charts reload at the resolution it gets.
@@ -78,11 +78,13 @@ The picker and the command palette offer each bucket width with the number of bu
 
 Buckets of 6 hours and longer start on your clock: 6-hour buckets at 00, 06, 12, and 18 local time, a day at midnight, a week on Monday. A day across a clock change is 23 or 25 hours long.
 
-## Filtering
+## Filtering [#filtering]
 
 A filter bar sits next to the time picker on every analytics page. Type a dimension and value, for example `country = DE`, and press Enter to add a filter chip. The value field suggests the real values of the time range with their pageviews.
 
-The dimension picker lists Page, Country, and Device first, then browser, OS, connection, viewport, referrer, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel). Empty values such as "Direct / none" cannot be filtered yet.
+"Add filter" opens on a short list: the fields you used last, the common ones, those that fit the page, and every other field by group. The search finds values too, so typing "Chrome" adds that filter in one step.
+
+The five UTM fields are one entry, "Campaign (UTM)", with a switch for the field. Empty values such as "Direct / none" cannot be filtered yet.
 
 Filters live in the URL and carry across views and shared links. Chips combine with AND, and a comma inside one value means "any of". Click a chip to edit it, its X removes it, and the "Filter" button counts the active ones.
 
@@ -90,7 +92,7 @@ Filters live in the URL and carry across views and shared links. Chips combine w
 
 **Every chip has an on/off switch.** A switched-off chip stays in place, struck through, and neither the query nor the count includes it. Clicking the same country on the map switches it back on, and a shared link keeps the state.
 
-On a phone, a row of chips above the page replaces the filter pill and the side panel, and the time range opens as a bottom sheet.
+On a phone, one bar shows the time range, "Filter" with its count, and the display settings. Below it, a chip for each filter or changed setting goes back to the default with its x.
 
 ### Sparse data and time of day [#sparse-data]
 

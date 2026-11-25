@@ -120,10 +120,10 @@ A visitor gets the page from one cache. fastmon stores that one as `cache_layer`
 | -------------------------------------------------------------- | -------------------- | -------------- |
 | CDN status is `HIT`, `STALE`, `UPDATING`, or `REVALIDATED`     | `cdn`                | that status    |
 | otherwise the origin status is one of those                    | `origin`             | that status    |
-| otherwise the innermost layer that reported                    | that layer           | its status     |
+| otherwise the innermost layer that tried to cache              | that layer           | its status     |
 | no layer reported                                              | empty                | empty          |
 
-So Cloudflare `DYNAMIC` in front of a full-page cache `HIT` counts as an origin hit. `cache_served_rate` is the share of cacheable pageviews served from a copy: the four statuses above, out of every status but `BYPASS`, `DYNAMIC`, `NONE`, and `PASS`. A site without a cache status reads `null`.
+So Cloudflare `DYNAMIC` in front of a full-page cache `HIT` counts as an origin hit, and a CDN `MISS` in front of an origin `BYPASS` as a CDN miss. `cache_served_rate` is the share of cacheable pageviews served from a copy: the four statuses above, out of every status but `BYPASS`, `DYNAMIC`, `NONE`, and `PASS`. A site without a cache status reads `null`.
 
 ## Cache age [#cache-age]
 
