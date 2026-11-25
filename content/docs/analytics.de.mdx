@@ -33,7 +33,7 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 - **Ein Klick oder Tipp auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
 - **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus, und im Kiosk-Modus verschwinden Mauszeiger und Buttons nach drei Sekunden ohne Bewegung.
 - **Auf dem Handy** zeigt der Shopfloor hochkant seine Zahlen und bittet ums Drehen. Quer füllt die Fläche den ganzen Bildschirm.
-- **Auf dem iPhone** quer klappt ein Wisch nach oben Safaris Leiste ein, und die Fläche füllt den Bildschirm.
+- **Auf dem iPhone** hältst du das Gerät quer und wischst nach oben. Safari blendet dann seine Leiste aus, und der Shopfloor füllt den Bildschirm.
 - **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
 - **Er braucht [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zeigt niemanden und sagt das auch.
 
@@ -53,7 +53,7 @@ Die API ist `POST /organizations/{org_id}/partner/live`, abgefragt im Takt von `
 
 ## Zeitraum [#time-range]
 
-Die Zeitraum-Pille im Header legt das Fenster für alle Charts der Seite fest. Der Zeitraum bleibt, wenn du Organisation, Applikation oder Site wechselst.
+Die Zeitraum-Pille im Header legt das Fenster für alle Charts der Seite fest. Das Fenster bleibt, wenn du die Organisation, Applikation oder Site wechselst.
 
 - **Zoom**: Minus verdoppelt das Fenster, Plus halbiert es, auch mit den Tasten `-` und `+`. Ein Live-Fenster bleibt mit seinem Ende bei jetzt.
 - **Zieh über ein Trend-Chart**, um in diesen Abschnitt zu zoomen. Die Charts laden in der Auflösung neu, die dazu passt.
@@ -82,9 +82,9 @@ Buckets ab 6 Stunden beginnen nach deiner Uhr: 6-Stunden-Buckets um 00, 06, 12 u
 
 Neben dem Zeitraum-Picker sitzt auf jeder Analytics-Seite eine Filterleiste. Tipp eine Dimension und einen Wert, etwa `country = DE`, und drück Enter für einen Filter-Chip. Das Wertefeld schlägt die echten Werte des Zeitraums mit ihren Pageviews vor.
 
-„Filter hinzufügen“ öffnet eine kurze Liste: zuletzt genutzte Felder, die gängigen, die zur Seite passenden und alle übrigen nach Gruppe. Die Suche findet auch Werte, „Chrome“ eingetippt legt den Filter in einem Schritt an.
+„Filter hinzufügen“ zeigt zuerst eine kurze Auswahl: deine zuletzt genutzten Felder, die gängigen und die, die zur Seite passen. Alle anderen stehen darunter, nach Gruppen sortiert. Die Suche kennt auch Werte: Gibst du „Chrome“ ein, setzt du den Filter in einem Schritt.
 
-Die fünf UTM-Felder sind ein Eintrag, „Campaign (UTM)“, das Feld wählst du per Umschalter. Leere Werte wie „Direkt / keine“ lassen sich noch nicht filtern.
+Die fünf UTM-Felder sind unter „Kampagne (UTM)“ zusammengefasst, das einzelne Feld wählst du per Umschalter. Leere Werte wie „Direkt / keine“ lassen sich noch nicht filtern.
 
 Filter stehen in der URL und wandern über Views und geteilte Links mit. Mehrere Chips werden mit UND verknüpft, ein Komma in einem Wert bedeutet „eines von". Ein Klick auf einen Chip bearbeitet ihn, das X entfernt ihn, und der „Filter"-Button zählt die aktiven.
 
@@ -92,7 +92,7 @@ Filter stehen in der URL und wandern über Views und geteilte Links mit. Mehrere
 
 **Jeder Chip hat einen Ein/Aus-Schalter.** Ausgeschaltet bleibt der Chip durchgestrichen an seinem Platz, und weder die Abfrage noch der Zähler berücksichtigen ihn. Ein Klick auf dasselbe Land in der Karte schaltet ihn wieder ein, und ein geteilter Link behält den Zustand.
 
-Auf dem Handy zeigt eine Leiste den Zeitraum, „Filter“ mit der Anzahl und die Darstellungseinstellungen. Darunter steht ein Chip für jeden Filter und jede geänderte Einstellung, sein x setzt sie zurück.
+Auf dem Handy stehen Zeitraum, „Filter“ mit der Zahl aktiver Filter und die Darstellung in einer Leiste. Darunter siehst du jeden Filter und jede geänderte Einstellung als Chip, das x setzt sie zurück.
 
 ### Spärliche Daten und Tageszeit [#sparse-data]
 

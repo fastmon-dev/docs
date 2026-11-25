@@ -19,21 +19,21 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <ChangelogEntry date="2026-11-25" type="changed" area="tracker" title="Der Tracker ist lesbar">
 
-Das Tracker-Script ist nicht mehr obfuskiert, nur noch minifiziert. In den DevTools siehst du, was es misst und sendet.
+Das Tracker-Script wird nur noch minifiziert, nicht mehr verschleiert. Was es misst und verschickt, kannst du jetzt direkt in den DevTools nachlesen.
 
 Doku: [Beacon](/de/concepts/beacon).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="Filter in weniger Schritten">
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="Schneller filtern">
 
-Das Filter-Pop-up startet kürzer, und auf dem Handy gibt es nur noch eine ruhige Leiste.
+Filter legst du jetzt mit weniger Klicks an, und auf dem Handy ist die Leiste deutlich aufgeräumter.
 
-- **„Filter hinzufügen“** zeigt zuerst deine zuletzt genutzten Felder, die gängigen und die, die zur Seite passen. Alle anderen liegen in Gruppen, die du aufklappst.
-- **Die Suche findet Werte.** Tippst du „Chrome“ oder ein Land, bietet sie den Wert direkt an und legt den Filter in einem Schritt an.
-- **UTM** ist ein Eintrag, „Campaign (UTM)“. Ein Umschalter wählt Quelle, Medium, Kampagne, Begriff oder Inhalt.
-- **Auf dem Handy** zeigt die Leiste den Zeitraum, „Filter“ mit der Anzahl und die Darstellungseinstellungen. Darunter steht ein Chip pro Änderung, sein x setzt sie zurück.
-- **Perzentil und Traffic** stellst du in den Darstellungseinstellungen ein.
+- **„Filter hinzufügen“** zeigt erst einmal eine kurze Auswahl: deine zuletzt genutzten Felder, die gängigen und die, die zur aktuellen Seite passen. Den Rest findest du in Gruppen zum Aufklappen.
+- **Die Suche kennt auch Werte.** Gibst du „Chrome“ oder ein Land ein, übernimmst du den Wert direkt, und der Filter ist gesetzt.
+- **Die UTM-Felder** sind unter „Kampagne (UTM)“ zusammengefasst. Ob Quelle, Medium, Kampagne, Begriff oder Inhalt, wählst du dort per Umschalter.
+- **Auf dem Handy** stehen Zeitraum, „Filter“ mit der Zahl aktiver Filter und die Darstellung in einer Leiste. Darunter siehst du nur das, was du geändert hast, als Chip, und das x setzt es zurück.
+- **Perzentil und Traffic** findest du jetzt unter „Darstellung“.
 
 Doku: [Analytics → Filtern](/de/analytics#filtering).
 
@@ -41,29 +41,29 @@ Doku: [Analytics → Filtern](/de/analytics#filtering).
 
 <ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="TTFB-Phasen wieder in einem Diagramm">
 
-Die Ansicht „Phases“ im TTFB-Verlauf zeichnet jede Phase als Linie auf einer gemeinsamen Achse. Ein Klick auf die Legende blendet eine Linie aus, mit Cmd- oder Strg-Klick siehst du eine Phase allein. Die Ansicht mit einer Zeile pro Phase heißt jetzt „Parts“.
+Im TTFB-Verlauf zeigt die Ansicht „Phasen“ wieder alle Phasen als Linien auf einer gemeinsamen Achse. Ein Klick auf die Legende blendet eine Phase aus, mit Cmd- oder Strg-Klick siehst du nur diese eine. Die bisherige Darstellung mit einer Zeile pro Phase heißt jetzt „Teile“.
 
 Doku: [TTFB → TTFB in fastmon](/de/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Cache-Seiten mit dem Standarddiagramm">
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Cache-Seiten mit dem gewohnten Verlaufsdiagramm">
 
-Der Verlauf auf den Seiten Server cache und Browser cache ist jetzt das übliche Trenddiagramm, mit Zoom per Ziehen, Release-Markern und ausblendbaren Legendeneinträgen. Statt „Kopie“ heißt es Cache-Treffer und Cache-Eintrag. Eine Schicht, die nie aus ihrem Cache ausliefert, taucht nicht mehr auf.
+Server-Cache und Browser-Cache zeigen den Verlauf jetzt im selben Diagramm wie die anderen Seiten. Du kannst also per Ziehen zoomen, siehst Release-Marker und blendest Einträge über die Legende aus. Statt von „Kopie“ sprechen die Seiten von Cache-Treffer und Cache-Eintrag, und Schichten, die nie aus ihrem Cache ausliefern, tauchen gar nicht mehr auf.
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Zeitraum bleibt beim Wechseln">
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Zeitraum bleibt beim Wechsel erhalten">
 
-Wechselst du Organisation, Applikation oder Site im Header oder per Cmd+K, bleiben Zeitraum, Vergleich, Perzentil und Darstellung erhalten. Beim Wechsel in eine andere Organisation fallen die Filter der alten weg.
+Wechselst du im Header oder mit Cmd+K die Organisation, Applikation oder Site, bleiben Zeitraum, Vergleich, Perzentil und Darstellung erhalten. Nur beim Wechsel in eine andere Organisation fallen die bisherigen Filter weg.
 
 Doku: [Analytics → Zeitraum](/de/analytics#time-range).
 
 </ChangelogEntry>
 
-<ChangelogEntry date="2026-11-16" type="fixed" area="platform" title="Server-Cache-Rate hinter einem Origin ohne Cache">
+<ChangelogEntry date="2026-11-16" type="fixed" area="platform" title="Cache-Trefferquote hinter einem Origin ohne Cache">
 
-Die Trefferquote steht hinter einem Origin ohne Cache nicht mehr bei 100 %. Ein CDN-`MISS` vor einem Origin-`BYPASS` zählt jetzt als CDN-Miss. Seitenaufrufe vom 15.11.2026 ab 20:49 UTC bis zum Fix am selben Abend behalten ihre alten Werte.
+Steht hinter dem CDN ein Origin ohne eigenen Cache, zeigte die Trefferquote fälschlich 100 %. Jetzt zählt ein CDN-`MISS` vor einem Origin-`BYPASS` wieder als Miss des CDN. Seitenaufrufe vom 15.11.2026 zwischen 20:49 UTC und dem Fix am selben Abend lassen sich nicht mehr korrigieren.
 
 Doku: [Server-Timing → Ein Server-Cache pro Seitenaufruf](/de/guides/server-timing#served-cache).
 

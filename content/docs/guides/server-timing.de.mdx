@@ -123,7 +123,7 @@ Ein Besucher bekommt die Seite von genau einem Cache. fastmon speichert ihn als 
 | sonst die innerste Schicht, die cachen wollte                   | diese Schicht        | ihr Status     |
 | keine Schicht hat gemeldet                                      | leer                 | leer           |
 
-Cloudflare `DYNAMIC` vor einem `HIT` des Full-Page-Cache zählt also als Origin-Treffer, ein CDN-`MISS` vor einem Origin-`BYPASS` als CDN-Miss. `cache_served_rate` ist der Anteil der cachebaren Seitenaufrufe, die aus einer Kopie kamen: die vier Status oben, geteilt durch alle Status außer `BYPASS`, `DYNAMIC`, `NONE` und `PASS`. Eine Site ohne Cache-Status liefert `null`.
+Cloudflare `DYNAMIC` vor einem `HIT` des Full-Page-Cache zählt also als Origin-Treffer. Ein CDN-`MISS` vor einem Origin-`BYPASS` bleibt ein Miss des CDN. `cache_served_rate` ist der Anteil der cachebaren Seitenaufrufe, die aus einer Kopie kamen: die vier Status oben, geteilt durch alle Status außer `BYPASS`, `DYNAMIC`, `NONE` und `PASS`. Eine Site ohne Cache-Status liefert `null`.
 
 ## Cache-Alter [#cache-age]
 
