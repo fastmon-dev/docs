@@ -139,7 +139,7 @@ Soft-Navigationen (SPA-Routenwechsel) erzeugen keine nativen Paint- oder Navigat
 Das Script wird mit starkem Cache und `ETag` ausgeliefert. Zwei Dinge invalidieren den Cache automatisch:
 
 - **Einstellungs-Wechsel.** Änderst du eine Einstellung, die das ausgelieferte Bundle betrifft (etwa [`collect_sessions`](/de/tracker#collect-sessions)), liefert das eine neue Template-Version aus.
-- **Beacon-Upgrade.** Fastmon liefert Beacon-Versionen (`source_version`); ein Wechsel der gepinnten Version rollt den Cache.
+- **Beacon-Upgrade.** Ein neues fastmon-Release oder eine andere gepinnte `source_version` liefert ein neues Bundle aus, und der Cache wird erneuert.
 
 Du musst dafür nicht redeployen. Beim nächsten Cache-Check holt der Browser sich die neue Version automatisch.
 
