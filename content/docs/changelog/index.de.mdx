@@ -17,6 +17,100 @@ Wir beschreiben die Änderungen, die du kennen solltest, nicht jede interne Anpa
 
 <Changelog labels={labels}>
 
+<ChangelogEntry date="2026-11-25" type="changed" area="tracker" title="Der Tracker ist halb so groß und lesbar">
+
+Das Tracker-Script wird nur noch minifiziert, nicht mehr verschleiert. An deinem Snippet ändert sich nichts.
+
+- **Größe**: gzip-komprimiert rund 20 KB statt bis zu 60 KB, und der Main-Thread hat auf jeder Seite weniger zu tun.
+- **Lesbar**: Ausgeliefert wird ganz normales minifiziertes JavaScript, das du in den DevTools prüfen kannst.
+- **Updates kommen an**: Ein neues Tracker-Release erreicht jetzt auch Browser, die das Script schon im Cache haben. Der erste Seitenaufruf nach fünf Minuten lädt es nach, ab dem nächsten läuft es.
+
+Doku: [Beacon](/de/concepts/beacon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="fixed" area="tracker" title="GA4-Events aus Shopware mit der Währung der Seite">
+
+In einer Shopware-Storefront übernimmt ein GA4-Ecommerce-Event jetzt die Währung, die die Seite anzeigt. Schickt das Tag immer seine Kontowährung mit, landet eine Bestellung in CZK also nicht mehr unter `EUR`, und die gesendete Währung bleibt als `currency_sent` erhalten. Voraussetzung ist Shopware 6.7.7.
+
+Doku: [Custom Events → Aus dem dataLayer](/de/events#data-layer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="new" area="api" title="Ein Vergleich pro Release">
+
+`GET /releases/{release_id}/comparison` (alpha) stellt bis zu 7 Tage nach einem Release genauso vielen Tagen davor gegenüber. Verglichen werden Bestellrate, Web Vitals, Fehlerquote, Cache-Trefferquote und neue Fehler, jeweils mit der Schwelle, ab der es zählt. Das Ergebnis fasst ein `outcome` zusammen: `pending`, `sparse`, `better`, `worse`, `mixed` oder `flat`.
+
+Doku: [Releases → Releases vergleichen](/de/concepts/releases#comparing-releases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Analytics in fünf Gruppen">
+
+In der API-Referenz sind die Analytics-Operationen jetzt auf fünf Gruppen verteilt: Analytics, Performance, Visitors, Sales und Error tracking. Pfade, operationIds und Schemas bleiben gleich.
+
+- **Generierte Clients**: Benennt dein Generator Dateien oder Klassen nach dem Tag, landen die meisten Operationen in neuen.
+- **Vorläufige Felder**: Eine stabile Operation kann einzelne optionale Felder mit `x-stability-level: alpha` markieren. So ein Feld kann sich mit jedem Release ändern oder wegfallen.
+- **`visitors`** ist in jedem Schema ein Integer.
+
+Doku: [API-Referenz → Stabilität](/en/api#stability).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Partner können die Rechnung eines Kunden übernehmen">
+
+Mit `billing: true` übernimmt ein Partner per `PATCH /organizations/{org_id}/partner/clients/{client_org_id}` die Rechnung eines Kunden, für den er bisher nicht zahlt. Der Kunde wechselt dann in den Plan `partner` mit der Abdeckung aus dem Vertrag, eine laufende Testphase endet.
+
+- **Abdeckung**: Ein Wert in `covered_features` oder `included_pageviews`, der eine Zahlung auslöst, hat dieselbe Wirkung. Bisher kam hier 409.
+- **Abgelehnt** wird mit 409 `billing_client_pays_itself`, solange der Kunde ein laufendes Abo, einen offenen Checkout oder den Plan `enterprise` hat.
+- **Beenden** einer Zahlung bleibt Sache des Supports und liefert 409 `billing_stop_requires_support`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="Schneller filtern">
+
+Filter legst du jetzt mit weniger Klicks an, und auf dem Handy ist die Leiste deutlich aufgeräumter.
+
+- **„Filter hinzufügen“** zeigt erst einmal eine kurze Auswahl: deine zuletzt genutzten Felder, die gängigen und die, die zur aktuellen Seite passen. Den Rest findest du in Gruppen zum Aufklappen.
+- **Die Suche kennt auch Werte.** Gibst du „Chrome“ oder ein Land ein, übernimmst du den Wert direkt, und der Filter ist gesetzt.
+- **Die UTM-Felder** sind unter „Kampagne (UTM)“ zusammengefasst. Ob Quelle, Medium, Kampagne, Begriff oder Inhalt, wählst du dort per Umschalter.
+- **Auf dem Handy** stehen Zeitraum, „Filter“ mit der Zahl aktiver Filter und die Darstellung in einer Leiste. Darunter siehst du nur das, was du geändert hast, als Chip, und das x setzt es zurück.
+- **Perzentil und Traffic** findest du jetzt unter „Darstellung“.
+
+Doku: [Analytics → Filtern](/de/analytics#filtering).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="TTFB-Phasen wieder in einem Diagramm">
+
+Im TTFB-Verlauf zeigt die Ansicht „Phasen“ wieder alle Phasen als Linien auf einer gemeinsamen Achse. Ein Klick auf die Legende blendet eine Phase aus, mit Cmd- oder Strg-Klick siehst du nur diese eine. Die bisherige Darstellung mit einer Zeile pro Phase heißt jetzt „Teile“.
+
+Doku: [TTFB → TTFB in fastmon](/de/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Cache-Seiten mit dem gewohnten Verlaufsdiagramm">
+
+Server-Cache und Browser-Cache zeigen den Verlauf jetzt im selben Diagramm wie die anderen Seiten. Du kannst also per Ziehen zoomen, siehst Release-Marker und blendest Einträge über die Legende aus. Statt von „Kopie“ sprechen die Seiten von Cache-Treffer und Cache-Eintrag, und Schichten, die nie aus ihrem Cache ausliefern, tauchen gar nicht mehr auf.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Zeitraum bleibt beim Wechsel erhalten">
+
+Wechselst du im Header oder mit Cmd+K die Organisation, Applikation oder Site, bleiben Zeitraum, Vergleich, Perzentil und Darstellung erhalten. Nur beim Wechsel in eine andere Organisation fallen die bisherigen Filter weg.
+
+Doku: [Analytics → Zeitraum](/de/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="fixed" area="platform" title="Cache-Trefferquote hinter einem Origin ohne Cache">
+
+Steht hinter dem CDN ein Origin ohne eigenen Cache, zeigte die Trefferquote fälschlich 100 %. Jetzt zählt ein CDN-`MISS` vor einem Origin-`BYPASS` wieder als Miss des CDN. Seitenaufrufe vom 15.11.2026 zwischen 20:49 UTC und dem Fix am selben Abend lassen sich nicht mehr korrigieren.
+
+Doku: [Server-Timing → Ein Server-Cache pro Seitenaufruf](/de/guides/server-timing#served-cache).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-15" type="changed" area="api" title="Die API ist stabil">
 
 Die veröffentlichte API hat jetzt einen Stabilitätsvertrag. Jede Operation sagt in `x-stability-level`, was sie zusagt.

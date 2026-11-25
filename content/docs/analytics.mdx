@@ -33,11 +33,11 @@ The Shopfloor, under Analytics at `/shopfloor`, draws your shop from above as it
 - **A click or tap on a zone** zooms into it: its page types, and its top 10 URLs of the last 30 minutes with Pageviews and LCP.
 - **For a wall screen**, `?window=60&sound=1&kiosk=1` sets the window, the ka-ching per order, and kiosk mode. Sound is off by default, and in kiosk mode the pointer and buttons hide after three seconds without a move.
 - **On a phone** held upright the Shopfloor shows its figures and asks to be turned. Turned sideways, the floor fills the whole screen.
-- **On an iPhone**, add fastmon to the Home Screen for a full screen. It then opens as an app without the browser's bars, on the Shopfloor if added from there.
+- **On an iPhone** held sideways, a swipe up folds Safari's bar and the floor fills the screen.
 - **Filters** are country, device, page type, and traffic. A filter from another page stays as a muted chip marked "not applied here".
 - **It needs [`store_stitch`](/en/tracker#store-stitch).** A site without it shows nobody and says so.
 
-The API is [`POST /analytics/live`](/en/api/analytics/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/analytics/queryAnalyticsLiveSummary).
+The API is [`POST /analytics/live`](/en/api/visitors/queryAnalyticsLive) and [`POST /analytics/live-summary`](/en/api/visitors/queryAnalyticsLiveSummary).
 
 ### Partnerfloor [#partnerfloor]
 
@@ -53,7 +53,7 @@ The API is `POST /organizations/{org_id}/partner/live`, polled at `meta.next_pol
 
 ## Time range [#time-range]
 
-The range pill in the header sets the window for every chart on the page.
+The range pill in the header sets the window for every chart on the page. It stays when you switch organization, application, or site.
 
 - **Zoom**: minus doubles the window, plus halves it, also on the `-` and `+` keys. A live window keeps its end at now.
 - **Drag across a trend chart** to zoom into that stretch. The charts reload at the resolution it gets.
@@ -78,11 +78,13 @@ The picker and the command palette offer each bucket width with the number of bu
 
 Buckets of 6 hours and longer start on your clock: 6-hour buckets at 00, 06, 12, and 18 local time, a day at midnight, a week on Monday. A day across a clock change is 23 or 25 hours long.
 
-## Filtering
+## Filtering [#filtering]
 
 A filter bar sits next to the time picker on every analytics page. Type a dimension and value, for example `country = DE`, and press Enter to add a filter chip. The value field suggests the real values of the time range with their pageviews.
 
-The dimension picker lists Page, Country, and Device first, then browser, OS, connection, viewport, referrer, UTM fields, click-ID label, domain, navigation type, protocol, and the [checkout stage](/en/checkout-funnel). Empty values such as "Direct / none" cannot be filtered yet.
+"Add filter" opens on a short list: the fields you used last, the common ones, those that fit the page, and every other field by group. The search finds values too, so typing "Chrome" adds that filter in one step.
+
+The five UTM fields are one entry, "Campaign (UTM)", with a switch for the field. Empty values such as "Direct / none" cannot be filtered yet.
 
 Filters live in the URL and carry across views and shared links. Chips combine with AND, and a comma inside one value means "any of". Click a chip to edit it, its X removes it, and the "Filter" button counts the active ones.
 
@@ -90,7 +92,7 @@ Filters live in the URL and carry across views and shared links. Chips combine w
 
 **Every chip has an on/off switch.** A switched-off chip stays in place, struck through, and neither the query nor the count includes it. Clicking the same country on the map switches it back on, and a shared link keeps the state.
 
-On a phone, a row of chips above the page replaces the filter pill and the side panel, and the time range opens as a bottom sheet.
+On a phone, one bar shows the time range, "Filter" with its count, and the display settings. Below it, a chip for each filter or changed setting goes back to the default with its x.
 
 ### Sparse data and time of day [#sparse-data]
 
@@ -149,7 +151,7 @@ Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors,
 - A run of frames in the same vendor bundle folds into one row naming the library. When every frame is a library, the panel says so: the call that made the mistake was cut off at five frames.
 - A frame that only passes the error on is marked as a rethrow, and the cause sits further down.
 - A frame that cannot be read says why: no path was stored, the file sits on somebody else's host, the file is the fastmon tracker, or you deployed again under the same name and the position is gone.
-- The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/analytics/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
+- The endpoint is [`POST /analytics/error-types/symbolicate`](/en/api/error-tracking/queryAnalyticsErrorSymbolication). The same panel sits in the Explorer's row drawer: open a pageview, expand its errors, and the stack resolves there too.
 
 **"Where it happens" is the breakdown grid the metric pages carry**: page, page type, domain, country, device, browser, OS, connection, navigation, caches, bots, and network.
 
@@ -157,7 +159,7 @@ Errors sits under Monitoring in the sidebar, with four pages: JavaScript errors,
 
 **"AI prompt" hands the whole case to an assistant**: what broke, the numbers, the resolved stack with the code at the throw site, where it happens, and sample occurrences. It also says what your site does not collect.
 
-**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/analytics/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error.
+**Which API calls fail alongside it.** [`POST /analytics/error-types/correlated-requests`](/en/api/error-tracking/queryAnalyticsErrorCorrelatedRequests) ranks the fetch/XHR endpoints that fail in the same pageviews, each against its failure share in pageviews without that error.
 
 **An error signature is a filter like any other.** Every error row links into the Explorer scoped to the pageviews that carried it, and "Error signature" is in the filter list. `filters.error_fingerprint_kind` says which list the key came from (`error` or `failed_resource`).
 
@@ -178,7 +180,7 @@ Ownership is the registrable-domain rule above. **The list groups by host**, eac
 
 **Hiding a host** narrows the totals too: `host` and `exclude_hosts` do, `ownership` does not.
 
-**Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS, and country, the visitors affected, and sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/analytics/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key.
+**Opening a resource drills into it** the way opening an error signature does: the file, a time series, breakdowns over page, browser, device, OS, and country, the visitors affected, and sample beacons. Pass the row's `fingerprint` to [`POST /analytics/failed-resources/detail`](/en/api/error-tracking/queryAnalyticsFailedResourceDetail). The error drill-down refuses a resource key.
 
 `Failed resources` is a filter and a metric of its own, so `>= 1` scopes any view to pageviews where something did not load. In the pageview drill-down the failed loads have their own block, separate from the JavaScript errors.
 
@@ -186,7 +188,7 @@ The path needs [`collect_error_frames`](/en/tracker#collect-error-frames).
 
 Ad-blocked requests to known tracker hosts count as `blocked_count`, a subset of the foreign bucket and not failures.
 
-The list endpoint is [`POST /analytics/failed-resources`](/en/api/analytics/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
+The list endpoint is [`POST /analytics/failed-resources`](/en/api/error-tracking/queryAnalyticsFailedResources). The error-types endpoint refuses `error_type: ["ResourceLoadError"]` with a 400 pointing here.
 
 ## Visitors [#visitors]
 

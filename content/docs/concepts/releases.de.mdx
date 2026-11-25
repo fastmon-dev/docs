@@ -58,6 +58,8 @@ Eine `release`-Stage nach der Deploy-Stage, mit `$CI_COMMIT_SHA` oder `$CI_COMMI
 
 Schick das `window` eines Release als `time_range` und das vorherige Release als `compare_to: { "release_id": … }`. Jede Zeile im Ergebnis hat dann ein `comparison` mit denselben Metriken. Schritte und Beispiel stehen unter [Releases vergleichen](/de/guides/compare-releases#compare-metrics).
 
+In einem Aufruf geht das mit [`GET /releases/{release_id}/comparison`](/en/api/releases/getReleaseComparison) (alpha): bis zu 7 Tage nach dem Release gegen genauso viele davor, zusammengefasst in einem `outcome` wie `better`, `worse` oder `flat`.
+
 ## Häufige Szenarien
 
 ### Continuous Deploys

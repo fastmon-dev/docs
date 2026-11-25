@@ -48,6 +48,8 @@ Zwei unabhängige [Application-Einstellungen](/de/concepts/applications#events),
 
 Ein GA4-Event behält `value`, `currency`, die Anzahl der Artikel als `item_count` und pro Artikel `items.<n>.item_id`, `item_name`, `price` und `quantity`. Eine große Bestellung behält mindestens die ersten sechs Artikel. Bestellnummer und alle anderen Felder bleiben auf der Seite.
 
+In einer Shopware-Storefront ab 6.7.7 steht in `currency` die Währung, die die Seite anzeigt. Schickt das Tag eine andere, landet sie in `currency_sent`.
+
 `view_cart`, `begin_checkout` und `purchase` erreichen außerdem ihre Stufe im [Checkout-Funnel](/de/checkout-funnel#stage-events).
 
 #### Namen behalten oder verwerfen [#data-layer-names]

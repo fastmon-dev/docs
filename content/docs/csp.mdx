@@ -51,8 +51,8 @@ All three routes take the same `filters`, including `disposition`, `effective_di
 
 | Route | Returns |
 | --- | --- |
-| [`POST /analytics/csp`](/en/api/analytics/queryAnalyticsCsp) | Reports and affected visitors, per directive and disposition, over time |
-| [`POST /analytics/csp/breakdown`](/en/api/analytics/queryAnalyticsCspBreakdown) | Reports grouped by one `dimension`, with share, visitors, `first_seen_at`, and `last_seen_at`. A key goes back into its filter. |
-| [`POST /analytics/csp/reports`](/en/api/analytics/queryAnalyticsCspReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
+| [`POST /analytics/csp`](/en/api/error-tracking/queryAnalyticsCsp) | Reports and affected visitors, per directive and disposition, over time |
+| [`POST /analytics/csp/breakdown`](/en/api/error-tracking/queryAnalyticsCspBreakdown) | Reports grouped by one `dimension`, with share, visitors, `first_seen_at`, and `last_seen_at`. A key goes back into its filter. |
+| [`POST /analytics/csp/reports`](/en/api/error-tracking/queryAnalyticsCspReports) | Single reports, newest first, paged with `cursor`. `filters.report_id` selects one. |
 
-The [visitor detail](/en/api/analytics/queryAnalyticsVisitorDetail) and the [checkout journeys](/en/api/analytics/queryAnalyticsCheckoutJourneys) carry `csp_reports` beside `nel_reports`, without the policy.
+The [visitor detail](/en/api/visitors/queryAnalyticsVisitorDetail) and the [checkout journeys](/en/api/sales/queryAnalyticsCheckoutJourneys) carry `csp_reports` beside `nel_reports`, without the policy.

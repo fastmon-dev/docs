@@ -48,6 +48,8 @@ Two independent [application settings](/en/concepts/applications#events), both o
 
 A GA4 event keeps `value`, `currency`, the number of items as `item_count`, and per item `items.<n>.item_id`, `item_name`, `price`, and `quantity`. A large order keeps at least its first six items. The order id and every other field stay in the page.
 
+On a Shopware storefront from 6.7.7, `currency` is the currency the page shows. A different currency from the tag stays as `currency_sent`.
+
 `view_cart`, `begin_checkout`, and `purchase` also reach their [checkout funnel](/en/checkout-funnel#stage-events) stage.
 
 #### Keep or drop names [#data-layer-names]

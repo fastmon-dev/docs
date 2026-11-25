@@ -17,6 +17,7 @@ Every operation carries `x-stability-level` in the schema.
 
 - **Extensible enums**: a response enum under `x-extensible-enum` can gain values without notice. Treat an unknown value as an open string and never fail on it.
 - **Closed requests**: a request enum takes the closed copy `<Enum>Request`, and a body refuses any field it does not declare with `422`.
+- **Provisional fields**: a stable operation can mark one optional field `x-stability-level: alpha`, with a description starting "Provisional". It may change or go in any release, so your client has to work without it.
 - **Deprecated** operations and fields carry `deprecated: true` and keep answering until the changelog announces their removal.
 
 ## Cross-cutting topics
@@ -31,7 +32,7 @@ Every operation carries `x-stability-level` in the schema.
 
 ## Endpoints
 
-Pages are auto-generated per OpenAPI tag. Each operation has its own page with split-layout schema, language tabs (curl, JS, Python, Go, Java, C#), and a Try-it playground.
+Pages are auto-generated per OpenAPI tag. The analytics readers sit in five groups: Analytics, Performance, Visitors, Sales, and Error tracking (tag `errors`). Each operation has its own page with split-layout schema, language tabs (curl, JS, Python, Go, Java, C#), and a Try-it playground.
 
 <Cards>
   <Card title="Organizations" href="/en/api/organizations/listOrganizations" description="Top-level account container: members, plans, billing." />

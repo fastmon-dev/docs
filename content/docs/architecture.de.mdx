@@ -44,7 +44,7 @@ Drei Stellen in der Pipeline sind wichtig, wenn du das Verhalten verstehen wills
 
 | Komponente        | Was sie tut                                                                  |
 | ----------------- | ---------------------------------------------------------------------------- |
-| Beacon-Script     | Vanilla JS, ~10 KB komprimiert. Beobachtet Web Vitals, batcht, postet.       |
+| Beacon-Script     | Vanilla JS, ~20 KB komprimiert. Beobachtet Web Vitals, batcht, postet.       |
 | EU-Edge           | Entfernt IP und User-Agent an der Netzwerkgrenze, leitet das Land aus der IP ab, berechnet den begrenzten `stitch`. Rohe IP und UA erreichen die Anwendung nie. |
 | Collector         | Öffentlicher Ingest unter `/c/{collector_hash}`. Validation, Rate-Limit, serverseitige Sanitisierung. |
 | API               | Authentifizierte REST direkt im Root (`/organizations/…`). Versorgt das Dashboard. |

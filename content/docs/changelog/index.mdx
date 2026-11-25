@@ -12,6 +12,100 @@ We cover the changes you should know about, not every internal tweak. The except
 
 <Changelog>
 
+<ChangelogEntry date="2026-11-25" type="changed" area="tracker" title="The tracker is half the size and readable">
+
+The tracker script is minified but no longer obfuscated. Your snippet stays the same.
+
+- **Size**: about 20 KB gzipped instead of up to 60 KB, with less main-thread work on every page.
+- **Readable**: the served script is ordinary minified JavaScript you can check in DevTools.
+- **Updates arrive**: a new tracker release now reaches browsers that already cached the script. The first load after five minutes fetches it, and the next one runs it.
+
+Docs: [Beacon](/en/concepts/beacon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="fixed" area="tracker" title="GA4 events from Shopware carry the page currency">
+
+On a Shopware storefront, a GA4 ecommerce event takes the currency the page shows. An order paid in CZK no longer lands in `EUR` because the tag sends its account currency, and the sent one stays as `currency_sent`. Needs Shopware 6.7.7 or later.
+
+Docs: [Custom events → From the dataLayer](/en/events#data-layer).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="new" area="api" title="One comparison per release">
+
+`GET /releases/{release_id}/comparison` (alpha) compares up to 7 days after a release with as many days before it. It covers order rate, Web Vitals, error rate, cache served rate, and new errors, each with the threshold that counts. One `outcome` sums it up: `pending`, `sparse`, `better`, `worse`, `mixed`, or `flat`.
+
+Docs: [Releases → Comparing releases](/en/concepts/releases#comparing-releases).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Analytics in five groups">
+
+The analytics operations sit in five groups of the API reference: Analytics, Performance, Visitors, Sales, and Error tracking. Paths, operationIds, and schemas stay as they are.
+
+- **Generated clients**: a generator that names files or classes after the tag puts most of them into new ones.
+- **Provisional fields**: a stable operation can mark one optional field `x-stability-level: alpha`. Such a field may change or go in any release.
+- **`visitors`** is an integer in every schema.
+
+Docs: [API Reference → Stability](/en/api#stability).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-25" type="changed" area="api" title="Partners can take over a client's bill">
+
+`PATCH /organizations/{org_id}/partner/clients/{client_org_id}` takes `billing: true` for a client the partner does not pay for yet. The client moves to the `partner` plan with the contract's coverage, and a running trial ends.
+
+- **Coverage**: a `covered_features` or `included_pageviews` value that starts a payment does the same, where it answered 409 before.
+- **Refused** with 409 `billing_client_pays_itself` while the client has a live subscription, an open checkout, or the `enterprise` plan.
+- **Stopping** a payment stays a support case and answers 409 `billing_stop_requires_support`.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="Filters take fewer steps">
+
+The filter pop-up opens shorter, and the phone gets one calm bar.
+
+- **"Add filter"** opens on the fields you used last, the common ones, and those that fit the page. Every other field sits in a group you open.
+- **The search finds values.** Typing "Chrome" or a country offers the value itself and adds the filter in one step.
+- **UTM** is one entry, "Campaign (UTM)", with a switch for source, medium, campaign, term, or content.
+- **On a phone** the bar shows the time range, "Filter" with its count, and the display settings. A chip below it lists each change, and its x resets it.
+- **Percentile and traffic** are set in the display settings.
+
+Docs: [Analytics → Filtering](/en/analytics#filtering).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-18" type="changed" area="dashboard" title="TTFB phases on one chart again">
+
+The "Phases" view of the TTFB history draws one line per phase on a shared axis. A click on a legend entry hides its line, and Cmd or Ctrl click shows one phase alone. The view with one row per phase is now "Parts".
+
+Docs: [TTFB → How to see TTFB in fastmon](/en/web-vitals/ttfb#how-to-see-ttfb-in-fastmon).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Cache pages draw the standard chart">
+
+The history on the Server cache and Browser cache pages is the standard trend chart, with drag to zoom, release markers, and legend toggles. The pages say cache hit and cache entry in place of "copy". A layer that never serves from its cache is no longer listed.
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="changed" area="dashboard" title="Switching keeps the time range">
+
+Picking another organization, application, or site in the header or in Cmd+K keeps the period, the comparison, the percentile, and the view settings. A switch to another organization drops the old one's filters.
+
+Docs: [Analytics → Time range](/en/analytics#time-range).
+
+</ChangelogEntry>
+
+<ChangelogEntry date="2026-11-16" type="fixed" area="platform" title="Server cache rate behind an origin without a cache">
+
+The served rate no longer reads 100 % behind an origin that does not cache. A CDN miss in front of an origin `BYPASS` now counts as a CDN miss. Pageviews from 2026-11-15, 20:49 UTC, until the fix that evening keep their old values.
+
+Docs: [Server-Timing → One server cache per pageview](/en/guides/server-timing#served-cache).
+
+</ChangelogEntry>
+
 <ChangelogEntry date="2026-11-15" type="changed" area="api" title="The API is stable">
 
 The published API now has a stability contract. Every operation says in `x-stability-level` what it promises.

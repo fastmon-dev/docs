@@ -54,9 +54,12 @@ const spec = await res.json();
 // applications and organizations tags, so they are dropped by path, and its
 // application fields and schemas go with them. The support chat routes are
 // already left out of the schema by the backend. Goal factors stay out of the
-// docs on purpose.
+// docs on purpose, and so do the sales readers that are still admin-only
+// (arrivals, items, orders, revenue, buying behaviour, search terms, checkout
+// steps and the stage breakdown).
 const EXCLUDE_TAGS = new Set(["observations"]);
-const EXCLUDE_PATH = /\/uptime(\/|$)|\/goals\/factors$/;
+const EXCLUDE_PATH =
+  /\/uptime(\/|$)|\/goals\/factors$|\/analytics\/(arrivals|items|orders|revenue|buying-behaviour|search-terms)(\/|$)|\/funnels\/checkout\/(steps|stages\/breakdown)$/;
 const EXCLUDE_PROPERTY = /^uptime_/;
 const EXCLUDE_SCHEMA =
   /^(Uptime|SiteUptime|ApplicationUptime|SiteCertificate|Observation|PaginatedResponse_Observation|Goal(Factor|BaseStage))/;
@@ -272,6 +275,22 @@ await generateFiles({
   addGeneratedComment: true,
 });
 
+// The `errors` tag would generate api/errors/, which collides with the
+// hand-written api/errors.mdx (the error envelope). Its folder is served as
+// api/error-tracking/ instead, titled after what it covers.
+{
+  const { rename, readFile: rf } = await import("node:fs/promises");
+  const from = path.join(outDir, "errors");
+  if (await lstat(from).catch(() => null)) {
+    const to = path.join(outDir, "error-tracking");
+    await rename(from, to);
+    const metaPath = path.join(to, "meta.json");
+    const meta = JSON.parse(await rf(metaPath, "utf8"));
+    meta.title = "Error tracking";
+    await writeFile(metaPath, JSON.stringify(meta, null, 2) + "\n");
+  }
+}
+
 // `meta: true` overwrites the api/meta.json with just an alphabetic tag
 // list — wiping our hand-curated sidebar (sections + ordered hand-written
 // pages). Re-write it after generation.
@@ -304,6 +323,10 @@ const apiMeta = {
     "sites",
     "releases",
     "analytics",
+    "performance",
+    "visitors",
+    "sales",
+    "error-tracking",
     "synthetic",
     "notifications",
     "partners",

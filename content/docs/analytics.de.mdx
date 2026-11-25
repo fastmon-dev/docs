@@ -33,11 +33,11 @@ Der Shopfloor unter Analytics (`/shopfloor`) zeigt deinen Shop live von oben.
 - **Ein Klick oder Tipp auf eine Zone** zoomt hinein: ihre Seitentypen und ihre Top 10 URLs der letzten 30 Minuten mit Pageviews und LCP.
 - **Für einen Wandbildschirm** setzt `?window=60&sound=1&kiosk=1` Zeitfenster, Kassenklingeln pro Bestellung und Kiosk-Modus. Ton ist per Default aus, und im Kiosk-Modus verschwinden Mauszeiger und Buttons nach drei Sekunden ohne Bewegung.
 - **Auf dem Handy** zeigt der Shopfloor hochkant seine Zahlen und bittet ums Drehen. Quer füllt die Fläche den ganzen Bildschirm.
-- **Auf dem iPhone** bekommst du Vollbild, indem du fastmon zum Home-Bildschirm hinzufügst. Es öffnet sich dann als App ohne Browserleisten, im Shopfloor, wenn du es von dort hinzugefügt hast.
+- **Auf dem iPhone** hältst du das Gerät quer und wischst nach oben. Safari blendet dann seine Leiste aus, und der Shopfloor füllt den Bildschirm.
 - **Filtern** kannst du nach Land, Gerät, Seitentyp und Traffic. Ein Filter von einer anderen Seite bleibt als blasser Chip mit dem Hinweis, dass er hier nicht greift.
 - **Er braucht [`store_stitch`](/de/tracker#store-stitch).** Eine Site ohne zeigt niemanden und sagt das auch.
 
-Die API dazu: [`POST /analytics/live`](/de/api/analytics/queryAnalyticsLive) und [`POST /analytics/live-summary`](/de/api/analytics/queryAnalyticsLiveSummary).
+Die API dazu: [`POST /analytics/live`](/de/api/visitors/queryAnalyticsLive) und [`POST /analytics/live-summary`](/de/api/visitors/queryAnalyticsLiveSummary).
 
 ### Partnerfloor [#partnerfloor]
 
@@ -53,7 +53,7 @@ Die API ist `POST /organizations/{org_id}/partner/live`, abgefragt im Takt von `
 
 ## Zeitraum [#time-range]
 
-Die Zeitraum-Pille im Header legt das Fenster für alle Charts der Seite fest.
+Die Zeitraum-Pille im Header legt das Fenster für alle Charts der Seite fest. Das Fenster bleibt, wenn du die Organisation, Applikation oder Site wechselst.
 
 - **Zoom**: Minus verdoppelt das Fenster, Plus halbiert es, auch mit den Tasten `-` und `+`. Ein Live-Fenster bleibt mit seinem Ende bei jetzt.
 - **Zieh über ein Trend-Chart**, um in diesen Abschnitt zu zoomen. Die Charts laden in der Auflösung neu, die dazu passt.
@@ -78,11 +78,13 @@ Picker und Befehlsmenü bieten jede Bucket-Breite mit der Zahl der Buckets an, d
 
 Buckets ab 6 Stunden beginnen nach deiner Uhr: 6-Stunden-Buckets um 00, 06, 12 und 18 Uhr Ortszeit, ein Tag um Mitternacht, eine Woche am Montag. Über eine Zeitumstellung hat ein Tag 23 oder 25 Stunden.
 
-## Filtern
+## Filtern [#filtering]
 
 Neben dem Zeitraum-Picker sitzt auf jeder Analytics-Seite eine Filterleiste. Tipp eine Dimension und einen Wert, etwa `country = DE`, und drück Enter für einen Filter-Chip. Das Wertefeld schlägt die echten Werte des Zeitraums mit ihren Pageviews vor.
 
-Die Dimensionsauswahl listet zuerst Seite, Land und Gerät, dann Browser, Betriebssystem, Verbindung, Viewport, Referrer, UTM-Felder, Click-ID-Label, Domain, Navigationstyp, Protokoll und die [Checkout-Stufe](/de/checkout-funnel). Leere Werte wie „Direkt / keine" lassen sich noch nicht filtern.
+„Filter hinzufügen“ zeigt zuerst eine kurze Auswahl: deine zuletzt genutzten Felder, die gängigen und die, die zur Seite passen. Alle anderen stehen darunter, nach Gruppen sortiert. Die Suche kennt auch Werte: Gibst du „Chrome“ ein, setzt du den Filter in einem Schritt.
+
+Die fünf UTM-Felder sind unter „Kampagne (UTM)“ zusammengefasst, das einzelne Feld wählst du per Umschalter. Leere Werte wie „Direkt / keine“ lassen sich noch nicht filtern.
 
 Filter stehen in der URL und wandern über Views und geteilte Links mit. Mehrere Chips werden mit UND verknüpft, ein Komma in einem Wert bedeutet „eines von". Ein Klick auf einen Chip bearbeitet ihn, das X entfernt ihn, und der „Filter"-Button zählt die aktiven.
 
@@ -90,7 +92,7 @@ Filter stehen in der URL und wandern über Views und geteilte Links mit. Mehrere
 
 **Jeder Chip hat einen Ein/Aus-Schalter.** Ausgeschaltet bleibt der Chip durchgestrichen an seinem Platz, und weder die Abfrage noch der Zähler berücksichtigen ihn. Ein Klick auf dasselbe Land in der Karte schaltet ihn wieder ein, und ein geteilter Link behält den Zustand.
 
-Auf dem Handy ersetzt eine Reihe Chips über der Seite die Filter-Pille und das Seitenpanel, und der Zeitraum öffnet sich als Sheet von unten.
+Auf dem Handy stehen Zeitraum, „Filter“ mit der Zahl aktiver Filter und die Darstellung in einer Leiste. Darunter siehst du jeden Filter und jede geänderte Einstellung als Chip, das x setzt sie zurück.
 
 ### Spärliche Daten und Tageszeit [#sparse-data]
 
@@ -149,7 +151,7 @@ Fehler liegt in der Seitenleiste unter Monitoring, mit vier Seiten: JavaScript-F
 - Mehrere aufeinanderfolgende Frames aus demselben Vendor-Bundle klappen zu einer Zeile zusammen, die die Library nennt. Sind alle Frames Library, sagt das Panel das: Der Aufruf, der den Fehler gemacht hat, wurde bei fünf Frames abgeschnitten.
 - Ein Frame, der den Fehler nur weiterreicht, ist als Rethrow markiert, die Ursache sitzt dann weiter unten.
 - Ein Frame, der sich nicht lesen lässt, sagt warum: kein Pfad gespeichert, die Datei liegt auf fremdem Host, die Datei ist der fastmon-Tracker, oder du hast unter demselben Dateinamen neu deployt und die Position ist weg.
-- Der Endpunkt ist [`POST /analytics/error-types/symbolicate`](/de/api/analytics/queryAnalyticsErrorSymbolication). Dasselbe Panel steckt in der Zeilen-Detailansicht des Explorers: Pageview öffnen, Fehler aufklappen, und der Stack löst sich auch dort auf.
+- Der Endpunkt ist [`POST /analytics/error-types/symbolicate`](/de/api/error-tracking/queryAnalyticsErrorSymbolication). Dasselbe Panel steckt in der Zeilen-Detailansicht des Explorers: Pageview öffnen, Fehler aufklappen, und der Stack löst sich auch dort auf.
 
 **„Wo es auftritt" ist das Aufschlüsselungs-Raster der Metrikseiten**: Seite, Seitentyp, Domain, Land, Gerät, Browser, Betriebssystem, Verbindung, Navigation, Caches, Bots und Netzwerk.
 
@@ -157,7 +159,7 @@ Fehler liegt in der Seitenleiste unter Monitoring, mit vier Seiten: JavaScript-F
 
 **„AI-Prompt" übergibt den ganzen Fall an einen Assistenten**: was kaputt ist, die Zahlen, der aufgelöste Stack mit dem Code an der Wurfstelle, wo es auftritt, und Beispiel-Vorkommen. Er schreibt dazu, was deine Site nicht erfasst.
 
-**Welche API-Calls daneben fehlschlagen.** [`POST /analytics/error-types/correlated-requests`](/de/api/analytics/queryAnalyticsErrorCorrelatedRequests) sortiert die fetch/XHR-Endpunkte, die in denselben Pageviews scheitern, jeweils gegen ihre Fehlerquote in Pageviews ohne diesen Fehler.
+**Welche API-Calls daneben fehlschlagen.** [`POST /analytics/error-types/correlated-requests`](/de/api/error-tracking/queryAnalyticsErrorCorrelatedRequests) sortiert die fetch/XHR-Endpunkte, die in denselben Pageviews scheitern, jeweils gegen ihre Fehlerquote in Pageviews ohne diesen Fehler.
 
 **Eine Fehlersignatur ist ein Filter wie jeder andere.** Jede Fehlerzeile führt in den Explorer, eingegrenzt auf die Pageviews, die sie getragen haben, und „Fehlersignatur" steht in der Filterliste. `filters.error_fingerprint_kind` sagt, aus welcher Liste der Key stammt (`error` oder `failed_resource`).
 
@@ -178,7 +180,7 @@ Für die Zuordnung gilt die Regel der registrierbaren Domain von oben. **Die Lis
 
 **Ein ausgeblendeter Host** fehlt auch in den Summen: `host` und `exclude_hosts` grenzen sie ein, `ownership` nicht.
 
-**Eine geöffnete Ressource lässt sich aufschlüsseln** wie eine geöffnete Fehlersignatur: die Datei, eine Zeitreihe, Breakdowns nach Seite, Browser, Gerät, Betriebssystem und Land, betroffene Besucher und Beispiel-Beacons. Übergib den `fingerprint` der Zeile an [`POST /analytics/failed-resources/detail`](/de/api/analytics/queryAnalyticsFailedResourceDetail). Die Fehler-Detailansicht weist einen Ressourcen-Key ab.
+**Eine geöffnete Ressource lässt sich aufschlüsseln** wie eine geöffnete Fehlersignatur: die Datei, eine Zeitreihe, Breakdowns nach Seite, Browser, Gerät, Betriebssystem und Land, betroffene Besucher und Beispiel-Beacons. Übergib den `fingerprint` der Zeile an [`POST /analytics/failed-resources/detail`](/de/api/error-tracking/queryAnalyticsFailedResourceDetail). Die Fehler-Detailansicht weist einen Ressourcen-Key ab.
 
 `Fehlgeschlagene Ressourcen` ist ein eigener Filter und eine eigene Metrik: `>= 1` grenzt jede Ansicht auf Pageviews ein, bei denen etwas nicht geladen hat. In der Pageview-Detailansicht haben die fehlgeschlagenen Ladevorgänge einen eigenen Block, getrennt von den JavaScript-Fehlern.
 
@@ -186,7 +188,7 @@ Der Pfad braucht [`collect_error_frames`](/de/tracker#collect-error-frames).
 
 Ad-geblockte Requests an bekannte Tracker-Hosts zählen als `blocked_count`, eine Teilmenge des fremden Buckets und keine Fehler.
 
-Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/analytics/queryAnalyticsFailedResources). Der Fehlertypen-Endpoint weist `error_type: ["ResourceLoadError"]` mit einem 400 ab, der hierher verweist.
+Der Listen-Endpunkt ist [`POST /analytics/failed-resources`](/de/api/error-tracking/queryAnalyticsFailedResources). Der Fehlertypen-Endpoint weist `error_type: ["ResourceLoadError"]` mit einem 400 ab, der hierher verweist.
 
 ## Besucher [#visitors]
 

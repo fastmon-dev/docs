@@ -86,7 +86,7 @@ Die Analytics-API bietet drei Endpunkte:
 - `POST /analytics/visitors/segments`: wie viele Besucher der Liste Fehler hatten, langsam waren (durchschnittlicher LCP ab `slow_lcp_threshold_ms`), bestellt haben, im Checkout oder am Warenkorb waren oder nur eine Seite gesehen haben. Er nimmt denselben Scope und dieselben Filter wie die Liste.
 - `POST /analytics/visitors/detail`: der vollständige Pageview-Pfad eines Besuchers (das „Replay"). Er akzeptiert `identity=session` oder `stitch` (je nachdem, was die Besucherliste genutzt hat; Default `session`); eine unbekannte Identität wird mit `422` abgelehnt. Im Preset `Minimal` erfasst die Site keinen der beiden Identifier, es gibt also keine Besucher zum Reinzoomen.
 
-Übergib `identity` explizit, um den Standard der Application zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/analytics/queryAnalyticsVisitors).
+Übergib `identity` explizit, um den Standard der Application zu überschreiben, oder lass es null, um `count_visitors_by` zu nutzen. Request-Shapes: [Analytics-API](/en/api/visitors/queryAnalyticsVisitors).
 
 Die Liste filtert danach, was die Journey eines Besuchers enthält: `contains_page_type` für einen Page-Type, bei Shops `contains_checkout_stage` (`cart`, `checkout` oder `success`) und `contains_cart_interaction` für den [Checkout-Funnel](/de/checkout-funnel). Jeder Pageview im Detail trägt seine `checkout_stage`, die Warenkorb-Interaktionsfelder und seinen eigenen Client-Kontext (`country`, `browser`, `browser_version`, `device_type`, `os`): pro Pageview statt pro Besucher, weil ein `stitch`-Besucher Geräte, Länder und Browser wechseln kann und eine Mischung als Mischung sichtbar bleiben soll. Der Funnel selbst hat eigene Endpunkte unter `/analytics/funnels/checkout`, gruppiert über dieselbe Identität.
 
@@ -102,4 +102,4 @@ Die Liste filtert danach, was die Journey eines Besuchers enthält: `contains_pa
 
 - [Tracker-Einstellungen](/de/tracker): was der Beacon pro Pageview erfasst und welche Identitäten jede Einstellung erzeugt.
 - [Privacy](/de/privacy): wie der `stitch`-Identifier abgeleitet wird und woher seine Datenschutz-Garantie tatsächlich kommt.
-- [Analytics-API](/en/api/analytics/queryAnalyticsVisitors): Besucher programmatisch abfragen.
+- [Analytics-API](/en/api/visitors/queryAnalyticsVisitors): Besucher programmatisch abfragen.
